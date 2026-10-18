@@ -22,6 +22,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 | Working on the gathering, the beacon, lyric distribution, requests, delegates or anything on the air | `design/ble-protocol.md` — broadcast carousel, frame formats, GATT service, CBOR payloads, procedures, security. Its header names the FRD version it depends on. |
 | Working on song files, library repositories, metadata, the content hash or the line list | `design/song-format.md` — the ChordPro profile, library layout, canonicalisation rules the protocol hashes against. |
 | Wondering why a requirement or feature exists | `design/prompts.md` — the original ask, verbatim, dated. |
+| Adding or changing anything that touches personal data, a permission, the network, or bytes received over the air | `design/security-privacy-assessment.md` — the principles made concrete, findings SP-nn, accepted risks; add a finding or re-run the assessment. |
 | Changing deployment or infra, or anything about Google Play (account, tracks, signing, listing, releases) | `docs/RUNBOOK.md` — operational how-to; the fixed Play decisions (application ID, SDK levels, version scheme) live there. |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
 | **Before committing** | Diff-driven review, lenses chosen by what changed — `/review-changes` where your tool has skills, otherwise paste `templates/review-changes.md` <!-- placeholder --> as a prompt. This row is what fires it: nothing else prompts either party mid-flow. ⚠️ Since v1.40.0 it needs a per-repo **review profile** at `.claude/review-profile.md` — the same path whatever your tool, per `templates/README.md` <!-- placeholder -->. Copy `templates/review-profile.md` <!-- placeholder --> and fill it in; without one it STOPS rather than reviewing at LOW. |
@@ -36,6 +37,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 - **Keep the documents in step.** A change to the FRD bumps its version and adds a change-history row. `design/ble-protocol.md` and `design/song-format.md` state the FRD version they depend on; update them in the same change or say explicitly that they are behind.
 - **English prose, Dutch UI terms in parentheses** (*kampvuurleider*, *zanger*, *verzoeknummer*). Requirement key words follow RFC 2119.
 - **Never add lyrics to this repository.** Lyrics live in external libraries with their own licences; the app ships none. Example songs in `design/song-format.md` must be public domain or written for the spec.
+- **Secure by design, privacy by design; users are under 18.** Nothing personal leaves a phone unencrypted or reaches the developer; defaults never identify a person; every input from the air or a library is untrusted; least privilege. FRD section 2.6 defines it, `design/security-privacy-assessment.md` assesses it. A feature that touches personal data, a permission, the network or received bytes gets a new assessment entry before it is designed in.
 - **Everything in a gathering works over BLE with no internet.** Do not design or implement a gathering feature that needs a network, a hotspot or system Bluetooth pairing (FR-BLE-01, FR-BLE-02).
 - **Keystores and passwords never enter the repository.** `.gitignore` covers `*.jks`, `*.keystore`, `keystore.properties`; the upload key lives in the password manager (RUNBOOK Step 6). Never weaken these ignore rules.
 - **The application ID is `nl.pe1mew.zangbundel.app`.** It is permanent once a bundle is uploaded to Play; the Gradle file must say so before any upload. Minimum SDK 26, target SDK 36 (RUNBOOK Decisions).
@@ -85,6 +87,7 @@ Dependency order among the specs: FRD → protocol → song format. Change upstr
 | `design/ble-protocol.md` | BLE protocol 1.0 (doc v0.2): beacon, carousel, GATT, CBOR payloads, procedures, traceability table. |
 | `design/song-format.md` | Song file and library specification: ChordPro profile, metadata, canonical form, content hash, line list. |
 | `design/prompts.md` | Dated record of the prompts that produced the specs. |
+| `design/security-privacy-assessment.md` | Secure-by-design and privacy-by-design principles, assessment of the design, findings and accepted risks. |
 | `scripts/check-design.sh` | Checks requirement IDs, cross-references and dependency versions across `design/`. |
 | `memory/MEMORY.md` | Memory index: current state, decisions, key paths. |
 | `memory/gotcha-log.md` | Problem → root cause → fix journal. |

@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- `design/security-privacy-assessment.md` v0.1: secure-by-design and privacy-by-design principles made concrete for an app used by minors, assessment of the design so far, 15 findings (SP-01 to SP-15), accepted risks. FRD v0.6: principles in section 2.6; FR-GATH-01, FR-SING-01, FR-DATA-03 amended (no device-derived default names, nickname guidance, no names in the gathering memory); FR-GEN-08 in-app privacy screen, FR-GATH-18 gathering fingerprint, FR-DATA-08 resume-data deletion, NFR-PRIV-02 no cloud backup of gathering data, NFR-SEC-03 to 05 added; Q6 closed. BLE v0.6 wording fix. Principle added to CLAUDE.md, the runbook and the review profile.
 - `docs/RUNBOOK.md`: Google Play preparation. Fixed decisions (application ID `nl.pe1mew.zangbundel.app`, min SDK 26, target SDK 36, free, Music & Audio, 13+), account check, app creation, dashboard tasks with answers derived from the design, data safety, permission declarations for BLE and the foreground service, upload key and Play App Signing, tracks and the 12-tester closed-test rule, store listing assets, release flow, common problems.
 - `docs/privacy-policy.md`: draft privacy policy in English and Dutch for the Play listing (no data collected, Bluetooth exchange explained, location permission on old Android explained).
 - `.gitignore`: keystores, `keystore.properties`, Android build output, the owner's `raw/` scratch folder; `.claude/` stays tracked.

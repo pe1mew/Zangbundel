@@ -12,6 +12,7 @@ Status 2026-10-18: the Google Play developer account exists (personal, created a
 - **Keys never enter the repository.** The upload keystore, its passwords and `keystore.properties` live outside the tree and in a password manager. `.gitignore` enforces it; a review of any `.gitignore` change is full depth for this reason.
 - **Target the required API level before the deadline, not after.** Google raises the bar every August; a new app that targets less is refused at upload, not warned.
 - **The 14-day closed test is a calendar constraint, not a formality.** Plan the first upload at least a month before the day you want the app in production.
+- **Secure by design, privacy by design, because users are under 18.** Before each release, re-run `design/security-privacy-assessment.md` and record the pass in its version table; a release that adds a permission, a network peer or a third-party component without an assessment entry is not ready.
 - **The store listing describes the app that exists.** Screenshots must be screenshots of the app; a feature graphic may be a campfire photo. Nothing in the listing promises phase 2 or 3.
 
 ## Decisions (fixed)

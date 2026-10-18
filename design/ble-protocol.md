@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.5 (draft) |
+| Document version | 0.6 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.5 |
+| Depends on | `design/functional-requirements.md` v0.6 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -18,6 +18,7 @@
 | 0.3 | 2026-10-18 | `download.url` may name a release archive or release index (song-format section 12); no change to keys or encoding. Depends on FRD v0.4. |
 | 0.4 | 2026-10-18 | Open question Q14: end-to-end encryption of the payloads carrying personal data, driven by Google Play's Data safety definitions. No normative change. |
 | 0.5 | 2026-10-18 | Q14 adopted: sealed payloads (section 8.4). Leader X25519 key `ek` in the signed state; singer key `xk` in the Join; Join, Request, Control and document 8 end-to-end encrypted; write framing byte; `gid` binding; error `0x8D`. Satisfies FR-BLE-17 (FRD v0.5). |
+| 0.6 | 2026-10-18 | Security table: row on fake or mistaken gatherings, join code inside the sealed Join, gathering fingerprint (assessment SP-04, SP-11). Depends on FRD v0.6. No wire change. |
 
 ---
 
@@ -788,6 +789,7 @@ Singers scan continuously in the foreground; this costs more than the v0.1 desig
 | Learning who requested what | `reqstat` carries only random request IDs; names are only in document 8, sealed to a delegate. | A sniffer can link a `rid` to the device address that wrote a sealed request, not to a name. Accepted. |
 | Tracking a person across gatherings | `sid`, token and `xk` are per gathering; the OS randomises addresses; nothing persistent is sent [NFR-PRIV-01]. | None of note. |
 | A second gathering started in range | Pre-start scan refuses [FR-GATH-16]; singers pick by name and RSSI. | A modified app can ignore it; the leader is warned [FR-GATH-17]. |
+| Luring singers into a fake or mistaken gathering | The join code travels inside the sealed Join (8.4); the gathering fingerprint [FR-GATH-18] lets the leader say which gathering to join and lets a singer see it joined the right one; leaving is one tap [FR-GATH-07]. | The leader says the code aloud, so it is no secret against people present. A leader-pushed text cannot be filtered; the leader is an adult by role. See `design/security-privacy-assessment.md` SP-04. |
 
 Link-layer encryption is deliberately not used: it would require system pairing, which FR-BLE-02 forbids, and would make broadcast impossible. Application-layer sealing (8.4) protects exactly the payloads that carry personal data and leaves the broadcast public.
 

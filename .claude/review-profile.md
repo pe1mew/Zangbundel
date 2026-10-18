@@ -14,7 +14,7 @@ sentence in a spec reaches every reader who builds on it, which is why specs are
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
-| **HIGH** | `design/functional-requirements.md`, `design/ble-protocol.md`, `design/song-format.md`, `CLAUDE.md`, `.claude/review-profile.md`, `scripts/**`, `.gitignore`, `LICENSE`, `license.md`, `docs/privacy-policy.md` | Full battery (3-4 lenses) |
+| **HIGH** | `design/functional-requirements.md`, `design/ble-protocol.md`, `design/song-format.md`, `design/security-privacy-assessment.md`, `CLAUDE.md`, `.claude/review-profile.md`, `scripts/**`, `.gitignore`, `LICENSE`, `license.md`, `docs/privacy-policy.md` | Full battery (3-4 lenses) |
 | **MEDIUM** | `design/**` (anything else under design, e.g. a future architecture or UI-flow document), `android/**` (re-tier to HIGH for published interfaces once code exists), `docs/RUNBOOK.md`, `README.md`, `contributing.md` | Two lenses (adversarial + doc-accuracy) |
 | **LOW** | `memory/**`, `design/prompts.md`, `changelog.md`, `code_of_conduct.md` | One lens (adversarial) |
 
@@ -54,7 +54,7 @@ unit-test command here and name the Gradle wrapper (`./gradlew`), not a system G
 
 ## Project additions to the shipped lens prompts
 
-- **adversarial**: *Attack the physical and platform claims. Anything stated about BLE capacity (bytes per advertisement, advertising intervals, connection limits, MTU), Android or iOS API behaviour, or timing budgets is an assertion from reading, not from a device. Flag a claim as a blocker when it is stated as fact but the document's own open questions or constraints say it has not been measured, and when a number was changed without the budget table that depends on it changing too.*
+- **adversarial**: *Apply FRD section 2.6 first: does the change add a permission, a network peer, a third-party component, personal data on the air or on disk, or a new parser of received bytes, without a finding in `design/security-privacy-assessment.md`? If so that is a blocker regardless of the rest. Then attack the physical and platform claims. Anything stated about BLE capacity (bytes per advertisement, advertising intervals, connection limits, MTU), Android or iOS API behaviour, or timing budgets is an assertion from reading, not from a device. Flag a claim as a blocker when it is stated as fact but the document's own open questions or constraints say it has not been measured, and when a number was changed without the budget table that depends on it changing too.*
 - **doc-accuracy**: *The FRD's section 20 summary table and the protocol's section 16 traceability table are derived from the bodies; a new or re-tiered requirement that does not appear there is a defect even though the body is right.*
 
 ## Project procedure kept with the profile

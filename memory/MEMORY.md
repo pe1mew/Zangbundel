@@ -21,7 +21,8 @@
 
 ## Current State
 
-- **Design phase, no code.** Three specifications are consistent with each other: FRD v0.5, BLE protocol document v0.5 (protocol version 1.0), song format document v0.2 (format version 1.0, archive version 1.0). `bash scripts/check-design.sh` passes. All three plus docs/ are staged, not yet committed.
+- **Design phase, no code.** Specifications consistent with each other: FRD v0.6, BLE protocol document v0.6 (protocol version 1.0), song format document v0.2 (format version 1.0, archive version 1.0), security/privacy assessment v0.1. `bash scripts/check-design.sh` passes. Everything is staged, not yet committed.
+- **Secure by design, privacy by design (users under 18) is an architecture principle since 2026-10-18** (FRD 2.6). The first assessment found two High items that were fixed at requirement level: default gathering names derived from the device name (SP-01) and Android auto-backup copying gathering data to the cloud (SP-05). Re-run the assessment when the architecture document is written and before each release.
 - **Play account exists; no app yet.** Next concrete Play steps that need no code: create the app entry, fill the dashboard tasks, publish the privacy policy URL, generate the upload keystore (RUNBOOK Steps 2–6). Everything from the first bundle on waits for the Android project (an architecture document should precede it).
 - **Library distribution unit is the `.zbl` release archive** (song-format section 12): the app may never need a git client (song-format Q13). The leader's BLE download instruction can point at an archive or a release index.
 - **App distribution decided at requirement level:** QR code with the store link is required; offline Android-to-Android sharing of the app's own package is a SHOULD and needs a build decision (universal APK or bundled splits, FRD Q11); Google Play's own "share apps" must not be relied on because Google is withdrawing it; iOS has no offline route.

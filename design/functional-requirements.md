@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.5 (draft) |
+| Version | 0.6 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -16,6 +16,7 @@
 | 0.3 | 2026-10-18 | Added: leader-to-singer information by repeated broadcast, connections only for upstream traffic and recovery of missed data (FR-BLE-15, 16). |
 | 0.4 | 2026-10-18 | Added: getting the app to participants, QR code with store link and offline sharing of the app (section 8.5, FR-DIST-01 to 09); Appendix A with the distribution options investigated; constraints 11–13; Q11, Q12. |
 | 0.5 | 2026-10-18 | Added FR-BLE-17: personal data on the air is end-to-end encrypted to its recipient; broadcasts carry none. Driven by Google Play's Data safety definitions (docs/RUNBOOK.md Step 4). |
+| 0.6 | 2026-10-18 | Design principles secure by design and privacy by design, users under 18 (section 2.6). From `design/security-privacy-assessment.md` v0.1: FR-GATH-01, FR-SING-01, FR-DATA-03 amended; FR-GEN-08, FR-GATH-18, FR-DATA-08, NFR-PRIV-02, NFR-SEC-03 to 05 added; Q6 closed. |
 
 ---
 
@@ -98,6 +99,15 @@ A device is not permanently a leader or a singer. Any installation can start a g
 | **P2** | Karaoke | Timed lyrics, current-line highlighting synchronised with the leader, singing aids. |
 | **P3** | Instruments | Chords and musical notation for instrument players, transposition, musician view. |
 
+### 2.6 Design principles: secure by design, privacy by design
+
+Many users are **under 18**. The app must be safe to hand to a child without anyone reading a policy first, and nothing about the child may reach anyone, the developer included. Two architecture principles therefore bind every requirement, every design document and every implementation choice:
+
+- **Secure by design.** Least privilege (only the permissions a function needs); minimal attack surface (no server, no accounts, no third-party components that talk to the internet, nothing executed from received data); secure defaults; everything received over the air or from a library is verified before it is shown or stored; failures are safe; several independent layers protect the same thing; the build and supply chain are trustworthy.
+- **Privacy by design.** Privacy is the default and costs the user no function; personal data leaves the phone only through an action that obviously sends it, end-to-end encrypted to its recipient, and lives only as long as the gathering; defaults never identify a person; the app explains in plain language what goes where; every singer is treated as a possible minor: no public profiles, no singer-to-singer messaging, free text only to the adult leader, nothing to consent to because nothing is collected.
+
+`design/security-privacy-assessment.md` makes the principles concrete, assesses the design against them and records accepted risks. It is repeated at every architecture change and before each release. A requirement or design element that conflicts with these principles is wrong until the conflict is resolved and recorded there.
+
 ---
 
 ## 3. General requirements
@@ -115,6 +125,8 @@ A device is not permanently a leader or a singer. Any installation can start a g
 **FR-GEN-06** (SHOULD, P1) — The app SHOULD offer a short first-use introduction explaining the leader/singer concept and how to join a gathering.
 
 **FR-GEN-07** (MUST, P1) — The app MUST show the version of the app and the version (commit/tag) of each imported library in an "About" screen.
+
+**FR-GEN-08** (MUST, P1) — The app MUST contain a privacy screen in plain language, in the UI language, readable by a 12-year-old, that says what the app sends (to nearby phones during a gathering: gathering state, lyrics, and, encrypted to the leader, the display name and requests), what it never sends (anything to the developer), what it keeps on the phone and how to delete it. It MUST be reachable from the first-use introduction (FR-GEN-06) before any permission is requested, and from the About screen. (Assessment SP-07.)
 
 ---
 
@@ -196,7 +208,7 @@ A device is not permanently a leader or a singer. Any installation can start a g
 
 ## 6. Gathering lifecycle
 
-**FR-GATH-01** (MUST, P1) — A leader MUST be able to start a gathering by giving it a name. The app MUST propose a default name (e.g. device name plus date).
+**FR-GATH-01** (MUST, P1) — A leader MUST be able to start a gathering by giving it a name. The app MUST propose a neutral default name that identifies no person or device, e.g. "Kampvuur 18 okt", and MUST NOT derive it from the device name or any account. The name screen asks the leader not to put a person's name in it, because the name is broadcast in clear. (Amended in v0.6, assessment SP-01.)
 
 **FR-GATH-02** (MUST, P1) — From the moment a gathering is started until it is ended, the leader's device MUST broadcast a BLE beacon that identifies the app, the gathering name and a unique gathering identifier, so singers can discover it.
 
@@ -229,6 +241,8 @@ A device is not permanently a leader or a singer. Any installation can start a g
 **FR-GATH-16** (MUST, P1) — Only one gathering can run within BLE range. Before starting a gathering the app MUST listen for running gatherings for at least 5 seconds. If one is in range, the app MUST refuse to start a new gathering, MUST show the name of the gathering it found and MUST offer to join it instead. There is no override (see open question Q9).
 
 **FR-GATH-17** (SHOULD, P1) — While leading, the app SHOULD keep detecting other running gatherings that come into range (started out of range and moved closer) and SHOULD warn the leader, naming the other gathering. The app cannot stop a gathering started elsewhere; both continue.
+
+**FR-GATH-18** (SHOULD, P1) — The app SHOULD show a **gathering fingerprint**, two short words derived deterministically from the gathering identifier (e.g. "appel-vuur"), on the leader's screen while leading and on every singer's screen after joining, so that a leader can say aloud which gathering to join and a singer can see at once that they joined the right one. The gathering list SHOULD warn when two gatherings in range have the same or a very similar name. Together with the join code (FR-GATH-05) and one-tap leaving (FR-GATH-07) this limits the harm of a fake or mistaken gathering. (Assessment SP-04.)
 
 ---
 
@@ -354,7 +368,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 ### 9.1 Joining and receiving
 
-**FR-SING-01** (MUST, P1) — A singer MUST be able to choose a display name once (stored on the device) that is shown to the leader. The name is optional; a default (e.g. "Zanger 7") is used otherwise.
+**FR-SING-01** (MUST, P1) — A singer MUST be able to choose a display name once (stored on the device) that is shown to the leader. The name is optional; a generic default (e.g. "Zanger 7") is used otherwise. The field MUST NOT be pre-filled from the device name, an account or contacts, MUST be limited to 24 characters, and the screen asks for a first name or nickname only. The name travels only encrypted to the leader (FR-BLE-17). (Amended in v0.6, assessment SP-03.)
 
 **FR-SING-02** (MUST, P1) — When the leader pushes a new song, the singer device MUST switch to it automatically and MUST make the change noticeable (brief visual cue; optional vibration, configurable).
 
@@ -440,7 +454,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 **FR-DATA-02** (MUST, P1) — Songs that are part of a library the user imported themselves are not affected by FR-DATA-01 and remain on the device.
 
-**FR-DATA-03** (MUST, P1) — After a gathering ends, the device MUST keep a **gathering memory**: gathering name, date, the leader's display name (singer side) or participant count (leader side) and the ordered list of song titles sung, including the song identifier and library reference so the song can be found if the user later imports that library.
+**FR-DATA-03** (MUST, P1) — After a gathering ends, the device MUST keep a **gathering memory**: gathering name, date, participant count (leader side) and the ordered list of song titles sung, including the song identifier and library reference so the song can be found if the user later imports that library. The memory MUST contain no names of people and no identifiers of other devices. (Amended in v0.6, assessment SP-02.)
 
 **FR-DATA-04** (MUST, P1) — The user MUST be able to view past gathering memories and delete any or all of them. The app MUST NOT share gathering memories with anyone.
 
@@ -449,6 +463,8 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 **FR-DATA-06** (MUST, P1) — Requests, setlists of the gathering and connection data MUST be discarded when the gathering ends, except for the song titles kept in the gathering memory. Prepared setlists (FR-LEAD-02) are kept.
 
 **FR-DATA-07** (MUST, P1) — Data stored on the device (libraries, settings, gathering memories) MUST be removable by the user from within the app ("remove all data").
+
+**FR-DATA-08** (MUST, P1) — Data the leader's device persists so that a gathering can be resumed after an app restart (FR-GATH-13: key material, the singer table with display names and tokens) MUST be deleted when the gathering ends and, if the app was not restarted in time, when the resume window expires, at the latest at the next app start. It MUST be kept in app-private storage only. (Assessment SP-06.)
 
 ---
 
@@ -506,7 +522,15 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 **NFR-SEC-02** (MUST, P1) — Data sent over BLE MUST NOT allow a third device to impersonate the leader of a running gathering (e.g. by using the gathering identifier and a session token established at join). Encryption of lyrics in transit is not required, as lyrics are not confidential.
 
+**NFR-SEC-03** (MUST, P1) — No third-party component in the app may transmit data off the device, and release builds MUST NOT write display names, request text, tokens or keys to logs. Every dependency's network behaviour is reviewed before it is added, and a crash reporter, if ever added, is opt-in and documented in the privacy policy. (Assessment SP-08.)
+
+**NFR-SEC-04** (MUST, P1) — Everything parsed from the air or from a library (song files, CBOR payloads, DEFLATE streams, ZIP archives) is untrusted input. Parsers MUST enforce explicit size and time bounds, MUST be fuzz-tested as part of the test plan, and a parse failure of a received song MUST be treated as a failed reception (FR-BLE-04), never crash the app. (Assessment SP-09.)
+
+**NFR-SEC-05** (SHOULD, P1) — Dependencies SHOULD be pinned to exact versions with verified checksums and reviewed at each release; the release build SHOULD be reproducible enough that the uploaded bundle can be matched to a tagged revision. (Assessment SP-15.)
+
 **NFR-PRIV-01** (MUST, P1) — The app MUST NOT collect or transmit personal data. The display name is the only user-entered identity and is only exchanged over BLE within the gathering.
+
+**NFR-PRIV-02** (MUST, P1) — Gathering data (gathering memories, resume data, settings that include a display name) MUST be excluded from platform cloud backup (Android Auto Backup, device-to-device transfer of app data), or backup disabled for the app altogether, so that no gathering data is ever copied to a cloud account. (Assessment SP-05.)
 
 **NFR-ACC-01** (SHOULD, P1) — The app SHOULD be usable with the platform screen reader for navigation, and all controls SHOULD have a minimum touch target of 48 dp for use in the dark.
 
@@ -547,7 +571,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q3 | Should the default library be a repository under the project's own control, and who maintains it? | Library governance, FR-LIB-02 |
 | Q4 | Do we adopt ChordPro as the song format, or define our own Markdown/YAML-based format? | Song format spec, P3 |
 | Q5 | Is leader hand-over (FR-GATH-14) needed in P1, e.g. when the leader's battery runs out? | Scope P1 |
-| Q6 | Should the gathering memory also be kept on the leader device, including who requested what? (Current assumption: titles only, no names.) | Privacy, FR-DATA-03 |
+| Q6 | *Closed 2026-10-18 (assessment SP-02):* the gathering memory holds no names on either side; titles, date and count only (FR-DATA-03 v0.6). | Resolved |
 | Q7 | Minimum Android version and whether a tablet layout is in scope for P1. | Architecture |
 | Q8 | Which languages beyond NL and EN are planned, and do we need right-to-left support? | Localisation |
 | Q9 | Should FR-GATH-16 allow an override when the gathering in range is clearly abandoned (e.g. a forgotten phone still advertising), or is "ask that leader to end it" always acceptable? | FR-GATH-16, leader UI |
@@ -565,7 +589,8 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | `design/ble-protocol.md` | Beacon format, join procedure, message types, chunking and compression, versioning, relay strategy. |
 | `design/song-format.md` | Song file and library metadata format, metadata fields, timing (P2) and notation (P3) extensions. |
 | `design/ui-flows.md` | Screen flows for leader and singer, day/night theme guidelines. |
-| `design/test-plan.md` | Field test scenarios (range, number of singers, battery), automated test strategy. |
+| `design/test-plan.md` | Field test scenarios (range, number of singers, battery), automated test strategy, parser fuzzing (NFR-SEC-04). |
+| `design/security-privacy-assessment.md` | *Exists (v0.1).* Principles made concrete, assessment of the design, findings and accepted risks; repeated at each architecture change and release. |
 
 ---
 
@@ -573,10 +598,10 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 | Area | P1 (MUST) | P1 (SHOULD/MAY) | P2 | P3 |
 |---|---|---|---|---|
-| General (GEN) | 01–05, 07 | 06 | | |
+| General (GEN) | 01–05, 07, 08 | 06 | | |
 | Language (LANG) | 01–05 | 06, 07 | | |
 | Library (LIB) | 01–07, 10–12, 14, 15, 17, 20, 21, 23, 30, 31, 33 | 13, 16, 22, 32 | | |
-| Gathering (GATH) | 01–04, 06–12, 15, 16 | 05, 13, 14, 17 | | |
+| Gathering (GATH) | 01–04, 06–12, 15, 16 | 05, 13, 14, 17, 18 | | |
 | BLE (BLE) | 01–08, 10, 12–17 | 11 | | |
 | Leader (LEAD) | 01–04, 06, 10, 11, 30, 32, 40–45 | 05, 07, 12, 13, 31, 46 | | |
 | Distribution (DIST) | 01–03, 06, 08, 09 | 04, 05 | 07 | |
@@ -584,7 +609,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Display (DISP) | 01, 03–07, 09, 10 | 02, 08, 11 | | |
 | Requests (REQ) | 01–03, 05 | 04, 06, 07 | | |
 | Network (NET) | 01–03 | 04 | | |
-| Data (DATA) | 01–04, 06, 07 | 05 | | |
+| Data (DATA) | 01–04, 06–08 | 05 | | |
 | Karaoke (KAR) | | | 01–09 | |
 | Instruments (INST) | | | | 01–07 |
 
