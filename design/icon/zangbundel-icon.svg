@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Zangbundel app icon, master. Chosen from proposal 02 "Kring van zangers" (2026-10-18).
+       Full square: Google Play applies its own mask. Key content stays inside the central
+       ~400 px circle so corner masks never cut a figure. The adaptive launcher layers in
+       ic_launcher_*.svg reuse the same content group scaled into the 66 dp safe zone. -->
+  <defs>
+    <linearGradient id="zb-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13315C"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+    <radialGradient id="zb-glow" cx="0.5" cy="0.56" r="0.5">
+      <stop offset="0" stop-color="#FF8A3D" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#FF8A3D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#zb-bg)"/>
+  <circle cx="256" cy="286" r="210" fill="url(#zb-glow)"/>
+  <!-- content group: transform keeps everything inside a 400 px circle -->
+  <g transform="translate(256 262) scale(0.9) translate(-256 -262)">
+    <!-- Bluetooth ripples around the book -->
+    <g fill="none" stroke="#4FC3F7" stroke-linecap="round">
+      <circle cx="256" cy="286" r="88" stroke-width="12" stroke-dasharray="44 28"/>
+      <circle cx="256" cy="286" r="126" stroke-width="9" stroke-dasharray="40 32" opacity="0.5"/>
+    </g>
+    <!-- five singers around the fire -->
+    <g fill="#FFFFFF">
+      <g transform="translate(256 86)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(92 188)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(420 188)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(138 378)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(374 378)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+    </g>
+    <!-- singing: notes rising from three singers -->
+    <g fill="#FFD166">
+      <circle cx="304" cy="78" r="8"/><rect x="309" y="46" width="5" height="34" rx="2.5"/>
+      <circle cx="140" cy="182" r="8"/><rect x="145" y="150" width="5" height="34" rx="2.5"/>
+      <circle cx="468" cy="182" r="8"/><rect x="473" y="150" width="5" height="34" rx="2.5"/>
+    </g>
+    <!-- the songbook, orange like the fire -->
+    <path d="M184 264 Q220 248 256 264 L256 322 Q220 306 184 322 Z" fill="#FFB36B"/>
+    <path d="M328 264 Q292 248 256 264 L256 322 Q292 306 328 322 Z" fill="#FF8A3D"/>
+    <path d="M256 264 L256 322" stroke="#7A3E12" stroke-width="5"/>
+    <g stroke="#7A3E12" stroke-width="4" stroke-linecap="round" opacity="0.55">
+      <path d="M202 282 Q226 272 244 282"/><path d="M202 302 Q226 292 244 302"/>
+      <path d="M268 282 Q286 272 310 282"/><path d="M268 302 Q286 292 310 302"/>
+    </g>
+  </g>
+</svg>

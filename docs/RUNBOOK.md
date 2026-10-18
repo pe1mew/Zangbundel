@@ -181,7 +181,7 @@ Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.m
 
 | Asset | Spec |
 |---|---|
-| App icon | 512 × 512 px, 32-bit PNG, no alpha; same artwork as the adaptive launcher icon |
+| App icon | **Ready:** `docs/store-listing/graphics/icon-512.png` (512 × 512, 32-bit PNG, full square; Play applies its own mask), rendered from the master `design/icon/zangbundel-icon.svg`, chosen from proposal 02 "Kring van zangers" on 2026-10-18. Upload under Store listing → App icon. The adaptive launcher layers for the Android project are `design/icon/ic_launcher_foreground.svg` and `ic_launcher_background.svg` (Android Studio → Image Asset). |
 | Feature graphic | 1024 × 500 px, JPEG or 24-bit PNG; a campfire photo works. Get consent from recognisable people, especially minors, before using a group photo. |
 | Phone screenshots | 2 to 8; 16:9 or 9:16; each side 320–3840 px; actual screenshots of the app, night theme included |
 | 7-inch and 10-inch tablet screenshots | Recommended since tablets are supported (FR 2.4) |

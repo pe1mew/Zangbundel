@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- App icon: five proposals in `design/icon-proposals/` (with a contact sheet); proposal 02 "Kring van zangers" chosen. Master `design/icon/zangbundel-icon.svg`, adaptive launcher layers `ic_launcher_foreground.svg` and `ic_launcher_background.svg`, and the Play icon `docs/store-listing/graphics/icon-512.png`. `.claude/launch.json` gained a repo-root preview server.
 - Google Play app entry created 2026-10-18 (app id 4974489515379733805, package `nl.pe1mew.zangbundel.app`, Dutch default, free, automatic protection off). All nine App content declarations saved (privacy policy URL, app access with reviewer instructions, no ads, no advertising ID, IARC content rating PEGI 3 / ESRB Everyone, target audience 13+, data safety "no data collected or shared", not a government app, no financial or health features), category Music & Audio, contact details, nl-NL listing texts as draft. Recorded in `docs/RUNBOOK.md`.
 - `docs/privacy/index.html`: rendered privacy policy for the Play listing at `https://pe1mew.github.io/Zangbundel/privacy/`; effective date set to 18 October 2026 in the Markdown version of record. `docs/store-listing/nl-NL.md` and `en-US.md`: store listing texts within Play's limits.
 - GitHub Pages enabled (main, /docs) and verified live at `https://pe1mew.github.io/Zangbundel/j/`; canonical join link now carries the trailing slash (BLE v0.9). `.claude/launch.json` serves `docs/` locally for page checks.
