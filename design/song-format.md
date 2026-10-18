@@ -5,15 +5,16 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.0 (draft) |
-| Document version | 0.1 (draft) |
+| Document version | 0.2 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.4, `design/ble-protocol.md` v0.2 |
+| Depends on | `design/functional-requirements.md` v0.4, `design/ble-protocol.md` v0.3 |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft. Answers FRD open question Q4 (ChordPro). |
+| 0.2 | 2026-10-18 | Added section 12: the release archive (`.zbl`), its manifest, repository snapshots, release index, build and load procedures, validation codes A001–A103. Later sections renumbered (examples 13, traceability 14, open questions 15). `release_index` in `zangbundel.json`; `releases.json` in the layout. Q12–Q14. |
 
 ---
 
@@ -27,9 +28,9 @@ It is written for two audiences: **library maintainers**, who edit song files wi
 
 ### 1.2 Scope
 
-In scope: the repository layout, `zangbundel.json`, the `.cho` song file, canonical form and content hash, the canonical line list, validation and import reporting, and the extension rules for later phases.
+In scope: the repository layout, `zangbundel.json`, the `.cho` song file, canonical form and content hash, the canonical line list, validation and import reporting, the extension rules for later phases, and the release archive (`.zbl`) with its manifest and release index, which is the unit the app downloads or opens from a file.
 
-Out of scope: how the app downloads a repository (FR-LIB-10 to 17, architecture document), the on-device storage model, the BLE transport of a song (`design/ble-protocol.md`), and the UI that renders a song.
+Out of scope: the network and storage code that fetches a repository or an archive (architecture document), the on-device storage model, the BLE transport of a song (`design/ble-protocol.md`), and the UI that renders a song.
 
 ### 1.3 Conventions
 
@@ -52,6 +53,10 @@ Out of scope: how the app downloads a repository (FR-LIB-10 to 17, architecture 
 | **Canonical line list** | The ordered list of lyric lines in sung order, with chorus repeats expanded (section 9). The BLE `pos` field is a 1-based index into it. |
 | **Environment** | A block of lines between `{start_of_<x>}` and `{end_of_<x>}`: verse, chorus, bridge, or another kind. |
 | **Zangbundel profile** | The subset of ChordPro this document requires plus the extensions it defines. |
+| **Release archive** | A `.zbl` ZIP file built from a tagged revision of a library: canonical song files, metadata, licence and a manifest (section 12). What the app downloads, opens from a file, or passes to another phone. |
+| **Manifest** | `zangbundel-archive.json` inside a release archive: revision, version, build time, and the content hash of every song (12.4). |
+| **Snapshot** | A plain ZIP of the repository tree without a manifest; accepted with reduced guarantees (12.5). |
+| **Release index** | `releases.json`: the list of a library's releases with archive URLs, sizes and digests, used for update checks (12.6). |
 
 ---
 
@@ -96,6 +101,7 @@ A song file written to this profile renders acceptably in the ChordPro reference
 ├── README.md               for humans: what, who, how to contribute  SHOULD
 ├── .gitattributes          forces LF line endings (section 3.4)   SHOULD
 ├── .editorconfig           editor hints (section 3.4)             SHOULD
+├── releases.json           release index, written by the release tooling (12.6)  SHOULD
 ├── songs/                  song files, any depth of subdirectories MUST
 │   ├── nl/
 │   │   └── vuur-in-de-nacht.cho
@@ -163,6 +169,7 @@ The library file is edited rarely and is small. JSON parses identically on Andro
 | `license` | object | MUST | `{ "id": string, "file": string, "summary": string }`. `id` is an SPDX identifier (e.g. `CC-BY-SA-4.0`), or `proprietary`, or `mixed` when songs carry their own licences. `file` is the path, relative to the repository root, of the full licence text the app shows on first import [FR-LIB-21]. `summary` is one sentence shown before the full text. |
 | `min_app_version` | string | MUST | Semantic version `major.minor.patch` of the oldest app that can use this library. [FR-LIB-05] |
 | `homepage` | string | MAY | URL for humans (repository page, website). |
+| `release_index` | string | MAY | HTTPS URL of the library's release index (`releases.json`, section 12.6). With it the app can check for and download releases; without it the app can only update through git or a URL the user supplies. |
 | `languages` | array of string | MAY | BCP 47 codes of the song languages in the library, informational; the app derives the real list from the songs. |
 | `tags` | object | MAY | Localised labels for tags used in the songs: `{ "<tag>": { "<lang>": "<label>", … } }`. A tag without an entry is shown as is. [FR-LIB-30] |
 
@@ -433,7 +440,7 @@ Output: `L`, numbered from 1. Position `n` refers to `L[n]`. `pos` 0 means "no p
 
 ### 9.3 Worked example
 
-For the Dutch example in section 12.1 the list has 18 entries:
+For the Dutch example in section 13.1 the list has 18 entries:
 
 | n | Section (generated label) | Display text |
 |---|---|---|
@@ -456,7 +463,7 @@ For the Dutch example in section 12.1 the list has 18 entries:
 | 17 | Refrein | Vuur in de nacht, de dag is op de vlucht, |
 | 18 | Refrein | en de nacht zingt met ons mee. |
 
-The English example (section 12.2) has the same 18 lines once chords are removed, which is why its timing block numbers 1 to 18.
+The English example (section 13.2) has the same 18 lines once chords are removed, which is why its timing block numbers 1 to 18.
 
 ---
 
@@ -613,11 +620,192 @@ The "what changed" view after an update [FR-LIB-11] is computed from song ids an
 
 ---
 
-## 12. Examples
+## 12. Release archive (`.zbl`)
+
+A library is maintained in git, but the app does not need git to use it. A **release archive** is a ZIP file that the library's release tooling builds from a tagged revision of the repository: the canonical song files, the library metadata, the licence, and a manifest that records where the content came from and the content hash of every song. It is the unit the app downloads, opens from a file, is pointed at by the leader, and can pass on to another phone.
+
+### 12.1 What the archive is for
+
+| Use | How | FRD |
+|---|---|---|
+| **Download a library over HTTPS** without a git client in the app: the app fetches the archive of the latest release, or of a chosen release from the release index (12.6). | URL of an archive or of a release index | FR-LIB-10, FR-LIB-11, FR-LIB-13, FR-LIB-14 |
+| **Import from a local file** on a phone that never has internet: the archive arrives by USB, SD card, e-mail attachment, download at home. | Open a `.zbl` file from the file manager or share sheet | FR-LIB-16 |
+| **Leader's download instruction** names an archive URL, so singers with internet fetch exactly the revision the leader has. | BLE `download` document, `url` and `rev` | FR-LEAD-30, FR-LEAD-31 |
+| **Phone-to-phone without internet**: a device exports an installed library as an archive and hands it over with Quick Share or Bluetooth file transfer, the same route as the app itself (FRD section 8.5). | Export + system share sheet; the receiver opens the file | FR-LIB-16, FR-DIST-05 pattern |
+| **Reproducible record** of what a release contained, independent of the hosting platform. | Manifest with revision and per-song hashes | FR-LIB-17, FR-LIB-11 |
+
+Importing from the git repository directly (clone or pull) remains allowed; whether the app implements it at all is an architecture decision (open question Q13). An app that supports only archives satisfies FR-LIB-10 and FR-LIB-11, since the archive is the "equivalent download of a chosen branch or tag" those requirements allow.
+
+### 12.2 Container
+
+| Property | Rule |
+|---|---|
+| Format | ZIP (PKWARE APPNOTE), as produced by `zip`, Python `zipfile`, `java.util.zip` and the like. ZIP64 MAY be used; archives stay far below its need. |
+| File name | `<library id>-<version>.zbl`, e.g. `zangbundel-voorbeeld-2026.10.0.zbl`. The extension `.zbl` ("Zangbundel library") lets the app register as the handler for the file type; a plain `.zip` opened through the file picker is accepted too. |
+| MIME type | `application/vnd.zangbundel.library+zip`. Hosting that serves `application/zip` or `application/octet-stream` is accepted. |
+| Entry names | UTF-8 (general-purpose flag bit 11 set), forward slashes, relative to the archive root, no leading `/`, no `.` or `..` components, no drive letters, no backslashes. ≤ 255 bytes per name. Names compared case-sensitively; two entries that differ only in case are an error (A006). |
+| Entry types | Regular files only. Directory entries are ignored; symbolic links and other special entries are an error (A005). |
+| Compression | *stored* (0) or *deflate* (8) only. Encryption of any kind is an error (A004). |
+| Top-level layout | All content at the archive root: `zangbundel-archive.json`, `zangbundel.json`, `songs/…`. Exactly one top-level directory wrapping everything (as GitHub source downloads produce) is accepted only for repository snapshots (12.5). |
+| Size limits | Archive ≤ 64 MiB (A002); warning above 16 MiB (A101). Uncompressed total ≤ 256 MiB and ≤ 20 × the compressed size (A003, zip-bomb guard). ≤ 10 000 entries (A002). Individual `.cho` entries follow section 5.5. |
+| Duplicate names | An error (A006). |
+| Comments and extra fields | Ignored. |
+
+### 12.3 Contents
+
+| Entry | Req. | Content |
+|---|---|---|
+| `zangbundel-archive.json` | MUST | The manifest (12.4). Distinguishes a release archive from a repository snapshot. |
+| `zangbundel.json` | MUST | The library metadata, byte-identical to the repository file at the recorded revision (section 4). |
+| licence file | MUST | The file named by `license.file` in `zangbundel.json`, at that path. |
+| `songs/**/*.cho` | MUST (≥ 1) | Every song file of the revision that passes validation without a song-level error, **in canonical form** (section 8). The builder canonicalises; the app verifies each file's content hash against the manifest. |
+| `notation/**` | MAY | Notation attachments referenced by `{meta: notation …}` (section 10.3). |
+| `README.md` | MAY | Shown nowhere; included so a human who unzips the file sees what it is. |
+| anything else | ignored | The app ignores other entries without a message, except that entries outside `songs/`, `notation/` and the root files above count towards the size limits only. |
+
+Songs that failed validation at build time are **not** in the archive; the manifest lists them under `skipped` so the maintainer sees them in the release and the app can report them as part of the import report (section 11.2) without parsing them.
+
+### 12.4 Manifest: `zangbundel-archive.json`
+
+| Field | Type | Req. | Meaning |
+|---|---|---|---|
+| `format` | string | MUST | Fixed value `"zangbundel-archive"`. |
+| `archive_version` | string | MUST | `"<major>.<minor>"` of this archive specification; `"1.0"` for this document (12.10). |
+| `library` | string | MUST | Library id; MUST equal `id` in the archive's `zangbundel.json`. |
+| `format_version` | string | MUST | Copy of `format_version` from `zangbundel.json`, so the app can refuse an unsupported major before unpacking songs. |
+| `version` | string | MUST | The release version as the maintainer names it, normally the git tag without a leading `v`: `2026.10.0`, `1.4.2`. Free text, ≤ 32 characters; the app shows it and never parses it for ordering. |
+| `revision` | string | MUST | The full git commit hash the archive was built from, 40 lower-case hex characters (64 for SHA-256 repositories). Becomes the installed revision [FR-LIB-17]. |
+| `created` | string | MUST | Build time, RFC 3339 in UTC (`2026-10-18T14:05:00Z`). Used for ordering releases and shown as the release date. |
+| `source` | object | MUST | `{ "repository": "<HTTPS URL of the git repository>", "ref": "<tag or branch name>" }`. Informational; the app does not fetch it. |
+| `songs` | array | MUST | One entry per included song: `{ "path": "songs/nl/vuur-in-de-nacht.cho", "id": "vuur-in-de-nacht", "hash": "<32 lower-case hex characters>", "size": <bytes> }`. `hash` is the content hash (section 8.2) in hex. Sorted by `path`. |
+| `skipped` | array | MAY | Songs excluded at build time: `{ "path": …, "code": "S003", "message": "…" }`. |
+| `notation` | array | MAY | Included notation files: `{ "path": …, "sha256": "<64 hex>", "size": <bytes> }`. |
+| `builder` | string | MAY | Name and version of the tool that built the archive, e.g. `zangbundel-release 1.0.0`. |
+| `previous` | object | MAY | `{ "version": …, "revision": … }` of the release before this one, so a "what changed" report can be made without the previous archive. |
+
+Unknown fields MUST be ignored. The manifest is UTF-8 JSON, LF line endings, keys in the order above, two-space indentation, so that two builders produce the same bytes (12.6).
+
+Example:
+
+```json
+{
+  "format": "zangbundel-archive",
+  "archive_version": "1.0",
+  "library": "zangbundel-voorbeeld",
+  "format_version": "1.0",
+  "version": "2026.10.0",
+  "revision": "9f2c1e7d4b0a6c3e8f5d2a1b7c4e9f0d3a6b8c1e2f4d7a9b0c3e6f1d5a8b2c4e",
+  "created": "2026-10-18T14:05:00Z",
+  "source": {
+    "repository": "https://github.com/example/zangbundel-voorbeeld",
+    "ref": "v2026.10.0"
+  },
+  "songs": [
+    { "path": "songs/en/fire-in-the-night.cho", "id": "fire-in-the-night", "hash": "3b7d2f9a1c4e6b8d0f2a4c6e8b1d3f5a", "size": 1912 },
+    { "path": "songs/nl/vuur-in-de-nacht.cho",  "id": "vuur-in-de-nacht",  "hash": "a1c3e5f7b9d1f3a5c7e9b1d3f5a7c9e1", "size": 1180 }
+  ],
+  "skipped": [],
+  "builder": "zangbundel-release 1.0.0",
+  "previous": { "version": "2026.09.0", "revision": "4d1a8e2c7f3b9d5e1a6c8f2b4d7e9a1c3f5b8d2e6a9c1f4b7d0e3a6c9f2b5d8e" }
+}
+```
+
+### 12.5 Repository snapshots (plain ZIP without manifest)
+
+A ZIP of the repository tree without a manifest, such as the "Download ZIP" a hosting site offers or a maintainer's own `zip -r`, is accepted as a **snapshot** with reduced guarantees:
+
+- The app looks for `zangbundel.json` at the root, or inside exactly one top-level directory; anything else is A001.
+- Song files are canonicalised on import (8.3, warning W001 per file) and validated as on a git import.
+- The installed revision is recorded as `snapshot-<sha256 of the ZIP, first 16 hex>` and shown as "snapshot, revision unknown". The leader's `libs` list and FR-LEAD-31 therefore never show such an install as "same version as leader"; songs still match by content hash over BLE [FR-BLE-12], which is what matters at the fire.
+- Update checks (12.7) are not possible for a snapshot; the library screen says so and offers to replace it by a release archive or repository URL.
+
+### 12.6 Building a release
+
+The release tooling is a deliverable of the architecture document (section 11.4 names the validator it builds on). Its behaviour is specified here so that any implementation, including a maintainer's own script, produces an archive the app accepts.
+
+1. Check out the tagged revision. Refuse to build from a dirty working tree.
+2. Run the validator (section 11). Refuse on any library-level error. Exclude songs with a song-level error and record them under `skipped`.
+3. Canonicalise every included `.cho` file (8.1) and compute its content hash.
+4. Write the manifest (12.4) with `revision` from git, `created` from the commit time of the tag (not the wall clock) and `version` from the tag.
+5. Add entries in **sorted path order**, with the manifest first, each entry's modification time set to the commit time, no extra fields, deflate at a fixed level. Two builds of the same revision then produce byte-identical archives, so the archive's SHA-256 can be published and compared.
+6. Name the file `<library id>-<version>.zbl`, attach it to the release, and update the release index (below).
+
+**Release index.** A library SHOULD publish a `releases.json` next to its releases so the app can check for updates without downloading an archive [FR-LIB-13]:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `format` | string | `"zangbundel-releases"` |
+| `library` | string | Library id |
+| `releases` | array | Newest first: `{ "version", "revision", "created", "url", "size", "sha256" }` with the same meanings as the manifest; `url` is the HTTPS URL of the archive, `sha256` the hex digest of the archive bytes. |
+
+The index is reachable from the library: `zangbundel.json` MAY carry `"release_index": "<HTTPS URL>"` (added to section 4.2), and a repository SHOULD keep `releases.json` at its root, maintained by the release tooling, so the raw-file URL of the default branch works as the index URL. On GitHub, `https://github.com/<owner>/<repo>/releases/latest/download/<library id>-latest.zbl` is a stable URL for the newest archive if the tooling also uploads the archive under that fixed name.
+
+**Versioning of releases** is the maintainer's choice (calendar `2026.10.0` or semantic `1.4.2`). The app orders releases by `created` and identifies them by `revision`; it never compares version strings.
+
+### 12.7 Loading an archive in the app
+
+Whether the archive came from a URL, a file or the share sheet, the app proceeds the same way:
+
+1. **Bound the input.** Refuse a file above 64 MiB before reading entries (A002). Read the central directory; refuse on encryption, bad entry names, special entries, duplicates, entry count, or an uncompressed total that breaks the limits (A002–A006). Never extract to the file system with the entry's own path; read entries into memory or into app-private files the app names.
+2. **Read the manifest** (A007–A010) or fall back to snapshot handling (12.5).
+3. **Refuse what the app cannot use** before unpacking songs: `format_version` major (L004), `min_app_version` (L005) from `zangbundel.json`, `archive_version` major (A008), library id clash with another configured library (L006).
+4. **Verify every song**: the entry exists, its bytes are canonical (else A011: a release archive is built canonical, so a deviation means tampering or a broken builder, not a maintainer slip) and its content hash equals the manifest entry (A012). A song listed in the manifest but missing, or present but unlisted, is A012.
+5. **Validate** with section 11 exactly as for a git import. Songs the builder skipped are reported from `skipped` with their recorded codes.
+6. **Install atomically** [FR-LIB-15]: the previous revision stays in use until the new one is complete; then switch and delete the old one.
+7. **Record** the revision, version, `created`, the source URL or file name, and the archive's SHA-256; show them on the library screen and in the import report (11.2). Compute the "what changed" view [FR-LIB-11] from the previous installed manifest, or from `previous` when the installed one is older than that.
+
+**Update check** [FR-LIB-13]: fetch the release index (HTTP conditional request with `ETag`/`If-None-Match` so an unchanged index costs nothing), compare the newest `revision` with the installed one, and offer the download with its `size` [FR-NET-04]. Verify the downloaded bytes against `sha256` from the index before step 1.
+
+**Leader's download instruction** [FR-LEAD-30]: the BLE `download` document's `url` MAY be an archive URL or a release index URL; `rev` is the manifest `revision`. A singer that already has that revision installed reports "up to date" and downloads nothing.
+
+**Export** (SHOULD): the app can re-create a release archive of an installed library from its stored canonical files and manifest, for sharing with a nearby phone through the system share sheet. An exported archive is byte-identical to the original when the original was a release archive; a snapshot exports with a manifest whose `revision` is the snapshot id and `source.repository` is the recorded URL or empty.
+
+### 12.8 Archive validation codes
+
+Archive-level codes are **library errors** (section 11.1): the archive is refused and the previous revision stays installed.
+
+| Code | Condition |
+|---|---|
+| A001 | Not a ZIP file, or no `zangbundel.json` at the root (or, for a snapshot, inside the single top-level directory) |
+| A002 | Archive larger than 64 MiB, or more than 10 000 entries |
+| A003 | Uncompressed total larger than 256 MiB or more than 20 × the compressed size |
+| A004 | An entry is encrypted or uses a compression method other than stored or deflate |
+| A005 | An entry is a symbolic link or other special entry |
+| A006 | An entry name is not valid (absolute, `..`, backslash, not UTF-8, too long) or duplicates another, including by case |
+| A007 | `zangbundel-archive.json` is not valid JSON or a MUST field is missing or has the wrong type |
+| A008 | `archive_version` major is not supported by this app ("update the app") |
+| A009 | Manifest `library` does not equal `id` in `zangbundel.json`, or `format_version` differs between the two files |
+| A010 | Manifest `revision` or `created` malformed |
+| A011 | A song entry is not in canonical form |
+| A012 | A song's content hash differs from the manifest, a listed song is missing, or a `.cho` entry under `songs/` is not listed |
+| A013 | Downloaded archive bytes do not match the `sha256` in the release index |
+
+Warnings (archive imported):
+
+| Code | Condition |
+|---|---|
+| A101 | Archive larger than 16 MiB |
+| A102 | Repository snapshot without manifest: revision unknown, no update checks |
+| A103 | `notation` entry listed with a `sha256` that does not match (the file is dropped, the song stays) |
+
+### 12.9 Security notes
+
+- **Path traversal** ("zip slip") is prevented by never using entry names as file-system paths (12.7 step 1) and by rejecting `..`, absolute names and backslashes (A006).
+- **Decompression bombs** are bounded by the size and ratio limits (A002, A003), checked from the central directory before any entry is inflated, and enforced again while inflating.
+- **Integrity**: every song is hash-verified against the manifest, and the archive against the index when it came from one. A manifest can still be replaced together with the songs by whoever controls the hosting; authenticity rests on HTTPS to the maintainer's host [NFR-SEC-01]. A detached signature over the manifest, with the public key published in the repository, would close that gap and is open question Q12.
+- **Content**: an archive carries text and notation only. Nothing in it is executed, and the app never follows URLs found inside it except the release index named in `zangbundel.json`, and only when the user asks for an update check.
+
+### 12.10 Archive format versioning
+
+`archive_version` follows the same rule as `format_version` (10.4): a **minor** bump adds fields or optional entries; a **major** bump changes the container rules, the manifest's MUST fields or the verification procedure. An app that implements major 1 reads any `1.x` archive and ignores what it does not know. This document defines **1.0**.
+
+---
+
+## 13. Examples
 
 Both examples are original texts written for this specification and released under CC0, so they can be copied into a test library. They are translations of each other and share a variant group. The Dutch file is a plain phase 1 song. The English file additionally carries chords (phase 3) and line timing (phase 2); a phase 1 app shows it exactly like the Dutch one, with English words.
 
-### 12.1 Dutch: `songs/nl/vuur-in-de-nacht.cho`
+### 13.1 Dutch: `songs/nl/vuur-in-de-nacht.cho`
 
 ```
 # Vuur in de nacht - voorbeeldlied bij design/song-format.md
@@ -665,7 +853,7 @@ dan blijft het lied nog in ons hoofd.
 
 What the app shows (Dutch UI): the title, then "Couplet 1" with four lines, "Refrein" with four lines set off, "Couplet 2", "Brug", and "Refrein" with the four chorus lines again. An English UI shows the same with "Verse 1", "Chorus", "Verse 2", "Bridge", "Chorus". The info screen shows lyricist, composer, melody, © 2026 Zangbundel-project, CC0-1.0, source and the tags "Kampvuur" and "Avond" (labels from `zangbundel.json`).
 
-### 12.2 English: `songs/en/fire-in-the-night.cho`
+### 13.2 English: `songs/en/fire-in-the-night.cho`
 
 ```
 # Fire in the Night - example song for design/song-format.md
@@ -746,12 +934,20 @@ Notes on this file:
 
 ---
 
-## 13. Requirements traceability
+## 14. Requirements traceability
 
 | Requirement | Where satisfied |
 |---|---|
 | FR-LANG-05 | `{meta: language}` MUST, BCP 47 (6.1, 6.2) |
-| FR-LANG-06 | `{meta: variant-group}` (6.1), example 12 |
+| FR-LANG-06 | `{meta: variant-group}` (6.1), example 13 |
+| FR-LIB-10, FR-LIB-11 | Release archive as the download unit (12.1, 12.7); "what changed" from manifests (12.7) |
+| FR-LIB-13 | Release index and conditional update check (12.6, 12.7) |
+| FR-LIB-14 | Archive and index over plain HTTPS (12.6) |
+| FR-LIB-15 | Atomic install of an archive (12.7 step 6) |
+| FR-LIB-16 | Archive from a local file; repository snapshot (12.1, 12.5) |
+| FR-LEAD-30, FR-LEAD-31 | Download instruction with archive URL and revision (12.7) |
+| FR-NET-04 | Archive size from the index before download (12.7) |
+| NFR-SEC-01 (archives) | Container limits, hash verification, zip-slip and bomb guards (12.2, 12.8, 12.9) |
 | FR-LANG-07 | `{sorttitle}` and article rule (6.1) |
 | FR-LIB-01 | Library is a git repository (3) |
 | FR-LIB-03 | Plain-text ChordPro profile (2, 5) |
@@ -784,10 +980,13 @@ Notes on this file:
 
 ---
 
-## 14. Open questions
+## 15. Open questions
 
 | # | Question | Impact |
 |---|---|---|
+| Q12 | Should release archives be signed (a detached signature over the manifest, public key in the repository), so that a compromised host cannot serve altered songs? HTTPS alone protects the transport, not the host. | 12.9, NFR-SEC-01, release tooling |
+| Q13 | Does the app implement git at all, or only release archives and snapshots? Archives cover FR-LIB-10/11 with far less code and no git credentials; git gives maintainers instant updates without cutting a release. | Architecture document, FR-LIB-10 |
+| Q14 | The release index convention (12.6) is written with GitHub Releases in mind. Which other hosts must the tooling support out of the box (GitLab, Codeberg, a plain web server)? | Release tooling |
 | Q1 | Is JSON acceptable for `zangbundel.json`, or do maintainers want YAML for its comments and multi-line strings despite the coercion risk (section 4.1)? | Library file, parser dependency |
 | Q2 | Timing is keyed by canonical line number (10.2). Inserting a lyric line shifts every later number, so timed songs need a renumbering tool or an inline alternative such as a timing directive immediately before each line. Which do maintainers prefer? | P2 format, maintainer tooling |
 | Q3 | Variant groups link songs within one library only. Should a group id be allowed to span libraries (`<library id>/<group>`), given that translations often come from different maintainers? | FR-LANG-06, library governance (FRD Q3) |

@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.2 (draft) |
+| Document version | 0.3 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -15,6 +15,7 @@
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft: beacon-driven short-lived GATT connections; delegates; single gathering per area. |
 | 0.2 | 2026-10-18 | Broadcast-first redesign: all leader-to-singer information goes out as a repeated broadcast carousel (section 7); connections are used only to register, send requests, act as delegate and recover missed data. Request statuses broadcast anonymously. Relays rebroadcast. |
+| 0.3 | 2026-10-18 | `download.url` may name a release archive or release index (song-format section 12); no change to keys or encoding. Depends on FRD v0.4. |
 
 ---
 
@@ -474,7 +475,7 @@ A song marked "do not redistribute" in the library [FR-LIB-22] is never broadcas
 
 **message** (document 5) [FR-BLE-13]: `{1: text (tstr ≤ 200), 2: ts (uint)}`.
 
-**download** (document 6) [FR-LEAD-30]: `{1: lib, 2: url (HTTPS), 3: branch, 4: rev, 5: size (uint, optional) [FR-NET-04]}`.
+**download** (document 6) [FR-LEAD-30]: `{1: lib, 2: url (HTTPS), 3: branch, 4: rev, 5: size (uint, optional) [FR-NET-04]}`. `url` names the library's git repository, a release archive (`.zbl`, song-format section 12) or its release index; `rev` is the git revision, which for an archive is the manifest's `revision`. A singer that already has that revision installed downloads nothing.
 
 **reqstat** (document 7) [FR-REQ-05]
 
