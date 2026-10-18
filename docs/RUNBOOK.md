@@ -62,7 +62,7 @@ Do these in Play Console before the first upload; they block release otherwise. 
 
 | Task | Answer for Zangbundel | Source |
 |---|---|---|
-| Privacy policy | URL of `docs/privacy-policy.md` rendered on GitHub, or a GitHub Pages page. Must be public and not a PDF. | NFR-PRIV-01, FR-NET-03 |
+| Privacy policy | `https://pe1mew.github.io/Zangbundel/privacy/` (rendered copy of `docs/privacy-policy.md`, served by Pages). Public, not a PDF. | NFR-PRIV-01, FR-NET-03 |
 | App access | All functionality is available without special access (no login, no join code needed to review). Mention that BLE features need two phones. | FR-BLE-02 |
 | Ads | No ads | |
 | Content rating (IARC questionnaire) | Category: Utility, Productivity, Communication or Other. Answer no to violence, sexual content, language, controlled substances, gambling, user interaction (see note), location sharing, purchases. Expected rating: Everyone / PEGI 3. | |
@@ -174,7 +174,7 @@ Both test tracks still require the dashboard tasks of Step 3 to be complete.
 
 ### Step 8 — Store listing
 
-Prepare in `docs/store-listing/` (text) and a non-committed folder for graphics, or commit graphics with Git LFS. Required assets:
+Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.md` (app name, short and full description, release-notes template). Graphics go in a non-committed folder or in Git LFS. Required assets:
 
 | Asset | Spec |
 |---|---|

@@ -1,8 +1,8 @@
 # Zangbundel – Privacy Policy / Privacybeleid
 
-*Draft 2026-10-18 for the Google Play listing. Review before publishing; the English text is the version of record, the Dutch text follows it.*
+*Version of record. Published for the Google Play listing at https://pe1mew.github.io/Zangbundel/privacy/ (rendered copy in `docs/privacy/index.html`; keep both in step). The English text is the version of record, the Dutch text follows it.*
 
-Effective date: to be set at first publication. Developer: Remko Welling (PE1MEW), contact via https://github.com/pe1mew/Zangbundel.
+Effective date: 18 October 2026. Developer: Remko Welling (PE1MEW), contact via https://github.com/pe1mew/Zangbundel.
 
 ## English
 
