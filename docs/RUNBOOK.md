@@ -114,9 +114,37 @@ If an opt-in crash reporter is ever added, re-declare "Crash logs, optional, not
 | `BLUETOOTH_SCAN` with `neverForLocation`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT` (API 31+); `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION` with `maxSdkVersion="30"` for API 26–30 | Discovery, broadcast carousel, GATT (BLE protocol sections 6–8) | No declaration form, but the in-app rationale is required (FR-GEN-05). The location permission on old devices needs an explanation in the listing's full description ("used only for Bluetooth scanning on Android 11 and lower; no location is read"). |
 | `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Leader keeps advertising with the screen off (FR-GATH-15) | Play Console asks for a **foreground service type declaration**: a description and a short screen-recorded video of the leader flow. Prepare the video with the first upload. |
 | `INTERNET`, `ACCESS_NETWORK_STATE` | Library import (FR-LIB-10) | None. |
-| Camera | **Not** requested: the app shows a QR code (FR-DIST-01); scanning uses the phone's camera app. | None. |
+| Camera | **Not** requested in the baseline: the app shows QR codes (FR-DIST-01, FR-GATH-19); scanning uses the phone's camera app, which opens the join link (FR-GATH-23). If an in-app scanner is added later, `CAMERA` is requested only when the user taps "scan" and declared on Play with that rationale. | None in the baseline. |
+| App Links for the join QR code | The join link `https://<project domain>/j#…` must open the app directly (FR-GATH-20, 22). | Host `/.well-known/assetlinks.json` on the project domain listing the app's package name and the **app signing key** SHA-256 (Step 6), plus the static install page. Domain is FRD Q13; until it exists, joining by QR works only with the `zangbundel:` scheme fallback. |
 | `REQUEST_INSTALL_PACKAGES` | **Not** requested: sharing the app's own package (FR-DIST-05) goes through the system share sheet; the receiver's file manager performs the install. | Avoids a restricted-permission review. |
 | `QUERY_ALL_PACKAGES`, accessibility services, SMS, contacts | Not requested. | |
+
+### Step 5b — GitHub Pages for the join link (option 1, do now)
+
+The join QR code (FRD FR-GATH-19 to 23, BLE section 6.5) encodes `https://pe1mew.github.io/Zangbundel/j#<payload>`. The page lives in this repository at `docs/j/index.html`; `docs/.nojekyll` makes GitHub serve the folder as is.
+
+- [ ] Repository → Settings → Pages → Source "Deploy from a branch", branch `main`, folder `/docs`. Save; wait for the first deploy (a minute).
+- [ ] Open `https://pe1mew.github.io/Zangbundel/j` on a phone: the install page appears. Open it with a test fragment (section 6.5 of the protocol gives the payload; `#` followed by base64url): the join page appears with the gathering name and an "Open in Zangbundel" button.
+- [ ] The page loads no external resource and sends nothing: check the browser's network panel shows only the page itself.
+- [ ] Enforce HTTPS is on in the Pages settings (default).
+
+With only this step, Android 12 and later open the link in the browser first; the page's button launches the app through an `intent://` link, or Play when the app is missing. One extra tap, no verification needed.
+
+### Step 5c — Prepare App Links verification (option 2, publish after the first upload)
+
+Verified App Links make the camera app open Zangbundel directly, skipping the browser. Android verifies by fetching `https://pe1mew.github.io/.well-known/assetlinks.json`, the **host root**, which GitHub Pages serves only from a repository named `pe1mew.github.io`. Preparation that needs no code is done:
+
+- [ ] `docs/app-links/assetlinks.template.json` holds the file to publish, with the package name filled in and the fingerprints as placeholders.
+- [ ] `docs/app-links/intent-filters.xml` holds the two intent filters (verified `https` form, `zangbundel:` scheme form) for the Android manifest.
+
+When the app has been uploaded once (Step 6 records the app signing key SHA-256):
+
+1. Create the repository `pe1mew/pe1mew.github.io` with Pages enabled on `main`, containing `.nojekyll` and `.well-known/assetlinks.json` copied from the template with the real fingerprint(s). An `index.html` that redirects to `https://pe1mew.github.io/Zangbundel/` is optional.
+2. Confirm `curl -s https://pe1mew.github.io/.well-known/assetlinks.json` returns the JSON with `Content-Type: application/json`.
+3. Install a build that carries the `autoVerify` filter and check on the phone: `adb shell pm get-app-links nl.pe1mew.zangbundel.app` must show `pe1mew.github.io: verified`. Verification runs at install time; reinstall after publishing the file.
+4. Scan a join code with the camera app: Zangbundel opens without a browser step.
+
+Nothing in the QR code or in the page changes between option 1 and option 2.
 
 ### Step 6 — Signing
 

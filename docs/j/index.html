@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Zangbundel – meezingen</title>
+<!--
+  Join-and-install page for the Zangbundel join QR code.
+  Spec: design/ble-protocol.md section 6.5; FRD FR-GATH-19 to 23, FR-DIST-01/02.
+
+  The QR code encodes  https://pe1mew.github.io/Zangbundel/j#<base64url(CBOR payload)>
+  The fragment is never sent to a server by the browser, and nothing in this
+  page sends it anywhere either: no external scripts, images, fonts or requests.
+
+  Payload (CBOR map): 1 ver, 2 gid (5 bytes), 3 pk (32 bytes), 4 code (text, optional),
+  5 name (text, optional). Only ver and name are used here; pk and code are never shown.
+-->
+<style>
+  :root { color-scheme: light; }
+  html, body { margin: 0; background: #fff; color: #111; }
+  body { font: 18px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px 16px 48px; max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 28px 0 8px; }
+  p { margin: 8px 0; }
+  .name { font-size: 24px; font-weight: 700; margin: 12px 0 16px; }
+  .btn { display: block; box-sizing: border-box; width: 100%; padding: 16px 18px; margin: 10px 0; border-radius: 12px; text-align: center; font-size: 20px; font-weight: 700; text-decoration: none; }
+  .primary { background: #111; color: #fff; }
+  .secondary { background: #fff; color: #111; border: 3px solid #111; }
+  .muted { color: #444; font-size: 15px; }
+  .hidden { display: none; }
+  .bad { border: 3px solid #b00020; border-radius: 12px; padding: 12px; }
+  hr { border: 0; border-top: 2px solid #ddd; margin: 32px 0; }
+  code { font-size: 15px; background: #f2f2f2; padding: 1px 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Zangbundel</h1>
+<p class="muted">Liedjes zingen rond het kampvuur · Campfire songbook</p>
+
+<!-- Dutch -->
+<section id="nl">
+  <div id="nl-join" class="hidden">
+    <h2>Meezingen</h2>
+    <p>Je bent uitgenodigd voor het kampvuur:</p>
+    <p class="name" data-name></p>
+    <a class="btn primary" data-open href="#">Open in Zangbundel</a>
+    <p class="muted">Staat Zangbundel nog niet op je telefoon? Installeer de app en scan de QR-code daarna opnieuw.</p>
+    <a class="btn secondary" data-play href="#">Installeren via Google Play</a>
+  </div>
+  <div id="nl-install" class="hidden">
+    <h2>Installeren</h2>
+    <p>Zangbundel is de liedbundel-app voor rond het kampvuur. De leider stuurt de liedtekst via Bluetooth naar iedereen rond het vuur; internet is daarna niet nodig.</p>
+    <a class="btn primary" data-play href="#">Installeren via Google Play</a>
+    <p class="muted">Heb je een QR-code van de leider gescand? Installeer eerst de app en scan de code daarna opnieuw om mee te zingen.</p>
+  </div>
+  <div id="nl-bad" class="hidden bad">
+    <h2>Deze code is niet geldig</h2>
+    <p>De QR-code bevat geen geldige uitnodiging. Vraag de leider om de code opnieuw te laten zien.</p>
+  </div>
+  <p class="muted">Deze pagina stuurt niets door. De uitnodiging in de QR-code blijft op je telefoon.</p>
+</section>
+
+<hr>
+
+<!-- English -->
+<section id="en" lang="en">
+  <div id="en-join" class="hidden">
+    <h2>Join the singing</h2>
+    <p>You are invited to the campfire:</p>
+    <p class="name" data-name></p>
+    <a class="btn primary" data-open href="#">Open in Zangbundel</a>
+    <p class="muted">Don't have Zangbundel yet? Install the app, then scan the QR code again.</p>
+    <a class="btn secondary" data-play href="#">Install from Google Play</a>
+  </div>
+  <div id="en-install" class="hidden">
+    <h2>Install</h2>
+    <p>Zangbundel is the songbook app for the campfire. The leader sends the lyrics over Bluetooth to everyone around the fire; no internet is needed after that.</p>
+    <a class="btn primary" data-play href="#">Install from Google Play</a>
+    <p class="muted">Scanned a QR code from the leader? Install the app first, then scan the code again to join.</p>
+  </div>
+  <div id="en-bad" class="hidden bad">
+    <h2>This code is not valid</h2>
+    <p>The QR code does not contain a valid invitation. Ask the leader to show the code again.</p>
+  </div>
+  <p class="muted">This page sends nothing anywhere. The invitation in the QR code stays on your phone.</p>
+</section>
+
+<script>
+(function () {
+  "use strict";
+  var PACKAGE = "nl.pe1mew.zangbundel.app";
+  var PLAY = "https://play.google.com/store/apps/details?id=" + PACKAGE;
+  var SCHEME = "zangbundel";
+
+  // --- base64url -> bytes
+  function b64urlToBytes(s) {
+    s = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  // --- minimal CBOR decoder: unsigned ints, byte strings, text strings, maps with uint keys.
+  // Anything else makes the payload invalid, which is the safe outcome for a join page.
+  function decodeCbor(bytes) {
+    var pos = 0;
+    function need(n) { if (pos + n > bytes.length) throw new Error("short"); }
+    function readLen(info) {
+      if (info < 24) return info;
+      if (info === 24) { need(1); return bytes[pos++]; }
+      if (info === 25) { need(2); var v = (bytes[pos] << 8) | bytes[pos + 1]; pos += 2; return v; }
+      throw new Error("len");
+    }
+    function item() {
+      need(1);
+      var b = bytes[pos++], major = b >> 5, info = b & 31;
+      if (major === 0) return readLen(info);
+      if (major === 2) { var n = readLen(info); need(n); var v = bytes.subarray(pos, pos + n); pos += n; return v; }
+      if (major === 3) { var m = readLen(info); need(m); var t = new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(pos, pos + m)); pos += m; return t; }
+      if (major === 5) {
+        var count = readLen(info), map = {};
+        for (var i = 0; i < count; i++) { var k = item(); if (typeof k !== "number") throw new Error("key"); map[k] = item(); }
+        return map;
+      }
+      throw new Error("type");
+    }
+    var result = item();
+    if (pos !== bytes.length) throw new Error("trailing");
+    return result;
+  }
+
+  function show(id) { document.getElementById(id).classList.remove("hidden"); }
+  function setAll(selector, fn) { var els = document.querySelectorAll(selector); for (var i = 0; i < els.length; i++) fn(els[i]); }
+
+  setAll("[data-play]", function (a) { a.href = PLAY; });
+
+  function render() {
+    setAll("section > div", function (d) { d.classList.add("hidden"); });
+
+    var frag = location.hash ? location.hash.slice(1) : "";
+    if (!frag) { show("nl-install"); show("en-install"); return; }
+
+    var payload = null;
+    try {
+      if (!/^[A-Za-z0-9_-]{20,400}$/.test(frag)) throw new Error("chars");
+      payload = decodeCbor(b64urlToBytes(frag));
+      if (payload[1] !== 1) throw new Error("ver");
+      if (!(payload[2] instanceof Uint8Array) || payload[2].length !== 5) throw new Error("gid");
+      if (!(payload[3] instanceof Uint8Array) || payload[3].length !== 32) throw new Error("pk");
+    } catch (e) {
+      show("nl-bad"); show("en-bad");
+      return;
+    }
+
+    var name = (typeof payload[5] === "string" && payload[5].length <= 40) ? payload[5] : "";
+    setAll("[data-name]", function (p) { p.textContent = name || "Kampvuur / Campfire"; });
+
+    // The app receives the same payload as a path segment of a zangbundel: URL.
+    // Chrome on Android launches intent:// links directly and falls back to Play if the app is absent.
+    var schemeUrl = SCHEME + "://j/" + frag;
+    var intentUrl = "intent://j/" + frag + "#Intent;scheme=" + SCHEME + ";package=" + PACKAGE +
+                    ";S.browser_fallback_url=" + encodeURIComponent(PLAY) + ";end";
+    var isAndroid = /Android/i.test(navigator.userAgent);
+    setAll("[data-open]", function (a) { a.href = isAndroid ? intentUrl : schemeUrl; });
+
+    show("nl-join"); show("en-join");
+  }
+
+  render();
+  window.addEventListener("hashchange", render);
+})();
+</script>
+</body>
+</html>

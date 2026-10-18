@@ -1,0 +1,31 @@
+<!--
+  Reference intent filters for the join link (design/ble-protocol.md section 6.5).
+  Copy into the <activity> that handles joining when the Android project exists.
+
+  Two forms of the same link:
+    https://pe1mew.github.io/Zangbundel/j#<payload>   (QR code; fragment never reaches a server)
+    zangbundel://j/<payload>                          (what the Pages button and iOS use)
+
+  The https filter carries android:autoVerify="true". Verification succeeds only once
+  https://pe1mew.github.io/.well-known/assetlinks.json exists with the app signing key
+  fingerprint (docs/app-links/assetlinks.template.json, RUNBOOK Step 5c). Until then
+  Android 12+ opens the link in the browser, where the Pages button hands it to the app.
+-->
+
+<!-- https form, verified App Link (option 2) -->
+<intent-filter android:autoVerify="true">
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="https"
+          android:host="pe1mew.github.io"
+          android:pathPrefix="/Zangbundel/j" />
+</intent-filter>
+
+<!-- custom scheme form (option 1 button, iOS camera, in-app scanner) -->
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="zangbundel" android:host="j" />
+</intent-filter>

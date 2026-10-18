@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.6 (draft) |
+| Document version | 0.8 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.6 |
+| Depends on | `design/functional-requirements.md` v0.8 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -19,6 +19,8 @@
 | 0.4 | 2026-10-18 | Open question Q14: end-to-end encryption of the payloads carrying personal data, driven by Google Play's Data safety definitions. No normative change. |
 | 0.5 | 2026-10-18 | Q14 adopted: sealed payloads (section 8.4). Leader X25519 key `ek` in the signed state; singer key `xk` in the Join; Join, Request, Control and document 8 end-to-end encrypted; write framing byte; `gid` binding; error `0x8D`. Satisfies FR-BLE-17 (FRD v0.5). |
 | 0.6 | 2026-10-18 | Security table: row on fake or mistaken gatherings, join code inside the sealed Join, gathering fingerprint (assessment SP-04, SP-11). Depends on FRD v0.6. No wire change. |
+| 0.7 | 2026-10-18 | Join QR code (section 6.5): payload with the leader's public key, join flow with key pinned from the code, QR-only joining. Depends on FRD v0.7. No change to what goes over the air. |
+| 0.8 | 2026-10-18 | 6.5: link host is GitHub Pages (`pe1mew.github.io/Zangbundel/j`), scheme form `zangbundel://j/<payload>`, browser step with `intent://` button described. Q16 resolved. Depends on FRD v0.8. |
 
 ---
 
@@ -222,6 +224,36 @@ An iOS leader MUST restart advertising whenever `seq`, `flags` or `pos` change. 
 - A change of `pos` alone MUST NOT increment `seq`. Singers apply `pos` directly from the beacon [FR-LEAD-05].
 - A singer treats the beacon as *lost* when nothing from the gathering (beacon or data frame) has been received for 10 s, and the gathering as *ended* after a configurable 5 minutes [FR-GATH-10, FR-GATH-11]. A relay beacon counts.
 - The gathering list [FR-GATH-03, FR-GATH-04] is built from beacons with `ENDED` = 0 and `RELAY` = 0, grouped by `gid`, with RSSI as the distance hint.
+
+### 6.5 Join QR code [FR-GATH-19 to FR-GATH-23]
+
+The beacon lets a singer find a gathering; the QR code on the leader's screen lets a singer find **the right one** and trust it. It is an out-of-band channel: whoever can see the leader's screen gets the leader's public key directly, so nothing received over the air afterwards can be forged.
+
+**Content.** An HTTPS URL on the project's GitHub Pages site (FRD Q13, resolved) with the join data in the fragment, which browsers never send to the server:
+
+```
+https://pe1mew.github.io/Zangbundel/j#<base64url(payload)>
+```
+
+The app also accepts the same payload as a path segment of its own scheme, `zangbundel://j/<base64url(payload)>`; this is what the Pages button, an in-app scanner and the iOS camera use.
+
+`payload` is the CBOR map:
+
+| Key | Name | Type | Req. | Meaning |
+|---|---|---|---|---|
+| 1 | `ver` | uint | yes | Protocol major version (1). |
+| 2 | `gid` | bstr 5 | yes | Gathering ID. |
+| 3 | `pk` | bstr 32 | yes | The leader's Ed25519 public key. This is what makes the code unforgeable: a scanning phone pins `pk` before it listens to the air, and accepts only a state record signed by it. |
+| 4 | `code` | tstr ≤ 8 | no | The join code, when the gathering requires one (`CODE` flag). In QR-only mode this is a random 8-character code that exists nowhere else [FR-GATH-21]. |
+| 5 | `name` | tstr ≤ 40 | no | Gathering name, for the "joining …" screen. Optional; it is the only human-readable field and carries no personal data by FR-GATH-01. |
+
+Typical size: 45–95 bytes of payload, 60–130 characters of URL; a QR code of version 5 or 6 at error-correction level M, which a phone camera reads from arm's length at the size FR-DIST-02 prescribes. The leader regenerates the code when the join code changes; nothing else in it changes during a gathering.
+
+**Verification by the scanner.** `SHA-256(pk)[0..5]` MUST equal `gid`, else the code is rejected as malformed. The app then scans for a beacon with that `gid`; when found, it collects or reads the state record and verifies its signature with the `pk` from the code, **not** with a key from Info. A beacon with the right `gid` whose state does not verify is ignored, and the app keeps looking. After verification the normal registration follows (10.2) with `code` from the QR code when present. If no verified gathering appears within 30 s the app says the gathering is not in range and offers to retry.
+
+**Phones without the app, and the browser step.** Opening the URL in a browser shows the static page `docs/j/index.html` from this repository: it decodes the fragment locally, shows the gathering name, and offers "Open in Zangbundel" and the store link [FR-DIST-01, FR-GATH-22]. The button is an `intent://j/<payload>#Intent;scheme=zangbundel;package=nl.pe1mew.zangbundel.app;S.browser_fallback_url=<Play URL>;end` link on Android (Chrome launches the app or falls back to Play) and a `zangbundel://j/<payload>` link elsewhere. The page loads nothing external and sends nothing. Until the App Link is verified (`docs/RUNBOOK.md` Step 5c) Android 12 and later always take this browser step; with verification the camera app opens Zangbundel directly.
+
+**What the code does not protect against.** Someone showing a code for their *own* gathering: the trust anchor is the leader's screen, which is what the scouts are told to scan. A photographed code reused later is useless once the gathering has ended, because the key is deleted (10.10). The code contains no secret except an optional join code, which the leader can rotate.
 
 ---
 
@@ -643,6 +675,7 @@ sequenceDiagram
 - If `result` ≠ 0 the singer shows the reason; results 2 and 5 leave it listening and retrying registration every 30–60 s in the background [FR-BLE-10].
 - If Info reports a protocol `major` the singer does not implement, it MUST NOT register and MUST show the update message [FR-BLE-07].
 - After registration the singer has the current song and setlist [FR-GATH-06].
+- **Joining by QR code** (6.5) replaces the first two steps: the user's camera app opens the link, the app has `gid` and `pk` from the code, pins `pk` without consulting Info, and only accepts a state record that verifies against it. The `code` from the QR code goes into the Join request. Everything from the Join onward is identical.
 
 ### 10.3 Follow the carousel (singer)
 
@@ -789,7 +822,7 @@ Singers scan continuously in the foreground; this costs more than the v0.1 desig
 | Learning who requested what | `reqstat` carries only random request IDs; names are only in document 8, sealed to a delegate. | A sniffer can link a `rid` to the device address that wrote a sealed request, not to a name. Accepted. |
 | Tracking a person across gatherings | `sid`, token and `xk` are per gathering; the OS randomises addresses; nothing persistent is sent [NFR-PRIV-01]. | None of note. |
 | A second gathering started in range | Pre-start scan refuses [FR-GATH-16]; singers pick by name and RSSI. | A modified app can ignore it; the leader is warned [FR-GATH-17]. |
-| Luring singers into a fake or mistaken gathering | The join code travels inside the sealed Join (8.4); the gathering fingerprint [FR-GATH-18] lets the leader say which gathering to join and lets a singer see it joined the right one; leaving is one tap [FR-GATH-07]. | The leader says the code aloud, so it is no secret against people present. A leader-pushed text cannot be filtered; the leader is an adult by role. See `design/security-privacy-assessment.md` SP-04. |
+| Luring singers into a fake or mistaken gathering | The join QR code (6.5) carries the leader's public key, so a phone that scans it can only end up in the gathering signed by that key; in QR-only mode [FR-GATH-21] the list cannot be used to join at all. For singers who join from the list: the join code travels inside the sealed Join (8.4), the gathering fingerprint [FR-GATH-18] lets the leader say which gathering to join, and leaving is one tap [FR-GATH-07]. | A leader-pushed text cannot be filtered; the leader is an adult by role. A spoken join code is no secret against people present. See `design/security-privacy-assessment.md` SP-04. |
 
 Link-layer encryption is deliberately not used: it would require system pairing, which FR-BLE-02 forbids, and would make broadcast impossible. Application-layer sealing (8.4) protects exactly the payloads that carry personal data and leaves the broadcast public.
 
@@ -844,6 +877,8 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | FR-GATH-13 | Persisted key and resume (10.1, 10.9) |
 | FR-GATH-15 | Foreground service (15.1), iOS limits (15.2) |
 | FR-GATH-16, 17 | Pre-start scan and scanning while leading (10.1) |
+| FR-GATH-18 | Gathering fingerprint derived from `gid` (security table, 13) |
+| FR-GATH-19, 20, 21, 22, 23 | Join QR code: payload with `pk`, verification, QR-only mode, install page, no camera permission (6.5, 10.2) |
 | FR-BLE-01, 02 | Architecture (3), no pairing (13) |
 | FR-BLE-03 | Burst on change (7.4), budget (12.1) |
 | FR-BLE-04 | Group verification (7.5), hash checks (9.5), loss handling (12.2) |
@@ -894,3 +929,4 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q13 | Should the leader lower its scan-response usage when many singers are present, since 50 scan requests per advertising event may stress some controllers? | 7.1 |
 | Q14 | *Adopted 2026-10-18 as section 8.4 and FR-BLE-17.* A separate X25519 key published in the signed state was chosen over deriving it from the Ed25519 key, because iOS CryptoKit has no Ed25519-to-X25519 conversion. | Resolved |
 | Q15 | libsodium sealed box (chosen, one library on both platforms) versus HPKE (RFC 9180, native in CryptoKit on iOS 17+ and in Tink on Android). Revisit if libsodium becomes a problem on either platform. | 8.4, 15 |
+| Q16 | *Resolved 2026-10-18 with FRD Q13:* GitHub Pages hosts the page in this repository; App Links verification is prepared for a `pe1mew.github.io` repository (`docs/RUNBOOK.md` Step 5b, 5c). | Resolved |

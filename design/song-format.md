@@ -9,7 +9,7 @@
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.6, `design/ble-protocol.md` v0.6 |
+| Depends on | `design/functional-requirements.md` v0.8, `design/ble-protocol.md` v0.8 |
 
 | Version | Date | Change |
 |---|---|---|

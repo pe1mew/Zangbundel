@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.6 (draft) |
+| Version | 0.8 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -17,6 +17,8 @@
 | 0.4 | 2026-10-18 | Added: getting the app to participants, QR code with store link and offline sharing of the app (section 8.5, FR-DIST-01 to 09); Appendix A with the distribution options investigated; constraints 11–13; Q11, Q12. |
 | 0.5 | 2026-10-18 | Added FR-BLE-17: personal data on the air is end-to-end encrypted to its recipient; broadcasts carry none. Driven by Google Play's Data safety definitions (docs/RUNBOOK.md Step 4). |
 | 0.6 | 2026-10-18 | Design principles secure by design and privacy by design, users under 18 (section 2.6). From `design/security-privacy-assessment.md` v0.1: FR-GATH-01, FR-SING-01, FR-DATA-03 amended; FR-GEN-08, FR-GATH-18, FR-DATA-08, NFR-PRIV-02, NFR-SEC-03 to 05 added; Q6 closed. |
+| 0.7 | 2026-10-18 | Joining by QR code, unforgeable because it carries the leader's key (FR-GATH-19 to 23); FR-GATH-18 amended; Q13. Assessment SP-04 resolution extended. |
+| 0.8 | 2026-10-18 | Q13 resolved: the join link is hosted on GitHub Pages from this repository; App Links verification prepared. No requirement changed. |
 
 ---
 
@@ -242,7 +244,17 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 
 **FR-GATH-17** (SHOULD, P1) — While leading, the app SHOULD keep detecting other running gatherings that come into range (started out of range and moved closer) and SHOULD warn the leader, naming the other gathering. The app cannot stop a gathering started elsewhere; both continue.
 
-**FR-GATH-18** (SHOULD, P1) — The app SHOULD show a **gathering fingerprint**, two short words derived deterministically from the gathering identifier (e.g. "appel-vuur"), on the leader's screen while leading and on every singer's screen after joining, so that a leader can say aloud which gathering to join and a singer can see at once that they joined the right one. The gathering list SHOULD warn when two gatherings in range have the same or a very similar name. Together with the join code (FR-GATH-05) and one-tap leaving (FR-GATH-07) this limits the harm of a fake or mistaken gathering. (Assessment SP-04.)
+**FR-GATH-18** (SHOULD, P1) — The app SHOULD show a **gathering fingerprint**, two short words derived deterministically from the gathering identifier (e.g. "appel-vuur"), on the leader's screen while leading and on every singer's screen after joining, so that a leader can say aloud which gathering to join and a singer can see at once that they joined the right one. The gathering list SHOULD warn when two gatherings in range have the same or a very similar name. Together with the join code (FR-GATH-05) and one-tap leaving (FR-GATH-07) this limits the harm of a fake or mistaken gathering. Joining by QR code (FR-GATH-19 to 23) removes the risk altogether for singers who scan; the fingerprint remains for those who join from the list. (Assessment SP-04; amended in v0.7.)
+
+**FR-GATH-19** (MUST, P1) — The leader MUST be able to show a **join QR code** for the running gathering. The code identifies the gathering and carries the leader's public key, so that a phone that scans it can verify everything it later receives over the air against that key. A forged or substituted gathering therefore cannot be joined through the code: the scanning phone accepts only a gathering whose state is signed by the key in the code. The QR screen follows the display rules of FR-DIST-02 (dark on light, bright, large).
+
+**FR-GATH-20** (MUST, P1) — Scanning the join QR code with the phone's camera app MUST open Zangbundel and join the gathering without typing: the app finds the gathering by the identifier in the code, pins the leader's key from the code, verifies the gathering state with it, and registers, supplying the join code from the QR code when the gathering requires one. If the gathering is not in Bluetooth range the app says so and keeps looking for a short while. The scanned code MUST contain no personal data (the gathering name is optional in it).
+
+**FR-GATH-21** (SHOULD, P1) — The leader SHOULD be able to make joining **QR-only**: the app then generates a random join code that is only ever inside the QR code (never shown as text unless the leader asks for it), so that nobody can join by picking the gathering from the list. This is the recommended setting for groups of young children.
+
+**FR-GATH-22** (SHOULD, P1) — The join QR code SHOULD double as the install link of FR-DIST-01: a phone without the app lands on a page that explains how to install it, and the same code joins the gathering once the app is installed. The join data in the code MUST NOT be sent to any web server when the link is opened in a browser.
+
+**FR-GATH-23** (MUST, P1) — Joining by QR code MUST work with the phone's own camera app, so the app itself needs no camera permission. The app MAY offer an in-app scanner for phones whose camera app does not open links; if it does, the camera permission is requested only at the moment the user chooses to scan, and the image never leaves the device.
 
 ---
 
@@ -342,7 +354,7 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 Participants arrive with phones that may not have the app. The options for getting it onto their phones, with and without internet, are compared in Appendix A; these requirements follow from that comparison.
 
-**FR-DIST-01** (MUST, P1) — The leader MUST be able to show a QR code that encodes the app's store listing (Google Play; the App Store once an iOS version exists), so that a participant can scan it with the phone's camera and install the app. The link MUST also be shown as text next to the code.
+**FR-DIST-01** (MUST, P1) — The leader MUST be able to show a QR code that encodes the app's store listing (Google Play; the App Store once an iOS version exists), so that a participant can scan it with the phone's camera and install the app. The link MUST also be shown as text next to the code. The join QR code of a running gathering carries the same link (FR-GATH-22), so one code serves both purposes at the fire.
 
 **FR-DIST-02** (MUST, P1) — The QR code MUST be displayed dark on light with the screen brightness raised, regardless of the night theme, and large enough to scan from arm's length. Camera apps read inverted (light-on-dark) codes unreliably.
 
@@ -578,6 +590,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q10 | Should singers see who pushed a song or handled their request (leader or which delegate), or is this detail only for the leader? | FR-LEAD-45, setlist display |
 | Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? | FR-DIST-05, constraint 12, architecture and release process |
 | Q12 | Is the offline hotspot (FR-DIST-07) worth building, given that Quick Share already covers Android-to-Android and iOS cannot be served offline at all? | FR-DIST-07, scope P2 |
+| Q13 | *Resolved 2026-10-18:* no domain or server outside git. The link is `https://pe1mew.github.io/Zangbundel/j`, served by GitHub Pages from `docs/` in this repository, with the page's "Open in Zangbundel" button covering the unverified case; App Links verification follows later through a `pe1mew.github.io` repository holding `assetlinks.json` (`docs/RUNBOOK.md` Steps 5b, 5c). | Resolved |
 
 ---
 
@@ -601,7 +614,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | General (GEN) | 01–05, 07, 08 | 06 | | |
 | Language (LANG) | 01–05 | 06, 07 | | |
 | Library (LIB) | 01–07, 10–12, 14, 15, 17, 20, 21, 23, 30, 31, 33 | 13, 16, 22, 32 | | |
-| Gathering (GATH) | 01–04, 06–12, 15, 16 | 05, 13, 14, 17, 18 | | |
+| Gathering (GATH) | 01–04, 06–12, 15, 16, 19, 20, 23 | 05, 13, 14, 17, 18, 21, 22 | | |
 | BLE (BLE) | 01–08, 10, 12–17 | 11 | | |
 | Leader (LEAD) | 01–04, 06, 10, 11, 30, 32, 40–45 | 05, 07, 12, 13, 31, 46 | | |
 | Distribution (DIST) | 01–03, 06, 08, 09 | 04, 05 | 07 | |
