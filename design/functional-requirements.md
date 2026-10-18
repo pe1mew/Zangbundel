@@ -4,10 +4,15 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.1 (draft) |
+| Version | 0.2 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
+
+| Version | Date | Change |
+|---|---|---|
+| 0.1 | 2026-10-18 | First draft. |
+| 0.2 | 2026-10-18 | Added: only one gathering within BLE range (FR-GATH-16, 17); delegate role (section 8.4, FR-LEAD-40 to 46). |
 
 ---
 
@@ -37,6 +42,7 @@ The first target platform is Android. The design must allow an iOS version later
 | **App** | The Zangbundel application installed on a device. Every installation can act as leader or singer. |
 | **Leader** (*kampvuurleider*) | The person, and the device, that starts and controls a gathering. Exactly one per gathering. |
 | **Singer** (*zanger*) | A participant who has joined a gathering to receive lyrics. |
+| **Delegate** (*assistent-leider*) | A singer to whom the leader has given the right to handle song requests and push songs on the leader's behalf. Zero or more per gathering; the role ends with the gathering. |
 | **Gathering** (*kampvuur*) | A session started by a leader and ended by that leader. Singers join and leave while it runs. |
 | **Beacon** | The BLE advertisement the leader broadcasts for the duration of the gathering so singers can discover and join it. |
 | **Library** (*bundel*) | A collection of songs stored in a git repository, imported into the app and updated from the repository. |
@@ -60,6 +66,7 @@ Everyone around the fire sees the same lyrics at the same moment on their own ph
 |---|---|
 | **Leader** | Runs the gathering: starts/ends it, chooses songs, pushes lyrics, handles requests, may instruct singers to download or update the library. Usually a scout leader or the person with the guitar. |
 | **Singer** | Joins a gathering, reads lyrics, scrolls at their own pace, sends requests, leaves when they want. |
+| **Delegate** | A singer appointed by the leader during the gathering. Handles requests and pushes songs as the leader would, so the leader can sing or play. Cannot end the gathering or appoint other delegates. |
 | **Library maintainer** | A person (outside the app) who edits the git repository with songs, metadata and licence information. Not an app user role, but the app's import rules are written for them. |
 
 A device is not permanently a leader or a singer. Any installation can start a gathering (becoming leader) or join one (becoming singer). A device is never both at the same time.
@@ -67,12 +74,13 @@ A device is not permanently a leader or a singer. Any installation can start a g
 ### 2.3 Key scenario (happy path)
 
 1. Before the trip, the leader opens Zangbundel with internet access and imports or updates the library from the configured repository.
-2. At the fire, the leader starts a gathering, gives it a name ("Zomerkamp vrijdag") and the app starts sending the beacon.
+2. At the fire, the leader starts a gathering and gives it a name ("Zomerkamp vrijdag"). The app first checks that no other gathering is running within range, then starts sending the beacon.
 3. Singers open the app. It shows nearby gatherings; they tap the one for their fire and join.
 4. The leader picks a song. The lyrics appear on all singers' devices within a few seconds. Singers scroll line by line as they sing; the display is white text on black.
 5. A singer requests "Hoofd, schouders, knie en teen". The leader sees the request, accepts it and pushes that song next.
-6. A singer who has to leave early exits the gathering. Their device returns to the idle screen.
-7. The leader ends the gathering. All singer devices leave automatically. Lyrics received over BLE are discarded; the list of titles sung is kept as a memory of the evening.
+6. The leader picks up the guitar and makes another leader at the fire a delegate. From then on the delegate handles requests and pushes the next songs; the leader keeps control of the gathering itself.
+7. A singer who has to leave early exits the gathering. Their device returns to the idle screen.
+8. The leader ends the gathering. All singer devices leave automatically. Lyrics received over BLE are discarded; the list of titles sung is kept as a memory of the evening.
 
 ### 2.4 Platforms
 
@@ -215,6 +223,10 @@ A device is not permanently a leader or a singer. Any installation can start a g
 
 **FR-GATH-15** (MUST, P1) — The gathering MUST keep running while the leader's screen is off or the app is in the background, within the limits the platform allows for BLE advertising. The app MUST warn the leader when the platform is likely to stop the beacon (e.g. battery saver mode).
 
+**FR-GATH-16** (MUST, P1) — Only one gathering can run within BLE range. Before starting a gathering the app MUST listen for running gatherings for at least 5 seconds. If one is in range, the app MUST refuse to start a new gathering, MUST show the name of the gathering it found and MUST offer to join it instead. There is no override (see open question Q9).
+
+**FR-GATH-17** (SHOULD, P1) — While leading, the app SHOULD keep detecting other running gatherings that come into range (started out of range and moved closer) and SHOULD warn the leader, naming the other gathering. The app cannot stop a gathering started elsewhere; both continue.
+
 ---
 
 ## 7. Communication over BLE
@@ -251,6 +263,8 @@ These are functional requirements on the behaviour the user experiences. The pro
 
 ## 8. Leader functions
 
+Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perform the same action unless the requirement says *leader only*.
+
 ### 8.1 Choosing and pushing songs
 
 **FR-LEAD-01** (MUST, P1) — The leader MUST be able to select any song from the local library and push it as the current song with one action.
@@ -284,6 +298,22 @@ These are functional requirements on the behaviour the user experiences. The pro
 **FR-LEAD-31** (SHOULD, P1) — The leader SHOULD be able to see which singers have the library at the same revision as the leader, so the leader knows whether pushing songs will be fast (FR-BLE-12).
 
 **FR-LEAD-32** (MUST, P1) — Singers without internet MUST still be able to take part fully; the leader's download instruction is advisory and lyrics continue to be sent over BLE to singers that lack them.
+
+### 8.4 Delegates
+
+**FR-LEAD-40** (MUST, P1, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role, chosen from the list of joined singers by display name, and MUST be able to revoke it at any time. The role ends automatically when the gathering ends or when the delegate leaves.
+
+**FR-LEAD-41** (MUST, P1) — A delegate MUST see the same request list as the leader (FR-LEAD-10) and MUST be able to accept, decline and immediately push requests (FR-LEAD-11). The requester is informed of the outcome in the same way.
+
+**FR-LEAD-42** (MUST, P1) — A delegate MUST be able to push a song from the local library as the current song, add songs to the setlist and push the next song in the setlist (FR-LEAD-01, FR-LEAD-03), provided the leader's device also has that song. Pushing a song the leader's device does not have SHOULD be possible by transferring the song from the delegate to the leader over BLE first.
+
+**FR-LEAD-43** (MUST, P1) — Delegate actions take effect through the leader's device, which remains the single source of the gathering state. If the leader's device cannot be reached, the delegate's action MUST be refused with a clear message and MUST NOT be applied later without the delegate repeating it.
+
+**FR-LEAD-44** (MUST, P1, *leader only*) — Ending the gathering, changing the join code, appointing or revoking delegates, sending library download instructions and handing over the leader role remain leader-only. The delegate UI MUST NOT offer these actions.
+
+**FR-LEAD-45** (MUST, P1) — A singer MUST be told when the leader makes them a delegate and when the role is revoked, and the leader MUST see at all times who the delegates are. Songs pushed and requests handled by a delegate appear on the leader's device as they happen.
+
+**FR-LEAD-46** (SHOULD, P1) — The delegate role SHOULD survive a temporary loss of contact between the delegate and the leader within the gathering (FR-GATH-10).
 
 ---
 
@@ -467,6 +497,8 @@ These are functional requirements on the behaviour the user experiences. The pro
 6. **Library imported by singers persists.** It is assumed that FR-DATA-01 (discarding lyrics at the end of a gathering) applies only to lyrics received over BLE, and not to libraries the user imported themselves. If the intention is to discard **all** lyrics on singer devices, FR-DATA-02 must be changed.
 7. **Song identity across libraries.** Song identifiers are unique within a library; the pair (library identifier, song identifier) is unique globally.
 8. **No audio playback in P1.** Singing is acoustic; the app does not play music or record audio in P1.
+9. **One gathering per area is enforced at start only.** FR-GATH-16 prevents a second gathering from being started within range of a running one. Two gatherings started out of each other's range that later overlap cannot be prevented; the app only warns (FR-GATH-17), and singers choose by name (FR-GATH-04).
+10. **The leader's device is the only authority.** Delegates act through the leader's device (FR-LEAD-43). A delegate cannot keep a gathering going when the leader's device is gone; FR-GATH-14 (hand-over) covers that case.
 
 ---
 
@@ -482,6 +514,8 @@ These are functional requirements on the behaviour the user experiences. The pro
 | Q6 | Should the gathering memory also be kept on the leader device, including who requested what? (Current assumption: titles only, no names.) | Privacy, FR-DATA-03 |
 | Q7 | Minimum Android version and whether a tablet layout is in scope for P1. | Architecture |
 | Q8 | Which languages beyond NL and EN are planned, and do we need right-to-left support? | Localisation |
+| Q9 | Should FR-GATH-16 allow an override when the gathering in range is clearly abandoned (e.g. a forgotten phone still advertising), or is "ask that leader to end it" always acceptable? | FR-GATH-16, leader UI |
+| Q10 | Should singers see who pushed a song or handled their request (leader or which delegate), or is this detail only for the leader? | FR-LEAD-45, setlist display |
 
 ---
 
@@ -504,9 +538,9 @@ These are functional requirements on the behaviour the user experiences. The pro
 | General (GEN) | 01–05, 07 | 06 | | |
 | Language (LANG) | 01–05 | 06, 07 | | |
 | Library (LIB) | 01–07, 10–12, 14, 15, 17, 20, 21, 23, 30, 31, 33 | 13, 16, 22, 32 | | |
-| Gathering (GATH) | 01–04, 06–12, 15 | 05, 13, 14 | | |
+| Gathering (GATH) | 01–04, 06–12, 15, 16 | 05, 13, 14, 17 | | |
 | BLE (BLE) | 01–08, 10, 12–14 | 11 | | |
-| Leader (LEAD) | 01–04, 06, 10, 11, 30, 32 | 05, 07, 12, 13, 31 | | |
+| Leader (LEAD) | 01–04, 06, 10, 11, 30, 32, 40–45 | 05, 07, 12, 13, 31, 46 | | |
 | Singer (SING) | 01–04, 10, 11, 13–15 | 12 | | |
 | Display (DISP) | 01, 03–07, 09, 10 | 02, 08, 11 | | |
 | Requests (REQ) | 01–03, 05 | 04, 06, 07 | | |
