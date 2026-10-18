@@ -4,7 +4,7 @@
      Today this file is about one thing: getting Zangbundel onto Google Play. Local
      development and build sections grow when code lands in android/. -->
 
-Status 2026-10-18: the Google Play developer account exists (personal, created after 13 November 2023). No app code exists yet. Everything below that needs an App Bundle waits for the first build; everything else can be done now.
+Status 2026-10-18 (evening): the Google Play developer account exists (personal, created after 13 November 2023). The app entry **Zangbundel** exists in Play Console (app id 4974489515379733805, package `nl.pe1mew.zangbundel.app`). All nine App content declarations, the privacy policy, the store category and contact details are saved; the default (nl-NL) store listing texts are saved as a draft. Still open before the first upload: store graphics, the en-US listing translation, the upload keystore (Step 6). No app code exists yet; everything that needs an App Bundle waits for the first build.
 
 ## Principles
 
@@ -30,6 +30,8 @@ Status 2026-10-18: the Google Play developer account exists (personal, created a
 | Packaging | Android App Bundle (`.aab`), Play App Signing | Mandatory on Play for new apps. The Play-signed universal APK from the App Bundle Explorer is what goes on GitHub Releases for offline sharing (FRD FR-DIST-05, Q11). |
 | Target audience | 13 and over; not designed for children | Selecting any under-13 age group puts the app under the Families policy with its own review. Scouts younger than 13 sing from a leader's or parent's phone. Revisit if the owner wants a Families listing. |
 | Version scheme | `versionName` semantic (`1.0.0`); `versionCode` strictly increasing integer, `YYYYMMDDnn` (e.g. `2026101801`) | Play refuses a bundle whose `versionCode` is not higher than every previous upload on any track. |
+| Play "automatic protection" | **Off** (chosen at app creation, 2026-10-18; changeable under App integrity) | It adds an installer check that makes a copy installed from outside Play refuse to run, which would defeat offline sharing of the app (FRD FR-DIST-05) and the sideloadable universal APK. |
+| Public contact e-mail and IARC rating e-mail | `zangbundel@rfsee.nl` | Project address, shown on the listing; the IARC certificate goes there too. |
 
 ## Google Play setup
 
@@ -54,7 +56,7 @@ Play Console → All apps → Create app:
 | Free or paid | Free |
 | Declarations | Developer Program Policies: agree. US export laws: agree. |
 
-The application ID is **not** entered here; Play takes it from the first uploaded bundle. That bundle fixes it forever, so the Gradle file must say `applicationId = "nl.pe1mew.zangbundel.app"` before anything is uploaded.
+**Done 2026-10-18.** Play Console now asks for the package name at creation; `nl.pe1mew.zangbundel.app` was entered and reported available. The Gradle file must use exactly this `applicationId`, or the first upload is refused. Automatic protection was turned off in the same form (Decisions table).
 
 ### Step 3 — Dashboard tasks ("Set up your app")
 
@@ -63,18 +65,19 @@ Do these in Play Console before the first upload; they block release otherwise. 
 | Task | Answer for Zangbundel | Source |
 |---|---|---|
 | Privacy policy | `https://pe1mew.github.io/Zangbundel/privacy/` (rendered copy of `docs/privacy-policy.md`, served by Pages). Public, not a PDF. | NFR-PRIV-01, FR-NET-03 |
-| App access | All functionality is available without special access (no login, no join code needed to review). Mention that BLE features need two phones. | FR-BLE-02 |
+| App access ("Inloggegevens") | **Answered "Yes, part of the app is restricted"**, because the form counts "actions on another device" and "QR codes" as restrictions, and joining a gathering needs a second phone or the leader's QR code. One instruction set, "Reviewer instructions (no login needed)", no username or password, text: no login, account, payment or code; leader mode works on one phone; joining needs a second phone or the QR code shown on the first; the optional join code is shown on the leader's screen. Update this text when the UI wording changes. | FR-BLE-02, FR-GATH-19 |
 | Ads | No ads | |
-| Content rating (IARC questionnaire) | Category: Utility, Productivity, Communication or Other. Answer no to violence, sexual content, language, controlled substances, gambling, user interaction (see note), location sharing, purchases. Expected rating: Everyone / PEGI 3. | |
-| Target audience and content | Age groups 13–15, 16–17, 18+. "Could the app unintentionally appeal to children?" answer honestly; avoid child-styled graphics in the listing. | Decision above |
+| Content rating (IARC questionnaire) | **Submitted 2026-10-18**: category "All other app types"; downloaded objectionable content no; users exchange content **yes** (requests to the leader), user content not primary, no public nudity or violence, no block, no report, no chat moderation, interactions restrictable to invited people **yes**; online content **yes** (song libraries) with violence, sexuality, language and drugs all no; no age-restricted goods; no location sharing, purchases, rewards, browser, news. **Result: PEGI 3, ESRB Everyone, USK all ages, ClassInd all ages, IARC 3+, interactive element "users interact".** Re-run the questionnaire when a feature changes any of these answers. | |
+| Target audience and content | **Done**: age groups 13–15, 16–17, 18+. Play skipped its further questions for this selection. Avoid child-styled graphics in the listing. | Decision above |
 | News app | No | |
 | COVID-19 contact tracing / status | No | |
-| Data safety | See the Data safety section below. | NFR-PRIV-01 |
-| Government app | No | |
-| Financial features | None | |
-| Health | No health features | |
-| App category and contact details | Music & Audio; e-mail; website = repository URL | |
-| Store listing | See Store listing below | |
+| Data safety | **Done**: no data collected, no data shared; preview shows the privacy policy URL. See Step 4. | NFR-PRIV-01 |
+| Advertising ID | **Done**: not used | |
+| Government app | **Done**: No | |
+| Financial features | **Done**: none | |
+| Health | **Done**: no health features | |
+| App category and contact details | **Done**: Music & Audio; e-mail `zangbundel@rfsee.nl`; website `https://github.com/pe1mew/Zangbundel`; no phone number. External marketing left at its default. | |
+| Store listing | nl-NL texts saved as a **draft** 2026-10-18 (name, short and full description). Still needed: icon, feature graphic, phone screenshots, and the en-US translation (texts in `docs/store-listing/en-US.md`). | |
 
 **User interaction note.** The content rating questionnaire asks whether users can interact or share content. Singers send song requests (free text up to 100 characters) and a display name to the leader over Bluetooth within a few metres. Answer "yes, users can interact" and "no, content is not shared with the developer or beyond nearby devices". This may raise the rating slightly; it is still accurate.
 
@@ -174,7 +177,7 @@ Both test tracks still require the dashboard tasks of Step 3 to be complete.
 
 ### Step 8 — Store listing
 
-Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.md` (app name, short and full description, release-notes template). Graphics go in a non-committed folder or in Git LFS. Required assets:
+Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.md` (app name, short and full description, release-notes template); the nl-NL texts are entered in Play Console as a draft (2026-10-18). To add English: Store listing → language selector → add en-US and paste from the en-US file. Graphics go in a non-committed folder or in Git LFS. Required assets:
 
 | Asset | Spec |
 |---|---|
