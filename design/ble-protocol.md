@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.8 (draft) |
+| Document version | 0.9 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -21,6 +21,7 @@
 | 0.6 | 2026-10-18 | Security table: row on fake or mistaken gatherings, join code inside the sealed Join, gathering fingerprint (assessment SP-04, SP-11). Depends on FRD v0.6. No wire change. |
 | 0.7 | 2026-10-18 | Join QR code (section 6.5): payload with the leader's public key, join flow with key pinned from the code, QR-only joining. Depends on FRD v0.7. No change to what goes over the air. |
 | 0.8 | 2026-10-18 | 6.5: link host is GitHub Pages (`pe1mew.github.io/Zangbundel/j`), scheme form `zangbundel://j/<payload>`, browser step with `intent://` button described. Q16 resolved. Depends on FRD v0.8. |
+| 0.9 | 2026-10-18 | 6.5: canonical link carries the trailing slash (`/Zangbundel/j/#…`); Pages site verified live. |
 
 ---
 
@@ -232,8 +233,10 @@ The beacon lets a singer find a gathering; the QR code on the leader's screen le
 **Content.** An HTTPS URL on the project's GitHub Pages site (FRD Q13, resolved) with the join data in the fragment, which browsers never send to the server:
 
 ```
-https://pe1mew.github.io/Zangbundel/j#<base64url(payload)>
+https://pe1mew.github.io/Zangbundel/j/#<base64url(payload)>
 ```
+
+The trailing slash is part of the canonical form: without it GitHub Pages answers with a redirect, which browsers follow with the fragment intact but which costs a round trip. The site is live since 2026-10-18.
 
 The app also accepts the same payload as a path segment of its own scheme, `zangbundel://j/<base64url(payload)>`; this is what the Pages button, an in-app scanner and the iOS camera use.
 

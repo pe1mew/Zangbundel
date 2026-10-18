@@ -121,10 +121,11 @@ If an opt-in crash reporter is ever added, re-declare "Crash logs, optional, not
 
 ### Step 5b — GitHub Pages for the join link (option 1, do now)
 
-The join QR code (FRD FR-GATH-19 to 23, BLE section 6.5) encodes `https://pe1mew.github.io/Zangbundel/j#<payload>`. The page lives in this repository at `docs/j/index.html`; `docs/.nojekyll` makes GitHub serve the folder as is.
+The join QR code (FRD FR-GATH-19 to 23, BLE section 6.5) encodes `https://pe1mew.github.io/Zangbundel/j/#<payload>` (trailing slash; without it Pages redirects first). The page lives in this repository at `docs/j/index.html`; `docs/.nojekyll` makes GitHub serve the folder as is.
 
-- [ ] Repository → Settings → Pages → Source "Deploy from a branch", branch `main`, folder `/docs`. Save; wait for the first deploy (a minute).
-- [ ] Open `https://pe1mew.github.io/Zangbundel/j` on a phone: the install page appears. Open it with a test fragment (section 6.5 of the protocol gives the payload; `#` followed by base64url): the join page appears with the gathering name and an "Open in Zangbundel" button.
+- [x] Pages enabled 2026-10-18 via the GitHub API: source branch `main`, folder `/docs`, HTTPS enforced. Live at `https://pe1mew.github.io/Zangbundel/`; every push to `main` redeploys within a minute or two.
+- [x] Opened `https://pe1mew.github.io/Zangbundel/j/` with and without a test fragment on 2026-10-18: install page, join page with gathering name, error page for a corrupt payload; no external resources loaded.
+- [ ] Repeat the three checks on a phone's browser after the first app build exists, and tap "Open in Zangbundel". Open it with a test fragment (section 6.5 of the protocol gives the payload; `#` followed by base64url): the join page appears with the gathering name and an "Open in Zangbundel" button.
 - [ ] The page loads no external resource and sends nothing: check the browser's network panel shows only the page itself.
 - [ ] Enforce HTTPS is on in the Pages settings (default).
 

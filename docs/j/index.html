@@ -10,7 +10,8 @@
   Join-and-install page for the Zangbundel join QR code.
   Spec: design/ble-protocol.md section 6.5; FRD FR-GATH-19 to 23, FR-DIST-01/02.
 
-  The QR code encodes  https://pe1mew.github.io/Zangbundel/j#<base64url(CBOR payload)>
+  The QR code encodes  https://pe1mew.github.io/Zangbundel/j/#<base64url(CBOR payload)>
+  (trailing slash: without it GitHub Pages redirects first)
   The fragment is never sent to a server by the browser, and nothing in this
   page sends it anywhere either: no external scripts, images, fonts or requests.
 
