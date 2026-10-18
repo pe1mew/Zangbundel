@@ -8,3 +8,10 @@ that app shall be able to support notes for instruments in a later phase.
 particpants shall be able to submit requests to the leader for songs they wanna sing that are sent to them by the leader. a particpant can extit the ble gathering anytime. the kampfire is inded by the leader leaving all singer apps. at leaving the lyrics are discarded in the app. maybe the list of song titles remains as a memory.
 create a functional requirements document in design/
 ```
+
+# 18-10-2026 App distribution
+The prompt that added section 8.5 and Appendix A to the FDS (v0.4):
+
+```
+add to the fds that the leader can share a link to the app to participants to install the app form the play store throug QR-code. investigate is other means of distribution of the app are possible without internet.
+```

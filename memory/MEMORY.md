@@ -21,7 +21,8 @@
 
 ## Current State
 
-- **Design phase, no code.** Three specifications are committed and consistent with each other: FRD v0.3, BLE protocol document v0.2 (protocol version 1.0), song format document v0.1 (format version 1.0). `bash scripts/check-design.sh` passes.
+- **Design phase, no code.** Three specifications are consistent with each other: FRD v0.4, BLE protocol document v0.2 (protocol version 1.0), song format document v0.1 (format version 1.0). `bash scripts/check-design.sh` passes. FRD v0.4 (section 8.5, Appendix A) is staged, not yet committed.
+- **App distribution decided at requirement level:** QR code with the store link is required; offline Android-to-Android sharing of the app's own package is a SHOULD and needs a build decision (universal APK or bundled splits, FRD Q11); Google Play's own "share apps" must not be relied on because Google is withdrawing it; iOS has no offline route.
 - **Nothing is implemented.** `android/` is empty. No architecture document, no UI flows, no test plan yet; the FRD's section 19 lists them as documents still to write.
 - **Open questions are where the work is.** Each design document ends with a numbered open-question table. The ones that gate implementation: FRD Q1/Q4 (group size, song format choice — Q4 is now answered by song-format.md and should be closed in the FRD), protocol Q2/Q3 (advertising-set counts and battery on real phones, needs a field test), Q10 (delegate upload in 1.0 or later).
 - **Repository hygiene landed 2026-10-18:** agent-ready scaffold, README, contributing guide, code of conduct, licence files, changelog. The owner commits; nothing was committed by an agent.

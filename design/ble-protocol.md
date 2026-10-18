@@ -9,7 +9,7 @@
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.3 |
+| Depends on | `design/functional-requirements.md` v0.4 |
 
 | Version | Date | Change |
 |---|---|---|

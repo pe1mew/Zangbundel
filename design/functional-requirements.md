@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.3 (draft) |
+| Version | 0.4 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -14,6 +14,7 @@
 | 0.1 | 2026-10-18 | First draft. |
 | 0.2 | 2026-10-18 | Added: only one gathering within BLE range (FR-GATH-16, 17); delegate role (section 8.4, FR-LEAD-40 to 46). |
 | 0.3 | 2026-10-18 | Added: leader-to-singer information by repeated broadcast, connections only for upstream traffic and recovery of missed data (FR-BLE-15, 16). |
+| 0.4 | 2026-10-18 | Added: getting the app to participants, QR code with store link and offline sharing of the app (section 8.5, FR-DIST-01 to 09); Appendix A with the distribution options investigated; constraints 11–13; Q11, Q12. |
 
 ---
 
@@ -76,7 +77,7 @@ A device is not permanently a leader or a singer. Any installation can start a g
 
 1. Before the trip, the leader opens Zangbundel with internet access and imports or updates the library from the configured repository.
 2. At the fire, the leader starts a gathering and gives it a name ("Zomerkamp vrijdag"). The app first checks that no other gathering is running within range, then starts sending the beacon.
-3. Singers open the app. It shows nearby gatherings; they tap the one for their fire and join.
+3. Singers open the app. It shows nearby gatherings; they tap the one for their fire and join. A scout who does not have the app yet scans the QR code on the leader's phone to install it from the store, or, without internet, receives it from the leader's phone over Quick Share.
 4. The leader picks a song. The lyrics appear on all singers' devices within a few seconds. Singers scroll line by line as they sing; the display is white text on black.
 5. A singer requests "Hoofd, schouders, knie en teen". The leader sees the request, accepts it and pushes that song next.
 6. The leader picks up the guitar and makes another leader at the fire a delegate. From then on the delegate handles requests and pushes the next songs; the leader keeps control of the gathering itself.
@@ -320,6 +321,30 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 **FR-LEAD-46** (SHOULD, P1) — The delegate role SHOULD survive a temporary loss of contact between the delegate and the leader within the gathering (FR-GATH-10).
 
+### 8.5 Getting the app to participants
+
+Participants arrive with phones that may not have the app. The options for getting it onto their phones, with and without internet, are compared in Appendix A; these requirements follow from that comparison.
+
+**FR-DIST-01** (MUST, P1) — The leader MUST be able to show a QR code that encodes the app's store listing (Google Play; the App Store once an iOS version exists), so that a participant can scan it with the phone's camera and install the app. The link MUST also be shown as text next to the code.
+
+**FR-DIST-02** (MUST, P1) — The QR code MUST be displayed dark on light with the screen brightness raised, regardless of the night theme, and large enough to scan from arm's length. Camera apps read inverted (light-on-dark) codes unreliably.
+
+**FR-DIST-03** (MUST, P1) — The QR screen MUST state that installing from the store needs internet on the participant's phone and MUST recommend installing the app before the trip.
+
+**FR-DIST-04** (SHOULD, P1) — Any installation SHOULD be able to share the store link through the system share sheet (message, e-mail, group chat), so a leader can send it to participants before the trip. This is the recommended route; everything below is for participants who arrive without the app.
+
+**FR-DIST-05** (SHOULD, P1) — On Android, the app SHOULD be able to hand its own installation package to a nearby Android phone without internet, through the platform's peer-to-peer file sharing (Quick Share; Bluetooth file transfer as fallback), with on-screen instructions for the receiver, including allowing installation from that source. The package handed over MUST be complete and installable on the receiving device (constraint 12) and MUST carry the same signature as the store version, so that later store updates apply to it.
+
+**FR-DIST-06** (MUST, P1) — Offline sharing of the app MUST NOT depend on a store feature. The Play Store's own "share apps" feature is being withdrawn by Google (Appendix A), so FR-DIST-05 is implemented by the app itself.
+
+**FR-DIST-07** (MAY, P2) — The leader MAY be able to open a temporary Wi-Fi hotspot without internet that serves an install page, with a second QR code carrying the Wi-Fi credentials, for groups where many phones lack the app at the fire.
+
+**FR-DIST-08** (MUST, P1) — The app package MUST NOT be distributed over the gathering's BLE channel. A package of tens of megabytes cannot be moved over BLE in acceptable time, and the BLE protocol carries lyrics and gathering state only.
+
+**FR-DIST-09** (MUST, P1) — A participant who has just installed the app MUST be able to join the running gathering like any other singer (FR-GATH-03) without any further action by the leader.
+
+On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04 are the only routes there (constraint 11).
+
 ---
 
 ## 9. Singer functions
@@ -504,6 +529,9 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 8. **No audio playback in P1.** Singing is acoustic; the app does not play music or record audio in P1.
 9. **One gathering per area is enforced at start only.** FR-GATH-16 prevents a second gathering from being started within range of a running one. Two gatherings started out of each other's range that later overlap cannot be prevented; the app only warns (FR-GATH-17), and singers choose by name (FR-GATH-04).
 10. **The leader's device is the only authority.** Delegates act through the leader's device (FR-LEAD-43). A delegate cannot keep a gathering going when the leader's device is gone; FR-GATH-14 (hand-over) covers that case.
+11. **iOS cannot be installed offline.** iOS apps come only from the App Store (or TestFlight, which also needs internet). Offline sharing of the app (FR-DIST-05, 07) is Android-only; an iOS participant needs internet once, before or at the fire.
+12. **An installed Android app is usually several files.** Apps published through Google Play as an app bundle are installed as a base APK plus device-specific split APKs (screen density, CPU architecture, language). Sharing only the base file yields a package that fails to install or crashes. FR-DIST-05 therefore needs either a bundled set of all installed splits with a receiver that installs them together, or a universal build of the app kept available for sharing. This is a build and release decision for the architecture document (Q11).
+13. **Sideloading needs a user action.** Android asks the receiver to allow installation from the sharing app or file manager once. The app can explain it but cannot skip it.
 
 ---
 
@@ -521,6 +549,8 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 | Q8 | Which languages beyond NL and EN are planned, and do we need right-to-left support? | Localisation |
 | Q9 | Should FR-GATH-16 allow an override when the gathering in range is clearly abandoned (e.g. a forgotten phone still advertising), or is "ask that leader to end it" always acceptable? | FR-GATH-16, leader UI |
 | Q10 | Should singers see who pushed a song or handled their request (leader or which delegate), or is this detail only for the leader? | FR-LEAD-45, setlist display |
+| Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? | FR-DIST-05, constraint 12, architecture and release process |
+| Q12 | Is the offline hotspot (FR-DIST-07) worth building, given that Quick Share already covers Android-to-Android and iOS cannot be served offline at all? | FR-DIST-07, scope P2 |
 
 ---
 
@@ -546,6 +576,7 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 | Gathering (GATH) | 01–04, 06–12, 15, 16 | 05, 13, 14, 17 | | |
 | BLE (BLE) | 01–08, 10, 12–16 | 11 | | |
 | Leader (LEAD) | 01–04, 06, 10, 11, 30, 32, 40–45 | 05, 07, 12, 13, 31, 46 | | |
+| Distribution (DIST) | 01–03, 06, 08, 09 | 04, 05 | 07 | |
 | Singer (SING) | 01–04, 10, 11, 13–15 | 12 | | |
 | Display (DISP) | 01, 03–07, 09, 10 | 02, 08, 11 | | |
 | Requests (REQ) | 01–03, 05 | 04, 06, 07 | | |
@@ -553,3 +584,22 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 | Data (DATA) | 01–04, 06, 07 | 05 | | |
 | Karaoke (KAR) | | | 01–09 | |
 | Instruments (INST) | | | | 01–07 |
+
+---
+
+## Appendix A – Getting the app onto participants' phones: options investigated
+
+Investigated 2026-10-18 for section 8.5. The question: how can a participant who arrives at the fire without the app get it, preferably without internet?
+
+| Option | Works without internet | Android | iOS | Verdict |
+|---|---|---|---|---|
+| **A1. QR code with the store link** shown by the leader | No: the participant's phone needs internet to reach the store | Yes | Yes | **Required** (FR-DIST-01 to 03). Simplest and the only route that works on both platforms. |
+| **A2. Share the store link in advance** (message, e-mail, group chat) | Not at the fire, but the participant installs at home | Yes | Yes | **Recommended** (FR-DIST-04). Solves the problem before it exists. |
+| **A3. Google Play "share apps"** (peer-to-peer via Nearby/Quick Share, Play-verified) | Yes | Yes today, but Google announced its removal in the Play Store 44.1 release notes | No | **Do not depend on it** (FR-DIST-06). |
+| **A4. The app shares its own installation package** via Quick Share or Bluetooth file transfer | Yes | Yes. Receiver must allow installs from the source once. The installed app is usually base + split APKs, so the share must bundle all parts or use a universal build (constraint 12). Quick Share moves tens of MB in seconds to a minute; Bluetooth file transfer in minutes. | No | **Should** (FR-DIST-05). The only offline route under the app's own control. |
+| **A5. Offline Wi-Fi hotspot** on the leader's phone with a local install page; QR code with the Wi-Fi credentials | Yes | Yes | Can open the page, cannot install | **May, P2** (FR-DIST-07). More to build than A4, serves many phones at once. |
+| **A6. Over the gathering's BLE channel** | Yes | Far too slow: a 10–30 MB package at BLE throughput takes many minutes to hours and blocks the lyrics carousel | No | **Rejected** (FR-DIST-08). |
+| **A7. Alternative stores, web installs, Instant Apps, TestFlight** | No | — | — | Rejected: all need internet; no gain over A1. |
+| **A8. Manual file transfer** (USB cable, SD card) | Yes | Possible with a laptop | No | Not an app feature; a leader can always do this with the package from A4. |
+
+Sources consulted (2026-10-18): Android Authority and PhoneArena on the removal of Play Store app sharing; Gizchina on sharing apps offline with Quick Share through Files by Google; Zebra developer blog on sideloading split APK sets. See `design/prompts.md` for the originating request.

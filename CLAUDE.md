@@ -75,7 +75,7 @@ Dependency order among the specs: FRD → protocol → song format. Change upstr
 
 | Path | What it is |
 |------|-----------|
-| `design/functional-requirements.md` | The FRD. 157 requirements, 20 sections, phases P1–P3, assumptions, open questions. |
+| `design/functional-requirements.md` | The FRD. Numbered requirements over 20 sections plus Appendix A, phases P1–P3, assumptions, open questions. `check-design.sh` prints the current count. |
 | `design/ble-protocol.md` | BLE protocol 1.0 (doc v0.2): beacon, carousel, GATT, CBOR payloads, procedures, traceability table. |
 | `design/song-format.md` | Song file and library specification: ChordPro profile, metadata, canonical form, content hash, line list. |
 | `design/prompts.md` | Dated record of the prompts that produced the specs. |

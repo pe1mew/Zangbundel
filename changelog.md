@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- `design/functional-requirements.md` v0.4: getting the app to participants (section 8.5, FR-DIST-01 to 09: QR code with the store link, sharing the link in advance, offline Android-to-Android sharing of the app package) and Appendix A comparing the distribution options investigated. `ble-protocol.md` and `song-format.md` now depend on FRD v0.4; their content is unchanged.
 - `design/functional-requirements.md` v0.3: the functional requirements document. 157 numbered requirements over 20 sections, phases P1 (songbook over BLE), P2 (karaoke) and P3 (instruments), assumptions and open questions. v0.2 added the single-gathering rule (FR-GATH-16, 17) and the delegate role (FR-LEAD-40 to 46); v0.3 added broadcast-first delivery (FR-BLE-15, 16).
 - `design/ble-protocol.md` v0.2: the BLE protocol design. Discovery beacon, broadcast carousel over legacy and extended advertising, GATT service for registration, requests, delegate commands and repair of missed frames, CBOR payloads, signed state, procedures, performance budget, security considerations, requirements traceability.
 - `design/song-format.md` v0.1: song file format (a ChordPro profile), library repository layout, metadata, canonical form, content hash and canonical line list.
