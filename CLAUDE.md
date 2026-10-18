@@ -22,6 +22,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 | Working on the gathering, the beacon, lyric distribution, requests, delegates or anything on the air | `design/ble-protocol.md` — broadcast carousel, frame formats, GATT service, CBOR payloads, procedures, security. Its header names the FRD version it depends on. |
 | Working on song files, library repositories, metadata, the content hash or the line list | `design/song-format.md` — the ChordPro profile, library layout, canonicalisation rules the protocol hashes against. |
 | Wondering why a requirement or feature exists | `design/prompts.md` — the original ask, verbatim, dated. |
+| Changing deployment or infra, or anything about Google Play (account, tracks, signing, listing, releases) | `docs/RUNBOOK.md` — operational how-to; the fixed Play decisions (application ID, SDK levels, version scheme) live there. |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
 | **Before committing** | Diff-driven review, lenses chosen by what changed — `/review-changes` where your tool has skills, otherwise paste `templates/review-changes.md` <!-- placeholder --> as a prompt. This row is what fires it: nothing else prompts either party mid-flow. ⚠️ Since v1.40.0 it needs a per-repo **review profile** at `.claude/review-profile.md` — the same path whatever your tool, per `templates/README.md` <!-- placeholder -->. Copy `templates/review-profile.md` <!-- placeholder --> and fill it in; without one it STOPS rather than reviewing at LOW. |
 | Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries. Then `/curate`, or paste `templates/curate.md` <!-- placeholder -->. |
@@ -36,6 +37,8 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 - **English prose, Dutch UI terms in parentheses** (*kampvuurleider*, *zanger*, *verzoeknummer*). Requirement key words follow RFC 2119.
 - **Never add lyrics to this repository.** Lyrics live in external libraries with their own licences; the app ships none. Example songs in `design/song-format.md` must be public domain or written for the spec.
 - **Everything in a gathering works over BLE with no internet.** Do not design or implement a gathering feature that needs a network, a hotspot or system Bluetooth pairing (FR-BLE-01, FR-BLE-02).
+- **Keystores and passwords never enter the repository.** `.gitignore` covers `*.jks`, `*.keystore`, `keystore.properties`; the upload key lives in the password manager (RUNBOOK Step 6). Never weaken these ignore rules.
+- **The application ID is `nl.pe1mew.zangbundel.app`.** It is permanent once a bundle is uploaded to Play; the Gradle file must say so before any upload. Minimum SDK 26, target SDK 36 (RUNBOOK Decisions).
 - **Honesty.** Never claim a check passed without running it, never claim a file exists without reading it, and never describe a design as "verified" when it has only been written. Field tests on real phones are open questions (ble-protocol.md Q2, Q3), not facts.
 
 ## Architecture
@@ -63,6 +66,9 @@ Zangbundel/
 │   ├── ble-protocol.md           ← how leader and singers talk (depends on FRD)
 │   └── song-format.md            ← song file + library spec (depends on FRD and protocol)
 ├── scripts/check-design.sh       ← cross-document consistency check
+├── docs/
+│   ├── RUNBOOK.md                ← Google Play setup, signing, tracks, release flow
+│   └── privacy-policy.md         ← published for the Play listing (EN + NL)
 ├── memory/                       ← MEMORY.md index + gotcha-log.md (committed, shared)
 ├── .claude/review-profile.md     ← per-repo half of /review-changes
 ├── README.md, changelog.md, contributing.md, code_of_conduct.md, license.md, LICENSE
@@ -84,6 +90,8 @@ Dependency order among the specs: FRD → protocol → song format. Change upstr
 | `memory/gotcha-log.md` | Problem → root cause → fix journal. |
 | `.claude/review-profile.md` | Risk tiers and guarantee surfaces for pre-commit review. |
 | `changelog.md` | Keep a Changelog format; every notable change gets a line under `[Unreleased]`. |
+| `docs/RUNBOOK.md` | Google Play: fixed decisions, account and app setup, data safety, permissions declarations, signing, tracks and the 12-tester rule, store listing, release flow. |
+| `docs/privacy-policy.md` | The privacy policy the Play listing links to. A published surface: wording changes are reviewed at full depth. |
 | `license.md`, `LICENSE` | Code: Apache 2.0 with Commons Clause. Content: CC BY-NC 4.0. Lyrics: not in this repo. |
 
 ## How to Work Here

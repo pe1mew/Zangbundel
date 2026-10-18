@@ -1,0 +1,29 @@
+# Signing material — never commit (see docs/RUNBOOK.md, Step 6)
+*.jks
+*.keystore
+*.p12
+keystore.properties
+*.pepk
+
+# Android / Gradle build output and IDE state
+android/**/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/**/*.iml
+android/captures/
+android/.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Owner's scratch material (photos for the store listing etc.), never committed
+raw/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Note: .claude/ is deliberately NOT ignored; .claude/review-profile.md is tracked on purpose.

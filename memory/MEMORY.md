@@ -21,7 +21,8 @@
 
 ## Current State
 
-- **Design phase, no code.** Three specifications are consistent with each other: FRD v0.4, BLE protocol document v0.3 (protocol version 1.0), song format document v0.2 (format version 1.0, archive version 1.0). `bash scripts/check-design.sh` passes. FRD v0.4, BLE v0.3 and song-format v0.2 are staged, not yet committed.
+- **Design phase, no code.** Three specifications are consistent with each other: FRD v0.5, BLE protocol document v0.5 (protocol version 1.0), song format document v0.2 (format version 1.0, archive version 1.0). `bash scripts/check-design.sh` passes. All three plus docs/ are staged, not yet committed.
+- **Play account exists; no app yet.** Next concrete Play steps that need no code: create the app entry, fill the dashboard tasks, publish the privacy policy URL, generate the upload keystore (RUNBOOK Steps 2–6). Everything from the first bundle on waits for the Android project (an architecture document should precede it).
 - **Library distribution unit is the `.zbl` release archive** (song-format section 12): the app may never need a git client (song-format Q13). The leader's BLE download instruction can point at an archive or a release index.
 - **App distribution decided at requirement level:** QR code with the store link is required; offline Android-to-Android sharing of the app's own package is a SHOULD and needs a build decision (universal APK or bundled splits, FRD Q11); Google Play's own "share apps" must not be relied on because Google is withdrawing it; iOS has no offline route.
 - **Nothing is implemented.** `android/` is empty. No architecture document, no UI flows, no test plan yet; the FRD's section 19 lists them as documents still to write.
@@ -60,3 +61,5 @@
 - **One gathering per BLE range, enforced at start only** — FRD FR-GATH-16/17 and assumption 9.
 - **Song files are a ChordPro profile** — `design/song-format.md` section 2; FRD open question Q4 should be marked answered.
 - **Lyrics never live in this repository** — copyright stays with the external libraries; `license.md`, CLAUDE.md hard constraints.
+- **Data safety hinges on end-to-end encryption, not on where data ends up** — Play counts any transmission off the device as collection unless it is end-to-end encrypted. Adopted 2026-10-18: FR-BLE-17 and BLE section 8.4 seal display name, requests, tokens and the delegate queue (libsodium sealed box, leader X25519 key in the signed state). The Play declaration is "no data collected, no data shared"; it stays true only if the implementation seals exactly those payloads (`docs/RUNBOOK.md` Step 4).
+- **Google Play decisions fixed 2026-10-18** — application ID `nl.pe1mew.zangbundel.app`, min SDK 26 (advertising sets), target SDK 36, free, Music & Audio, target audience 13+ to stay outside the Families policy; personal developer account created after Nov 2023, so a 12-tester, 14-day closed test precedes production. `docs/RUNBOOK.md` Decisions table.

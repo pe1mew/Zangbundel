@@ -14,8 +14,8 @@ sentence in a spec reaches every reader who builds on it, which is why specs are
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
-| **HIGH** | `design/functional-requirements.md`, `design/ble-protocol.md`, `design/song-format.md`, `CLAUDE.md`, `.claude/review-profile.md`, `scripts/**`, `.gitignore`, `LICENSE`, `license.md` | Full battery (3-4 lenses) |
-| **MEDIUM** | `design/**` (anything else under design, e.g. a future architecture or UI-flow document), `android/**` (re-tier to HIGH for published interfaces once code exists), `README.md`, `contributing.md` | Two lenses (adversarial + doc-accuracy) |
+| **HIGH** | `design/functional-requirements.md`, `design/ble-protocol.md`, `design/song-format.md`, `CLAUDE.md`, `.claude/review-profile.md`, `scripts/**`, `.gitignore`, `LICENSE`, `license.md`, `docs/privacy-policy.md` | Full battery (3-4 lenses) |
+| **MEDIUM** | `design/**` (anything else under design, e.g. a future architecture or UI-flow document), `android/**` (re-tier to HIGH for published interfaces once code exists), `docs/RUNBOOK.md`, `README.md`, `contributing.md` | Two lenses (adversarial + doc-accuracy) |
 | **LOW** | `memory/**`, `design/prompts.md`, `changelog.md`, `code_of_conduct.md` | One lens (adversarial) |
 
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific
@@ -29,6 +29,8 @@ Every path here sits in the HIGH row above.
 - `design/ble-protocol.md`: the beacon layout (section 6.1), the frame formats (7.2), the GATT UUIDs and error codes (8), and every CBOR key number (9) are wire format. Within protocol major version 1 they may only be added to, never renumbered or re-meaned; a breaking change bumps the major version.
 - `design/song-format.md`: the canonical form and the content-hash definition decide whether two devices consider a song identical. A change to either silently breaks matching between devices on different app versions, so it needs a format-version bump and a note in the protocol.
 - `scripts/check-design.sh`: the gate named in `CLAUDE.md` Hard Constraints. It must exit non-zero on a seeded failure (a cited-but-undefined ID), or it is a silent hook.
+- `docs/privacy-policy.md`: linked from the Google Play listing and read by users and reviewers. Every statement in it must stay true of the app (no data to the developer, no location read, Bluetooth data deleted at the end of a gathering); a feature that breaks one of these sentences needs the policy changed first.
+- `.gitignore`: guarantees that keystores, `keystore.properties` and build output never enter the repository while `.claude/review-profile.md` stays trackable.
 
 ## Test baseline
 
