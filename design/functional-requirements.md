@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.2 (draft) |
+| Version | 0.3 (draft) |
 | Date | 2026-10-18 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -13,6 +13,7 @@
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft. |
 | 0.2 | 2026-10-18 | Added: only one gathering within BLE range (FR-GATH-16, 17); delegate role (section 8.4, FR-LEAD-40 to 46). |
+| 0.3 | 2026-10-18 | Added: leader-to-singer information by repeated broadcast, connections only for upstream traffic and recovery of missed data (FR-BLE-15, 16). |
 
 ---
 
@@ -258,6 +259,10 @@ These are functional requirements on the behaviour the user experiences. The pro
 **FR-BLE-13** (MUST, P1) — The leader MUST be able to send a short free-text message to all singers (e.g. "Pauze, over 10 minuten verder").
 
 **FR-BLE-14** (MUST, P1) — Communication MUST be limited to data needed for the gathering. No personal data other than the self-chosen display name is exchanged.
+
+**FR-BLE-15** (MUST, P1) — Information from the leader to the singers (current song, lyrics, setlist, messages, request outcomes, gathering state) MUST be sent primarily by broadcast, so that it reaches any number of singers at once without a connection per singer, and MUST be repeated more than once so that singers who miss part of it still receive it. A singer MUST need a connection to the leader only to register, to send a request, to act as delegate, or to recover information it missed. The objective is to keep the number of connections small so that the number of participants is not limited by the leader device's connection capacity (FR-BLE-10).
+
+**FR-BLE-16** (MUST, P1) — A singer that has not received information completely within a reasonable time MUST be able to request exactly the missing part from the leader, and MUST get it without disturbing the broadcast to the other singers.
 
 ---
 
@@ -539,7 +544,7 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 | Language (LANG) | 01–05 | 06, 07 | | |
 | Library (LIB) | 01–07, 10–12, 14, 15, 17, 20, 21, 23, 30, 31, 33 | 13, 16, 22, 32 | | |
 | Gathering (GATH) | 01–04, 06–12, 15, 16 | 05, 13, 14, 17 | | |
-| BLE (BLE) | 01–08, 10, 12–14 | 11 | | |
+| BLE (BLE) | 01–08, 10, 12–16 | 11 | | |
 | Leader (LEAD) | 01–04, 06, 10, 11, 30, 32, 40–45 | 05, 07, 12, 13, 31, 46 | | |
 | Singer (SING) | 01–04, 10, 11, 13–15 | 12 | | |
 | Display (DISP) | 01, 03–07, 09, 10 | 02, 08, 11 | | |
