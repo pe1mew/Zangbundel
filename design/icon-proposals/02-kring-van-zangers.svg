@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 02 Kring van zangers: a group around a songbook that acts as the beacon -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13315C"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.55" r="0.5">
+      <stop offset="0" stop-color="#FF8A3D" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FF8A3D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <circle cx="256" cy="280" r="200" fill="url(#glow)"/>
+  <!-- bluetooth ripples around the book -->
+  <g fill="none" stroke="#4FC3F7" stroke-width="10" stroke-linecap="round">
+    <circle cx="256" cy="286" r="88" stroke-dasharray="40 26" opacity="0.9"/>
+    <circle cx="256" cy="286" r="124" stroke-dasharray="40 30" opacity="0.5"/>
+  </g>
+  <!-- singers: head + shoulders, five around the circle -->
+  <g fill="#FFFFFF">
+    <g transform="translate(256 92)">
+      <circle r="26"/><path d="M-46 76 a46 40 0 0 1 92 0 z"/>
+    </g>
+    <g transform="translate(96 190)">
+      <circle r="26"/><path d="M-46 76 a46 40 0 0 1 92 0 z"/>
+    </g>
+    <g transform="translate(416 190)">
+      <circle r="26"/><path d="M-46 76 a46 40 0 0 1 92 0 z"/>
+    </g>
+    <g transform="translate(140 372)">
+      <circle r="26"/><path d="M-46 76 a46 40 0 0 1 92 0 z"/>
+    </g>
+    <g transform="translate(372 372)">
+      <circle r="26"/><path d="M-46 76 a46 40 0 0 1 92 0 z"/>
+    </g>
+  </g>
+  <!-- small notes near the mouths: singing -->
+  <g fill="#FFD166">
+    <circle cx="300" cy="84" r="7"/><rect x="305" y="56" width="4" height="30" rx="2"/>
+    <circle cx="140" cy="186" r="7"/><rect x="145" y="158" width="4" height="30" rx="2"/>
+    <circle cx="460" cy="186" r="7"/><rect x="465" y="158" width="4" height="30" rx="2"/>
+  </g>
+  <!-- open book in the centre, orange like a fire -->
+  <path d="M190 268 Q223 254 256 268 L256 318 Q223 304 190 318 Z" fill="#FFB36B"/>
+  <path d="M322 268 Q289 254 256 268 L256 318 Q289 304 322 318 Z" fill="#FF8A3D"/>
+  <path d="M256 268 L256 318" stroke="#7A3E12" stroke-width="4"/>
+</svg>

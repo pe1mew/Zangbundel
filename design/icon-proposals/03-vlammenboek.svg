@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 03 Vlammenboek: the pages of the songbook rise as a campfire flame -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13315C"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#FF6A2B"/>
+      <stop offset="0.6" stop-color="#FF9F3D"/>
+      <stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <!-- bluetooth signal top right -->
+  <g fill="none" stroke="#4FC3F7" stroke-width="14" stroke-linecap="round">
+    <path d="M352 112 A70 70 0 0 1 352 212" opacity="0.95"/>
+    <path d="M384 80 A115 115 0 0 1 384 244" opacity="0.55"/>
+    <path d="M414 50 A158 158 0 0 1 414 274" opacity="0.3"/>
+  </g>
+  <!-- flame made of page shapes -->
+  <path d="M256 96 C 300 150 334 190 334 262 C 334 320 298 352 256 352 C 214 352 178 320 178 262 C 178 220 200 196 214 176 C 212 214 226 232 240 236 C 232 196 240 140 256 96 Z" fill="url(#flame)"/>
+  <path d="M256 196 C 280 232 292 250 292 284 C 292 312 276 330 256 330 C 236 330 220 312 220 284 C 220 262 232 248 240 236 C 242 256 250 262 256 264 C 250 240 252 216 256 196 Z" fill="#FFF4E0" opacity="0.9"/>
+  <!-- note inside the flame: singing -->
+  <g fill="#0B2545">
+    <ellipse cx="248" cy="302" rx="11" ry="8" transform="rotate(-20 248 302)"/>
+    <rect x="256" y="262" width="5" height="40" rx="2"/>
+  </g>
+  <!-- open book at the base -->
+  <path d="M92 388 Q174 358 256 388 L256 456 Q174 426 92 456 Z" fill="#FFF4E0"/>
+  <path d="M420 388 Q338 358 256 388 L256 456 Q338 426 420 456 Z" fill="#FFE9C2"/>
+  <path d="M256 388 L256 456" stroke="#B8894E" stroke-width="6"/>
+  <!-- group: three small heads in front of the book -->
+  <g fill="#0B2545">
+    <circle cx="192" cy="440" r="14"/><circle cx="256" cy="448" r="16"/><circle cx="320" cy="440" r="14"/>
+  </g>
+</svg>

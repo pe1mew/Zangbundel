@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 04 Noot en golven: one big note whose flag is a booklet page; waves carry it to a row of smaller notes -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B3A6B"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <!-- bluetooth waves from the note head -->
+  <g fill="none" stroke="#4FC3F7" stroke-width="14" stroke-linecap="round">
+    <path d="M262 318 A96 96 0 0 1 262 462" opacity="0.9"/>
+    <path d="M300 286 A150 150 0 0 1 300 494" opacity="0.5"/>
+  </g>
+  <!-- the big note: head, stem, booklet-shaped flag -->
+  <ellipse cx="190" cy="392" rx="54" ry="40" transform="rotate(-22 190 392)" fill="#FFFFFF"/>
+  <rect x="229" y="110" width="18" height="282" rx="9" fill="#FFFFFF"/>
+  <!-- booklet flag: two pages hanging from the stem -->
+  <path d="M247 110 L247 240 L330 206 L330 76 Z" fill="#FFE9C2"/>
+  <path d="M330 76 L330 206 L404 240 L404 110 Z" fill="#FFD166"/>
+  <g stroke="#B8894E" stroke-width="6" stroke-linecap="round">
+    <path d="M268 136 L312 118"/><path d="M268 164 L312 146"/><path d="M268 192 L312 174"/>
+    <path d="M348 118 L386 136"/><path d="M348 146 L386 164"/><path d="M348 174 L386 192"/>
+  </g>
+  <!-- group: three small notes answering, in fire colours -->
+  <g fill="#FF8A3D">
+    <ellipse cx="376" cy="340" rx="18" ry="13" transform="rotate(-22 376 340)"/>
+    <rect x="389" y="282" width="7" height="58" rx="3"/>
+  </g>
+  <g fill="#FFB36B">
+    <ellipse cx="424" cy="400" rx="18" ry="13" transform="rotate(-22 424 400)"/>
+    <rect x="437" y="342" width="7" height="58" rx="3"/>
+  </g>
+  <g fill="#FFD166">
+    <ellipse cx="390" cy="454" rx="18" ry="13" transform="rotate(-22 390 454)"/>
+    <rect x="403" y="396" width="7" height="58" rx="3"/>
+  </g>
+</svg>

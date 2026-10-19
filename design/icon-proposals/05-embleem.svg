@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 05 Embleem: a scouting-style badge with group, songbook, notes and beacon -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13315C"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="206" fill="none" stroke="#FFD166" stroke-width="14"/>
+  <circle cx="256" cy="256" r="182" fill="#0E2A4F"/>
+  <!-- beacon arcs at the top of the badge -->
+  <g fill="none" stroke="#4FC3F7" stroke-width="12" stroke-linecap="round">
+    <path d="M196 132 A72 72 0 0 1 316 132"/>
+    <path d="M166 104 A112 112 0 0 1 346 104" opacity="0.5"/>
+  </g>
+  <!-- small bluetooth rune as the beacon source -->
+  <path d="M256 128 L256 196 M236 148 L276 180 L256 196 M236 180 L276 148 L256 128"
+        fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- group: three head-and-shoulder silhouettes -->
+  <g fill="#FFFFFF">
+    <g transform="translate(180 262)"><circle r="22"/><path d="M-40 66 a40 36 0 0 1 80 0 z"/></g>
+    <g transform="translate(332 262)"><circle r="22"/><path d="M-40 66 a40 36 0 0 1 80 0 z"/></g>
+    <g transform="translate(256 248)"><circle r="26"/><path d="M-46 74 a46 40 0 0 1 92 0 z"/></g>
+  </g>
+  <!-- singing: notes rising -->
+  <g fill="#FFD166">
+    <circle cx="300" cy="222" r="7"/><rect x="305" y="194" width="4" height="30" rx="2"/>
+    <circle cx="214" cy="226" r="6"/><rect x="218" y="202" width="4" height="26" rx="2"/>
+  </g>
+  <!-- open songbook, orange like the fire, at the base -->
+  <path d="M146 352 Q201 332 256 352 L256 404 Q201 384 146 404 Z" fill="#FFB36B"/>
+  <path d="M366 352 Q311 332 256 352 L256 404 Q311 384 366 404 Z" fill="#FF8A3D"/>
+  <path d="M256 352 L256 404" stroke="#7A3E12" stroke-width="5"/>
+  <g stroke="#7A3E12" stroke-width="4" stroke-linecap="round" opacity="0.6">
+    <path d="M170 368 Q212 356 240 368"/><path d="M170 386 Q212 374 240 386"/>
+    <path d="M272 368 Q300 356 342 368"/><path d="M272 386 Q300 374 342 386"/>
+  </g>
+</svg>

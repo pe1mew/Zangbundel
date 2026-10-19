@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <!-- Google Play feature graphic, 1024 x 500. Same artwork and palette as the app icon. -->
+  <defs>
+    <linearGradient id="fg-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B3A6B"/>
+      <stop offset="1" stop-color="#0B2545"/>
+    </linearGradient>
+    <radialGradient id="fg-glow" cx="0.5" cy="0.56" r="0.5">
+      <stop offset="0" stop-color="#FF8A3D" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#FF8A3D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#fg-bg)"/>
+  <!-- faint beacon arcs across the background -->
+  <g fill="none" stroke="#4FC3F7" stroke-width="3" opacity="0.18">
+    <circle cx="300" cy="250" r="300"/>
+    <circle cx="300" cy="250" r="380"/>
+    <circle cx="300" cy="250" r="460"/>
+  </g>
+  <!-- icon artwork, left -->
+  <g transform="translate(276 250) scale(0.78) translate(-256 -262)">
+    <circle cx="256" cy="286" r="210" fill="url(#fg-glow)"/>
+    <g fill="none" stroke="#4FC3F7" stroke-linecap="round">
+      <circle cx="256" cy="286" r="88" stroke-width="12" stroke-dasharray="44 28"/>
+      <circle cx="256" cy="286" r="126" stroke-width="9" stroke-dasharray="40 32" opacity="0.5"/>
+    </g>
+    <g fill="#FFFFFF">
+      <g transform="translate(256 86)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(92 188)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(420 188)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(138 378)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+      <g transform="translate(374 378)"><circle r="28"/><path d="M-50 82 a50 44 0 0 1 100 0 z"/></g>
+    </g>
+    <g fill="#FFD166">
+      <circle cx="304" cy="78" r="8"/><rect x="309" y="46" width="5" height="34" rx="2.5"/>
+      <circle cx="140" cy="182" r="8"/><rect x="145" y="150" width="5" height="34" rx="2.5"/>
+      <circle cx="468" cy="182" r="8"/><rect x="473" y="150" width="5" height="34" rx="2.5"/>
+    </g>
+    <path d="M184 264 Q220 248 256 264 L256 322 Q220 306 184 322 Z" fill="#FFB36B"/>
+    <path d="M328 264 Q292 248 256 264 L256 322 Q292 306 328 322 Z" fill="#FF8A3D"/>
+    <path d="M256 264 L256 322" stroke="#7A3E12" stroke-width="5"/>
+    <g stroke="#7A3E12" stroke-width="4" stroke-linecap="round" opacity="0.55">
+      <path d="M202 282 Q226 272 244 282"/><path d="M202 302 Q226 292 244 302"/>
+      <path d="M268 282 Q286 272 310 282"/><path d="M268 302 Q286 292 310 302"/>
+    </g>
+  </g>
+  <!-- text, right -->
+  <g font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text id="t1" x="520" y="216" fill="#FFFFFF" font-size="76" font-weight="700" letter-spacing="-1">Zangbundel</text>
+    <text id="t2" x="522" y="268" fill="#FFB36B" font-size="28" font-weight="600">Samen zingen rond het kampvuur</text>
+    <text id="t3" x="522" y="310" fill="#CFE6FF" font-size="22">Liedteksten via Bluetooth · zonder internet</text>
+  </g>
+</svg>
