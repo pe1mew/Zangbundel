@@ -1,0 +1,128 @@
+@startuml singer-mode-flow
+' Zangbundel - singer mode flow, for assessment of design/guiDesign.md v0.5
+' (sections 4, 6.1 and 6.2, decisions D-19 to D-47). Dutch UI terms in quotes.
+' The event loop is drawn as a ladder of independent checks so the diagram
+' stays narrow; in the app the events are independent, not ordered.
+' Render (UTF-8 source):
+'   java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tsvg -tpng singer-mode-flow.puml
+
+title Zangbundel – singer mode (zanger)\nguiDesign.md v0.5, D-19 to D-48
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityBorderColor #0B2545
+skinparam ActivityDiamondBackgroundColor #FFF4EA
+skinparam ActivityDiamondBorderColor #FF8A3D
+skinparam PartitionBorderColor #0B2545
+skinparam PartitionBackgroundColor #F6F8FB
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam ArrowColor #13315C
+
+partition "Configuration screens (image background)" {
+  start
+  :Welcome screen, at most 1.5 s\nname + version  (D-04, D-05);
+  if (opened from a scanned QR link?) then (yes)
+    :Joining screen "deelnemen"  (D-35)\n"Kampvuur zoeken…" → "Gevonden, controleren…";
+    if (gathering found and its state signed\nby the key in the code?) then (yes)
+    else (no, or not in range after 60 s)
+      :"Dit is niet het kampvuur van de QR-code"\nor "Ga dichter bij de kampvuurleider staan"\n→ "Opnieuw zoeken" / "Naar start";
+      stop
+    endif
+  else (no)
+    :Home screen "startscherm", scanning  (D-21, D-22);
+    if (gatherings in range?) then (yes)
+      :Cards: name, signal, lock, fingerprint  (D-22, D-36)\nstart = small text button;
+    else (no)
+      :"Zoeken naar kampvuren…" + QR hint\nstart = large button;
+    endif
+    :Tap a gathering card;
+    if (join code required?) then (yes)
+      :Code dialog  (D-26);
+    endif
+  endif
+  if (first join ever?) then (yes)
+    :Display name dialog, optional, at most 24 characters  (D-26, D-44);
+  endif
+  :Join; receive the current song and the state  (FR-GATH-06);
+}
+
+partition "Gathering screens (no image; night theme = white on black)" {
+  :Lyric view, edge to edge  (D-27)\nheader strip: name · fingerprint · state  (D-20, D-36)\nround buttons: ▲ previous · ≡ songlist · ▼ next  (D-30)\npage = only the songs received in this session  (D-47);
+
+  repeat
+    :Wait for an event;
+    if (swipe, tap on a half, volume key?) then (yes)
+      :Scroll one line or continuous  (D-17, D-29)\nfollow-the-leader off until switched on again;
+    endif
+    if (▲ or ▼ button?) then (yes)
+      :Jump to the start of the previous / next\nreceived song  (D-29, D-30, D-47)\n▼ disabled on the latest pushed song;
+    endif
+    if (scrolled past a song divider?) then (yes)
+      :Header strip names the song now at the top  (D-29);
+    endif
+    if (heart on a song?) then (yes)
+      :Like → to the leader as a grouped request  (D-32, D-39);
+    endif
+    if (tap on the strip, or long press?) then (yes)
+      :Toolbar: theme, text size, fit-to-width, brightness,\nkeep screen on, follow the leader, song info  (D-17, D-45);
+    endif
+    if (≡ songlist button?) then (yes)
+      :Songlist sheet  (D-31)\ntabs "Lijst" · "Verzoeken" · "Liedboek" (· "Leiden");
+      if (tab "Lijst"?) then (yes)
+        :Songs received this session, current pinned  (D-47)\ntap = jump to the song's start; heart = like;
+      endif
+      if (tab "Verzoeken"?) then (yes)
+        :Own requests with state  (D-38)\nwithdraw; "Ander lied aanvragen" (free text, 100 chars);
+      endif
+      if (tab "Liedboek"?) then (yes)
+        :Own local library, separate from the session  (D-40, D-47)\nsearch and filters; no stars while joined  (D-39, D-48)\ntap a song → browse state, strip "bladeren"\n"Dit lied aanvragen" in the toolbar\nchip "Terug naar het huidige lied"  (FR-SING-14);
+      endif
+      if (tab "Leiden" (delegates only)?) then (yes)
+        :Leader's request list: accept / push / decline\nsetlist: next, add; "Nu zingen"  (D-46)\nrefused at once when the leader is unreachable;
+      endif
+      if (row "Kampvuur verlaten" and confirmed "Verlaten"?) then (yes)
+        :Discard received lyrics,\nwrite the gathering memory  (D-34);
+        break
+      endif
+    endif
+    if (leader pushes a song over BLE?) then (yes)
+      :Song received → added to the page  (D-47)\nscroll to it, orange bar 1 s, vibrate twice if enabled  (D-43)\nalso from browse state;
+    endif
+    if (contact with the leader lost?) then (yes)
+      :Strip "opnieuw verbinden…", page unchanged  (D-37);
+      if (found again within the set time?) then (yes)
+        :Strip "verbonden"; delegate tab enabled again  (D-46);
+      else (no, default 5 min)
+        :Strip "beëindigd" + banner\n"Het kampvuur is niet meer te vinden"  (D-37);
+      endif
+    endif
+    if (leader ends the gathering?) then (yes)
+      :Strip "beëindigd" + banner\n"De leider heeft het kampvuur beëindigd"  (D-37);
+    endif
+    if (leader sends a download instruction?) then (yes)
+      :Banner "… bibliotheek downloaden (12 MB)"\n"Downloaden" / "Niet nu"  (D-37);
+    endif
+    if (leader grants or revokes the delegate role?) then (yes)
+      :Banner; tab "Leiden" appears or disappears  (D-46);
+    endif
+    if (banner "Terug naar start" tapped?) then (yes)
+      :Discard received lyrics,\nwrite the gathering memory  (D-37);
+      break
+    endif
+  repeat while (still in singer mode)
+}
+
+partition "Configuration screens (image background)" {
+  :Home screen  (D-21);
+  stop
+}
+
+note right
+  Decisions in parentheses refer to
+  design/guiDesign.md v0.5.
+  At the fire: no image, white on black
+  in the night theme (D-01, D-15).
+end note
+@enduml

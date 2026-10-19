@@ -11,6 +11,7 @@ The shared background of the welcome and configuration screens, as specified in 
 | `Backdrop_001-land.png` | **Landscape master**, 3200 × 1440, RGB, lossless: the full-width band of the source (rows 1700–4724) scaled to 1920 × 1440 and placed at the right of a black canvas, as composed by the owner in Paint.NET and rebuilt with the command under "Export procedure". | No |
 | `backdrop-3200x1440.webp` | **Shipped landscape asset** (D-13): lossy WebP, quality 80, 50 KB, no metadata. Goes in `res/drawable-land-nodpi/` on Android. | Yes |
 | `preview.html` | Contact sheet: the portrait image centre-cropped in 16:9 and 20:9 frames and the landscape image in a 2400 × 1080 frame, with the D-14 scrim and sample titles. Open in a browser. | No |
+| `singer-mode-flow.puml`, `.svg`, `.png` | Flowchart of singer mode for assessment (PlantUML activity diagram; `guiDesign.md` sections 4, 6.1, 6.2, decisions D-19 to D-47). Rendered with PlantUML 1.2024.8 on Java 8: `java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tsvg -tpng singer-mode-flow.puml` (the charset flag matters on Java 8, which otherwise reads the file as cp1252 and garbles the dashes). The event loop is drawn as a ladder of independent checks so the diagram stays narrow. The `.puml` is the source; re-render both files after editing it. | No |
 
 ## Rights and people
 
