@@ -65,7 +65,30 @@
      them the same way — Problem, Root cause, Fix — and name the documents.
 -->
 
-<!-- No entries yet. The first real one comes from the next session that hits something. -->
+### A GUI wish contradicts a MUST in the FRD (2026-10-19) [x3] [PROMOTED]
+**Problem**: Three times in one session the owner described a screen in a way that a MUST requirement forbade: no library download instruction for singers (FR-LEAD-30, MUST), no singer list (FR-LEAD-40 said "chosen from the list of joined singers"), and statistics sent to the author's server (FR-GEN-08 says the app sends nothing to the developer). Each time the GUI decision was written first and the collision found afterwards, once by a follow-up session that had already started amending the FRD.
+**Root cause**: The GUI document was written from the owner's description, and the FRD was consulted for citations, not for prohibitions. A MUST that forbids a design is only found when its text is read, not when its ID is cited.
+**Fix**: Before writing a design decision from an owner's wish, grep the FRD for the area's requirements and read every MUST in it; when one collides, record the decision with an open question and let the owner choose between amending the FRD (withdraw or demote the requirement, version bump, dependants) and changing the design. Promoted to `memory/MEMORY.md` Recently Promoted.
+
+### Java 8 reads PlantUML sources as cp1252 (2026-10-19)
+**Problem**: The rendered title of `design/gui/singer-mode-flow.puml` showed `â€“` for an en dash; arrows and accented Dutch words would garble the same way.
+**Root cause**: The PlantUML jar run on Java 8 (`java version 1.8.0_503`, the only Java on the machine) decodes source files with the platform default charset, cp1252 on Windows, not UTF-8.
+**Fix**: Always render with `-charset UTF-8`. The render commands in `design/gui/README.md` and `design/ble/README.md` carry the flag; if a rendered diagram shows `â€`, the flag was dropped.
+
+### PlantUML switch and elseif chains render side by side (2026-10-19)
+**Problem**: An activity diagram with a twelve-case `switch` rendered 6616 pixels wide; the same content with an `elseif` chain was 5075 pixels wide. Both unreadable for an assessment.
+**Root cause**: PlantUML lays every alternative branch horizontally; each case adds width. Independent `if … endif` blocks, one after another, stack vertically.
+**Fix**: For an event loop, draw a ladder of independent `if (event?) then (yes) … endif` blocks inside `repeat`; `design/gui/singer-mode-flow.puml` is 905 × 4341 that way. Say in a comment that the events are independent, since the ladder reads as ordered.
+
+### PNG output clipped at 4096 pixels (2026-10-19)
+**Problem**: A PNG rendered at exactly 4096 pixels wide with the right part of the diagram missing; the SVG of the same source was complete (viewBox 6617 wide).
+**Root cause**: PlantUML's default `PLANTUML_LIMIT_SIZE` is 4096 and it clips rather than failing.
+**Fix**: Render with `java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar …`, and compare the PNG dimensions with the SVG viewBox after every render; a PNG width of exactly 4096 is the symptom.
+
+### Parallel session rewrote spec files under an open edit (2026-10-19)
+**Problem**: A batch of edits to `functional-requirements.md` and `song-format.md` failed with "file has been modified since read"; afterwards `git status` showed those files modified although `git diff` was empty.
+**Root cause**: A follow-up session started from a proposal card worked in the same checkout at the same time, first amending and then reverting the same files. Its reverts rewrote them with LF endings in a checkout whose `core.autocrlf` expects CRLF, which git reports as modified until it next touches the files.
+**Fix**: Re-read a file right before editing it when another session is linked and working in the same folder; treat an empty `git diff` with a "modified" status as a line-ending artefact; when two sessions touch one document, send the second a scope message and let it finish before editing the same file.
 
 ## Promoted
 
@@ -88,6 +111,10 @@
 | YYYY-MM-DD | [a pattern that kept recurring] | **3** — YYYY-MM-DD first; YYYY-MM-DD again; YYYY-MM-DD after promotion | project file, [rule name] |
 
 -->
+
+| Date | Gotcha | Occurrences | Promoted to |
+|------|--------|-------------|-------------|
+| 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
 
 ## Mechanized
 

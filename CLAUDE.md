@@ -20,7 +20,8 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 | Starting any session (framework drift) | Compare the `framework: agent-ready-projects vX.Y.Z` line in this file's header against https://github.com/ducroq/agent-ready-projects/blob/master/CHANGELOG.md (or local clone if present). If the project is behind the latest released version, briefly surface the drift to the user before starting work. `/update-drift`, or `templates/update-drift.md` <!-- placeholder --> pasted as a prompt, does this triage. Don't auto-update — adopting changes is the engineer's call. |
 | Changing what the app must do, or checking whether something is required | `design/functional-requirements.md` — numbered FR/NFR requirements with MUST/SHOULD/MAY and phase tags, assumptions, open questions. Section 1.3 has the ID rules. |
 | Working on the gathering, the beacon, lyric distribution, requests, delegates or anything on the air | `design/ble-protocol.md` — broadcast carousel, frame formats, GATT service, CBOR payloads, procedures, security. Its header names the FRD version it depends on. |
-| Working on song files, library repositories, metadata, the content hash or the line list | `design/song-format.md` — the ChordPro profile, library layout, canonicalisation rules the protocol hashes against. |
+| Working on song files, library repositories, metadata, the content hash or the line list | `design/song-format.md` — the ChordPro profile, library layout, canonicalisation rules the protocol hashes against, release archive, setlists. |
+| Designing or changing a screen, a control, a theme or what a singer or leader sees | `design/guiDesign.md` — numbered decisions D-nn (D-48 ranks above the rest), open questions at the end; `design/gui/` and `design/ble/` hold the assets and diagrams. Grep the FRD for the area's MUSTs before writing a decision. |
 | Wondering why a requirement or feature exists | `design/prompts.md` — the original ask, verbatim, dated. |
 | Adding or changing anything that touches personal data, a permission, the network, or bytes received over the air | `design/security-privacy-assessment.md` — the principles made concrete, findings SP-nn, accepted risks; add a finding or re-run the assessment. |
 | Changing deployment or infra, or anything about Google Play (account, tracks, signing, listing, releases) | `docs/RUNBOOK.md` — operational how-to; the fixed Play decisions (application ID, SDK levels, version scheme) live there. |
@@ -34,7 +35,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 - **Lead with the point; no narrative.** Each entry is a fact or a rule in a line or two. How it got that way goes in the changelog, not here: this file is loaded every session, and narrative is what grows it.
 - **Never commit, push, merge or rebase.** Git is manual and the owner's. Stage the files, write a suggested commit message, then stop — also when asked to "save" or "finalise".
 - **The design documents are the specification.** Requirement IDs (`FR-AREA-nn`, `NFR-AREA-nn`) are never reused; a withdrawn requirement is marked *Withdrawn* and kept. Every ID cited in any document must be defined in the FRD. `scripts/check-design.sh` enforces this; run it before staging a design change.
-- **Keep the documents in step.** A change to the FRD bumps its version and adds a change-history row. `design/ble-protocol.md` and `design/song-format.md` state the FRD version they depend on; update them in the same change or say explicitly that they are behind.
+- **Keep the documents in step.** A change to the FRD bumps its version and adds a change-history row. `design/ble-protocol.md`, `design/song-format.md` and `design/guiDesign.md` state the FRD version they depend on; update them in the same change or say explicitly that they are behind.
 - **English prose, Dutch UI terms in parentheses** (*kampvuurleider*, *zanger*, *verzoeknummer*). Requirement key words follow RFC 2119.
 - **Never add lyrics to this repository.** Lyrics live in external libraries with their own licences; the app ships none. Example songs in `design/song-format.md` must be public domain or written for the spec.
 - **Secure by design, privacy by design; users are under 18.** Nothing personal leaves a phone unencrypted or reaches the developer; defaults never identify a person; every input from the air or a library is untrusted; least privilege. FRD section 2.6 defines it, `design/security-privacy-assessment.md` assesses it. A feature that touches personal data, a permission, the network or received bytes gets a new assessment entry before it is designed in.
@@ -66,26 +67,38 @@ Zangbundel/
 │   ├── prompts.md                ← the original ask, verbatim
 │   ├── functional-requirements.md  ← FRD: what the app must do (canonical)
 │   ├── ble-protocol.md           ← how leader and singers talk (depends on FRD)
-│   └── song-format.md            ← song file + library spec (depends on FRD and protocol)
+│   ├── song-format.md            ← song file, library, release archive and setlist spec (depends on FRD and protocol)
+│   ├── guiDesign.md              ← GUI decisions D-nn for every screen (depends on FRD)
+│   ├── security-privacy-assessment.md ← findings SP-nn, accepted risks
+│   ├── gui/                      ← backdrop photograph and exports, singer-mode flowchart (.puml/.svg/.png)
+│   ├── ble/                      ← BLE sequence diagrams per scenario (.puml/.svg/.png)
+│   ├── icon/                     ← app icon master, launcher layers, feature graphic
+│   └── icon-proposals/           ← the five icon proposals and their contact sheet
 ├── scripts/check-design.sh       ← cross-document consistency check
 ├── docs/
 │   ├── RUNBOOK.md                ← Google Play setup, signing, tracks, release flow
-│   └── privacy-policy.md         ← published for the Play listing (EN + NL)
-├── memory/                       ← MEMORY.md index + gotcha-log.md (committed, shared)
-├── .claude/review-profile.md     ← per-repo half of /review-changes
+│   ├── privacy-policy.md         ← published for the Play listing (EN + NL)
+│   ├── privacy/, j/              ← GitHub Pages: rendered privacy policy, join-and-install page
+│   ├── app-links/                ← assetlinks template and intent filters for App Links
+│   └── store-listing/            ← listing texts and graphics for Play
+├── memory/                       ← MEMORY.md index, gotcha-log.md, session records (committed, shared)
+├── .claude/                      ← review-profile.md, launch.json (preview servers)
+├── raw/                          ← owner's scratch folder, ignored by git
 ├── README.md, changelog.md, contributing.md, code_of_conduct.md, license.md, LICENSE
 └── android/                      ← empty; the app goes here
 ```
 
-Dependency order among the specs: FRD → protocol → song format. Change upstream first.
+Dependency order among the specs: FRD → protocol → song format → GUI design. Change upstream first. The song library itself lives in a separate repository, `github.com/pe1mew/Zangbundel-bibliotheek`, with the validator and release tool that implement song-format sections 11 to 13.
 
 ## Key Paths
 
 | Path | What it is |
 |------|-----------|
 | `design/functional-requirements.md` | The FRD. Numbered requirements over 20 sections plus Appendix A, phases P1–P3, assumptions, open questions. `check-design.sh` prints the current count. |
-| `design/ble-protocol.md` | BLE protocol 1.0 (doc v0.2): beacon, carousel, GATT, CBOR payloads, procedures, traceability table. |
-| `design/song-format.md` | Song file and library specification: ChordPro profile, metadata, canonical form, content hash, line list. |
+| `design/ble-protocol.md` | BLE protocol 1.0 (document version in its header): beacon, carousel, GATT, CBOR payloads, procedures, traceability table. |
+| `design/song-format.md` | Song file and library specification: ChordPro profile, metadata, canonical form, content hash, line list, release archive (`.zbl`), setlists (`.zbs`). |
+| `design/guiDesign.md` | GUI design: numbered decisions D-nn, screen families, singer and leader mode, traceability, open questions. |
+| `design/gui/`, `design/ble/` | GUI assets and diagrams; BLE sequence diagrams. Each folder's README has the render command (PlantUML needs `-charset UTF-8` on Java 8). |
 | `design/prompts.md` | Dated record of the prompts that produced the specs. |
 | `design/security-privacy-assessment.md` | Secure-by-design and privacy-by-design principles, assessment of the design, findings and accepted risks. |
 | `scripts/check-design.sh` | Checks requirement IDs, cross-references and dependency versions across `design/`. |
