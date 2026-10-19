@@ -1,0 +1,69 @@
+@startuml seq-07-helper-code-delegate
+' Zangbundel BLE protocol, document v0.11, protocol 1.0 - sections 8.4, 9.4, 9.8, 10.12
+' Scenario 7: the leader makes a singer a delegate with a helper code; the delegate acts; revocation.
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-07-helper-code-delegate.puml
+
+title BLE 7 – Appoint a delegate with a helper code\nble-protocol.md v0.11, sections 8.4, 9.4, 9.8, 10.12
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+actor "Leader (person)" as U
+participant "Leader app" as L
+participant "Air\n(broadcast)" as AIR
+participant "Helper's app\n(registered singer)" as D
+actor "Helper (person)" as H
+
+== Appoint ==
+U -> L : drawer → "Hulpleider toevoegen"  [guiDesign D-61, D-73]
+L -> L : hc = 4 random digits, valid 120 s or until used,\none code at a time  [10.12]
+L -> U : show hc large on the leader's screen
+U -> H : reads the code aloud / shows the screen (out of band)
+H -> D : songlist sheet → "Hulpleider worden", types hc  [guiDesign D-73]
+D -> L : connect; write Control 0009 = 0x01 ‖ seal_ek{tok, cid, op 9, hc, gid}  [9.8, 8.4]
+L -> L : open with ek; token known? hc equals the valid code?
+alt hc correct
+  L -> L : add sid to dlg, consume hc, seq + 1, ts ↑, sign  [9.4]
+  L --> D : write response: success
+  L -> AIR : beacon seq; burst: new state record  [7.4]
+  AIR --> D : state frames → verified: own sid is in dlg  [FR-LEAD-45]
+  D -> H : banner "De leider heeft je hulpleider gemaakt";\ntab "Leiden" appears  [guiDesign D-46]
+  D -> L : Transfer 0005 = 0x01 ‖ seal{doc 8, tok, gid}  [9.7]
+  L --> D : Data: HEADER enc 2, DATA (sealed to xk), END → request list with names
+  L -> U : drawer lists the delegate by display name, with "Intrekken"  [guiDesign D-73]
+else hc wrong, expired, or locked
+  L --> D : error 0x8E; wrong-try counter + 1  [8.3]
+  D -> H : "Code onjuist of verlopen"
+  note right of L : After 3 wrong tries, or 120 s, the code is dead:\nevery further op 9 gets 0x8E until the leader\nshows a new code. One try per 2 s per connection.
+end
+D -> L : disconnect (or keep "stay" if granted)  [8.2, 10.8]
+
+== Act as delegate ==
+H -> D : "Nu zingen" on a song in the Leiden tab  [guiDesign D-46]
+D -> L : connect; Control {tok, cid, op 1 push song, ref} sealed  [9.8]
+L -> L : apply as if done on the leader's screen; seq + 1; sign  [FR-LEAD-43]
+L -> AIR : beacon seq; burst: state + song
+L -> U : leader's page updates: "wordt gezongen"  [FR-LEAD-45]
+alt leader unreachable
+  D -> H : "De leider is niet bereikbaar, probeer het straks opnieuw";\nnot queued  [FR-LEAD-43, guiDesign D-46]
+end
+
+== Revoke (leader only) ==
+U -> L : "Intrekken" next to the delegate  [FR-LEAD-44]
+L -> L : remove sid from dlg, seq + 1, sign  [10.12]
+L -> AIR : burst: new state
+AIR --> D : state → own sid no longer in dlg
+D -> H : banner; tab "Leiden" disappears  [FR-LEAD-45]
+D -> L : (any later Control op 1–8) → 0x89 not a delegate  [8.3]
+note over L, D : A delegate that leaves (op 10) is removed from dlg by the leave itself.\nThe role survives a temporary loss of contact: dlg is in the signed state  [FR-LEAD-46].
+@enduml

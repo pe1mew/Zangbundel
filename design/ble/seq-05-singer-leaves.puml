@@ -3,7 +3,7 @@
 ' Scenario 5: a singer leaves the gathering (voluntarily, or by walking out of range).
 ' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-05-singer-leaves.puml
 
-title BLE 5 – A singer leaves the gathering\nble-protocol.md v0.10, sections 3.3, 10.9, 10.11
+title BLE 5 – A singer leaves the gathering\nble-protocol.md v0.11, sections 3.3, 9.8, 10.9, 10.11
 
 skinparam shadowing false
 skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
@@ -27,11 +27,19 @@ alt the singer leaves on purpose  [FR-GATH-07]
   U -> S : songlist sheet → "Kampvuur verlaten" (or system back)  [guiDesign D-34]
   S -> U : confirm: "Je ziet de liedteksten dan niet meer" → Verlaten / Blijven
   U -> S : Verlaten
+  S -> L : connect; write Control 0009 = 0x01 ‖ seal_ek{tok, cid, op 10 leave, gid}  [9.8]
+  alt leader reached
+    L -> L : remove sid (and from dlg), invalidate tok,\nsingers − 1, seq + 1, sign, broadcast  [10.9]
+    L --> S : write response: success
+  else leader not reached within 2 s, or 0x80 / 0x88
+    S -> S : leave anyway; the leader's 10-minute rule catches up  [10.11]
+  end
+  S -> L : disconnect
   S -> S : stop scanning; discard every document received\nin this gathering (song, setlist, message, reqstat)  [FR-DATA-01, FR-DATA-06]
   S -> S : write the gathering memory: name, date, titles sung\n(no names, no device ids)  [FR-DATA-03, guiDesign D-49]
   S -> S : forget tok, sid, xk and the pinned pk
   S -> U : home screen  [guiDesign D-21]
-  note over S, L : No message goes to the leader: the protocol has no explicit "leave"\n(ble-protocol 10.9: the leader's count is an upper bound; an explicit leave\nis an open point there). The singer simply stops listening.
+  note over S, L : Explicit leave since protocol v0.11 (Control op 10): the count drops at once.\nA singer that walks away without it is handled by the 10-minute rule below.
 else the singer walks out of range (or Bluetooth is switched off)
   AIR --> S : …nothing from the gathering for 10 s…
   S -> S : state RECONNECTING  [3.3]
@@ -51,7 +59,7 @@ else the singer walks out of range (or Bluetooth is switched off)
   end
 end
 
-== Leader side, in both cases ==
+== Leader side, silent departure ==
 L -> L : a singer with no GATT activity for 10 min is removed from the count;\nthe beacon and state show the lower "singers" figure  [10.9, FR-GATH-12]
 L -> L : its token stays valid until the gathering ends;\na rejoin with the same sid returns the same token  [9.3]
 @enduml

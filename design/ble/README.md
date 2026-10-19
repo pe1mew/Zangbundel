@@ -1,6 +1,6 @@
 # BLE sequence diagrams
 
-Sequence diagrams of what happens on the air for the six main scenarios of `design/ble-protocol.md` (document v0.10, protocol 1.0), drawn in preparation of the technical design. Each diagram cites the protocol sections and FRD requirements it depicts, and the GUI decisions (`design/guiDesign.md` D-nn) at the points where a person acts or sees something. The protocol document is normative; a diagram that disagrees with it is wrong.
+Sequence diagrams of what happens on the air for the main scenarios of `design/ble-protocol.md` (document v0.11, protocol 1.0), drawn in preparation of the technical design. Each diagram cites the protocol sections and FRD requirements it depicts, and the GUI decisions (`design/guiDesign.md` D-nn) at the points where a person acts or sees something. The protocol document is normative; a diagram that disagrees with it is wrong.
 
 | File | Scenario | Protocol sections |
 |---|---|---|
@@ -10,6 +10,7 @@ Sequence diagrams of what happens on the air for the six main scenarios of `desi
 | `seq-04-missing-song-repair` | A singer misses frames: repair timer, random delay, Transfer of the missing byte ranges over GATT, backoff when the leader is busy | 7.6, 9.7, 10.4, 10.8 |
 | `seq-05-singer-leaves` | A singer leaves on purpose or walks out of range: local clean-up and memory, reconnecting, the 5-minute end; what the leader sees | 3.3, 10.9, 10.11 |
 | `seq-06-end-gathering` | The leader ends the gathering: final state and beacon, singers' clean-up, the 60-second window, key deletion | 9.4, 10.10, 10.11 |
+| `seq-07-helper-code-delegate` | The leader shows a helper code, the helper's app sends it, the delegate acts through the leader, the leader revokes | 8.4, 9.4, 9.8, 10.12 |
 
 Each scenario exists as `.puml` (source), `.svg` and `.png`. Render with PlantUML (the jar from any project; sequence diagrams need no Graphviz):
 
@@ -21,6 +22,6 @@ The `-charset UTF-8` flag matters on Java 8, which otherwise reads the files as 
 
 ## Findings while drawing
 
-- **No explicit leave.** The protocol has no message for a singer that leaves; the leader's singer count drops only after ten minutes without GATT activity (10.9), so the count during the evening is an upper bound. Scenario 5 shows this. Whether an explicit leave is worth a sealed write is a question for the protocol document.
+- **Explicit leave, since v0.11.** Drawing scenario 5 against v0.10 showed that the protocol had no message for a singer that leaves, so the leader's count only dropped after ten minutes without GATT activity (10.9). Protocol v0.11 added Control op 10: a leaving singer tells the leader, best effort within two seconds, and the count drops at once; silent departures are still caught by the ten-minute rule. Scenario 5 shows both.
 - **Join by QR skips Info.** Scenario 2 shows the two ways in side by side: from the list the key comes from the Info document and is checked against `gid`; from the QR code the key is pinned from the code and Info is never consulted (6.5).
-- **The helper code of guiDesign D-73 is not drawn.** The delegate appointment by code is not in the protocol yet (guiDesign Q22); the existing appoint-by-`dlg` flow is in the protocol document itself (10.12) and gets its diagram once Q22 is resolved.
+- **Helper code, since v0.11.** The delegate appointment by a four-digit code shown on the leader's screen (guiDesign D-73) is Control op 9 in protocol v0.11 (9.8, 10.12); scenario 7 draws it together with a delegate action and the revocation.

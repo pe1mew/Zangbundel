@@ -9,13 +9,13 @@
 | Date | 2026-10-19 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.9, `design/ble-protocol.md` v0.10 |
+| Depends on | `design/functional-requirements.md` v0.9, `design/ble-protocol.md` v0.11 |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft. Answers FRD open question Q4 (ChordPro). |
 | 0.2 | 2026-10-18 | Added section 12: the release archive (`.zbl`), its manifest, repository snapshots, release index, build and load procedures, validation codes A001–A103. Later sections renumbered (examples 13, traceability 14, open questions 15). `release_index` in `zangbundel.json`; `releases.json` in the layout. Q12–Q14. |
-| 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.10: FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. Section 13, setlists (`.zbs`), added as format 1.1 and archive 1.1: the setlist file, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104 (`design/guiDesign.md` D-59, Q18). Later sections renumbered (examples 14, traceability 15, open questions 16). |
+| 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.11 (v0.10 withdrew the download instruction, v0.11 added the helper code and the explicit leave; neither touches this format): FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. Section 13, setlists (`.zbs`), added as format 1.1 and archive 1.1: the setlist file, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104 (`design/guiDesign.md` D-59, Q18). Later sections renumbered (examples 14, traceability 15, open questions 16). |
 
 ---
 
