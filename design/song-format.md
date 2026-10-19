@@ -4,7 +4,7 @@
 |---|---|
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
-| Format version | 1.0 (draft) |
+| Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
 | Document version | 0.3 (draft) |
 | Date | 2026-10-19 |
 | Author | Remko Welling |
@@ -15,7 +15,7 @@
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft. Answers FRD open question Q4 (ChordPro). |
 | 0.2 | 2026-10-18 | Added section 12: the release archive (`.zbl`), its manifest, repository snapshots, release index, build and load procedures, validation codes A001–A103. Later sections renumbered (examples 13, traceability 14, open questions 15). `release_index` in `zangbundel.json`; `releases.json` in the layout. Q12–Q14. |
-| 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.10: FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. No change to the format. |
+| 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.10: FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. Section 13, setlists (`.zbs`), added as format 1.1 and archive 1.1: the setlist file, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104 (`design/guiDesign.md` D-59, Q18). Later sections renumbered (examples 14, traceability 15, open questions 16). |
 
 ---
 
@@ -441,7 +441,7 @@ Output: `L`, numbered from 1. Position `n` refers to `L[n]`. `pos` 0 means "no p
 
 ### 9.3 Worked example
 
-For the Dutch example in section 13.1 the list has 18 entries:
+For the Dutch example in section 14.1 the list has 18 entries:
 
 | n | Section (generated label) | Display text |
 |---|---|---|
@@ -464,7 +464,7 @@ For the Dutch example in section 13.1 the list has 18 entries:
 | 17 | Refrein | Vuur in de nacht, de dag is op de vlucht, |
 | 18 | Refrein | en de nacht zingt met ons mee. |
 
-The English example (section 13.2) has the same 18 lines once chords are removed, which is why its timing block numbers 1 to 18.
+The English example (section 14.2) has the same 18 lines once chords are removed, which is why its timing block numbers 1 to 18.
 
 ---
 
@@ -521,7 +521,7 @@ The `KARAOKE` flag in the beacon, the `Time` characteristic and the broadcast ti
 ### 10.4 Format versioning [NFR-MAINT-01]
 
 - `format_version` in `zangbundel.json` is `major.minor`. **Major** changes break the rules above (a new line type, a new canonicalisation, a changed line-list algorithm). **Minor** changes are additive: new directives, new meta names, new environments, new `zangbundel.json` fields. An app that implements major 1 reads any `1.x` library and ignores what it does not know.
-- This document defines **1.0**. The P2 timing directives are planned as **1.1** and the P3 chord grammar and notation as **1.2**; both are described here so maintainers can prepare, but a 1.0 app treats them under the ignore rules.
+- This document defines **1.0** and, with section 13 (setlists), **1.1**. The P2 timing directives are planned as **1.2** and the P3 chord grammar and notation as **1.3**; both are described here so maintainers can prepare, but a 1.0 app treats them under the ignore rules.
 - The app states the format versions it supports on the About screen, next to the app version [FR-GEN-07, NFR-MAINT-01].
 - Song files carry no version of their own. A song is parsed under the rules of its library's `format_version`; a song received over BLE without its library is parsed under the highest major the app supports, which is safe because of the ignore rules.
 
@@ -661,6 +661,7 @@ Importing from the git repository directly (clone or pull) remains allowed; whet
 | licence file | MUST | The file named by `license.file` in `zangbundel.json`, at that path. |
 | `songs/**/*.cho` | MUST (≥ 1) | Every song file of the revision that passes validation without a song-level error, **in canonical form** (section 8). The builder canonicalises; the app verifies each file's content hash against the manifest. |
 | `notation/**` | MAY | Notation attachments referenced by `{meta: notation …}` (section 10.3). |
+| `setlists/**/*.zbs` | MAY (archive 1.1) | Setlist files of the revision that pass validation (section 13), in canonical form, listed under `setlists` in the manifest. |
 | `README.md` | MAY | Shown nowhere; included so a human who unzips the file sees what it is. |
 | anything else | ignored | The app ignores other entries without a message, except that entries outside `songs/`, `notation/` and the root files above count towards the size limits only. |
 
@@ -681,6 +682,7 @@ Songs that failed validation at build time are **not** in the archive; the manif
 | `songs` | array | MUST | One entry per included song: `{ "path": "songs/nl/vuur-in-de-nacht.cho", "id": "vuur-in-de-nacht", "hash": "<32 lower-case hex characters>", "size": <bytes> }`. `hash` is the content hash (section 8.2) in hex. Sorted by `path`. |
 | `skipped` | array | MAY | Songs excluded at build time: `{ "path": …, "code": "S003", "message": "…" }`. |
 | `notation` | array | MAY | Included notation files: `{ "path": …, "sha256": "<64 hex>", "size": <bytes> }`. |
+| `setlists` | array | MAY (archive 1.1) | Included setlist files (section 13): `{ "path": "setlists/zomerkamp.zbs", "id": "zomerkamp", "title": "Zomerkamp", "songs": <count>, "sha256": "<64 hex>", "size": <bytes> }`, sorted by `path`. Absent when the library ships no setlists. |
 | `builder` | string | MAY | Name and version of the tool that built the archive, e.g. `zangbundel-release 1.0.0`. |
 | `previous` | object | MAY | `{ "version": …, "revision": … }` of the release before this one, so a "what changed" report can be made without the previous archive. |
 
@@ -788,6 +790,7 @@ Warnings (archive imported):
 | A101 | Archive larger than 16 MiB |
 | A102 | Repository snapshot without manifest: revision unknown, no update checks |
 | A103 | `notation` entry listed with a `sha256` that does not match (the file is dropped, the song stays) |
+| A104 | `setlists` entry listed with a `sha256` that does not match, or listed but missing (the setlist is dropped, the library stays; section 13.7) |
 
 ### 12.9 Security notes
 
@@ -798,15 +801,98 @@ Warnings (archive imported):
 
 ### 12.10 Archive format versioning
 
-`archive_version` follows the same rule as `format_version` (10.4): a **minor** bump adds fields or optional entries; a **major** bump changes the container rules, the manifest's MUST fields or the verification procedure. An app that implements major 1 reads any `1.x` archive and ignores what it does not know. This document defines **1.0**.
+`archive_version` follows the same rule as `format_version` (10.4): a **minor** bump adds fields or optional entries; a **major** bump changes the container rules, the manifest's MUST fields or the verification procedure. An app that implements major 1 reads any `1.x` archive and ignores what it does not know. This document defines **1.0** and **1.1**, which adds the optional `setlists` manifest field and the `setlists/` entries (section 13.7).
 
 ---
 
-## 13. Examples
+## 13. Setlists (`.zbs`)
+
+A **setlist** (*setlist*) is the ordered list of songs a leader prepares for an evening. The app keeps setlists on the leader's device, but a leader also writes them on a computer, a group shares them as files, and a library may ship them (`design/guiDesign.md` D-54, D-59). This section defines the file. It is **format 1.1**: a 1.0 app never looks under `setlists/` and is unaffected; a 1.1 app reads setlists from libraries that carry them and imports or exports the same file on its own.
+
+### 13.1 File
+
+- File name: `<setlist id>.zbs`; the id has song-id syntax (section 3.2) and MUST be unique among the setlists of a library. In a repository and an archive the files live under `setlists/`, any depth; the path carries no meaning.
+- Encoding and canonical form exactly as a song file (sections 5.1 and 8.1): UTF-8 without BOM, NFC, LF, no trailing whitespace, one final LF. The content hash of a setlist is the same construction as for a song (section 8.2) and is used only for the manifest.
+- Line types, in the manner of section 5.2: **blank** (ignored), **file comment** (first character `#`, ignored), **directive** (`{name}` or `{name: value}`, section 5.3), and **entry** (anything else).
+- Size: at most 64 KiB and at most 200 entries (SL103 above 200; the BLE setlist document and the lyric page are sized for an evening, not a songbook).
+
+### 13.2 Directives
+
+| Directive | Req. | Meaning |
+|---|---|---|
+| `{title: …}` | MUST | The setlist's name as shown; at most 60 characters. Exactly one, and it MUST come before the first entry. |
+| `{meta: id <id>}` | MUST | Equals the file name without `.zbs`. Exactly one. |
+| `{meta: description …}` | MAY | One line shown under the name. |
+| `{meta: language <tag>}` | MAY | BCP 47 tag of the evening's main language, for filtering; informational. |
+| any other directive | ignored | Section 10.1 applies: unknown directives are ignored and listed once as I001. |
+
+### 13.3 Entries
+
+```
+<library id>/<song id>
+<library id>/<song id>   # <title>
+? <title>
+```
+
+- A **song entry** names a song by its library id and song id, both in id syntax, separated by one `/`. Everything after the first run of whitespace followed by `#` is a comment, conventionally the title, and is ignored by the app: the title shown is always the one from the song file.
+- A **title-only entry** starts with `?` and a space and gives a title in free text, for a song the author knows but whose library they do not have, or that is in no library. The app keeps it as an unresolved entry and tries to match it by title against the installed libraries on import and whenever a library is added (section 13.5).
+- Order is sung order. The same song MAY appear more than once.
+- Anything else is a malformed entry (SL004).
+
+### 13.4 Example: `setlists/zomerkamp.zbs`
+
+```
+# Zomerkamp 2026 - avondprogramma, bijgehouden door de leiding
+{title: Zomerkamp}
+{meta: id zomerkamp}
+{meta: description Eerste avond, rond het grote vuur}
+{meta: language nl}
+
+zangbundel-bibliotheek/advocaatje                 # Advocaatje
+zangbundel-bibliotheek/hoog-laait-het-vuur        # Hoog laait het vuur
+zangbundel-bibliotheek/daar-was-laatst-een-meisje-loos
+zangbundel-voorbeeld/vuur-in-de-nacht             # Vuur in de nacht
+? Vader Jacob
+```
+
+### 13.5 Behaviour in the app
+
+- **Shipped with a library** [FR-LEAD-02]: every valid `setlists/*.zbs` of an installed library appears on the leader's *Setlists* screen under the library's name and colour, read-only; *Dupliceren* makes an editable copy owned by the device. When the library is updated, the shipped setlists follow the library; copies are untouched.
+- **Import from a file or URL**: the same parser; the setlist becomes a device-owned setlist. The report lists malformed lines and unresolved entries by line number.
+- **Resolution**: a song entry whose library is installed and holds the song is resolved; one whose library is not installed, or whose song id is unknown in that library, is kept as *niet gevonden* with its identifiers, and resolves itself when the library arrives. A title-only entry is matched case- and accent-insensitively against titles and sort titles of installed songs; a single match resolves it, several matches leave it unresolved with the candidates offered to the leader. Unresolved entries are shown in the setlist and skipped at the fire.
+- **Export**: the app writes the setlist in this format, canonical, with the title as comment on each song entry and `? <title>` for entries that were never resolved, so a file survives a round trip unchanged in meaning.
+- **At the start of a gathering** the setlist is copied into the gathering (`design/guiDesign.md` D-55); the file is not touched.
+- Setlists are never sent over BLE as files; the gathering's setlist goes out as the protocol's setlist document.
+
+### 13.6 Validation codes
+
+Setlist errors skip the setlist; the rest of the library imports. Warnings import it. The report fields are those of section 11.2.
+
+| Code | Level | Condition |
+|---|---|---|
+| SL001 | error | File is not valid UTF-8, or contains control characters other than LF, CR, tab |
+| SL002 | error | `{title}` or `{meta: id}` missing, empty, duplicated, or `{title}` after the first entry |
+| SL003 | error | `id` does not equal the file name, or duplicates another setlist in this library |
+| SL004 | error | Malformed entry line (not `<id>/<id>`, not `? <title>`) or malformed directive |
+| SL005 | error | No entries |
+| SL101 | warning | Song entry names this library but the song id does not exist in it |
+| SL102 | warning | File not in canonical form (as W001) |
+| SL103 | warning | More than 200 entries |
+| SL104 | warning | Title longer than 60 characters |
+| I004 | info | Song entry names another library (resolved only when that library is installed) |
+| I005 | info | Title-only entry |
+
+### 13.7 Archive
+
+A release archive (section 12) of a library at format 1.1 MAY include its valid setlists under `setlists/`, in canonical form, and then lists them in the manifest's `setlists` array (12.4) with path, id, title, song count, SHA-256 and size. Setlists that fail validation are left out and reported in the build like skipped songs. On loading, a listed setlist whose SHA-256 does not match is dropped with warning A104, the library is still imported. `archive_version` becomes `1.1` when the `setlists` field is present.
+
+---
+
+## 14. Examples
 
 Both examples are original texts written for this specification and released under CC0, so they can be copied into a test library. They are translations of each other and share a variant group. The Dutch file is a plain phase 1 song. The English file additionally carries chords (phase 3) and line timing (phase 2); a phase 1 app shows it exactly like the Dutch one, with English words.
 
-### 13.1 Dutch: `songs/nl/vuur-in-de-nacht.cho`
+### 14.1 Dutch: `songs/nl/vuur-in-de-nacht.cho`
 
 ```
 # Vuur in de nacht - voorbeeldlied bij design/song-format.md
@@ -854,7 +940,7 @@ dan blijft het lied nog in ons hoofd.
 
 What the app shows (Dutch UI): the title, then "Couplet 1" with four lines, "Refrein" with four lines set off, "Couplet 2", "Brug", and "Refrein" with the four chorus lines again. An English UI shows the same with "Verse 1", "Chorus", "Verse 2", "Bridge", "Chorus". The info screen shows lyricist, composer, melody, © 2026 Zangbundel-project, CC0-1.0, source and the tags "Kampvuur" and "Avond" (labels from `zangbundel.json`).
 
-### 13.2 English: `songs/en/fire-in-the-night.cho`
+### 14.2 English: `songs/en/fire-in-the-night.cho`
 
 ```
 # Fire in the Night - example song for design/song-format.md
@@ -935,7 +1021,7 @@ Notes on this file:
 
 ---
 
-## 14. Requirements traceability
+## 15. Requirements traceability
 
 | Requirement | Where satisfied |
 |---|---|
@@ -955,6 +1041,7 @@ Notes on this file:
 | FR-LIB-04 | Song metadata table (6.1): id, title, language, lyrics MUST; the rest SHOULD/MAY |
 | FR-LIB-05 | `zangbundel.json` fields (4.2) |
 | FR-LIB-06 | Ignore rules (10.1), P2 and P3 extensions (10.2, 10.3) |
+| FR-LEAD-02 | Setlist file, `setlists/` in repositories and archives, import, export and resolution (13) |
 | FR-LIB-07 | Validation levels, report and codes (11) |
 | FR-LIB-11 | "What changed" from ids and hashes (11.2) |
 | FR-LIB-17 | Revision in the import report (11.2) |
@@ -981,7 +1068,7 @@ Notes on this file:
 
 ---
 
-## 15. Open questions
+## 16. Open questions
 
 | # | Question | Impact |
 |---|---|---|

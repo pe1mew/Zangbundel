@@ -19,7 +19,7 @@
 | 0.6 | 2026-10-18 | Design principles secure by design and privacy by design, users under 18 (section 2.6). From `design/security-privacy-assessment.md` v0.1: FR-GATH-01, FR-SING-01, FR-DATA-03 amended; FR-GEN-08, FR-GATH-18, FR-DATA-08, NFR-PRIV-02, NFR-SEC-03 to 05 added; Q6 closed. |
 | 0.7 | 2026-10-18 | Joining by QR code, unforgeable because it carries the leader's key (FR-GATH-19 to 23); FR-GATH-18 amended; Q13. Assessment SP-04 resolution extended. |
 | 0.8 | 2026-10-18 | Q13 resolved: the join link is hosted on GitHub Pages from this repository; App Links verification prepared. No requirement changed. |
-| 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. |
+| 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. Same day: FR-LEAD-40 amended (delegates appointed with a helper code, no singer list; note on FR-GATH-12), Q5 closed (no hand-over in P1; FR-GATH-14 stays a MAY). |
 
 ---
 
@@ -233,11 +233,11 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 
 **FR-GATH-11** (MUST, P1) — If the singer device cannot find the gathering again within a configurable time (default: 5 minutes), it MUST treat the gathering as ended (FR-DATA-01 applies).
 
-**FR-GATH-12** (MUST, P1) — The leader MUST see the number of joined singers at all times and SHOULD be able to see a list of them by a display name chosen by each singer.
+**FR-GATH-12** (MUST, P1) — The leader MUST see the number of joined singers at all times and SHOULD be able to see a list of them by a display name chosen by each singer. (Note, v0.9: the GUI design deliberately does not implement the list, since singers are anonymous to the leader and delegates are appointed with a helper code, FR-LEAD-40; `design/guiDesign.md` D-73.)
 
 **FR-GATH-13** (SHOULD, P1) — If the leader's app is closed unexpectedly (crash, battery empty) and restarted within a configurable time, the app SHOULD offer to resume the same gathering with the same identifier, so singers reconnect automatically.
 
-**FR-GATH-14** (MAY, P1) — The leader MAY hand over the leader role to a joined singer, after which the roles are swapped and the gathering continues.
+**FR-GATH-14** (MAY, P1) — The leader MAY hand over the leader role to a joined singer, after which the roles are swapped and the gathering continues. (Not in P1, Q5 closed in v0.9: stop and restart instead.)
 
 **FR-GATH-15** (MUST, P1) — The gathering MUST keep running while the leader's screen is off or the app is in the background, within the limits the platform allows for BLE advertising. The app MUST warn the leader when the platform is likely to stop the beacon (e.g. battery saver mode).
 
@@ -337,7 +337,7 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 ### 8.4 Delegates
 
-**FR-LEAD-40** (MUST, P1, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role, chosen from the list of joined singers by display name, and MUST be able to revoke it at any time. The role ends automatically when the gathering ends or when the delegate leaves.
+**FR-LEAD-40** (MUST, P1, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role and MUST be able to revoke it at any time. The leader does not pick from a list of singers: the leader's app shows a short **helper code** (*hulpleidercode*) that the intended helper enters on their own phone, so that only a person standing next to the leader can become a delegate and the leader never has to identify singers. The role ends automatically when the gathering ends or when the delegate leaves. (Amended in v0.9, `design/guiDesign.md` D-73: no singer list in the leader app.)
 
 **FR-LEAD-41** (MUST, P1) — A delegate MUST see the same request list as the leader (FR-LEAD-10) and MUST be able to accept, decline and immediately push requests (FR-LEAD-11). The requester is informed of the outcome in the same way.
 
@@ -583,7 +583,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q2 | Must singers be able to see upcoming songs in the setlist, or only what has been sung? (FR-SING-03 assumes the leader can choose.) | Leader UI |
 | Q3 | Should the default library be a repository under the project's own control, and who maintains it? | Library governance, FR-LIB-02 |
 | Q4 | Do we adopt ChordPro as the song format, or define our own Markdown/YAML-based format? | Song format spec, P3 |
-| Q5 | Is leader hand-over (FR-GATH-14) needed in P1, e.g. when the leader's battery runs out? | Scope P1 |
+| Q5 | *Closed 2026-10-19 (v0.9):* not in P1. A leader who has to stop ends the gathering and another adult starts a new one from the same setlist (exported file or library setlist); singers rejoin. FR-GATH-14 stays a MAY for a later phase (`design/guiDesign.md` D-72). | Resolved |
 | Q6 | *Closed 2026-10-18 (assessment SP-02):* the gathering memory holds no names on either side; titles, date and count only (FR-DATA-03 v0.6). | Resolved |
 | Q7 | Minimum Android version and whether a tablet layout is in scope for P1. | Architecture |
 | Q8 | Which languages beyond NL and EN are planned, and do we need right-to-left support? | Localisation |
