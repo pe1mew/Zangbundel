@@ -4,15 +4,16 @@
 |---|---|
 | Document | Assessment of the design against the project's security and privacy principles |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.1 |
-| Date | 2026-10-18 |
+| Document version | 0.3 |
+| Date | 2026-10-19 |
 | Author | Remko Welling |
-| Status | Assessment of the design as of FRD v0.5, BLE protocol v0.5, song format v0.2, docs/RUNBOOK.md; the changes it led to are in FRD v0.6 and BLE v0.6 |
+| Status | Assessment of the design as of FRD v0.5, BLE protocol v0.5, song format v0.2, docs/RUNBOOK.md; the changes it led to are in FRD v0.6 and BLE v0.6. v0.3 assesses the opt-in campfire statistics (`design/guiDesign.md` D-60) against FRD v0.8; decided export only without a server, so no requirement or policy changed |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-18 | First assessment, before any code exists. |
 | 0.2 | 2026-10-18 | SP-04 resolution extended: joining by QR code that carries the leader's public key (FR-GATH-19 to 23, BLE 6.5); QR-only mode recommended for young groups. |
+| 0.3 | 2026-10-19 | SP-16: opt-in campfire statistics (`design/guiDesign.md` D-60, Q19): the data set item by item with the anonymity argument, the small-group risk from song identifiers plus date, the developer's server as a network peer and why that route is not taken, the settings screen as consent surface, the export file. Owner's decision the same day: export only without a server, field tests with known groups under the test plan, a local statistics screen for the leader. Nothing in the FRD, the privacy policy or the Play declaration changes; "nothing reaches the developer" stays true. |
 
 ---
 
@@ -53,7 +54,7 @@ Following the seven foundational principles of privacy by design (Cavoukian) and
 
 ## 3. Scope of this assessment
 
-Assessed: FRD v0.5, BLE protocol v0.5, song format v0.2, `docs/RUNBOOK.md` (Google Play preparation), `docs/privacy-policy.md`. Not assessed: code (none exists), the architecture document (not yet written), field behaviour (no measurements yet).
+Assessed: FRD v0.5, BLE protocol v0.5, song format v0.2, `docs/RUNBOOK.md` (Google Play preparation), `docs/privacy-policy.md`. Not assessed: code (none exists), the architecture document (not yet written), field behaviour (no measurements yet). v0.3 additionally assesses `design/guiDesign.md` v0.6, decision D-60 (opt-in campfire statistics), against FRD v0.8 as it stands.
 
 ## 4. What the design already does well
 
@@ -87,10 +88,57 @@ Severity: **High** = violates a principle in a way a minor could be harmed by or
 | SP-09 | **Parsers run on hostile input.** The song parser, CBOR decoder, DEFLATE inflater and ZIP reader all process bytes from the air or from a library the user did not write. Limits exist; robustness is asserted, not tested. | S2, S5 | Medium | NFR-SEC-04 added: parsers are fuzz-tested and run with explicit size and time bounds; a parse failure of a received song is a failed reception, never a crash. |
 | SP-10 | **5-byte gathering ID fingerprint** can be forged with about 2^40 work (BLE Q4). | S4 | Low | Accepted for 1.0: singers pin the key at their first verified state, so forgery must precede the join, and the fingerprint of SP-04 exposes a swap to the leader and singers. Q4 stays open. |
 | SP-11 | **Join code not covered in the protocol's security table.** Since v0.5 it travels inside the sealed Join, which the table did not say; nor did the table address the fake-gathering case of SP-04. Documentation only. | — | Low | BLE 13 gained a row in v0.6 covering both. |
-| SP-12 | **Library download instruction from a leader** names a URL; singers confirm, but the host then sees each singer's IP address. | P6 | Low | Accepted: FR-LEAD-30 already requires confirmation; the prompt shows the host name. Privacy policy already says libraries are the only network peers. |
+| SP-12 | **Library download instruction from a leader** names a URL; singers confirm, but the host then sees each singer's IP address. | P6 | Low | Accepted: FR-LEAD-30 already requires confirmation; the prompt shows the host name. Privacy policy already says libraries are the only network peers. *2026-10-19: moot in phase 1, FR-LEAD-30 withdrawn in FRD v0.9 (`design/guiDesign.md` D-66); re-assess if the instruction returns.* |
 | SP-13 | **Delegates see requesters' display names** (document 8); a delegate may be a minor. | P8 | Low | Accepted: the leader appoints delegates; names are nicknames by SP-03; the queue is sealed and deleted at the end. Noted in the leader UI. |
 | SP-14 | **Store listing photos** of recognisable minors need consent. | P8 | Low | Already in RUNBOOK Step 8. |
 | SP-15 | **Supply chain** rules are implied (RUNBOOK Step 6) but not required. | S7 | Low | NFR-SEC-05 added: pinned dependency versions with verified checksums, dependency review per release. |
+| SP-16 | **Opt-in campfire statistics** (`design/guiDesign.md` D-60, Q19, 2026-10-19). As first proposed, with a submission to the developer's server, the option would add a transmission to the developer and a server, which S2, P2, FR-GEN-08 and NFR-PRIV-01 rule out and the privacy policy and the Play declaration deny; the local records and the export file must be shown to be anonymous without hashing. Assessed item by item in section 5.1. | S2, S3, P2, P6, P7, P8 | Medium with a server; Low without | **Decided 2026-10-19: export only, no server.** The leader's device keeps the opt-in records and exports them as a file by hand; field tests with known groups answer the protocol's open questions under the test plan; the leader gets a local statistics screen. No network peer is added, so FR-GEN-08's "nothing to the developer", NFR-PRIV-01, the privacy policy and the Play declaration stay true as they are. Conditions for the local records and the export file in section 5.1; the server conditions are kept there for the record. |
+
+### 5.1 SP-16 in detail: opt-in campfire statistics (D-60)
+
+D-60 describes records the leader's device keeps per campfire after a deliberate opt-in: the date; per pushed song its song and library identifiers, push time relative to the start of the gathering, duration until the next push, skipped or not; the number of joined singers over time; figures from the leader's own radio; the app, format and protocol versions. As first proposed they would stay on the leader's device until the leader exported them as a file or sent them once over HTTPS to the author's server. This section assesses the records, the two ways they could leave the phone, and the alternatives; the owner's decision and what follows from it are at the end. Nothing here changes a requirement.
+
+**The data set, item by item.** Every item is anonymous on its own and in combination, because nothing in a record names, numbers or pseudonymises a person, a phone or an installation:
+
+| Item | Content | Why it cannot point to a person |
+|---|---|---|
+| Date | The day of the gathering | Shared by every gathering held that day; no time of day. |
+| Pushed songs | Song and library identifiers, push time relative to the start of the gathering, time until the next push, skipped or not | Identifiers of published songs, not of people; relative times carry no clock. |
+| Singers | Number of joined singers over time | Counts only; no entry per singer, no join or leave event with a name or token. |
+| Radio | Advertising sets, frames repeated or repaired, connection attempts and failures, signal-strength bands | About the leader's own radio; counts and bands, no addresses. |
+| Versions | App, song format, protocol | Shared by every installation of that version. |
+
+Never recorded, by D-60: display names, the gathering name (free text that may name a person), device identifiers or addresses of any phone, anything hashed or pseudonymous, clock times finer than the day, location, anything about an individual singer. Singers' devices record nothing. No hashing anywhere, and that matters: a hash of a stable value is a pseudonym that can be matched later, and Google Play counts pseudonymous data as collected (RUNBOOK Step 4). The owner's instruction was anonymised *without* hashing for exactly this reason.
+
+Q19 asks whether the phone model and the Android version should be added, since the radio figures cannot be interpreted without knowing what radio produced them. Recommendation: the Android major version and the radio's capability flags (extended advertising supported, number of advertising sets), which are shared by millions of phones and are what the protocol's open questions (ble-protocol Q2, Q3) need; never the model name, which with the radio figures would narrow a record down to one phone type in one group.
+
+**Singling out a group.** The song identifiers of one evening plus the day form a pattern. Someone who already knows that a particular group sang those songs on that day can recognise the record as that group's. What they then learn is durations, counts and radio figures, and nothing about any person in the group: no location, no name, no device. The principles protect persons (P2, P8); a group's setlist with no location is not personal data. With export only, the record leaves the phone only when the leader hands the file to someone, and the leader knows who; the day can stay. If a copy ever went to a server, it should carry the ISO week instead of the day (Q19's rounding question), and the model name stays out in every case, as above. Residual risk: **Low**.
+
+**The server as a new network peer (route not taken).** Today the only network peers are libraries the user chose (FR-NET-03, SP-12), and S2 says "no server". A submission would add the developer's server. These are the conditions under which that would keep the principles true, kept here for the record because each is a cost of the server route and together they are why it was not taken:
+
+- *Transport.* HTTPS with certificate validation, the same rule as library downloads (NFR-SEC-01). One request, the record as its body, nothing else: no cookies, no installation identifier, and a fixed user-agent string, because Android's default one names the phone's model.
+- *Authentication of the server.* A fixed URL built into the app under a domain the developer controls; certificate validation binds the connection to that name. Certificate pinning is not needed: a wrong server could at worst receive an anonymous record, and the app would never fetch anything from the server, so the server could not feed the app data (S2).
+- *What the server sees that is not in the record.* The IP address of the leader's phone and the moment of submission. The server would have to store the record and nothing from the connection, with address and receive time not logged or dropped before storage.
+- *Retention and who can read it.* Records stored only on the developer's own server, readable by the developer alone, kept for as long as they serve to improve the app, never passed on as records, with published figures as aggregates. All of this written where a parent can find it and linked from the settings screen (D-60's fourth precondition).
+- *Secure defaults.* Off by default (S3); while off, no record and no network peer exist, and a fresh install is exactly as today.
+- *The documents.* FR-GEN-08, NFR-PRIV-01 and section 2.6 of the FRD, the privacy policy in both languages and the Play Data safety declaration all say today that nothing reaches the developer; every one of them would have to change before such a feature shipped, and the Play question (does an anonymous opt-in record count as collected?) has no settled answer (RUNBOOK Step 4).
+
+**The export file.** With export only, a record leaves the phone in one way: the leader chooses *Exporteren* on the settings screen and the platform share sheet hands a JSON or CSV file to an app the leader picks, such as mail or a file manager. The app does not choose the recipient, does not send anything itself and has no network peer for it; what the leader does with the file is the leader's own act, like exporting a gathering memory as text (FR-DATA-05). Conditions: the file holds exactly the data set above and nothing else (no file-level metadata that names the phone or the installation, no embedded device name in a filename), the content is shown before the share sheet opens so the leader sends what they saw (P6), and the export is a one-off action, never a scheduled or automatic one. A leader who mails the file to the author reaches the developer by hand, outside the app, which is what FR-GEN-08's "the app never sends anything to the developer" is about.
+
+**The local records and the local statistics screen.** Off by default (S3); while off, nothing is recorded. Switched on only in settings, under *Statistieken*, through a screen that lists the full data set in the language of FR-GEN-08 with the switch at the bottom, with no prompt, banner or nudge elsewhere (P7). Kept in app-private storage, not part of the gathering memory, deleted with "remove all data" (FR-DATA-07), and excluded from cloud backup with the rest of the gathering data (NFR-PRIV-02) so that a record never reaches a cloud account either. A local statistics screen shows the leader their own figures (*Dit seizoen: 14 kampvuren, 212 liederen, gemiddeld 23 zangers*) from the same records and never leaves the phone. The leader is an adult by role; no minor is asked to consent to anything, no singer's device records anything, and the singer's privacy screen has nothing new to say (P8). The opt-in is the leader's choice about their own anonymous records, not consent for personal data in the GDPR sense, because there is none; the app must not present it as such.
+
+**The routes weighed.** D-60's table lists the ways the developer's need (BLE reach, repair rates, battery; songs, durations, group sizes) can be met, and this assessment weighs them against the principles:
+
+1. **Export only, no server.** The opt-in records and *Exporteren* through the share sheet; no *Versturen*. Nothing leaves the phone except by the leader's own hand through an app the leader chose, the privacy policy's "no server of the developer" stays literally true, the Data safety declaration is untouched, and the figures reach the developer when a leader mails the file. Fewer, self-selected data points.
+2. **Field tests with known groups** on a logging test build under the test plan (FRD section 19): exactly the BLE and battery figures that ble-protocol Q2 and Q3 need, with context, from consenting adult leaders; nothing in the released app. No view of everyday use.
+3. **A local statistics screen** for the leader: the leader finds it useful and the author learns from the leaders they talk to; nothing leaves the phone. No aggregate for the author.
+4. **Platform signals that already exist**: Android vitals and installs in the Play Console (from users who opted into Google's diagnostics), release download counts of the library archives on GitHub, issue reports. No code in the app; coarse, nothing about songs or BLE.
+5. **A closed-test cohort** in the Play closed test the project runs anyway (RUNBOOK Step 7), with testers who agreed up front to share exports. Richer data from people who signed up for it; a test programme to run.
+6. **A server, with the FRD amended first.** The most data, at the price of the only developer-side network peer in the app, the conditions above, a public promise that has to be kept on a server, and the one change that would make "nothing reaches the developer" false, which is the sentence a parent reads first.
+
+Recommendation: routes 1 to 5 together cover the need, route 2 answers the protocol's open questions soonest since those need measured sessions rather than volunteers, and route 6 is not needed until the app has shipped without it and a real need for aggregate data has been shown.
+
+**Decision and resolution (owner, 2026-10-19).** Statistics are **export only with no server**: the leader's device keeps the opt-in records and the leader exports a file by hand; **field tests with known groups** are done under the test plan; the leader gets a **local statistics screen**. The server route is not adopted. Consequences: no network peer is added, FR-GEN-08's "the app never sends anything to the developer", NFR-PRIV-01, section 2.6, the privacy policy and the Play Data safety declaration stay true as they stand and are not changed by this finding. What remains to be done when the feature is designed into the FRD and the GUI: a requirement for the local records with the data set, the never-list, the opt-in screen, the export action and deletion with "remove all data"; a sentence in FR-GEN-08's privacy screen and in the privacy policy's "what stays on your phone" paragraph naming the local records, since they are something the phone keeps; the export conditions above in the GUI design; and the logging test build and its consent in the test plan. The finding closes when those exist; the server conditions stay on record in case the question ever returns.
 
 ## 6. Outcome
 
@@ -98,6 +146,7 @@ Severity: **High** = violates a principle in a way a minor could be harmed by or
 - **Four requirements amended** (FR-GATH-01, FR-SING-01, FR-DATA-03, FR-GATH-13 clarified by FR-DATA-08) and **eight added** (FR-GEN-08, FR-GATH-18, FR-DATA-08, NFR-PRIV-02, NFR-SEC-03, 04, 05) in FRD v0.6.
 - **Two risks accepted** with reasoning (SP-10, SP-12, SP-13 noted).
 - **The privacy policy and the Play Data safety declaration remain true** under the amended design; SP-05 and SP-08 were the two findings that could have falsified them after the fact.
+- **v0.3 (SP-16):** opt-in campfire statistics assessed and decided the same day: export only with no server, field tests with known groups, a local statistics screen. No requirement, policy or declaration changed; "nothing reaches the developer" stays true. Still to do when the feature is designed in: a requirement for the local records and the export, a sentence on the local records in FR-GEN-08's screen and in the privacy policy, the logging test build in the test plan.
 
 ## 7. Next assessment
 
@@ -106,6 +155,7 @@ Run this assessment again, and record it in the version table, when:
 1. the architecture document is written (check SP-05, SP-08, SP-09, SP-15 against concrete choices),
 2. the first App Bundle is built (check permissions in the manifest against S1, and the backup configuration against NFR-PRIV-02),
 3. karaoke (P2) or instrument (P3) features are designed, since each adds data and surface,
-4. anything is added that touches personal data, a permission, the network, or bytes received over the air.
+4. anything is added that touches personal data, a permission, the network, or bytes received over the air,
+5. the campfire statistics (SP-16) are designed into the FRD and the GUI: check the requirement, the opt-in screen and the export against the conditions of section 5.1, and if a server is ever reconsidered, re-run the server conditions there against the concrete design.
 
 Keep the finding IDs; a finding that reopens keeps its number with a new date.

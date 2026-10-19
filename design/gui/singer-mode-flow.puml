@@ -101,9 +101,6 @@ partition "Gathering screens (no image; night theme = white on black)" {
     if (leader ends the gathering?) then (yes)
       :Strip "beëindigd" + banner\n"De leider heeft het kampvuur beëindigd"  (D-37);
     endif
-    if (leader sends a download instruction?) then (yes)
-      :Banner "… bibliotheek downloaden (12 MB)"\n"Downloaden" / "Niet nu"  (D-37);
-    endif
     if (leader grants or revokes the delegate role?) then (yes)
       :Banner; tab "Leiden" appears or disappears  (D-46);
     endif

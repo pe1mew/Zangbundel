@@ -110,6 +110,8 @@ Two conditions keep the declaration true, and both are review items for the firs
 
 If an opt-in crash reporter is ever added, re-declare "Crash logs, optional, not shared" and add the service to the privacy policy.
 
+The opt-in campfire statistics (`design/guiDesign.md` D-60, assessment SP-16) were decided on 2026-10-19 as export only: the leader's device keeps them and the leader exports a file by hand, so the declaration is unaffected. If a submission to the developer's server is ever adopted after all, re-evaluate this declaration before the release that contains it. A submission is data transmitted off the device, which is Google's definition of "collect", and the record would be anonymous by design (no name, identifier, pseudonym, location or fine time); the open question is whether such an anonymous, opt-in record falls under any data type of the form at all, or counts as "App activity → App interactions, optional, not shared". Check the data types table of the Play Console help page cited above and the User Data policy's definition of personal and sensitive user data at that time. Export only, as a file through the share sheet, transmits nothing and needs no change.
+
 ### Step 5 — Permissions and policy declarations the first bundle will trigger
 
 | Permission / feature | Needed because | Play consequence |

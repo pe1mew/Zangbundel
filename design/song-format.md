@@ -5,16 +5,17 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.0 (draft) |
-| Document version | 0.2 (draft) |
-| Date | 2026-10-18 |
+| Document version | 0.3 (draft) |
+| Date | 2026-10-19 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.8, `design/ble-protocol.md` v0.9 |
+| Depends on | `design/functional-requirements.md` v0.9, `design/ble-protocol.md` v0.10 |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft. Answers FRD open question Q4 (ChordPro). |
 | 0.2 | 2026-10-18 | Added section 12: the release archive (`.zbl`), its manifest, repository snapshots, release index, build and load procedures, validation codes A001–A103. Later sections renumbered (examples 13, traceability 14, open questions 15). `release_index` in `zangbundel.json`; `releases.json` in the layout. Q12–Q14. |
+| 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.10: FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. No change to the format. |
 
 ---
 
@@ -630,7 +631,7 @@ A library is maintained in git, but the app does not need git to use it. A **rel
 |---|---|---|
 | **Download a library over HTTPS** without a git client in the app: the app fetches the archive of the latest release, or of a chosen release from the release index (12.6). | URL of an archive or of a release index | FR-LIB-10, FR-LIB-11, FR-LIB-13, FR-LIB-14 |
 | **Import from a local file** on a phone that never has internet: the archive arrives by USB, SD card, e-mail attachment, download at home. | Open a `.zbl` file from the file manager or share sheet | FR-LIB-16 |
-| **Leader's download instruction** names an archive URL, so singers with internet fetch exactly the revision the leader has. | BLE `download` document, `url` and `rev` | FR-LEAD-30, FR-LEAD-31 |
+| **Leader's download instruction** names an archive URL, so singers with internet fetch exactly the revision the leader has. *Not used in phase 1: FR-LEAD-30 and FR-LEAD-31 were withdrawn in FRD v0.9; the BLE `download` document is kept reserved.* | BLE `download` document, `url` and `rev` | FR-LEAD-30, FR-LEAD-31 (withdrawn) |
 | **Phone-to-phone without internet**: a device exports an installed library as an archive and hands it over with Quick Share or Bluetooth file transfer, the same route as the app itself (FRD section 8.5). | Export + system share sheet; the receiver opens the file | FR-LIB-16, FR-DIST-05 pattern |
 | **Reproducible record** of what a release contained, independent of the hosting platform. | Manifest with revision and per-song hashes | FR-LIB-17, FR-LIB-11 |
 
@@ -756,7 +757,7 @@ Whether the archive came from a URL, a file or the share sheet, the app proceeds
 
 **Update check** [FR-LIB-13]: fetch the release index (HTTP conditional request with `ETag`/`If-None-Match` so an unchanged index costs nothing), compare the newest `revision` with the installed one, and offer the download with its `size` [FR-NET-04]. Verify the downloaded bytes against `sha256` from the index before step 1.
 
-**Leader's download instruction** [FR-LEAD-30]: the BLE `download` document's `url` MAY be an archive URL or a release index URL; `rev` is the manifest `revision`. A singer that already has that revision installed reports "up to date" and downloads nothing.
+**Leader's download instruction** [FR-LEAD-30, withdrawn in FRD v0.9; reserved for a later phase]: should the BLE `download` document be used, its `url` MAY be an archive URL or a release index URL; `rev` is the manifest `revision`. A singer that already has that revision installed reports "up to date" and downloads nothing. Phase 1 apps do not send or act on it.
 
 **Export** (SHOULD): the app can re-create a release archive of an installed library from its stored canonical files and manifest, for sharing with a nearby phone through the system share sheet. An exported archive is byte-identical to the original when the original was a release archive; a snapshot exports with a manifest whose `revision` is the snapshot id and `source.repository` is the recorded URL or empty.
 
@@ -945,7 +946,7 @@ Notes on this file:
 | FR-LIB-14 | Archive and index over plain HTTPS (12.6) |
 | FR-LIB-15 | Atomic install of an archive (12.7 step 6) |
 | FR-LIB-16 | Archive from a local file; repository snapshot (12.1, 12.5) |
-| FR-LEAD-30, FR-LEAD-31 | Download instruction with archive URL and revision (12.7) |
+| FR-LEAD-30, FR-LEAD-31 (withdrawn, FRD v0.9) | Download instruction with archive URL and revision (12.7), reserved, not used in phase 1 |
 | FR-NET-04 | Archive size from the index before download (12.7) |
 | NFR-SEC-01 (archives) | Container limits, hash verification, zip-slip and bomb guards (12.2, 12.8, 12.9) |
 | FR-LANG-07 | `{sorttitle}` and article rule (6.1) |

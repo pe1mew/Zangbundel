@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.9 (draft) |
-| Date | 2026-10-18 |
+| Document version | 0.10 (draft) |
+| Date | 2026-10-19 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.8 |
+| Depends on | `design/functional-requirements.md` v0.9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -22,6 +22,7 @@
 | 0.7 | 2026-10-18 | Join QR code (section 6.5): payload with the leader's public key, join flow with key pinned from the code, QR-only joining. Depends on FRD v0.7. No change to what goes over the air. |
 | 0.8 | 2026-10-18 | 6.5: link host is GitHub Pages (`pe1mew.github.io/Zangbundel/j`), scheme form `zangbundel://j/<payload>`, browser step with `intent://` button described. Q16 resolved. Depends on FRD v0.8. |
 | 0.9 | 2026-10-18 | 6.5: canonical link carries the trailing slash (`/Zangbundel/j/#…`); Pages site verified live. |
+| 0.10 | 2026-10-19 | Depends on FRD v0.9, which withdraws FR-LEAD-30 and 31 (no library download instruction in phase 1, `design/guiDesign.md` D-66). The `download` document (6) and the `libs` fields in Info and Join stay defined but are reserved: phase 1 apps do not send them and ignore them when received. No wire change. |
 
 ---
 
@@ -58,7 +59,7 @@ In scope: everything that travels over the air during a gathering. Out of scope:
 | At least 25, ideally 50 singers; graceful refusal beyond capacity | FR-BLE-10 |
 | Optional relay through singer devices | FR-BLE-11 |
 | Send identifier first, lyrics only to singers that lack the song | FR-BLE-12 |
-| Leader text messages, download instructions, setlist, requests and their status | FR-BLE-06, FR-BLE-13, FR-LEAD-30, section 11 FRD |
+| Leader text messages, setlist, requests and their status (download instructions reserved, FR-LEAD-30 withdrawn in FRD v0.9) | FR-BLE-06, FR-BLE-13, section 11 FRD |
 | **Leader-to-singer information goes out by broadcast, repeated; connections only to register, request, delegate or recover** | **FR-BLE-15, FR-BLE-16** |
 | Leader position for "follow the leader" | FR-LEAD-05, FR-SING-12 |
 | Automatic reconnection; gathering treated as ended after a timeout | FR-GATH-10, FR-GATH-11 |
@@ -468,7 +469,7 @@ Join, Request and Control MUST use `0x01`. A Transfer request MUST use `0x01` wh
 | 8 | `relay` | bool | no | `true` on a relay. |
 | 9 | `hops` | uint | no | Distance from the leader; 0 on the leader. |
 | 10 | `app` | tstr | no | Leader app name and version [FR-GEN-07]. |
-| 11 | `libs` | array | no | Libraries the leader has: `[{1: lib, 2: rev, 3: url}]` [FR-LEAD-31]. |
+| 11 | `libs` | array | no | Reserved (FR-LEAD-31 withdrawn in FRD v0.9; not sent in phase 1): libraries the leader has: `[{1: lib, 2: rev, 3: url}]`. |
 | 12 | `nsets` | uint | no | Number of legacy data sets in use (0 in degraded mode). |
 | 13 | `ext` | bool | no | Extended carrier running. |
 | 14 | `ek` | bstr 32 | no | Leader's X25519 public key, informational copy; the authoritative value is in the signed state (9.4). |
@@ -488,7 +489,7 @@ The Join request is sealed to the leader's `ek` and the Join response to the sin
 | 3 | `sid` | bstr 8 | yes | Singer ID for this gathering. |
 | 4 | `name` | tstr ≤ 24 | no | Display name [FR-SING-01]. |
 | 5 | `code` | tstr ≤ 8 | no | Join code if `CODE` flag is set [FR-GATH-05]. |
-| 6 | `libs` | array | no | Libraries the singer has: `[{1: lib, 2: rev}]` [FR-LEAD-31]. |
+| 6 | `libs` | array | no | Reserved (FR-LEAD-31 withdrawn in FRD v0.9; not sent in phase 1): libraries the singer has: `[{1: lib, 2: rev}]`. |
 | 7 | `caps` | uint | no | Capability bits: bit 0 can act as relay; bit 1 receives extended advertising; bit 2 receives legacy data frames. |
 | 8 | `app` | tstr | no | Singer app version. |
 | 9 | `gid` | bstr 5 | yes | Gathering ID; binds the sealed payload (8.4). |
@@ -554,7 +555,7 @@ A song marked "do not redistribute" in the library [FR-LIB-22] is never broadcas
 
 **message** (document 5) [FR-BLE-13]: `{1: text (tstr ≤ 200), 2: ts (uint)}`.
 
-**download** (document 6) [FR-LEAD-30]: `{1: lib, 2: url (HTTPS), 3: branch, 4: rev, 5: size (uint, optional) [FR-NET-04]}`. `url` names the library's git repository, a release archive (`.zbl`, song-format section 12) or its release index; `rev` is the git revision, which for an archive is the manifest's `revision`. A singer that already has that revision installed downloads nothing.
+**download** (document 6) [FR-LEAD-30, withdrawn in FRD v0.9; reserved, not sent in phase 1, ignored when received]: `{1: lib, 2: url (HTTPS), 3: branch, 4: rev, 5: size (uint, optional) [FR-NET-04]}`. `url` names the library's git repository, a release archive (`.zbl`, song-format section 12) or its release index; `rev` is the git revision, which for an archive is the manifest's `revision`. A singer that already has that revision installed downloads nothing.
 
 **reqstat** (document 7) [FR-REQ-05]
 
@@ -899,7 +900,7 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | **FR-BLE-17** | Sealed payloads (8.4): `ek` in signed state (9.4), `xk` in Join (9.3), sealed Join, Request, Control, document 8; no personal data in the carousel (7.3, 13) |
 | FR-LEAD-05, FR-SING-12 | `pos` in beacon (6.1, 10.6) |
 | FR-LEAD-06 | Re-push (10.5), `cur` absent |
-| FR-LEAD-30, 31, 32 | `download` document, `libs` in Info/Join |
+| FR-LEAD-32 | Lyrics broadcast to every singer (7, 9.5); `download` document and `libs` in Info/Join reserved since FR-LEAD-30 and 31 were withdrawn (FRD v0.9) |
 | FR-LEAD-40, 45, 46 | `dlg` in State (9.4), `role` in Join (9.3), appoint/revoke (10.12) |
 | FR-LEAD-41 | Document 8 (9.5), Control ops 5–7 (9.8) |
 | FR-LEAD-42 | Control ops 1, 3, 4 and upload op 8 (9.8) |

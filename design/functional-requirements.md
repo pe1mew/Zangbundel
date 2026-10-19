@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.8 (draft) |
-| Date | 2026-10-18 |
+| Version | 0.9 (draft) |
+| Date | 2026-10-19 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -19,6 +19,7 @@
 | 0.6 | 2026-10-18 | Design principles secure by design and privacy by design, users under 18 (section 2.6). From `design/security-privacy-assessment.md` v0.1: FR-GATH-01, FR-SING-01, FR-DATA-03 amended; FR-GEN-08, FR-GATH-18, FR-DATA-08, NFR-PRIV-02, NFR-SEC-03 to 05 added; Q6 closed. |
 | 0.7 | 2026-10-18 | Joining by QR code, unforgeable because it carries the leader's key (FR-GATH-19 to 23); FR-GATH-18 amended; Q13. Assessment SP-04 resolution extended. |
 | 0.8 | 2026-10-18 | Q13 resolved: the join link is hosted on GitHub Pages from this repository; App Links verification prepared. No requirement changed. |
+| 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. |
 
 ---
 
@@ -174,7 +175,7 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 
 **FR-LIB-11** (MUST, P1) — The app MUST be able to update a locally stored library to the latest version of its configured branch/tag and MUST show what changed (songs added, changed, removed) after the update.
 
-**FR-LIB-12** (MUST, P1) — Import and update MUST be user-initiated or leader-directed (see FR-LEAD-30). The app MUST NOT download library data silently in the background without the user having enabled this.
+**FR-LIB-12** (MUST, P1) — Import and update MUST be user-initiated. The app MUST NOT download library data silently in the background without the user having enabled this. (Amended in v0.9: the leader-directed download of FR-LEAD-30 is withdrawn.)
 
 **FR-LIB-13** (SHOULD, P1) — The user SHOULD be able to enable automatic update checks when on Wi-Fi.
 
@@ -272,7 +273,7 @@ These are functional requirements on the behaviour the user experiences. The pro
 
 **FR-BLE-05** (MUST, P1) — Song data MUST be transferred in a compact form (text compression, chunking) suited to BLE throughput. A typical song (up to about 4 kB of text) MUST reach a singer within the time stated in FR-BLE-03.
 
-**FR-BLE-06** (MUST, P1) — The protocol MUST support messages from singers to the leader (requests, section 11) and from the leader to singers (current song, setlist, download instruction, gathering end, informational messages).
+**FR-BLE-06** (MUST, P1) — The protocol MUST support messages from singers to the leader (requests, section 11) and from the leader to singers (current song, setlist, gathering end, informational messages). (Amended in v0.9: the download instruction is withdrawn with FR-LEAD-30.)
 
 **FR-BLE-07** (MUST, P1) — The protocol MUST be versioned. A singer with an older protocol version MUST get a clear message ("update the app to join this gathering") instead of failing silently.
 
@@ -328,11 +329,11 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 ### 8.3 Directing library downloads
 
-**FR-LEAD-30** (MUST, P1) — The leader MUST be able to send an instruction to all singers to download or update a given library (repository URL, branch/tag and revision). On the singer device this shows as a prompt; it is only carried out after the singer confirms and only if the singer device has internet access.
+**FR-LEAD-30** (*Withdrawn* 2026-10-19 in v0.9; was MUST, P1) — The leader MUST be able to send an instruction to all singers to download or update a given library (repository URL, branch/tag and revision). On the singer device this shows as a prompt; it is only carried out after the singer confirms and only if the singer device has internet access. *Withdrawn:* the owner decided that singers receive what the leader pushes over BLE and ask for what is missing (`design/guiDesign.md` D-66); a download instruction may return in a later phase as a new requirement.
 
-**FR-LEAD-31** (SHOULD, P1) — The leader SHOULD be able to see which singers have the library at the same revision as the leader, so the leader knows whether pushing songs will be fast (FR-BLE-12).
+**FR-LEAD-31** (*Withdrawn* 2026-10-19 in v0.9; was SHOULD, P1) — The leader SHOULD be able to see which singers have the library at the same revision as the leader, so the leader knows whether pushing songs will be fast (FR-BLE-12). *Withdrawn:* without the download instruction there is nothing for the leader to act on, and showing who has what invites comparing phones (`design/guiDesign.md` D-64, D-66).
 
-**FR-LEAD-32** (MUST, P1) — Singers without internet MUST still be able to take part fully; the leader's download instruction is advisory and lyrics continue to be sent over BLE to singers that lack them.
+**FR-LEAD-32** (MUST, P1) — Singers without internet MUST be able to take part fully: lyrics are sent over BLE to every singer that lacks them, and no singer needs a library or a network to sing along. (Amended in v0.9: the reference to the advisory download instruction removed.)
 
 ### 8.4 Delegates
 
@@ -344,7 +345,7 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 **FR-LEAD-43** (MUST, P1) — Delegate actions take effect through the leader's device, which remains the single source of the gathering state. If the leader's device cannot be reached, the delegate's action MUST be refused with a clear message and MUST NOT be applied later without the delegate repeating it.
 
-**FR-LEAD-44** (MUST, P1, *leader only*) — Ending the gathering, changing the join code, appointing or revoking delegates, sending library download instructions and handing over the leader role remain leader-only. The delegate UI MUST NOT offer these actions.
+**FR-LEAD-44** (MUST, P1, *leader only*) — Ending the gathering, changing the join code, appointing or revoking delegates and handing over the leader role remain leader-only. The delegate UI MUST NOT offer these actions. (Amended in v0.9: library download instructions removed from the list with FR-LEAD-30.)
 
 **FR-LEAD-45** (MUST, P1) — A singer MUST be told when the leader makes them a delegate and when the role is revoked, and the leader MUST see at all times who the delegates are. Songs pushed and requests handled by a delegate appear on the leader's device as they happen.
 
@@ -616,7 +617,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Library (LIB) | 01–07, 10–12, 14, 15, 17, 20, 21, 23, 30, 31, 33 | 13, 16, 22, 32 | | |
 | Gathering (GATH) | 01–04, 06–12, 15, 16, 19, 20, 23 | 05, 13, 14, 17, 18, 21, 22 | | |
 | BLE (BLE) | 01–08, 10, 12–17 | 11 | | |
-| Leader (LEAD) | 01–04, 06, 10, 11, 30, 32, 40–45 | 05, 07, 12, 13, 31, 46 | | |
+| Leader (LEAD) | 01–04, 06, 10, 11, 32, 40–45 | 05, 07, 12, 13, 46 (30 and 31 withdrawn) | | |
 | Distribution (DIST) | 01–03, 06, 08, 09 | 04, 05 | 07 | |
 | Singer (SING) | 01–04, 10, 11, 13–15 | 12 | | |
 | Display (DISP) | 01, 03–07, 09, 10 | 02, 08, 11 | | |
