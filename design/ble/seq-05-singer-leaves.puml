@@ -1,0 +1,57 @@
+@startuml seq-05-singer-leaves
+' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 3.3, 10.9, 10.11
+' Scenario 5: a singer leaves the gathering (voluntarily, or by walking out of range).
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-05-singer-leaves.puml
+
+title BLE 5 – A singer leaves the gathering\nble-protocol.md v0.10, sections 3.3, 10.9, 10.11
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+actor "Singer (person)" as U
+participant "Singer app" as S
+participant "Air\n(broadcast)" as AIR
+participant "Leader app" as L
+
+alt the singer leaves on purpose  [FR-GATH-07]
+  U -> S : songlist sheet → "Kampvuur verlaten" (or system back)  [guiDesign D-34]
+  S -> U : confirm: "Je ziet de liedteksten dan niet meer" → Verlaten / Blijven
+  U -> S : Verlaten
+  S -> S : stop scanning; discard every document received\nin this gathering (song, setlist, message, reqstat)  [FR-DATA-01, FR-DATA-06]
+  S -> S : write the gathering memory: name, date, titles sung\n(no names, no device ids)  [FR-DATA-03, guiDesign D-49]
+  S -> S : forget tok, sid, xk and the pinned pk
+  S -> U : home screen  [guiDesign D-21]
+  note over S, L : No message goes to the leader: the protocol has no explicit "leave"\n(ble-protocol 10.9: the leader's count is an upper bound; an explicit leave\nis an open point there). The singer simply stops listening.
+else the singer walks out of range (or Bluetooth is switched off)
+  AIR --> S : …nothing from the gathering for 10 s…
+  S -> S : state RECONNECTING  [3.3]
+  S -> U : header strip "opnieuw verbinden…", lyrics stay as they are  [FR-GATH-10, guiDesign D-37]
+  alt beacon or frames with the same gid return within the set time (default 5 min)
+    AIR --> S : beacon {gid, seq}
+    S -> S : compare seq; the carousel delivers whatever was missed\n(normally no connection needed)  [10.9]
+    S -> U : header strip "verbonden"
+    opt the singer sends a request while reconnected
+      S -> L : connect, Join with the known sid → same tok, not counted twice  [9.3]
+    end
+  else nothing for 5 min  [FR-GATH-11]
+    S -> S : state ENDED: treat the gathering as ended  [10.11]
+    S -> U : header strip "beëindigd" + banner\n"Het kampvuur is niet meer te vinden"  [guiDesign D-37]
+    U -> S : "Terug naar start"
+    S -> S : discard documents, write the gathering memory,\ndiscard queued requests with a message  [FR-DATA-01, FR-REQ-03]
+  end
+end
+
+== Leader side, in both cases ==
+L -> L : a singer with no GATT activity for 10 min is removed from the count;\nthe beacon and state show the lower "singers" figure  [10.9, FR-GATH-12]
+L -> L : its token stays valid until the gathering ends;\na rejoin with the same sid returns the same token  [9.3]
+@enduml

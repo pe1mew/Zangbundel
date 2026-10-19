@@ -1,0 +1,72 @@
+@startuml seq-02-join-gathering
+' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 6.5, 7.5, 8.4, 9.2-9.4, 10.2
+' Scenario 2: a singer joins a gathering, from the list or by QR code.
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-02-join-gathering.puml
+
+title BLE 2 – Join a gathering (singer)\nble-protocol.md v0.10, sections 6.5, 7.5, 9.2–9.4, 10.2
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+actor "Singer (person)" as U
+participant "Singer app" as S
+participant "Air\n(broadcast)" as AIR
+participant "Leader app\n(GATT server)" as L
+
+== Discover and verify ==
+alt from the gathering list
+  AIR --> S : beacons {gid, seq, flags, name}, RSSI
+  S -> U : home screen: cards with name, signal, lock, fingerprint  [guiDesign D-22, D-36]
+  U -> S : tap a card (code dialog if CODE flag; display name on first join)  [D-26]
+  AIR --> S : info frames (doc 2) → {pk, name, …}
+  S -> S : verify SHA-256(pk)[0..5] == gid, pin pk  [9.2]
+else by QR code
+  U -> S : camera app opens the join link\n(payload: ver, gid, pk, code?, name?)  [6.5]
+  S -> S : verify SHA-256(pk)[0..5] == gid, pin pk from the code\n(Info is not consulted)
+  S -> U : joining screen "Kampvuur zoeken…"  [guiDesign D-35]
+  AIR --> S : beacon with that gid
+  note right of S : A beacon with the right gid whose state\ndoes not verify against pk is ignored;\nafter 60 s: "Ga dichter bij de leider staan".
+end
+AIR --> S : state frames (doc 1) = [body, sig]
+S -> S : verify sig with pinned pk; apply state\n(cur, title, docs manifest, dlg, rseq, ek)  [9.4]
+alt singer has a song with cur.hash in a local library
+  S -> S : use the local file, ignore song frames  [FR-BLE-12]
+else
+  AIR --> S : song frames (doc 3), collected and reassembled  [7.5]
+  S -> S : verify dh against the manifest and SHA-256(file) == cur.hash  [FR-BLE-04]
+end
+note over S : Already able to sing. Registration only\nadds the token and the head count.
+
+== Register ==
+S -> L : connect; request MTU; subscribe Data notifications  [8.2]
+alt beacon shows BUSY
+  S -> S : wait a random 0–2 s first  [10.8]
+end
+S -> L : write Join 0003 = 0x01 ‖ seal_ek{major, minor, sid, name?, code?, caps, app, gid, xk}  [9.3, 8.4]
+L -> L : open with ek; check version, code, capacity;\nstore sid, xk; count the singer
+S -> L : read Join 0003 → 0x01 ‖ seal_xk{result, tok, seq, max_pending, role?}
+alt result = 0 accepted
+  S -> S : keep tok for requests; singer is counted
+else result 1 wrong code / 3 version / 4 ended
+  S -> U : show the reason (msg)  [FR-BLE-07]
+else result 2 full / 5 try later
+  S -> S : keep listening, retry registration every 30–60 s in the background  [FR-BLE-10]
+end
+opt anything still incomplete (late joiner)
+  S -> L : write Transfer 0005 = 0x00 ‖ {doc, dv, hash?, ranges}  [9.7]
+  L --> S : Data 0006: HEADER, DATA…, END
+  S -> S : fill the same reassembly buffer, verify  [7.5]
+end
+S -> L : disconnect  [8.2]
+S -> U : singer mode: lyric view with the current song,\nheader strip name · fingerprint · verbonden  [guiDesign D-27, D-36]
+@enduml

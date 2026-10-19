@@ -1,0 +1,61 @@
+@startuml seq-06-end-gathering
+' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 9.4, 10.10, 10.11
+' Scenario 6: the leader ends the gathering.
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-06-end-gathering.puml
+
+title BLE 6 – End a gathering (leader)\nble-protocol.md v0.10, sections 9.4, 10.10, 10.11
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+actor "Leader (person)" as U
+participant "Leader app" as L
+participant "Air\n(broadcast)" as AIR
+participant "Singer apps" as S
+participant "Late or\nreconnecting singer" as S2
+
+U -> L : "Afsluiten" on the closing bar at the end of the setlist\n(or "Kampvuur beëindigen" in the drawer)  [guiDesign D-69, D-61]
+L -> U : confirm "Het kampvuur voor iedereen beëindigen?"  [FR-GATH-08]
+U -> L : Ja
+L -> L : state body: status = 1, flags ENDED, seq + 1, ts ↑; sign  [9.4, 10.10]
+L -> AIR : beacon with ENDED = 1 (within 100 ms)
+L -> AIR : burst: the final state record, 3 passes, then kept in the carousel
+opt "stay" connections (delegates)
+  L --> S : notify State 0004 with status = 1
+end
+
+par Singers in range
+  AIR --> S : beacon ENDED, or verified state with status = 1
+  S -> S : state ENDED  [3.3, 10.11]
+  S -> S : delete all documents received in this gathering  [FR-DATA-01, FR-DATA-06]
+  S -> S : write the gathering memory from the last verified setlist  [FR-DATA-03]
+  S -> S : header strip "beëindigd" + banner\n"De leider heeft het kampvuur beëindigd"; lyrics stay readable  [guiDesign D-37]
+  S -> S : "Terug naar start" → home screen
+else A singer out of range at that moment
+  S2 -> S2 : sees nothing; "opnieuw verbinden…" after 10 s
+  alt back in range within the 60 s window
+    AIR --> S2 : beacon ENDED → as the others
+  else back later, or never
+    S2 -> S2 : 5 min without the gathering → treated as ended;\nsame local effect  [FR-GATH-11, 10.11]
+  end
+end
+
+L -> L : during the 60 s: reject every GATT write with 0x88 "gathering has ended"  [8.3, 10.10]
+S2 -> L : (any late write) → 0x88
+L -> U : summary screen: name, date, time sung, songs sung,\nmaximum singers → "Terug naar start"  [guiDesign D-69]
+L -> L : write the leader's gathering memory with the participant count;\ndiscard requests, the gathering's setlist copy, connection data  [FR-DATA-03, FR-DATA-06]
+... 60 s after the final state ...
+L -> AIR : stop the beacon, all data sets and the extended set
+L -> L : stop the GATT server; delete the key pair (pk/sk, ek), the singer table,\ntokens and the resume data  [10.10, FR-DATA-08]
+note over L : A photographed QR code is useless from now on:\nthe key it names no longer exists  [6.5].
+@enduml

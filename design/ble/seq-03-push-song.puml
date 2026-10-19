@@ -1,0 +1,57 @@
+@startuml seq-03-push-song
+' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 7.4, 7.5, 9.4, 9.5, 10.3, 10.5
+' Scenario 3: the leader pushes a song to the singers ("Nu").
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-03-push-song.puml
+
+title BLE 3 – Push a song to the singers\nble-protocol.md v0.10, sections 7.4, 9.4, 9.5, 10.3, 10.5
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+actor "Leader (person)" as U
+participant "Leader app" as L
+participant "Air\n(broadcast)" as AIR
+participant "Singer A\n(has the library)" as SA
+participant "Singer B\n(no library)" as SB
+
+U -> L : "Nu" on the song's separator bar  [guiDesign D-56]
+L -> L : song document {ref{lib, song, hash}, file, lic}\nDEFLATE if it saves ≥ 10 %, frame it, dh/dv  [9.5]
+L -> L : state body: seq + 1, ts ↑, cur = ref, title,\ndocs[3] = {dh, enc, len}, pt; sign with sk  [9.4, 10.5]
+L -> AIR : beacon updated within 100 ms: seq, flags  [6.4, FR-BLE-03]
+L -> AIR : burst: every data set restarts at the changed documents;\nstate first, then 3 complete passes of the song  [7.4]
+opt a delegate holds a "stay" connection
+  L --> SA : notify State 0004 (if A is such a delegate)
+end
+L -> U : separator "wordt gezongen", previous one "gezongen",\nleader's own page scrolls to the song  [guiDesign D-56]
+
+par Singer A
+  AIR --> SA : beacon with new seq → expect a new state, start repair timer  [10.3]
+  AIR --> SA : state frames → verify sig, apply (ts newer)
+  SA -> SA : local library has cur.hash → use that file,\nignore song frames  [FR-BLE-12]
+  SA -> SA : lyric view scrolls to the song, orange bar 1 s,\nvibrate if enabled  [FR-SING-02, guiDesign D-43]
+else Singer B
+  AIR --> SB : beacon with new seq → start repair timer
+  AIR --> SB : state frames → verify sig, apply
+  SB -> SB : no file with cur.hash → show title, "ontvangen…"  [10.3]
+  AIR --> SB : song frames (doc 3): 16-byte legacy frames\nor ≤ 984-byte extended frames; bitmap of indices  [7.2, 7.5]
+  SB -> SB : group complete → verify dh and SHA-256(file) == cur.hash  [FR-BLE-04]
+  SB -> SB : show the lyrics; song added to the session page  [guiDesign D-47]
+end
+
+note over AIR : Typical delivery, 2 kB song, no loss:\n1 legacy set 12.5 s · 3 sets 4.2 s · extended 0.3 s  [7.7]\nTarget FR-BLE-03 is met by the burst; losses go to scenario 4.
+
+opt re-push for singers that report a failed transfer  [FR-LEAD-06]
+  U -> L : "Nu" again on the song being sung
+  L -> AIR : seq + 1 without changing the song: 3 more passes;\nsingers that already have it do nothing  [10.5]
+end
+@enduml

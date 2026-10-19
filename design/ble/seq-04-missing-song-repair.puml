@@ -1,0 +1,63 @@
+@startuml seq-04-missing-song-repair
+' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 7.6, 9.7, 10.4, 10.8
+' Scenario 4: a singer misses frames of the pushed song and repairs over GATT.
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-04-missing-song-repair.puml
+
+title BLE 4 – A singer misses (part of) a song: repair\nble-protocol.md v0.10, sections 7.6, 9.7, 10.4, 10.8
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+participant "Air\n(broadcast)" as AIR
+participant "Singer app" as S
+participant "Leader app\n(GATT server)" as L
+actor "Singer (person)" as U
+
+AIR --> S : beacon seq changed → new state expected;\nrepair timer for (doc 1) starts  [7.6]
+AIR --> S : state frames → verified, applied: cur.hash, docs[3], pt
+S -> S : no local file with cur.hash → collect song frames (doc 3, dv)\nrepair timer: min(1.5 × pt, 3 s) legacy · 1 s extended  [7.6]
+AIR --> S : song frames … some lost at the fire (distance, bodies, other radios)
+S -> U : title shown, "ontvangen…"  [10.3]
+
+alt the carousel completes the group before the timer expires
+  S -> S : verify dh and SHA-256(file) == cur.hash → show lyrics
+  note right of S : Normal case: the 3-pass burst covers typical loss;\nno connection is made  [7.4, 12.2]
+else timer expires with frames still missing  [FR-BLE-16]
+  S -> S : compute missing byte ranges of the framed document\nfrom the index bitmap (at most 32 ranges)
+  S -> S : wait random 0–400 ms (0–2 s while the beacon shows BUSY)  [10.8]
+  S -> L : connect; request MTU; subscribe Data 0006  [8.2]
+  alt leader at max_conn
+    L -> S : disconnect immediately
+    S -> S : retry with backoff 300 ms × 2…, cap 2 s, ±25 % jitter  [10.4]
+  else slot available
+    S -> L : write Transfer 0005 = 0x00 ‖ {doc 3, dv, hash = cur.hash, ranges}  [9.7]
+    alt leader still has that dv
+      L --> S : Data: 0x01 HEADER {dv, len, enc, dh, ranges}
+      L --> S : Data: 0x02 DATA chunks (MTU − 6 bytes each), in order
+      L --> S : Data: 0x03 END {count}
+      S -> S : bytes fill the same reassembly buffer as broadcast frames;\nverify dh and SHA-256(file) == cur.hash  [7.5, 9.7]
+      S -> U : show the lyrics
+    else dv gone (leader moved on) or bad range
+      L --> S : Data: 0x7F ERROR 0x86 (unknown version) / 0x8C (range)
+      S -> S : drop the group; the new state names the new song
+    end
+    opt a request is queued (singer was out of contact)  [10.7]
+      S -> L : write Request 0007 (sealed) on the same connection
+    end
+    S -> L : disconnect  [8.2]
+  end
+  note over S : While repairing the singer keeps listening:\nframes that arrive by broadcast shrink the ranges still needed.
+end
+
+note over S, L : A singer with the song in a local library never starts\na song repair timer. A singer browsing the library (not on\nthe lyric view) lets the carousel finish instead  [7.6].
+@enduml

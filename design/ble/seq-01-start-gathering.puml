@@ -1,0 +1,61 @@
+@startuml seq-01-start-gathering
+' Zangbundel BLE protocol, document v0.10, protocol 1.0 - section 10.1, 7.1, 7.4
+' Scenario 1: the leader starts a gathering.
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-01-start-gathering.puml
+
+title BLE 1 – Start a gathering (leader)\nble-protocol.md v0.10, sections 6, 7, 10.1
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam ArrowColor #13315C
+
+actor "Leader (person)" as U
+participant "Leader app" as L
+participant "BLE stack\n(leader phone)" as BLE
+participant "Air\n(singers in range)" as AIR
+
+U -> L : "Starten" on the gathering settings screen\n(name, join code or QR-only, setlist)  [guiDesign D-25]
+L -> BLE : scan, filter = Zangbundel service UUID, ≥ 5 s  [FR-GATH-16]
+BLE --> L : beacons received (if any)
+alt a beacon with ENDED = 0 and RELAY = 0 is in range
+  L -> U : refuse: show the other gathering's name,\noffer "Meezingen"  [FR-GATH-16]
+  note right of L : No override. A beacon with ENDED = 1\ndoes not block.
+else no running gathering in range
+  L -> L : generate Ed25519 key pair (pk, sk)\ngid = SHA-256(pk)[0..5]
+  L -> L : generate X25519 key pair (ek, …) for sealed payloads  [8.4]
+  L -> L : seq = random u16, ts = 0, status = 0\npersist key, gid, name, code, seq, singer table  [FR-GATH-13]
+  L -> L : build documents: state (signed), info,\nsetlist (prepared or empty)  [9.2, 9.4, 9.5]
+  L -> BLE : start GATT server (service 7e2b0001-…)  [8.1]
+  L -> BLE : start beacon advertising set\n(connectable, 100–250 ms, high TX power)  [6]
+  BLE --> AIR : beacon {ver, gid, seq, flags, pos, name}, repeated
+  L -> BLE : open legacy data sets until the stack refuses\n(keep 1 for the beacon, use at most 3 for data)  [7.1]
+  BLE --> L : n data sets available (or TOO_MANY_ADVERTISERS)
+  opt extended advertising supported
+    L -> BLE : start 1 extended advertising set (≤ 1000 B frames)
+  end
+  L -> L : set BCAST / EXT flags accordingly  [FR-GATH-02]
+  alt no data set at all (iOS, single-instance Android)
+    L -> U : "limited capacity on this device"\n(degraded mode: singers fetch over GATT)  [7.8]
+  end
+  L -> BLE : start the carousel  [7.4]
+  loop every ~1 s per set, continuously
+    BLE --> AIR : set S: state, info, reqstat, message, state, …
+    BLE --> AIR : sets D1…Dn: setlist frames (song frames once a song is pushed)
+  end
+  L -> U : leader's page: setlist block, separators, QR button  [guiDesign D-55…D-57]
+  loop while leading, 2 s every 30 s  [FR-GATH-17]
+    L -> BLE : low-duty scan for other gatherings
+    BLE --> L : beacon with another gid, ENDED = 0?
+    L -> U : drawer row "Ander kampvuur in de buurt" (information only)  [guiDesign D-68]
+  end
+end
+@enduml
