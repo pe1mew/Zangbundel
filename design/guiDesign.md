@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.7 (draft) |
-| Date | 2026-10-19 |
+| Document version | 0.8 (draft) |
+| Date | 2026-10-20 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.9, `design/icon/` (app icon decided 2026-10-18) |
+| Depends on | `design/functional-requirements.md` v0.10, `design/icon/` (app icon decided 2026-10-18) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -19,6 +19,7 @@
 | 0.5 | 2026-10-19 | Section 6.2, the rest of singer mode: joining from a QR code, the fingerprint in the header strip, reconnecting and ended states, the leader's download instruction, the request tab and the free-text request, one heart and one star, the library while singing, variants, rotation, the new-song cue, display name, the song-info sheet, the delegate role as a singer sees it, room for karaoke. D-35 to D-47; D-47 fixes that a singer sees only the songs sent over BLE in the running session (D-29, D-30, D-31 adjusted). Q14–Q17; leader mode is still to be written (Q14). Flowchart `design/gui/singer-mode-flow.puml` with SVG and PNG renders. D-48, the design objective that the phone is not the attraction, placed at the head of section 2 with the table of features it holds back; D-38, D-39, D-40 and D-41 trimmed accordingly. D-49: pushed songs are removed from the singer's app when the gathering has ended; the setlist stays as a gathering memory with its own screen. |
 | 0.6 | 2026-10-19 | Section 6.3, leader mode, first part: preparation (libraries from a repository or a file, the combined songbook with a colour square per library, sorting, title filter, metadata and usage filters, reset; reading a song and adding it to the setlist being edited; setlists added, renamed, removed and edited), the QR button at any time, the leader's page with the setlist on top and the lyrics below it, the song separators with the *Nu* button that pushes the song, the leader's button column with the QR button. D-50 to D-59; D-59: setlists made on a computer, imported like a library (also shipped inside a library), exported as a file. Q14 partly resolved; the remaining leader screens are listed under Q14. Q18: the setlist file format for the song-format specification. D-60: opt-in, anonymous campfire statistics on the leader's device, shared only through the platform share sheet, no server (Q19 resolved), with the routes considered. D-61: the leader bar at the top of the leader's page that slides open into the drawer with live statistics and the gathering functions (requests, singers, join code, download instruction, export, end); D-58 amended so the ≡ sheet is about songs only. D-62: live statistics in the drawer and the season view in settings. |
 | 0.7 | 2026-10-19 | Section 6.3, leader mode, second part, from the owner's answers: the request tab (D-63), the singer list (D-64), checkbox selection with a counter in the setlist editor (D-54 amended), the song bar's *Wis* and language buttons (D-65), no download instruction for singers (D-66, Q21), resume after a crash (D-67), battery and other-gathering warnings (D-68), the closing bar at the end of the setlist (D-69), follow-the-leader at song level only (D-70, Q20). D-37 and D-61 adjusted. Q14 reduced to the join code at the fire and hand-over. Q21 resolved the same day: FRD v0.9 withdraws FR-LEAD-30 and 31 and rewords 32, so D-66 stands; this document now depends on FRD v0.9. Later the same day: D-71 (join code and QR-only fixed per gathering), D-72 (no hand-over in phase 1, FRD Q5 closed), D-73 (no singer list, delegates by helper code; D-64 superseded; FR-LEAD-40 amended), D-74 (unresolved setlist entries shown with their reason under the separator bar, counted in the block and before the start, never skipped silently), D-52 amended (library name shown on rows whose title occurs in more than one library), Q14 and Q18 resolved, Q22 for the protocol. |
+| 0.8 | 2026-10-20 | Section 8, languages, from the owner's decisions: two language layers (D-75), Dutch primary with English as the fallback (D-76), generated labels in the app language and untranslated library names (D-77), rules for every string enforced by the build (D-78), a glossary of fixed terms (D-79), adding a language, no further languages and no right-to-left for now (D-80). The delegate role is *assistent* in Dutch (Q15 resolved; D-46, D-61, D-73 updated). Traceability row for FR-LANG-06 corrected to D-41 as amended. Colour reference, traceability and open questions renumbered 9–11. Depends on FRD v0.10. |
 
 ---
 
@@ -34,7 +35,7 @@ Every decision is numbered **D-nn** so that later documents, code comments and r
 
 In scope: the welcome screen, the home screen and the two top-level modes, the configuration screens (first-use introduction, permission explanations, privacy screen, settings, library management, About), the gathering screens (lyric view and everything shown at the fire), the background image, themes and colours, typography, contrast, touch targets, system bars.
 
-Out of scope: the content of each screen's texts (localisation files), the architecture (which UI toolkit), and the app icon, which is decided in `design/icon/`.
+Out of scope: the wording of each screen's texts, which lives in the locale files (section 8 gives the rules they follow), the architecture (which UI toolkit), and the app icon, which is decided in `design/icon/`.
 
 ### 1.3 Conventions
 
@@ -231,7 +232,7 @@ Section 6.1 is the page the singer reads. This section is everything else a sing
 
 #### The delegate role
 
-**D-46 — A singer who becomes a delegate gets one more tab, and nothing of the leader's.** When the leader grants the delegate role (*hulpleider*, Q15) [FR-LEAD-40], a banner says *De leider heeft je hulpleider gemaakt*, the header strip shows *hulpleider* after the state, and the songlist sheet gains a fourth tab, *Leiden* [FR-LEAD-45]. That tab holds the leader's request list with the same grouping and count (title, requester name, time; accept, push now, decline) [FR-LEAD-41], and the setlist with *Volgende zingen*, *Toevoegen uit liedboek* and, on any song of the *Liedboek* tab, *Nu zingen* [FR-LEAD-42]. Every action goes through the leader's device; when it cannot be reached the action is refused at once with *De leider is niet bereikbaar, probeer het straks opnieuw* and is not retried later [FR-LEAD-43]. The tab has no ending, no join code, no delegates, no download instruction and no hand-over [FR-LEAD-44]. During *opnieuw verbinden…* the tab stays and its actions are disabled; the role survives the reconnection [FR-LEAD-46]. When the role is revoked or the gathering ends, a banner says so and the tab disappears [FR-LEAD-45]. The delegate's own lyric view, likes and requests are unchanged. *Why:* the delegate is a singer with extra buttons, not a second leader; keeping the extras in one tab keeps the lyric view identical for everyone and makes FR-LEAD-44 a matter of what the tab does not contain.
+**D-46 — A singer who becomes a delegate gets one more tab, and nothing of the leader's.** When the leader grants the delegate role (*assistent*, Q15 resolved) [FR-LEAD-40], a banner says *De leider heeft je assistent gemaakt*, the header strip shows *assistent* after the state, and the songlist sheet gains a fourth tab, *Leiden* [FR-LEAD-45]. That tab holds the leader's request list with the same grouping and count (title, requester name, time; accept, push now, decline) [FR-LEAD-41], and the setlist with *Volgende zingen*, *Toevoegen uit liedboek* and, on any song of the *Liedboek* tab, *Nu zingen* [FR-LEAD-42]. Every action goes through the leader's device; when it cannot be reached the action is refused at once with *De leider is niet bereikbaar, probeer het straks opnieuw* and is not retried later [FR-LEAD-43]. The tab has no ending, no join code, no delegates, no download instruction and no hand-over [FR-LEAD-44]. During *opnieuw verbinden…* the tab stays and its actions are disabled; the role survives the reconnection [FR-LEAD-46]. When the role is revoked or the gathering ends, a banner says so and the tab disappears [FR-LEAD-45]. The delegate's own lyric view, likes and requests are unchanged. *Why:* the delegate is a singer with extra buttons, not a second leader; keeping the extras in one tab keeps the lyric view identical for everyone and makes FR-LEAD-44 a matter of what the tab does not contain.
 
 #### After the gathering
 
@@ -285,7 +286,7 @@ The leader prepares at home, with light and time, and leads at the fire, in the 
 
 #### The leader's top bar
 
-**D-61 — A small bar at the top of the leader's page that slides open into a drawer.** In leader mode the header strip of D-55 is the closed state of the **leader bar** (*leiderbalk*): one line, 32 dp, with the gathering name, the fingerprint, the singer count and the time since the start (`Kampvuur 18 okt · appel-vuur · 12 zangers · 1:05`), plus a small handle in the middle and, when something needs attention, a badge at the right: the number of new requests, or a warning icon [FR-GATH-15, FR-GATH-17]. Dragging the handle down, or tapping the bar, slides the drawer open over the top part of the page; the lyrics stay visible below it and keep scrolling. The drawer holds, top to bottom: the **live statistics** of D-62; the **leader functions** as rows: *Verzoeken* with the pending count [FR-LEAD-10] (D-63), *Hulpleiders* with the delegates and *Hulpleider toevoegen* [FR-LEAD-40] (D-73; the singer count itself is in the bar and the statistics, there is no singer list), *Deelnamecode* (shows the code; nothing in QR-only mode; not changeable, D-71) [FR-GATH-05, FR-GATH-21], *Statistieken delen* (when opt-in is on, D-60; opens the share sheet), the information row *Ander kampvuur in de buurt* while one is detected (D-68), and last, set apart, *Kampvuur beëindigen* with the confirmation of FR-GATH-08 (D-69); and at the bottom edge a handle to slide it shut. There is no download-instruction row (D-66). A swipe up, a tap on the lyrics, or the start of a song by *Nu* closes it. The drawer is the leader's control view in the sense of FR-LEAD-04 for everything about the gathering; the ≡ sheet (D-58) keeps everything about songs. Singers have no such bar: their strip is one line and does nothing on a drag (D-20, D-48). *Why:* the owner's instruction: a small bar that sits there during the campfire and can be enlarged by sliding it open, as the one place where more leader functions appear over time. It leaves the lyrics alone until the leader pulls, and new functions get a row in the drawer instead of a new button on the page.
+**D-61 — A small bar at the top of the leader's page that slides open into a drawer.** In leader mode the header strip of D-55 is the closed state of the **leader bar** (*leiderbalk*): one line, 32 dp, with the gathering name, the fingerprint, the singer count and the time since the start (`Kampvuur 18 okt · appel-vuur · 12 zangers · 1:05`), plus a small handle in the middle and, when something needs attention, a badge at the right: the number of new requests, or a warning icon [FR-GATH-15, FR-GATH-17]. Dragging the handle down, or tapping the bar, slides the drawer open over the top part of the page; the lyrics stay visible below it and keep scrolling. The drawer holds, top to bottom: the **live statistics** of D-62; the **leader functions** as rows: *Verzoeken* with the pending count [FR-LEAD-10] (D-63), *Assistenten* with the delegates and *Assistent toevoegen* [FR-LEAD-40] (D-73; the singer count itself is in the bar and the statistics, there is no singer list), *Deelnamecode* (shows the code; nothing in QR-only mode; not changeable, D-71) [FR-GATH-05, FR-GATH-21], *Statistieken delen* (when opt-in is on, D-60; opens the share sheet), the information row *Ander kampvuur in de buurt* while one is detected (D-68), and last, set apart, *Kampvuur beëindigen* with the confirmation of FR-GATH-08 (D-69); and at the bottom edge a handle to slide it shut. There is no download-instruction row (D-66). A swipe up, a tap on the lyrics, or the start of a song by *Nu* closes it. The drawer is the leader's control view in the sense of FR-LEAD-04 for everything about the gathering; the ≡ sheet (D-58) keeps everything about songs. Singers have no such bar: their strip is one line and does nothing on a drag (D-20, D-48). *Why:* the owner's instruction: a small bar that sits there during the campfire and can be enlarged by sliding it open, as the one place where more leader functions appear over time. It leaves the lyrics alone until the leader pulls, and new functions get a row in the drawer instead of a new button on the page.
 
 **D-62 — Live statistics in the drawer, the season in settings.** The top of the drawer shows the campfire so far, in four large figures and one line: time since the start, songs sung, singers now with the evening's maximum in small print, and link quality as one word (*goed* / *matig* / *zwak*, from the repair and failure rates of the leader's radio) with the last song's duration below. The figures are computed live from the same records as D-60 and shown whether or not the opt-in is on; what the opt-in governs is whether anything is kept after the gathering ends. The season view, *Statistieken* in settings, is the local statistics screen: per campfire the date, songs, maximum singers and duration; totals for the season (*14 kampvuren, 212 liederen, gemiddeld 23 zangers*); the most and least sung songs from the leader's own usage metadata (D-52); the opt-in switch with its explanation; *Delen* (the share sheet: mail, WhatsApp, Signal, files, any installed app); and *Wissen*. It is reachable from settings and from the drawer's statistics block. Nothing in it names a person [NFR-PRIV-01]. *Why:* the leader wants to know, tonight, whether the fire is still reaching everyone and how long the evening has run; and over a season, what was sung. The author learns from files leaders choose to share.
 
@@ -321,7 +322,7 @@ The leader prepares at home, with light and time, and leads at the fire, in the 
 
 #### Delegates without a singer list
 
-**D-73 — There is no singer list; the leader sees a count, and delegates are appointed with a helper code.** *(Supersedes D-64.)* The leader's app never lists the joined singers: singers are anonymous to the leader by design, so there is nothing a list could be used for except comparing phones. The drawer (D-61) shows *12 zangers* as a figure, which is also what the statistics keep (D-60, D-62) [FR-GATH-12]. Delegates (*hulpleiders*) are appointed with a **helper code**: the drawer row *Hulpleider toevoegen* shows a four-digit code, valid for two minutes, large enough to read across the fire; the helper opens their songlist sheet, taps *Hulpleider worden* on the *Verzoeken* tab and types the code; the leader's device confirms and the helper's app gains the *Leiden* tab (D-46) [FR-LEAD-40, FR-LEAD-45]. Only someone standing with the leader can do this, which is the point. The drawer then lists the delegates, and only them, by display name with an *Intrekken* button each, so the leader always sees who the helpers are [FR-LEAD-45]; the role ends with the gathering or when the helper leaves. FR-GATH-12's SHOULD, a list of singers by display name, is deliberately not met. Requests still show the requester's display name in the request sheet (D-63), as FR-LEAD-10 requires; that is the one place a name appears. *Why:* the owner's decision, 2026-10-19: drop the singer list; only the number matters, and because singers are anonymous there is nothing to do with who is who. FR-LEAD-40 was amended in FRD v0.9 to this mechanism; BLE protocol v0.11 carries it as Control op 9 (Q22, resolved).
+**D-73 — There is no singer list; the leader sees a count, and delegates are appointed with a helper code.** *(Supersedes D-64.)* The leader's app never lists the joined singers: singers are anonymous to the leader by design, so there is nothing a list could be used for except comparing phones. The drawer (D-61) shows *12 zangers* as a figure, which is also what the statistics keep (D-60, D-62) [FR-GATH-12]. Delegates (*assistenten*) are appointed with a **helper code** (*assistentcode*): the drawer row *Assistent toevoegen* shows a four-digit code, valid for two minutes, large enough to read across the fire; the helper opens their songlist sheet, taps *Assistent worden* on the *Verzoeken* tab and types the code; the leader's device confirms and the helper's app gains the *Leiden* tab (D-46) [FR-LEAD-40, FR-LEAD-45]. Only someone standing with the leader can do this, which is the point. The drawer then lists the delegates, and only them, by display name with an *Intrekken* button each, so the leader always sees who the helpers are [FR-LEAD-45]; the role ends with the gathering or when the helper leaves. FR-GATH-12's SHOULD, a list of singers by display name, is deliberately not met. Requests still show the requester's display name in the request sheet (D-63), as FR-LEAD-10 requires; that is the one place a name appears. *Why:* the owner's decision, 2026-10-19: drop the singer list; only the number matters, and because singers are anonymous there is nothing to do with who is who. FR-LEAD-40 was amended in FRD v0.9 to this mechanism; BLE protocol v0.11 carries it as Control op 9 (Q22, resolved).
 
 **D-64 — Superseded by D-73.** The singer list described in v0.7 is not built.
 
@@ -350,7 +351,55 @@ Resolution happens by itself when the missing library is installed (D-59). *Why:
 
 ---
 
-## 8. Colour reference
+## 8. Languages
+
+The app speaks Dutch and English. This section fixes how its own texts are translated and kept in step; the texts themselves live in the locale files, not here. Decided by the owner on 2026-10-20.
+
+**D-75 — Two language layers that never mix.** The **app language** is the language of the app's own texts: buttons, labels, messages, the privacy screen. The project translates it. The **song language** is the language of a song's words, set per song file by its `{meta: language …}` tag [FR-LANG-05]; the app never translates a song, and a Dutch app shows an English song unchanged and the reverse [FR-LANG-04]. A song's translation is a separate song file in the same variant group, switched to from the song-info sheet (D-41) or pushed by the leader with the song bar's language button (D-65) [FR-LANG-06]. Nothing language-dependent travels over Bluetooth: only identifiers, hashes and codes, and every phone renders its own labels, so a Dutch leader and an English singer each read their own app language at the same fire. Free text, such as the gathering name or a typed request, arrives exactly as typed. *Why:* the lyrics belong to the libraries and their licences; the app's job is to frame them in the reader's language.
+
+**D-76 — Dutch is the primary language; English is the fallback.** Every string is written and reviewed in Dutch first; the Dutch UI terms in this document are its source text [FR-LANG-01]. English is complete as well and is the **fallback**: a phone set to a language the app does not support shows English. On Android this means `values/strings.xml` holds English and `values-nl/strings.xml` Dutch; a phone set to Flemish (`nl-BE`) resolves to Dutch by the platform's own rules. The app follows the phone's language by default [FR-LANG-03]; settings has *Taal* with *Automatisch*, *Nederlands* and *English*, and the platform's per-app language picker (Android 13 and later, through `locales_config.xml`) offers the same list. All texts sit in resource files, so a language is one file and no code change [FR-LANG-02]. iOS later uses the same string keys; whether one source is exported to both platforms is for the architecture document (NFR-PORT-01). *Why:* the owner's decision. Dutch is the language of the groups the app is made for; English is the language a German, French or Polish phone in a Dutch camp is most likely to understand.
+
+**D-77 — Generated labels follow the app language; library names are shown as written.** The section labels the app generates when a song file has none (*Couplet 1* / *Verse 1*, *Refrein* / *Chorus*, *Brug* / *Bridge*) follow the app language, also over a song in another language: an English app shows *Chorus* above a Dutch chorus. A label the song file writes itself is shown as written (song-format section 7.1; its Q5 resolved). A library's `name` and `description` are shown as written in its `zangbundel.json`, in the maintainer's language, and are not translatable (song-format Q8 resolved). Tag labels remain translatable per language through the `tags` map; a tag without a label in the app language shows its English label, and without that the tag itself. *Why:* the owner's decisions: labels are part of the app, the library's own description is the maintainer's words.
+
+**D-78 — Rules for every string, enforced by the build.**
+
+- A sentence is never built by joining pieces; it is one string with numbered placeholders (`%1$s`), so a translation can reorder them.
+- Counts use the platform's plural resources (*1 zanger*, *12 zangers*), never a hand-made "zanger(s)".
+- Dates, times and numbers go through the locale's formatters; lists sort with the locale's collation, dropping a leading article of the song's own language (song-format 6.1) [FR-LANG-07].
+- No text in images (D-09); icons carry no letters.
+- Layouts use start and end, never left and right, so a right-to-left language later needs no layout work.
+- Controls are sized for the Dutch text, which often runs longer than the English; where space runs out, the truncation rules of D-36 apply.
+- A string added or changed in one language is added or changed in every supported language in the same change. The release build fails on a missing translation (Android lint's missing-translation check set to error).
+- Before each release the app is run once in the platform's pseudo-locales (long text, and mirrored layout) to catch cut-off and hard-coded text.
+
+*Why:* each rule removes a class of translation bug that is cheap to prevent and expensive to find in the field.
+
+**D-79 — One translation per fixed term.** These terms are used everywhere they apply, in the app, the store listing and the privacy texts; the spec term is what the design documents call the thing.
+
+| Dutch (app) | English (app) | Spec term |
+|---|---|---|
+| *kampvuur* | campfire | gathering |
+| *kampvuurleider*, *leider* | leader | leader |
+| *zanger* | singer | singer |
+| *assistent* | assistant | delegate |
+| *assistentcode* | assistant code | helper code |
+| *deelnamecode* | join code | join code |
+| *verzoek* (*verzoeknummer*) | request | request |
+| *vind ik leuk* (hartje) | like | like |
+| *setlist* | setlist | setlist |
+| *liedboek* | songbook | combined songbook |
+| *bibliotheek* | library | library |
+| *couplet*, *refrein*, *brug* | verse, chorus, bridge | verse, chorus, bridge environments |
+| *herinnering* | memory | gathering memory |
+| *Nu*, *Wis*, *Afsluiten* | Now, Clear, Close | push, clear current song, end gathering |
+
+The Dutch term for the delegate role is *assistent* (Q15, resolved 2026-10-20). A new fixed term is added to this table before it appears in a string.
+
+**D-80 — Adding a language, and for now no other languages.** A new app language is: the strings file translated in full, the language added to `locales_config.xml`, the privacy texts (the in-app privacy screen of FR-GEN-08 is part of the strings; `docs/privacy-policy.md` gets the language too), the store listing (`docs/store-listing/<locale>.md`), and the join page (`docs/j/index.html`). Translations come as a pull request on one file per language and are reviewed by someone who speaks the language. Decided 2026-10-20: no languages beyond Dutch and English for now, and no right-to-left support (FRD Q8 closed); the start-and-end rule of D-78 keeps the door open at no cost. *Why:* the owner's decision; one file per language is what FR-LANG-02 promises, and the texts outside the app are where a new language is most easily forgotten.
+
+---
+
+## 9. Colour reference
 
 | Name | Value | Used for |
 |---|---|---|
@@ -367,7 +416,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 
 ---
 
-## 9. Requirements traceability
+## 10. Requirements traceability
 
 | Requirement | Where satisfied |
 |---|---|
@@ -383,7 +432,8 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | FR-GATH-13 | Resume card (D-22) |
 | FR-GATH-16 | Start refused while a gathering is listed (D-23) |
 | FR-GATH-23 | QR hint when nothing is in range (D-22) |
-| FR-LANG-01 | No text in the background image (D-09) |
+| FR-LANG-01, FR-LANG-02, FR-LANG-03 | Dutch primary, English fallback, all text in resource files, language setting and per-app picker (D-76, D-78); no text in the background image (D-09) |
+| FR-LANG-04, FR-LANG-05, FR-LANG-07 | Two language layers, generated labels in the app language, locale formatting and sorting (D-75, D-77, D-78) |
 | FR-DISP-01, FR-DISP-02, FR-DISP-03 | Themes, night default, scrim level (D-02, D-03, D-15) |
 | FR-DISP-05, FR-DISP-06, NFR-ACC-02 | Typography (D-18) |
 | FR-DISP-07, FR-DISP-08 | Toolbar (D-17) |
@@ -401,7 +451,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | FR-GATH-10, FR-GATH-11, FR-REQ-03 | Reconnecting, ended after the configured time, queued requests (D-37, D-38) |
 | FR-REQ-02, FR-REQ-05, FR-REQ-06, FR-REQ-07 | Request tab, free-text form, limit, +1 on others' requests (D-38, D-39) |
 | FR-LIB-30, FR-LIB-31, FR-LIB-32, FR-LIB-33 | Library tab with search, filters and favourites; browse state (D-39, D-40) |
-| FR-LANG-06 | Variant chip on the title (D-41) |
+| FR-LANG-06 | Variant switch in the song-info sheet (D-41, as amended by D-48), language button on the song bar (D-65) |
 | FR-DISP-04 | Rotation keeps the line (D-42) |
 | FR-SING-01, FR-SING-02 | Display name and vibration in settings, new-song cue (D-43, D-44) |
 | FR-LIB-20, FR-LIB-23, FR-SING-15 | Song-info sheet (D-45) |
@@ -430,7 +480,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 
 ---
 
-## 10. Open questions
+## 11. Open questions
 
 | # | Question | Impact |
 |---|---|---|
@@ -450,7 +500,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | Q22 | *Resolved 2026-10-19:* BLE protocol v0.11 specifies the helper code as Control op 9 with key `hc` (9.8, 10.12): four digits, 120 s, one code at a time, locked after three wrong tries, error `0x8E`; and adds Control op 10, an explicit leave, so the leader's count drops at once when a singer leaves on purpose (D-34). | Resolved |
 | Q20 | D-70 leaves FR-LEAD-05 (SHOULD: the leader indicates the current verse or line) unmet in phase 1; follow-the-leader follows song starts only. Accept for phase 1 and revisit with karaoke (phase 2), where the gathering clock gives the position for free? | D-70, FR-LEAD-05, FR-SING-12 |
 | Q21 | *Resolved 2026-10-19:* the owner chose to keep D-66. FRD v0.9 withdraws FR-LEAD-30 and FR-LEAD-31, rewords FR-LEAD-32, and drops the instruction from FR-LIB-12, FR-BLE-06 and FR-LEAD-44; BLE v0.10 keeps the `download` document and the `libs` fields reserved and unused; song-format v0.3 marks 12.1 and 12.7 accordingly. | Resolved |
-| Q15 | Dutch UI term for the delegate role: *hulpleider* (used provisionally in D-46), *gedelegeerde*, or *assistent*? | D-46, locale files |
+| Q15 | *Resolved 2026-10-20:* the Dutch term for the delegate role is *assistent*, and the helper code is the *assistentcode* (D-46, D-61, D-73, glossary D-79). | Resolved |
 | Q16 | Is the library better as the third tab of the songlist sheet (D-40, one place for everything that is not the lyrics) or as a full screen of its own, given the search keyboard and the filter chips? To be judged on a phone with the first prototype. | D-40 |
 | Q19 | *Resolved 2026-10-19:* export only, no server; field tests with known groups under the test plan; a local statistics screen for the leader (D-62). FR-GEN-08, NFR-PRIV-01, the privacy policy and the Play declaration stay as they are; the assessment (SP-16) records the local records and the export file. Still open within D-60: whether the export includes the phone model and Android version, and whether the date is rounded to the week. | D-60, D-62, assessment |
 | Q18 | *Resolved 2026-10-19:* the setlist file is specified in `design/song-format.md` section 13 (format 1.1): `.zbs`, ChordPro-like `{title}` and `{meta: id}` directives, one `<library id>/<song id>` per line with an optional `# title`, `? <title>` for a song by title only, `#` comments, canonical form as for songs, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104. D-59 follows it. | Resolved |

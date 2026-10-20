@@ -15,10 +15,11 @@ Sequence diagrams of what happens on the air for the main scenarios of `design/b
 Each scenario exists as `.puml` (source), `.svg` and `.png`. Render with PlantUML (the jar from any project; sequence diagrams need no Graphviz):
 
 ```bash
-java -jar plantuml.jar -charset UTF-8 -tsvg -tpng design/ble/seq-*.puml
+java -jar plantuml.jar -charset UTF-8 -tsvg design/ble/seq-*.puml
+java -jar plantuml.jar -charset UTF-8 -tpng design/ble/seq-*.puml
 ```
 
-The `-charset UTF-8` flag matters on Java 8, which otherwise reads the files as cp1252 and garbles the dashes and arrows.
+Two runs are needed: PlantUML honours only the last `-t` flag, so `-tsvg -tpng` in one command writes the PNG and silently leaves the SVG stale. The `-charset UTF-8` flag matters on Java 8, which otherwise reads the files as cp1252 and garbles the dashes and arrows.
 
 ## Findings while drawing
 

@@ -1,7 +1,7 @@
 @startuml seq-01-start-gathering
 ' Zangbundel BLE protocol, document v0.10, protocol 1.0 - section 10.1, 7.1, 7.4
 ' Scenario 1: the leader starts a gathering.
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-01-start-gathering.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-01-start-gathering.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title BLE 1 – Start a gathering (leader)\nble-protocol.md v0.10, sections 6, 7, 10.1
 

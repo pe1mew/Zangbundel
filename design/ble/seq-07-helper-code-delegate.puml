@@ -1,9 +1,9 @@
 @startuml seq-07-helper-code-delegate
 ' Zangbundel BLE protocol, document v0.11, protocol 1.0 - sections 8.4, 9.4, 9.8, 10.12
 ' Scenario 7: the leader makes a singer a delegate with a helper code; the delegate acts; revocation.
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-07-helper-code-delegate.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-07-helper-code-delegate.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
-title BLE 7 – Appoint a delegate with a helper code\nble-protocol.md v0.11, sections 8.4, 9.4, 9.8, 10.12
+title BLE 7 – Appoint a delegate (assistent) with a helper code\nble-protocol.md v0.12, sections 8.4, 9.4, 9.8, 10.12
 
 skinparam shadowing false
 skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
@@ -25,11 +25,11 @@ participant "Helper's app\n(registered singer)" as D
 actor "Helper (person)" as H
 
 == Appoint ==
-U -> L : drawer → "Hulpleider toevoegen"  [guiDesign D-61, D-73]
+U -> L : drawer → "Assistent toevoegen"  [guiDesign D-61, D-73]
 L -> L : hc = 4 random digits, valid 120 s or until used,\none code at a time  [10.12]
 L -> U : show hc large on the leader's screen
 U -> H : reads the code aloud / shows the screen (out of band)
-H -> D : songlist sheet → "Hulpleider worden", types hc  [guiDesign D-73]
+H -> D : songlist sheet → "Assistent worden", types hc (assistentcode)  [guiDesign D-73]
 D -> L : connect; write Control 0009 = 0x01 ‖ seal_ek{tok, cid, op 9, hc, gid}  [9.8, 8.4]
 L -> L : open with ek; token known? hc equals the valid code?
 alt hc correct
@@ -37,7 +37,7 @@ alt hc correct
   L --> D : write response: success
   L -> AIR : beacon seq; burst: new state record  [7.4]
   AIR --> D : state frames → verified: own sid is in dlg  [FR-LEAD-45]
-  D -> H : banner "De leider heeft je hulpleider gemaakt";\ntab "Leiden" appears  [guiDesign D-46]
+  D -> H : banner "De leider heeft je assistent gemaakt";\ntab "Leiden" appears  [guiDesign D-46]
   D -> L : Transfer 0005 = 0x01 ‖ seal{doc 8, tok, gid}  [9.7]
   L --> D : Data: HEADER enc 2, DATA (sealed to xk), END → request list with names
   L -> U : drawer lists the delegate by display name, with "Intrekken"  [guiDesign D-73]

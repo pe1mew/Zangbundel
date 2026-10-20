@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.9 (draft) |
-| Date | 2026-10-19 |
+| Version | 0.10 (draft) |
+| Date | 2026-10-20 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -20,6 +20,7 @@
 | 0.7 | 2026-10-18 | Joining by QR code, unforgeable because it carries the leader's key (FR-GATH-19 to 23); FR-GATH-18 amended; Q13. Assessment SP-04 resolution extended. |
 | 0.8 | 2026-10-18 | Q13 resolved: the join link is hosted on GitHub Pages from this repository; App Links verification prepared. No requirement changed. |
 | 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. Same day: FR-LEAD-40 amended (delegates appointed with a helper code, no singer list; note on FR-GATH-12), Q5 closed (no hand-over in P1; FR-GATH-14 stays a MAY). |
+| 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
 
@@ -337,7 +338,7 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 ### 8.4 Delegates
 
-**FR-LEAD-40** (MUST, P1, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role and MUST be able to revoke it at any time. The leader does not pick from a list of singers: the leader's app shows a short **helper code** (*hulpleidercode*) that the intended helper enters on their own phone, so that only a person standing next to the leader can become a delegate and the leader never has to identify singers. The role ends automatically when the gathering ends or when the delegate leaves. (Amended in v0.9, `design/guiDesign.md` D-73: no singer list in the leader app.)
+**FR-LEAD-40** (MUST, P1, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role and MUST be able to revoke it at any time. The leader does not pick from a list of singers: the leader's app shows a short **helper code** (*assistentcode*) that the intended helper enters on their own phone, so that only a person standing next to the leader can become a delegate and the leader never has to identify singers. The role ends automatically when the gathering ends or when the delegate leaves. (Amended in v0.9, `design/guiDesign.md` D-73: no singer list in the leader app.)
 
 **FR-LEAD-41** (MUST, P1) — A delegate MUST see the same request list as the leader (FR-LEAD-10) and MUST be able to accept, decline and immediately push requests (FR-LEAD-11). The requester is informed of the outcome in the same way.
 
@@ -586,7 +587,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q5 | *Closed 2026-10-19 (v0.9):* not in P1. A leader who has to stop ends the gathering and another adult starts a new one from the same setlist (exported file or library setlist); singers rejoin. FR-GATH-14 stays a MAY for a later phase (`design/guiDesign.md` D-72). | Resolved |
 | Q6 | *Closed 2026-10-18 (assessment SP-02):* the gathering memory holds no names on either side; titles, date and count only (FR-DATA-03 v0.6). | Resolved |
 | Q7 | Minimum Android version and whether a tablet layout is in scope for P1. | Architecture |
-| Q8 | Which languages beyond NL and EN are planned, and do we need right-to-left support? | Localisation |
+| Q8 | *Closed 2026-10-20 (v0.10):* none beyond Dutch and English for now, and no right-to-left support. Dutch is primary, English the fallback for unsupported phone languages; layouts use start and end so either can be added later without layout work (`design/guiDesign.md` D-76, D-78, D-80). | Resolved |
 | Q9 | Should FR-GATH-16 allow an override when the gathering in range is clearly abandoned (e.g. a forgotten phone still advertising), or is "ask that leader to end it" always acceptable? | FR-GATH-16, leader UI |
 | Q10 | Should singers see who pushed a song or handled their request (leader or which delegate), or is this detail only for the leader? | FR-LEAD-45, setlist display |
 | Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? | FR-DIST-05, constraint 12, architecture and release process |

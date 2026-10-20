@@ -1,7 +1,7 @@
 @startuml seq-02-join-gathering
 ' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 6.5, 7.5, 8.4, 9.2-9.4, 10.2
 ' Scenario 2: a singer joins a gathering, from the list or by QR code.
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-02-join-gathering.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-02-join-gathering.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title BLE 2 – Join a gathering (singer)\nble-protocol.md v0.10, sections 6.5, 7.5, 9.2–9.4, 10.2
 

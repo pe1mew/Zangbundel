@@ -5,17 +5,18 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.3 (draft) |
-| Date | 2026-10-19 |
+| Document version | 0.4 (draft) |
+| Date | 2026-10-20 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.9, `design/ble-protocol.md` v0.11 |
+| Depends on | `design/functional-requirements.md` v0.10, `design/ble-protocol.md` v0.12 |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-18 | First draft. Answers FRD open question Q4 (ChordPro). |
 | 0.2 | 2026-10-18 | Added section 12: the release archive (`.zbl`), its manifest, repository snapshots, release index, build and load procedures, validation codes A001–A103. Later sections renumbered (examples 13, traceability 14, open questions 15). `release_index` in `zangbundel.json`; `releases.json` in the layout. Q12–Q14. |
 | 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.11 (v0.10 withdrew the download instruction, v0.11 added the helper code and the explicit leave; neither touches this format): FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. Section 13, setlists (`.zbs`), added as format 1.1 and archive 1.1: the setlist file, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104 (`design/guiDesign.md` D-59, Q18). Later sections renumbered (examples 14, traceability 15, open questions 16). |
+| 0.4 | 2026-10-20 | Q5 resolved: generated section labels follow the app language, as 7.1 already says. Q8 resolved: a library's `name` and `description` are not localisable; tag labels stay localisable. Depends on FRD v0.10 and BLE v0.12. No change to the format (`design/guiDesign.md` D-77). |
 
 ---
 
@@ -1079,10 +1080,10 @@ Notes on this file:
 | Q2 | Timing is keyed by canonical line number (10.2). Inserting a lyric line shifts every later number, so timed songs need a renumbering tool or an inline alternative such as a timing directive immediately before each line. Which do maintainers prefer? | P2 format, maintainer tooling |
 | Q3 | Variant groups link songs within one library only. Should a group id be allowed to span libraries (`<library id>/<group>`), given that translations often come from different maintainers? | FR-LANG-06, library governance (FRD Q3) |
 | Q4 | Should the project define a fixed tag vocabulary (with the NL/EN labels in a shared file) so filters work across libraries, or is a per-library `tags` map enough? | FR-LIB-30 across libraries |
-| Q5 | Generated section labels follow the UI language (7.1). Should they follow the song language instead, so a Dutch song in an English UI still says "Refrein"? | Lyric view |
+| Q5 | *Resolved 2026-10-20:* generated section labels follow the app (UI) language, as 7.1 says; a Dutch song in an English app shows "Chorus". A label written in the song file is shown as written (`design/guiDesign.md` D-77). | Resolved |
 | Q6 | Per-syllable timing anchors syllables by code point offset (10.2). Is that robust enough for maintainers, or are explicit syllable markers in the lyrics (which P1 would have to strip) preferable? | P2 format |
 | Q7 | Should the hash cover only the parsed content (metadata values plus canonical lines) instead of the whole file, so comment-only edits do not invalidate singers' cached copies? Whole-file hashing is simpler and matches the BLE document; the cost is one extra transfer after such an edit. | BLE section 5; section 8.2 here |
-| Q8 | Should `name` and `description` in `zangbundel.json` be localisable (`{ "nl": …, "en": … }`) like tag labels? | Library screen |
+| Q8 | *Resolved 2026-10-20:* no. `name` and `description` stay plain strings in the maintainer's language and are shown as written; only tag labels are localisable (`design/guiDesign.md` D-77). | Resolved |
 | Q9 | Chord-only lines are not canonical lines (9.1). Should a P3 musician view be able to follow the leader to an instrumental line, which would require numbering them? | Line list stability between P1 and P3 |
 | Q10 | The default library for FR-LIB-02: should this repository host it (under `library/` or as a separate repository), and who maintains licence checks on contributions? | FRD Q3, release planning |
 | Q11 | The command-line validator (11.4): part of this repository, or a separate tool shared with library maintainers? | Architecture document |

@@ -85,6 +85,11 @@
 **Root cause**: PlantUML's default `PLANTUML_LIMIT_SIZE` is 4096 and it clips rather than failing.
 **Fix**: Render with `java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar …`, and compare the PNG dimensions with the SVG viewBox after every render; a PNG width of exactly 4096 is the symptom.
 
+### PlantUML writes only the last -t format (2026-10-20)
+**Problem**: `java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-07-helper-code-delegate.puml` rewrote the PNG and left the SVG from the day before; the render commands in `design/ble/README.md`, `design/gui/README.md` and all eight `.puml` header comments had the same two-flag form.
+**Root cause**: PlantUML keeps one output format; a second `-t` flag replaces the first instead of adding to it. Nothing warns.
+**Fix**: Render each format in its own run. After a render, compare the modification times of `.svg` and `.png`, or grep the SVG for a changed label; the READMEs and header comments now say so.
+
 ### Parallel session rewrote spec files under an open edit (2026-10-19)
 **Problem**: A batch of edits to `functional-requirements.md` and `song-format.md` failed with "file has been modified since read"; afterwards `git status` showed those files modified although `git diff` was empty.
 **Root cause**: A follow-up session started from a proposal card worked in the same checkout at the same time, first amending and then reverting the same files. Its reverts rewrote them with LF endings in a checkout whose `core.autocrlf` expects CRLF, which git reports as modified until it next touches the files.

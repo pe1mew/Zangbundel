@@ -1,7 +1,7 @@
 @startuml seq-05-singer-leaves
 ' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 3.3, 10.9, 10.11
 ' Scenario 5: a singer leaves the gathering (voluntarily, or by walking out of range).
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-05-singer-leaves.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-05-singer-leaves.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title BLE 5 – A singer leaves the gathering\nble-protocol.md v0.11, sections 3.3, 9.8, 10.9, 10.11
 

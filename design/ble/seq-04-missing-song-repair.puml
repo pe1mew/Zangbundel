@@ -1,7 +1,7 @@
 @startuml seq-04-missing-song-repair
 ' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 7.6, 9.7, 10.4, 10.8
 ' Scenario 4: a singer misses frames of the pushed song and repairs over GATT.
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-04-missing-song-repair.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-04-missing-song-repair.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title BLE 4 – A singer misses (part of) a song: repair\nble-protocol.md v0.10, sections 7.6, 9.7, 10.4, 10.8
 

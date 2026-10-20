@@ -1,7 +1,7 @@
 @startuml seq-03-push-song
 ' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 7.4, 7.5, 9.4, 9.5, 10.3, 10.5
 ' Scenario 3: the leader pushes a song to the singers ("Nu").
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-03-push-song.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-03-push-song.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title BLE 3 – Push a song to the singers\nble-protocol.md v0.10, sections 7.4, 9.4, 9.5, 10.3, 10.5
 

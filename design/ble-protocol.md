@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.11 (draft) |
-| Date | 2026-10-19 |
+| Document version | 0.12 (draft) |
+| Date | 2026-10-20 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.9 |
+| Depends on | `design/functional-requirements.md` v0.10 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -24,6 +24,7 @@
 | 0.9 | 2026-10-18 | 6.5: canonical link carries the trailing slash (`/Zangbundel/j/#…`); Pages site verified live. |
 | 0.10 | 2026-10-19 | Depends on FRD v0.9, which withdraws FR-LEAD-30 and 31 (no library download instruction in phase 1, `design/guiDesign.md` D-66). The `download` document (6) and the `libs` fields in Info and Join stay defined but are reserved: phase 1 apps do not send them and ignore them when received. No wire change. |
 | 0.11 | 2026-10-19 | Two additive Control commands for any registered singer (9.8): op 9 *become delegate* with a helper code shown on the leader's screen (`design/guiDesign.md` D-73, Q22; FR-LEAD-40 as amended in FRD v0.9), and op 10 *leave*, so the leader's count drops at once (FR-GATH-07, FR-GATH-12). Error `0x8E`. Procedures 10.9, 10.11 and 10.12, security table and traceability updated. Protocol stays 1.0: new keys and ops only. |
+| 0.12 | 2026-10-20 | Depends on FRD v0.10 (Q8 closed, no protocol impact). Dutch UI term for the helper code is *assistentcode* (`design/guiDesign.md` Q15). Nothing language-dependent goes over the air: labels are rendered by each phone (guiDesign D-75). No wire change. |
 
 ---
 
@@ -633,7 +634,7 @@ Every Control write is sealed to the leader's `ek` (8.4) and carries the writer'
 | 7 | `data` | bstr | op 8 | Upload chunk bytes (framed song document bytes). |
 | 8 | `len` | uint | op 8, idx 0 | Total length of the upload. |
 | 9 | `gid` | bstr 5 | yes | Gathering ID; binds the sealed payload (8.4). |
-| 10 | `hc` | tstr 4 | op 9 | Helper code (*hulpleidercode*): the four digits shown on the leader's screen (10.12). |
+| 10 | `hc` | tstr 4 | op 9 | Helper code (*assistentcode*): the four digits shown on the leader's screen (10.12). |
 
 | `op` | Command | Effect on the leader | FRD |
 |---|---|---|---|
@@ -745,7 +746,7 @@ On `ENDED` in the beacon, `status` 1 in a verified state, or the 5-minute timeou
 
 ### 10.12 Delegates
 
-**Appoint with a helper code** [FR-LEAD-40, as amended in FRD v0.9]: the leader has no list of singers to pick from (`design/guiDesign.md` D-73). To appoint, the leader opens *Hulpleider toevoegen*; the leader's app generates a **helper code** `hc` of four decimal digits from a cryptographic random source, shows it large on the leader's screen and keeps it valid for **120 s** or until used, whichever is first; at most one code is valid at a time. The intended helper, a registered singer standing next to the leader, types the code; the singer app connects and writes Control op 9 `{tok, cid, op 9, hc, gid}` sealed to `ek` (9.8). The leader compares `hc` with the valid code: on a match it adds the writer's `sid` to `dlg`, `seq` + 1, signs and broadcasts; the code is consumed. On a mismatch it answers `0x8E` and counts a wrong try; after **3 wrong tries** against one code, or when the 120 s have passed, the code is invalid and every further op 9 gets `0x8E` until the leader shows a new code. A singer is limited to one op 9 per 2 s per connection (10.8 rate limits). The new delegate learns of its role from the next verified state (one carousel pass), shows the delegate UI and fetches document 8 over GATT [FR-LEAD-45]; the leader's drawer lists it by the display name from its Join.
+**Appoint with a helper code** [FR-LEAD-40, as amended in FRD v0.9]: the leader has no list of singers to pick from (`design/guiDesign.md` D-73). To appoint, the leader opens *Assistent toevoegen*; the leader's app generates a **helper code** `hc` of four decimal digits from a cryptographic random source, shows it large on the leader's screen and keeps it valid for **120 s** or until used, whichever is first; at most one code is valid at a time. The intended helper, a registered singer standing next to the leader, types the code; the singer app connects and writes Control op 9 `{tok, cid, op 9, hc, gid}` sealed to `ek` (9.8). The leader compares `hc` with the valid code: on a match it adds the writer's `sid` to `dlg`, `seq` + 1, signs and broadcasts; the code is consumed. On a mismatch it answers `0x8E` and counts a wrong try; after **3 wrong tries** against one code, or when the 120 s have passed, the code is invalid and every further op 9 gets `0x8E` until the leader shows a new code. A singer is limited to one op 9 per 2 s per connection (10.8 rate limits). The new delegate learns of its role from the next verified state (one carousel pass), shows the delegate UI and fetches document 8 over GATT [FR-LEAD-45]; the leader's drawer lists it by the display name from its Join.
 
 **Revoke** [FR-LEAD-40, FR-LEAD-44]: leader-only, on the leader's screen: the leader removes the `sid` from `dlg`, `seq` + 1, sign, broadcast. After revocation a Control write with that token gets `0x89`. A delegate that leaves (op 10) is removed from `dlg` by the leave itself.
 

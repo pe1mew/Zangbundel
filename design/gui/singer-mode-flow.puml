@@ -4,7 +4,7 @@
 ' The event loop is drawn as a ladder of independent checks so the diagram
 ' stays narrow; in the app the events are independent, not ordered.
 ' Render (UTF-8 source):
-'   java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tsvg -tpng singer-mode-flow.puml
+'   java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tsvg singer-mode-flow.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title Zangbundel – singer mode (zanger)\nguiDesign.md v0.5, D-19 to D-48
 

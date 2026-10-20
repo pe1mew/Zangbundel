@@ -1,7 +1,7 @@
 @startuml seq-06-end-gathering
 ' Zangbundel BLE protocol, document v0.10, protocol 1.0 - sections 9.4, 10.10, 10.11
 ' Scenario 6: the leader ends the gathering.
-' Render: java -jar plantuml.jar -charset UTF-8 -tsvg -tpng seq-06-end-gathering.puml
+' Render: java -jar plantuml.jar -charset UTF-8 -tsvg seq-06-end-gathering.puml   (run again with -tpng: PlantUML uses only the last -t flag)
 
 title BLE 6 – End a gathering (leader)\nble-protocol.md v0.10, sections 9.4, 10.10, 10.11
 
