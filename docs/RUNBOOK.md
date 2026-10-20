@@ -164,7 +164,8 @@ Play App Signing is mandatory, and Zangbundel uses it with **the owner's own app
 keytool -genkeypair -v -keystore zangbundel-upload.jks -alias upload -keyalg RSA -keysize 4096 -validity 10950 -storetype PKCS12 -dname "CN=Remko Welling, O=PE1MEW, C=NL"
 ```
 
-- [x] App signing keystore created; stored with its passwords in the password manager and on one offline backup. Losing it ends updates in every channel; there is no reset for it.
+- [x] App signing keystore created, outside every repository (verified 2026-10-21: the file exists in the owner's secrets folder, which is not a git repository; no keystore in either Zangbundel repository).
+- [ ] Owner confirms the app signing keystore and its passwords are in the password manager and on one offline backup. Losing it ends updates in every channel; there is no reset for it.
 - [ ] Create the upload keystore above; store it and its passwords the same way. Losing the upload key means a key-reset request through Play support with a new key.
 - [ ] Create `keystore.properties` next to the Android project (ignored by git) with `storeFile`, `storePassword`, `keyAlias`, `keyPassword` for the upload key; the Gradle signing config reads it and fails loudly when absent.
 - [ ] On the first upload, Play Console → Setup → App signing: choose to use your own app signing key instead of a Google-generated one (verify the exact wording there; Play provides a tool that encrypts the key from `zangbundel-appsigning.jks` for upload), and register the upload certificate. Check that the App signing page shows the **app signing key SHA-256** recorded above (`57:86:7B:…:9B:10`); a different value means Play generated its own key and the decision was not applied. It is the signature every installed copy carries, including the universal APK used for offline sharing (FRD FR-DIST-05).
