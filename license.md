@@ -1,20 +1,22 @@
 # License Information
 
-Three kinds of material meet in this project, and each is licensed differently.
+Four kinds of material meet in this project, and each is licensed differently.
 
-## Code license: Apache License 2.0 with the Commons Clause
+## Code license: Apache License 2.0
 
-The code in this repository (today: `scripts/`; later: the app under `android/` and any other platform directories) is licensed under the **Apache License 2.0**, subject to the **Commons Clause License Condition v1.0**. In short:
+The code in this repository (today: `scripts/`; later: the app under `android/` and any other platform directories) is licensed under the **Apache License 2.0**. In short:
 
-- **Use, modify and redistribute** the code under the terms of the Apache License 2.0.
-- **No selling**: the Commons Clause withholds the right to sell the software, meaning to provide it, or a product or service whose value derives substantially from it, to third parties for a fee or other consideration. Using the app at your own campfire, modifying it for your group and sharing your changes are all fine.
-- **Attribution**: keep the licence and attribution notices, including the Commons Clause notice, in any copy or derivative.
+- **Use, modify and redistribute** the code, also commercially, under the terms of the Apache License 2.0.
+- **Attribution**: keep the licence text, the [NOTICE](NOTICE) file and the copyright notices in any copy or derivative, and mark files you changed.
+- **No warranty**: the code is provided as is.
 
-The full condition is in the [LICENSE file](LICENSE). The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
+The full text is in the [LICENSE file](LICENSE).
+
+**Why not the Commons Clause any more.** Until 2026-10-20 the code also carried the Commons Clause License Condition v1.0, which withheld the right to sell the software. The app is to be distributed through F-Droid, which includes only free and open-source software, and both the OSI and the FSF regard a licence with the Commons Clause as not free. The condition was therefore removed; `docs/FDROID-RUNBOOK.md` records the reasoning. No contributions from others existed at that date, so the owner could relicense alone.
 
 ## Content license: Creative Commons BY-NC 4.0
 
-The writing and other non-code content in this repository, including the design documents under `design/`, this documentation and any graphics, are licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)**.
+The writing and other non-code content in this repository, including the design documents under `design/`, this documentation and any graphics other than the app artwork listed in the next section, are licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)**.
 
 You may:
 
@@ -27,6 +29,28 @@ Under these conditions:
 - **Non-commercial**: the content may not be used for commercial purposes.
 
 Full text: https://creativecommons.org/licenses/by-nc/4.0/
+
+## App artwork: Creative Commons BY-SA 4.0
+
+The artwork that ships inside the app or on its store listings is licensed under the **Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)**, so the app is free in its assets as well as its code and F-Droid needs no *NonFreeAssets* label (`docs/FDROID-RUNBOOK.md` Step 4). Licensed this way since 2026-10-20; before that these files were CC BY-NC 4.0 with the rest of the content.
+
+| File | What it is |
+|---|---|
+| `design/icon/zangbundel-icon.svg` | App icon master ("Kring van zangers") |
+| `design/icon/ic_launcher_foreground.svg`, `design/icon/ic_launcher_background.svg` | Adaptive launcher icon layers |
+| `design/icon/feature-graphic.svg` | Feature graphic master |
+| `docs/store-listing/graphics/icon-512.png`, `docs/store-listing/graphics/feature-1024x500.png` | Store icon and feature graphic rendered from the masters |
+
+Copies and renders of these files, such as the launcher icons in the Android project and the images under `fastlane/metadata/android/`, carry the same licence. The rejected proposals in `design/icon-proposals/` stay under the content licence above.
+
+You may share and adapt this artwork for any purpose, also commercially, under these conditions:
+
+- **Attribution**: credit "Remko Welling, PE1MEW", link to the licence and indicate if changes were made.
+- **ShareAlike**: distribute adaptations under the same licence.
+
+Full text: https://creativecommons.org/licenses/by-sa/4.0/
+
+**Not covered: the background photograph** in `design/gui/` (`20260403-194850-MN-8966.jpg`, `Backdrop_001*`, `backdrop-*.webp`). It shows children seen from behind and is credited to "BOG & MN"; it stays under the content licence above and **stays out of the app** until the photographer's permission and the parents' consent are recorded in `design/gui/README.md`. Until then the configuration screens use the flat night-blue background (`design/guiDesign.md` D-08).
 
 ## Song lyrics: not in this repository
 

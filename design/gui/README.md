@@ -11,6 +11,7 @@ The shared background of the welcome and configuration screens, as specified in 
 | `Backdrop_001-land.png` | **Landscape master**, 3200 × 1440, RGB, lossless: the full-width band of the source (rows 1700–4724) scaled to 1920 × 1440 and placed at the right of a black canvas, as composed by the owner in Paint.NET and rebuilt with the command under "Export procedure". | No |
 | `backdrop-3200x1440.webp` | **Shipped landscape asset** (D-13): lossy WebP, quality 80, 50 KB, no metadata. Goes in `res/drawable-land-nodpi/` on Android. | Yes |
 | `preview.html` | Contact sheet: the portrait image centre-cropped in 16:9 and 20:9 frames and the landscape image in a 2400 × 1080 frame, with the D-14 scrim and sample titles. Open in a browser. | No |
+| `leader-mode-sequence.puml`, `.svg`, `.png` | Sequence diagram of leader mode for assessment, from app start to the end of a campfire, in 14 sections: app start and resume after a crash, libraries, songbook, setlists, starting, singers joining, the QR code, leading the songs (*Nu*, re-push, language variant, *Wis*), changing the setlist, requests, an *assistent*, the leader bar with live statistics and warnings, singers leaving, ending with summary, memory and statistics sharing. Participants: the leader, the app's screens and core, phone storage, the library host, the BLE layer, singer apps and an assistent's app. Cites `guiDesign.md` v0.8 decisions, BLE v0.12 sections and FRD v0.10 requirements; a closing note lists what phase 1 deliberately leaves out. Render as the flowchart below, once with `-tsvg` and once with `-tpng`. | No |
 | `singer-mode-flow.puml`, `.svg`, `.png` | Flowchart of singer mode for assessment (PlantUML activity diagram; `guiDesign.md` sections 4, 6.1, 6.2, decisions D-19 to D-47). Rendered with PlantUML 1.2024.8 on Java 8: `java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tsvg singer-mode-flow.puml`, then the same command with `-tpng` (PlantUML honours only the last `-t` flag, so one command with both writes only the PNG; the charset flag matters on Java 8, which otherwise reads the file as cp1252 and garbles the dashes). The event loop is drawn as a ladder of independent checks so the diagram stays narrow. The `.puml` is the source; re-render both files after editing it. | No |
 
 ## Rights and people
@@ -19,6 +20,8 @@ The photograph was taken on 3 April 2026 and is credited in its EXIF to "BOG & M
 
 - [ ] the project holds the right to use the photograph under the repository's content licence (CC BY-NC 4.0, see `license.md`) or a licence from the photographer: *not yet recorded*;
 - [ ] the consent of the parents of the children in the picture: *not yet recorded*.
+
+**Decided 2026-10-20:** the photograph stays out of the app in every channel (Google Play, F-Droid, GitHub Releases) until both boxes are ticked; the configuration screens use the flat background meanwhile (`docs/FDROID-RUNBOOK.md` Step 4). It is not part of the app artwork licensed CC BY-SA 4.0 in `license.md`. Note: the files above are already in the public repository since the commits of 2026-10-19; recording the consent, or removing the files from the repository, settles that.
 
 ## Measurements (2026-10-19, from `Backdrop_001.png`)
 

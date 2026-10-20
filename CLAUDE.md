@@ -25,6 +25,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 | Wondering why a requirement or feature exists | `design/prompts.md` — the original ask, verbatim, dated. |
 | Adding or changing anything that touches personal data, a permission, the network, or bytes received over the air | `design/security-privacy-assessment.md` — the principles made concrete, findings SP-nn, accepted risks; add a finding or re-run the assessment. |
 | Changing deployment or infra, or anything about Google Play (account, tracks, signing, listing, releases) | `docs/RUNBOOK.md` — operational how-to; the fixed Play decisions (application ID, SDK levels, version scheme) live there. |
+| Anything about F-Droid, adding a dependency to the app, or choosing the app signing key | `docs/FDROID-RUNBOOK.md` — what F-Droid requires, the signing decision that must precede the first Play upload, anti-features, metadata, submission. |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
 | **Before committing** | Diff-driven review, lenses chosen by what changed — `/review-changes` where your tool has skills, otherwise paste `templates/review-changes.md` <!-- placeholder --> as a prompt. This row is what fires it: nothing else prompts either party mid-flow. ⚠️ Since v1.40.0 it needs a per-repo **review profile** at `.claude/review-profile.md` — the same path whatever your tool, per `templates/README.md` <!-- placeholder -->. Copy `templates/review-profile.md` <!-- placeholder --> and fill it in; without one it STOPS rather than reviewing at LOW. |
 | Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries. Then `/curate`, or paste `templates/curate.md` <!-- placeholder -->. |
@@ -41,6 +42,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 - **Secure by design, privacy by design; users are under 18.** Nothing personal leaves a phone unencrypted or reaches the developer; defaults never identify a person; every input from the air or a library is untrusted; least privilege. FRD section 2.6 defines it, `design/security-privacy-assessment.md` assesses it. A feature that touches personal data, a permission, the network or received bytes gets a new assessment entry before it is designed in.
 - **Everything in a gathering works over BLE with no internet.** Do not design or implement a gathering feature that needs a network, a hotspot or system Bluetooth pairing (FR-BLE-01, FR-BLE-02).
 - **Keystores and passwords never enter the repository.** `.gitignore` covers `*.jks`, `*.keystore`, `keystore.properties`; the upload key lives in the password manager (RUNBOOK Step 6). Never weaken these ignore rules.
+- **The app stays free software.** Code under Apache 2.0, every dependency free and from Maven Central or Google's Maven repository, and nothing proprietary: no Google Play Services, Firebase, ML Kit, Play Core or Play Integrity. One build serves Google Play and F-Droid (`docs/FDROID-RUNBOOK.md`).
 - **The application ID is `nl.pe1mew.zangbundel.app`.** It is permanent once a bundle is uploaded to Play; the Gradle file must say so before any upload. Minimum SDK 26, target SDK 36 (RUNBOOK Decisions).
 - **Honesty.** Never claim a check passed without running it, never claim a file exists without reading it, and never describe a design as "verified" when it has only been written. Field tests on real phones are open questions (ble-protocol.md Q2, Q3), not facts.
 
@@ -77,6 +79,7 @@ Zangbundel/
 ├── scripts/check-design.sh       ← cross-document consistency check
 ├── docs/
 │   ├── RUNBOOK.md                ← Google Play setup, signing, tracks, release flow
+│   ├── FDROID-RUNBOOK.md         ← F-Droid requirements, signing decision, metadata, submission
 │   ├── privacy-policy.md         ← published for the Play listing (EN + NL)
 │   ├── privacy/, j/              ← GitHub Pages: rendered privacy policy, join-and-install page
 │   ├── app-links/                ← assetlinks template and intent filters for App Links
@@ -84,7 +87,7 @@ Zangbundel/
 ├── memory/                       ← MEMORY.md index, gotcha-log.md, session records (committed, shared)
 ├── .claude/                      ← review-profile.md, launch.json (preview servers)
 ├── raw/                          ← owner's scratch folder, ignored by git
-├── README.md, changelog.md, contributing.md, code_of_conduct.md, license.md, LICENSE
+├── README.md, changelog.md, contributing.md, code_of_conduct.md, license.md, LICENSE, NOTICE
 └── android/                      ← empty; the app goes here
 ```
 
@@ -108,7 +111,8 @@ Dependency order among the specs: FRD → protocol → song format → GUI desig
 | `changelog.md` | Keep a Changelog format; every notable change gets a line under `[Unreleased]`. |
 | `docs/RUNBOOK.md` | Google Play: fixed decisions, account and app setup, data safety, permissions declarations, signing, tracks and the 12-tester rule, store listing, release flow. |
 | `docs/privacy-policy.md` | The privacy policy the Play listing links to. A published surface: wording changes are reviewed at full depth. |
-| `license.md`, `LICENSE` | Code: Apache 2.0 with Commons Clause. Content: CC BY-NC 4.0. Lyrics: not in this repo. |
+| `license.md`, `LICENSE`, `NOTICE` | Code: Apache 2.0 (Commons Clause removed 2026-10-20 for F-Droid). App icon and store graphics: CC BY-SA 4.0. Other content: CC BY-NC 4.0. Background photograph: stays out of the app until consent is recorded. Lyrics: not in this repo. |
+| `docs/FDROID-RUNBOOK.md` | F-Droid: requirements check, signing decision, anti-features, in-repo store metadata, fdroiddata metadata file, local test, merge request, updates. |
 
 ## How to Work Here
 

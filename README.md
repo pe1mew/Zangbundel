@@ -72,7 +72,7 @@ See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct
 
 See [license.md](license.md) for details.
 
-The code in this repository is licensed under the Apache License 2.0 with the Commons Clause condition (see [LICENSE](LICENSE)). The documentation and other non-code content are licensed under a Creative Commons Attribution-NonCommercial 4.0 International License (http://creativecommons.org/licenses/by-nc/4.0/) by Remko Welling, PE1MEW (https://github.com/pe1mew).
+The code in this repository is licensed under the Apache License 2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)), and the app icon and store graphics under CC BY-SA 4.0, so the app can be distributed as free software, including through F-Droid. The documentation and other non-code content are licensed under a Creative Commons Attribution-NonCommercial 4.0 International License (http://creativecommons.org/licenses/by-nc/4.0/) by Remko Welling, PE1MEW (https://github.com/pe1mew).
 
 <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
 

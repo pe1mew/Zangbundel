@@ -162,7 +162,8 @@ keytool -genkeypair -v -keystore zangbundel-upload.jks -alias upload -keyalg RSA
 
 - [ ] Store `zangbundel-upload.jks` and both passwords in the password manager and on one offline backup. Losing the upload key means a key-reset request through Play support with a new key; losing the Play-held signing key is not possible.
 - [ ] Create `keystore.properties` next to the Android project (ignored by git) with `storeFile`, `storePassword`, `keyAlias`, `keyPassword`; the Gradle signing config reads it and fails loudly when absent.
-- [ ] On the first upload, Play Console → Setup → App signing: choose "Google-generated app signing key" and let the console register the upload certificate from the bundle. Record the **app signing key SHA-256** from that page in this file afterwards: it is the signature every installed copy carries, including the Play-signed universal APK used for offline sharing (FRD FR-DIST-05).
+- [ ] **Before the first upload, settle the signing decision in `docs/FDROID-RUNBOOK.md` Step 3.** A Google-generated app signing key means copies from Play and from F-Droid carry different signatures and cannot update each other; uploading the owner's own app signing key keeps one signature everywhere. The choice is hard to undo after the first upload.
+- [ ] On the first upload, Play Console → Setup → App signing: choose the key as decided above (Google-generated, or the owner's own key) and let the console register the upload certificate from the bundle. Record the **app signing key SHA-256** from that page in this file afterwards: it is the signature every installed copy carries, including the Play-signed universal APK used for offline sharing (FRD FR-DIST-05).
 
 ### Step 7 — Tracks and the closed-testing rule
 

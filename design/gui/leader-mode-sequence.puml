@@ -1,0 +1,275 @@
+@startuml leader-mode-sequence
+' Zangbundel - leader mode (kampvuurleider), complete sequence from app start to the end of a campfire.
+' For assessment of design/guiDesign.md v0.8 (sections 4, 6.3, 8; decisions D-19..D-80)
+' against design/ble-protocol.md v0.12 (protocol 1.0) and design/functional-requirements.md v0.10.
+' Dutch UI terms in quotes. Decisions in brackets: D-nn = guiDesign, numbers = BLE sections, FR-* = FRD.
+' Render (UTF-8 source, one run per format: PlantUML uses only the last -t flag):
+'   java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tsvg leader-mode-sequence.puml
+'   java -DPLANTUML_LIMIT_SIZE=16384 -jar plantuml.jar -charset UTF-8 -tpng leader-mode-sequence.puml
+
+title Zangbundel – leader mode (kampvuurleider), from preparation to the end of the campfire\nguiDesign.md v0.8 · ble-protocol.md v0.12 · FRD v0.10
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI, Roboto, sans-serif"
+skinparam sequenceMessageAlign center
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ParticipantBorderColor #0B2545
+skinparam ActorBackgroundColor #FFFFFF
+skinparam ActorBorderColor #0B2545
+skinparam DatabaseBackgroundColor #FFFFFF
+skinparam DatabaseBorderColor #0B2545
+skinparam NoteBackgroundColor #CFE6FF
+skinparam NoteBorderColor #13315C
+skinparam SequenceGroupBorderColor #FF8A3D
+skinparam SequenceGroupBackgroundColor #FFF4EA
+skinparam SequenceDividerBackgroundColor #13315C
+skinparam SequenceDividerFontColor #FFFFFF
+skinparam ArrowColor #13315C
+
+actor "Leader\n(kampvuurleider)" as U
+participant "Leader app\nscreens" as UI
+participant "Leader app core\n(libraries, setlists,\ngathering engine)" as CORE
+database "Phone storage\n(app-private)" as DB
+participant "Library host (HTTPS)\nor a file" as HOST
+participant "BLE: beacon,\ncarousel, GATT server" as BLE
+participant "Singer apps" as S
+participant "Assistent's app\n(a registered singer)" as A
+
+== 1. App start ==
+U -> UI : open the app
+UI -> CORE : resume data present?
+CORE -> DB : read persisted gathering (key, gid, name, tokens, seq)
+alt crashed while leading, within the resume window (default 10 min)  [FR-GATH-13, 10.9]
+  UI -> U : instead of the welcome screen: name, fingerprint, time since the crash,\n"Hervatten" / "Opnieuw beginnen"  [D-67]
+  alt "Hervatten"
+    CORE -> BLE : pre-start scan ignoring this gid; restart beacon, data sets, GATT server;\nseq + 1 so a burst follows  [10.1, 10.9]
+    BLE --> S : beacon with the same gid → singers reconnect by themselves  [FR-GATH-10]
+    UI -> U : the leader's page as it was  (continue at section 6)
+  else "Opnieuw beginnen"
+    CORE -> DB : delete resume data, keys and singer table  [FR-DATA-08]
+    UI -> U : home screen
+  end
+else normal start
+  CORE -> DB : resume data older than the window → delete  [FR-DATA-08]
+  UI -> U : welcome screen: name + versionName, at most 1.5 s  [D-04, D-05]
+  UI -> U : home screen: scanning; "Zelf een kampvuur starten",\nicon row: Bibliotheek · Setlists · Herinneringen · Instellingen · Over  [D-21, D-22]
+end
+
+== 2. Preparation: libraries (configuration screens, background image) ==
+U -> UI : "Bibliotheek" → "Bibliotheek toevoegen"  [D-50]
+alt online: URL of a repository, release index or .zbl archive
+  UI -> CORE : add library (URL)
+  CORE -> HOST : HTTPS: release index → newest .zbl  [song-format 12.6, 12.7]
+  HOST --> CORE : archive bytes (checked against sha256 from the index)
+else from a file (.zbl or zip from storage, share sheet, SD card)  [FR-LIB-16]
+  U -> UI : pick the file
+  UI -> CORE : add library (file)
+end
+CORE -> CORE : bound the input, read the manifest, verify every song hash,\nvalidate as section 11; library id clash → refuse (L006)  [song-format 12.7]
+UI -> U : licence summary and full text  [FR-LIB-21]
+U -> UI : accept
+CORE -> DB : install atomically; record revision, version, source  [FR-LIB-15, FR-LIB-17]
+CORE -> CORE : assign the next library colour (8 colour-blind-safe colours)  [D-51]
+UI -> U : import report: imported · skipped (file, reason) · warnings  [FR-LIB-07]
+opt later: "Bijwerken" / "Uit" / "Verwijderen" on a library row
+  CORE -> HOST : fetch newer release (only on tap, or a Wi-Fi check that asks first)  [FR-LIB-12, FR-LIB-13]
+  UI -> U : "wat is er veranderd": added, changed, removed  [FR-LIB-11]
+end
+
+== 3. Preparation: songbook ==
+U -> UI : "Liedboek"
+UI -> U : combined list of enabled libraries: colour square, title, language,\nusage "3× · laatst 12 okt"; library name added when a title occurs twice  [D-51, D-52]
+U -> UI : search a word in the title (switch "ook in de tekst"), sort A–Z / Z–A /\nvaakst / laatst gezongen, chips library · language · tag · usage
+UI -> U : filtered list; "Wis filters" visible while anything is filtered  [D-52]
+U -> UI : tap a song
+UI -> U : lyric view (day theme outside a gathering), song info available;\none button "Toevoegen aan 'Zomerkamp'"  [D-53, D-45]
+
+== 4. Preparation: setlists ==
+U -> UI : "Setlists"  [D-54]
+alt new, rename, duplicate or delete (delete is confirmed)
+  UI -> CORE : manage setlists
+  CORE -> DB : store device-owned setlists  [FR-LEAD-02, FR-DATA-06]
+else import a .zbs from a file or URL  [D-59]
+  UI -> CORE : parse (song-format 13), resolve entries against installed libraries
+  UI -> U : import report; unresolved entries kept as "niet gevonden" with the reason  [D-74]
+else a setlist shipped with a library (read-only)
+  U -> UI : "Dupliceren" → editable copy
+end
+U -> UI : open a setlist → "Liederen toevoegen"
+UI -> U : songbook in editing mode: banner "Zomerkamp · 14 liederen",\na checkbox before every row (title, language, library colour and name)  [D-54]
+U -> UI : tick / untick songs; drag to reorder, swipe to remove; "Klaar"
+UI -> CORE : save
+CORE -> DB : setlist stored
+opt "Exporteren"
+  CORE -> U : .zbs file through the share sheet (mail, messenger, files)  [D-59]
+end
+
+== 5. Starting the campfire ==
+U -> UI : home screen → "Zelf een kampvuur starten"
+UI -> U : gathering settings: neutral name proposed ("Kampvuur 20 okt"), join code or\nQR-only, setlist to start with  [D-25, FR-GATH-01, FR-GATH-05, FR-GATH-21]
+opt battery saver on or battery below 30 %
+  UI -> U : "Zet de batterijbespaarstand uit en gebruik een powerbank"  (starting still allowed)  [D-68]
+end
+opt the chosen setlist has unresolved entries
+  UI -> U : "12 liederen, 2 worden overgeslagen" above "Starten"  [D-74]
+end
+U -> UI : "Starten"
+UI -> CORE : start gathering
+CORE -> BLE : listen ≥ 5 s for running gatherings (the home screen has been scanning already)  [D-23, FR-GATH-16]
+alt a gathering is in range
+  UI -> U : refuse: its name and "Meezingen" instead; no override  [FR-GATH-16]
+else none
+  CORE -> CORE : Ed25519 key pair, gid = SHA-256(pk)[0..5]; X25519 key ek;\nseq random, ts 0; copy the setlist into the gathering  [10.1, D-55]
+  CORE -> DB : persist key, gid, name, code, seq, singer table (resume data)  [FR-GATH-13]
+  CORE -> BLE : GATT server; beacon (connectable, high power); legacy data sets\nuntil refused (≤ 3); extended set if supported; carousel  [6, 7.1, 7.4]
+  BLE --> S : beacon {gid, seq, flags, name} and carousel: state, info, setlist
+  UI -> U : leader's page: leader bar "Kampvuur 20 okt · appel-vuur · 0 zangers · 0:00",\nsetlist block, every song below its separator, unresolved ones greyed with\nthe reason; buttons ▲ · ≡ · ▼ and the QR button; night theme  [D-55, D-56, D-57, D-61, D-74]
+end
+
+== 6. Singers join (leader side) ==
+S -> BLE : connect; write Join (sealed to ek): sid, name, code, xk  [9.3]
+BLE -> CORE : open, check code and capacity; store sid, xk; count
+CORE --> S : Join response sealed to xk: result, token
+CORE -> CORE : state: singers + 1, seq + 1, sign; burst  [9.4, 7.4]
+UI -> U : leader bar "· 12 zangers"; live statistics: singers now, evening maximum  [D-61, D-62]
+note over UI, S : The leader never sees a list of singers: only the count (D-73).\nDisplay names appear only on requests (D-63).
+
+== 7. Showing the join QR code, at any time ==
+U -> UI : QR button (above ▲ ≡ ▼)  [D-57]
+UI -> U : QR code black on a white panel, brightness raised; name, fingerprint,\njoin code as text unless QR-only  [FR-GATH-19, FR-DIST-02]
+U -> S : a singer scans it with the camera app → joins as in section 6\n(key pinned from the code, 6.5)
+U -> UI : tap anywhere → page again, brightness restored
+note over UI : The join code and QR-only are fixed for this gathering;\na change means ending and starting a new one (D-71).
+
+== 8. Leading the songs ==
+U -> UI : scroll; ▲ / ▼ move between separators on the leader's own page only  [D-57]
+U -> UI : "Nu" on a song's separator bar  [D-56]
+UI -> CORE : push song (lib, song, hash)
+CORE -> CORE : song document (DEFLATE, framed); state: cur, title, seq + 1, ts ↑; sign  [9.5, 10.5]
+CORE -> BLE : beacon seq within 100 ms; burst: state first, then 3 passes of the song  [6.4, 7.4]
+BLE --> S : singers with the library use their own file; others collect the frames;\nmissing frames are repaired over GATT  [10.3, 10.4]
+UI -> U : separator "wordt gezongen", previous "gezongen", setlist block updated;\nlive statistics: songs sung, duration of the previous song  [D-56, D-62]
+alt "Nu" on a song further down
+  CORE -> CORE : songs in between stay in the list, unmarked (skipped)  [FR-LEAD-03]
+else "Nu" on the song being sung
+  CORE -> BLE : re-push: seq + 1, 3 more passes; singers that have it do nothing  [FR-LEAD-06, 10.5]
+else language button on the bar (only when another language variant exists)  [D-65]
+  UI -> U : the bar shows the variant (e.g. "EN"); "Nu" then pushes the variant  [FR-LEAD-07]
+else "Wis" (only on the song being sung)  [D-65]
+  CORE -> CORE : state without cur, seq + 1, sign  [FR-LEAD-06]
+  BLE --> S : header strip "gewist"; text stays on the singers' screens
+end
+note over U, S : The leader marks no line or verse: follow-the-leader follows song starts only (D-70).\nUnresolved setlist entries have no "Nu"; ▲ / ▼ step over them (D-74).
+
+== 9. Changing the setlist during the campfire ==
+U -> UI : ≡ button → sheet with tabs "Setlist" and "Liedboek"  [D-58]
+alt tab "Setlist": reorder, remove
+  UI -> CORE : update the gathering's setlist copy
+else tab "Liedboek": a song → "Toevoegen" or "Nu zingen"
+  UI -> CORE : add after the current song, or push at once (as section 8)
+end
+CORE -> CORE : setlist document changed, seq + 1, sign; burst  [9.5, 10.5]
+BLE --> S : new setlist; singers still see only songs already pushed  [D-47]
+
+== 10. Requests ==
+S -> BLE : write Request 0007 (sealed): token, rid, song ref or free text ≤ 100  [9.6]
+alt requests open
+  BLE -> CORE : store as pending; group identical songs, count likes  [FR-LEAD-12, D-32]
+  CORE -> CORE : rseq + 1, seq + 1, reqstat with the pending rid; sign; burst  [9.4, 9.5]
+  UI -> U : badge on the leader bar: rows not yet handled  [D-61, D-63]
+else "Geen verzoeken meer vanavond" is on  [FR-LEAD-13]
+  CORE --> S : error 0x81 "requests are closed"; singers' request buttons disabled  [8.3]
+end
+U -> UI : drawer → "Verzoeken"
+UI -> U : one row per song: title (free text in italics), library colour,\ncount "×4", time, requesters "Jip, Noor en 2 anderen"  [D-63, FR-LEAD-10]
+alt ✓ "Accepteren"
+  CORE -> CORE : append after the current song; status accepted with setlist position
+else ▶ "Nu"
+  CORE -> CORE : push at once (as section 8); status sung
+else ✕ "Afwijzen"
+  CORE -> CORE : status declined; row removed
+end
+CORE -> CORE : rseq + 1, seq + 1, reqstat; sign; burst  [9.6]
+BLE --> S : every requester learns the outcome from reqstat, anonymously  [FR-REQ-05]
+opt switch "Geen verzoeken meer vanavond"
+  CORE -> CORE : beacon and state flag REQ_OPEN = 0; document 8 open = false  [6.1, 9.5]
+end
+
+== 11. An assistent (delegate) ==
+U -> UI : drawer → "Assistent toevoegen"  [D-73]
+CORE -> CORE : assistentcode: 4 random digits, valid 120 s, one at a time  [10.12]
+UI -> U : the code, large
+U -> A : reads the code to the helper standing next to the leader
+A -> BLE : Control op 9 {token, cid, hc} sealed to ek  [9.8]
+alt code correct
+  BLE -> CORE : add the helper's sid to dlg; consume the code; seq + 1; sign; burst
+  BLE --> A : state with own sid in dlg → tab "Leiden"; fetch document 8 (sealed)  [D-46]
+  UI -> U : drawer "Assistenten": display name with "Intrekken"  [D-73, FR-LEAD-45]
+else wrong, expired or locked (3 wrong tries)
+  BLE --> A : 0x8E; the leader shows a new code if needed  [8.3]
+end
+opt the assistent acts (accept / decline / push a request, push or add a song)
+  A -> BLE : Control op 1–8 (sealed)  [9.8]
+  BLE -> CORE : apply as if on the leader's screen; seq + 1; sign; burst  [FR-LEAD-43]
+  UI -> U : the leader's page and request list update as it happens  [FR-LEAD-45]
+end
+opt "Intrekken"
+  U -> UI : revoke
+  CORE -> CORE : remove sid from dlg; seq + 1; sign; burst  [10.12]
+  BLE --> A : tab "Leiden" disappears; later Control writes → 0x89
+end
+
+== 12. The leader bar during the campfire ==
+U -> UI : drag the handle on the leader bar, or tap it  [D-61]
+UI -> U : drawer: time since start · songs sung · singers now (max) · link quality\n"goed / matig / zwak" · duration of the last song; rows Verzoeken · Assistenten ·\nDeelnamecode · Statistieken delen · Kampvuur beëindigen  [D-61, D-62]
+loop while leading
+  CORE -> BLE : every 30 s a 2 s scan for other gatherings  [10.1, FR-GATH-17]
+  opt another gathering in range
+    UI -> U : drawer row "Ander kampvuur in de buurt: '<name>'" (information only, no alert)  [D-68]
+  end
+  opt battery saver switched on, or the platform is about to stop the beacon  [FR-GATH-15]
+    UI -> U : warning icon on the leader bar; nothing interrupts  [D-68]
+  end
+  opt statistics opt-in is on  [D-60]
+    CORE -> DB : record: song identifiers, relative push time, duration, skipped;\nsinger counts; BLE repair and failure figures; versions (no names, no ids)
+  end
+end
+U -> UI : swipe up, tap the lyrics, or "Nu" → drawer closes
+
+== 13. Singers leave ==
+alt a singer leaves on purpose
+  S -> BLE : Control op 10 "leave" {token, cid} sealed  [9.8, 10.11]
+  BLE -> CORE : remove sid (and from dlg); invalidate token; singers − 1; seq + 1; sign
+else a singer walks away silently
+  CORE -> CORE : no GATT activity for 10 min → removed from the count  [10.9]
+end
+UI -> U : leader bar count drops  [FR-GATH-12]
+
+== 14. Ending the campfire ==
+alt the closing bar at the end of the setlist  [D-69]
+  U -> UI : "Afsluiten" on the bar "Einde van de setlist"
+else earlier
+  U -> UI : drawer → "Kampvuur beëindigen"
+end
+UI -> U : "Het kampvuur voor iedereen beëindigen?"  [FR-GATH-08]
+U -> UI : "Ja"
+CORE -> CORE : state status = 1, ENDED flag, seq + 1; sign  [10.10]
+CORE -> BLE : beacon ENDED; burst of the final state; notify stay connections
+BLE --> S : singers show "beëindigd", delete received songs, write their memory  [10.11, D-49]
+UI -> U : summary screen: name, date, time sung, songs sung, maximum singers;\n"Terug naar start"  [D-69]
+CORE -> DB : leader's gathering memory: name, date, participant count, titles sung;\ndiscard requests, the gathering's setlist copy, connection data  [FR-DATA-03, FR-DATA-06]
+... 60 s: GATT writes refused with 0x88 ...
+CORE -> BLE : stop beacon, data sets, extended set and GATT server  [10.10]
+CORE -> DB : delete keys (pk, sk, ek), singer table, tokens, resume data  [FR-DATA-08]
+opt statistics opt-in is on
+  U -> UI : Instellingen → "Statistieken" → "Delen"  [D-60, D-62]
+  UI -> U : JSON or CSV through the share sheet (mail, WhatsApp, Signal, files);\nthe app has no server and sends nothing itself
+end
+U -> UI : "Terug naar start" → home screen
+
+note across
+  Not in phase 1, by decision: no download instruction for singers (D-66, FR-LEAD-30 withdrawn), no singer list (D-73),
+  no hand-over of the leader role, stop and restart instead (D-72), no change of the join code during a gathering (D-71),
+  no line position for follow-the-leader (D-70).
+end note
+@enduml
