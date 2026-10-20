@@ -40,6 +40,7 @@ The artwork that ships inside the app or on its store listings is licensed under
 | `design/icon/ic_launcher_foreground.svg`, `design/icon/ic_launcher_background.svg` | Adaptive launcher icon layers |
 | `design/icon/feature-graphic.svg` | Feature graphic master |
 | `docs/store-listing/graphics/icon-512.png`, `docs/store-listing/graphics/feature-1024x500.png` | Store icon and feature graphic rendered from the masters |
+| `design/gui/20260403-194850-MN-8966.jpg`, `design/gui/Backdrop_001.pdn`, `design/gui/Backdrop_001.png`, `design/gui/Backdrop_001-land.png`, `design/gui/backdrop-1440x3200.webp`, `design/gui/backdrop-3200x1440.webp` | Background photograph (taken by the owner, April 2026), its Paint.NET project, masters and shipped exports; licensed CC BY-SA 4.0 since 2026-10-20 |
 
 Copies and renders of these files, such as the launcher icons in the Android project and the images under `fastlane/metadata/android/`, carry the same licence. The rejected proposals in `design/icon-proposals/` stay under the content licence above.
 
@@ -50,7 +51,7 @@ You may share and adapt this artwork for any purpose, also commercially, under t
 
 Full text: https://creativecommons.org/licenses/by-sa/4.0/
 
-**Not covered: the background photograph** in `design/gui/` (`20260403-194850-MN-8966.jpg`, `Backdrop_001*`, `backdrop-*.webp`). It shows children seen from behind and is credited to "BOG & MN"; it stays under the content licence above and **stays out of the app** until the photographer's permission and the parents' consent are recorded in `design/gui/README.md`. Until then the configuration screens use the flat night-blue background (`design/guiDesign.md` D-08).
+**The background photograph** was taken by the owner, who holds the copyright; the children in it cannot be recognised, so no consent is needed (`design/gui/README.md`, `design/guiDesign.md` D-09). By the owner's decision of 2026-10-20 it follows the licence of the app artwork and is listed in the table above. Other preview and documentation files in `design/gui/` (`preview.html`, `README.md`, the diagrams) stay under the content licence.
 
 ## Song lyrics: not in this repository
 

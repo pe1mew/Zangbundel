@@ -4,7 +4,7 @@
      project file's "Before You Start" table. Sibling of docs/RUNBOOK.md (Google Play);
      the two share one app, one application ID and, if Step 3 goes that way, one signing key. -->
 
-Status 2026-10-20: requirements investigated; code licence changed to plain Apache 2.0 and the app artwork to CC BY-SA 4.0, so the app qualifies with no anti-feature label; the background photograph stays out of the app until consent is recorded; store texts and graphics exist for Play (`docs/store-listing/`). No app code exists yet, so nothing can be built or submitted; the steps below are what to do from the first release on. **One step cannot wait for code: the signing decision (Step 3) must be made before the first upload to Google Play.**
+Status 2026-10-20: requirements investigated; code licence changed to plain Apache 2.0 and the app artwork to CC BY-SA 4.0, so the app qualifies with no anti-feature label; the background photograph is the owner's, needs no consent and is CC BY-SA 4.0 like the other app graphics; store texts and graphics exist for Play (`docs/store-listing/`). No app code exists yet, so nothing can be built or submitted; the steps below are what to do from the first release on. **One step cannot wait for code: the signing decision (Step 3) must be made before the first upload to Google Play.**
 
 ## What F-Droid is, in one paragraph
 
@@ -26,8 +26,8 @@ F-Droid is a catalogue of free and open-source Android apps. Its build server co
 | Application ID | `nl.pe1mew.zangbundel.app`, the same as on Play | Fixed (RUNBOOK Decisions). F-Droid rejects an ID that copies someone else's domain; `pe1mew.nl` is the owner's. |
 | Signing | Option B below (owner's own app signing key on Play and for F-Droid's reproducible build) recommended | **Open — decide before the first Play upload** (Step 3) |
 | Artwork licence | App icon, launcher layers and store graphics under CC BY-SA 4.0 → no *NonFreeAssets* label | **Done 2026-10-20** (license.md) |
-| Background photograph | Stays out of the app in every channel until the photographer's permission and the parents' consent are recorded in `design/gui/README.md`; screens use the flat background meanwhile | **Decided 2026-10-20** (Step 4) |
-| Anti-features | None | Holds while the app ships only the CC BY-SA artwork and no tracking (Step 4) |
+| Background photograph | The owner's own photograph, no consent needed (children not recognisable); CC BY-SA 4.0 like the other app graphics; ships | **Done 2026-10-20** (license.md, `design/gui/README.md`) |
+| Anti-features | None | Holds while every shipped asset is free-licensed and there is no tracking (Step 4) |
 | Categories | `Lyrics`, `Multimedia` (from fdroiddata `config/categories.yml`) | Proposed |
 | Release tags | `v<versionName>`, e.g. `v1.0.0`, on the commit the release is built from | Proposed; matches RUNBOOK Step 9 |
 | Store metadata layout | `fastlane/metadata/android/<locale>/` at the repository root, locales `nl-NL` and `en-US` | Proposed |
@@ -45,7 +45,7 @@ What F-Droid requires (sources at the end), and where Zangbundel stands. "Design
 | Builds from the published source on F-Droid's build server | To prove with the first release (Step 8). |
 | No download of executable code without opt-in | Libraries are song text and metadata, not code; the app downloads nothing executable. |
 | No undisclosed anti-features | None apply (Step 4): the artwork is CC BY-SA 4.0, so no *NonFreeAssets*; *Tracking* does not apply (statistics are opt-in, off by default, never transmitted by the app, guiDesign D-60); *NonFreeNet* and *TetheredNet* do not apply (libraries come from any HTTPS address or a file the user chooses, FRD FR-LIB-02, FR-LIB-16; nothing in a gathering uses a network). |
-| Assets with valid licences; non-commercial licences must allow redistribution | App icon, launcher layers and store graphics are CC BY-SA 4.0, a free licence. The photograph stays out of the app until its rights and consent are recorded. |
+| Assets with valid licences; non-commercial licences must allow redistribution | App icon, launcher layers and store graphics are CC BY-SA 4.0, a free licence. The background photograph is the owner's and CC BY-SA 4.0 as well. |
 | Actively developed, functional, useful, suitable for all users including children | Phase 1 release first; submit only when a gathering works end to end on two phones. |
 | Application ID not copying someone else's domain | `nl.pe1mew…` is the owner's. |
 
@@ -53,7 +53,7 @@ What F-Droid requires (sources at the end), and where Zangbundel stands. "Design
 
 ### Step 1 — Licence (done 2026-10-20)
 
-- [x] `LICENSE` holds the Apache License 2.0 text, `NOTICE` the copyright line, `license.md` explains the change. The same change was made to the library repository's `scripts/` so both repositories have one code licence.
+- [x] `LICENSE` holds the Apache License 2.0 text, `NOTICE` the copyright line, `license.md` explains the change. The library repository (`Zangbundel-bibliotheek`) is not distributed through F-Droid and keeps its own licences; decisions driven by F-Droid do not apply there (owner, 2026-10-20).
 - [ ] When code lands in `android/`: put an SPDX header (`SPDX-License-Identifier: Apache-2.0`) in new source files. Not required by F-Droid, but it makes the licence of every file obvious to reviewers.
 - The documentation and design content stay CC BY-NC 4.0; F-Droid does not look at them because they are not part of the app. The artwork that is part of the app is CC BY-SA 4.0 (Step 4).
 
@@ -81,7 +81,7 @@ Android installs an update only when it is signed with the same certificate as t
 
 - **Icon, launcher layers, feature graphic** (`design/icon/`, `docs/store-listing/graphics/`): made for the project by the owner and licensed **CC BY-SA 4.0** since 2026-10-20 (`license.md`, section "App artwork"). CC BY-SA is a free licence, so F-Droid needs no *NonFreeAssets* label. Copies in the Android project and under `fastlane/metadata/android/` carry the same licence; credit "Remko Welling, PE1MEW" on the About screen next to the code licence (FRD FR-GEN-07).
 - **Any new artwork that ships** (screenshots excepted, which show the app itself) must be CC BY-SA 4.0 or another free licence before it goes into the app or the store metadata; anything under CC BY-NC, CC BY-ND or without a recorded licence would bring the *NonFreeAssets* label back. Add the file to the table in `license.md`.
-- **Background photograph** (`design/gui/backdrop-*.webp`): **stays out of the app in every channel** until the photographer's permission and the parents' consent are recorded in `design/gui/README.md` (decided 2026-10-20). The configuration screens use the flat background meanwhile, which D-08 already allows (every screen reads the same without the image). When consent is recorded, decide the photograph's licence before it ships: under CC BY-NC it would bring back the *NonFreeAssets* label; under a free licence anyone could reuse a picture of children, which privacy by design argues against. A free illustration in the icon's style is the alternative that avoids both.
+- **Background photograph** (`design/gui/backdrop-*.webp`): taken by the owner, who holds the copyright; the children in it cannot be recognised, so no consent is needed (`design/gui/README.md`, guiDesign D-09 as amended in v0.9). By the owner's decision of 2026-10-20 it follows the licence of the app graphics, CC BY-SA 4.0, and is in the artwork table of `license.md`, so it needs no label and ships in every channel.
 - **The default library** (FRD FR-LIB-02) is CC BY-NC song content downloaded at run time, not part of the APK. F-Droid's anti-features do not cover content a user downloads; a reviewer may still ask. Answer: the app ships no content, libraries are configured by the user and can come from any HTTPS address or a file.
 - **Statistics** (guiDesign D-60): opt-in, off by default, never sent by the app → no *Tracking* label. If that ever changes, declare *Tracking*.
 - Declare in the metadata file (Step 7) exactly what applies; mention the reason in the description.

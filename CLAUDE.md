@@ -111,7 +111,7 @@ Dependency order among the specs: FRD → protocol → song format → GUI desig
 | `changelog.md` | Keep a Changelog format; every notable change gets a line under `[Unreleased]`. |
 | `docs/RUNBOOK.md` | Google Play: fixed decisions, account and app setup, data safety, permissions declarations, signing, tracks and the 12-tester rule, store listing, release flow. |
 | `docs/privacy-policy.md` | The privacy policy the Play listing links to. A published surface: wording changes are reviewed at full depth. |
-| `license.md`, `LICENSE`, `NOTICE` | Code: Apache 2.0 (Commons Clause removed 2026-10-20 for F-Droid). App icon and store graphics: CC BY-SA 4.0. Other content: CC BY-NC 4.0. Background photograph: stays out of the app until consent is recorded. Lyrics: not in this repo. |
+| `license.md`, `LICENSE`, `NOTICE` | Code: Apache 2.0 (Commons Clause removed 2026-10-20 for F-Droid). App graphics (icon, store graphics, background photograph): CC BY-SA 4.0. Other content: CC BY-NC 4.0. Lyrics: not in this repo. |
 | `docs/FDROID-RUNBOOK.md` | F-Droid: requirements check, signing decision, anti-features, in-repo store metadata, fdroiddata metadata file, local test, merge request, updates. |
 
 ## How to Work Here

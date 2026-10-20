@@ -16,12 +16,14 @@ The shared background of the welcome and configuration screens, as specified in 
 
 ## Rights and people
 
-The photograph was taken on 3 April 2026 and is credited in its EXIF to "BOG & MN". It shows two children from behind, reading a songbook by the fire, and silhouettes of others; no face is visible (D-09 as amended in guiDesign.md v0.3). Before the image is published (pushed to the public repository or shipped), the owner records here:
+The photograph was taken on 3 April 2026 and is credited in its EXIF to "BOG & MN". It shows two children from behind, reading a songbook by the fire, and silhouettes of others; no face is visible.
 
-- [ ] the project holds the right to use the photograph under the repository's content licence (CC BY-NC 4.0, see `license.md`) or a licence from the photographer: *not yet recorded*;
-- [ ] the consent of the parents of the children in the picture: *not yet recorded*.
+- [x] **Rights.** The owner, Remko Welling, took the photograph in April 2026 and holds the copyright (recorded 2026-10-20 on the owner's statement). Every file in this folder derives from it.
+- [x] **Consent.** Not needed: the children are seen from behind and cannot be recognised, which is the owner's judgement under D-09 as amended in `guiDesign.md` v0.9 (consent only for recognisable people). Recorded 2026-10-20.
 
-**Decided 2026-10-20:** the photograph stays out of the app in every channel (Google Play, F-Droid, GitHub Releases) until both boxes are ticked; the configuration screens use the flat background meanwhile (`docs/FDROID-RUNBOOK.md` Step 4). It is not part of the app artwork licensed CC BY-SA 4.0 in `license.md`. Note: the files above are already in the public repository since the commits of 2026-10-19; recording the consent, or removing the files from the repository, settles that.
+- [x] **Licence.** The photograph and every file derived from it in this folder (`20260403-194850-MN-8966.jpg`, `Backdrop_001.pdn`, `Backdrop_001.png`, `Backdrop_001-land.png`, `backdrop-1440x3200.webp`, `backdrop-3200x1440.webp`) follow the licence of the app artwork: **CC BY-SA 4.0**, credit "Remko Welling, PE1MEW" (owner's decision 2026-10-20; `license.md`, section "App artwork"). F-Droid therefore needs no *NonFreeAssets* label for it.
+
+The photograph may ship in the app in every channel.
 
 ## Measurements (2026-10-19, from `Backdrop_001.png`)
 
