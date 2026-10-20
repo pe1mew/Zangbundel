@@ -165,9 +165,9 @@ keytool -genkeypair -v -keystore zangbundel-upload.jks -alias upload -keyalg RSA
 ```
 
 - [x] App signing keystore created, outside every repository (verified 2026-10-20: the file exists in the owner's secrets folder, which is not a git repository; no keystore in either Zangbundel repository).
-- [ ] Owner confirms the app signing keystore and its passwords are in the password manager and on one offline backup. Losing it ends updates in every channel; there is no reset for it.
+- [x] App signing keystore and its passwords are in the password manager and on an offline backup (confirmed by the owner 2026-10-20). Losing it ends updates in every channel; there is no reset for it.
 - [x] Upload keystore created, outside every repository (verified 2026-10-20: `zangbundel-upload.jks` exists next to the app signing keystore in the owner's secrets folder; certificate read by the owner and recorded above).
-- [ ] Owner confirms the upload keystore and its password are in the password manager and on the offline backup. Losing the upload key means a key-reset request through Play support with a new key.
+- [x] Upload keystore and its password are in the password manager and on the offline backup (confirmed by the owner 2026-10-20). Losing the upload key means a key-reset request through Play support with a new key.
 - [ ] Create `keystore.properties` next to the Android project (ignored by git) with `storeFile`, `storePassword`, `keyAlias`, `keyPassword` for the upload key; the Gradle signing config reads it and fails loudly when absent.
 - [ ] On the first upload, Play Console → Setup → App signing: choose to use your own app signing key instead of a Google-generated one (verify the exact wording there; Play provides a tool that encrypts the key from `zangbundel-appsigning.jks` for upload), and register the upload certificate. Check that the App signing page shows the **app signing key SHA-256** recorded above (`57:86:7B:…:9B:10`); a different value means Play generated its own key and the decision was not applied. The upload certificate Play shows must be `C0:A3:C6:…:95:17:2A`. The app signing key's SHA-256 is the signature every installed copy carries, including the universal APK used for offline sharing (FRD FR-DIST-05).
 
