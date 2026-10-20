@@ -4,7 +4,7 @@
      project file's "Before You Start" table. Sibling of docs/RUNBOOK.md (Google Play);
      the two share one app, one application ID and, if Step 3 goes that way, one signing key. -->
 
-Status 2026-10-20: requirements investigated; code licence changed to plain Apache 2.0 and the app artwork to CC BY-SA 4.0, so the app qualifies with no anti-feature label; the background photograph is the owner's, needs no consent and is CC BY-SA 4.0 like the other app graphics; store texts and graphics exist for Play (`docs/store-listing/`). No app code exists yet, so nothing can be built or submitted; the steps below are what to do from the first release on. **One step cannot wait for code: the signing decision (Step 3) must be made before the first upload to Google Play.**
+Status 2026-10-20: requirements investigated; code licence changed to plain Apache 2.0 and the app artwork to CC BY-SA 4.0, so the app qualifies with no anti-feature label; the background photograph is the owner's, needs no consent and is CC BY-SA 4.0 like the other app graphics; store texts and graphics exist for Play (`docs/store-listing/`). No app code exists yet, so nothing can be built or submitted; the steps below are what to do from the first release on. The signing decision (Step 3) is made: the owner's own app signing key in every channel, keystore created 2026-10-20.
 
 ## What F-Droid is, in one paragraph
 
@@ -24,7 +24,7 @@ F-Droid is a catalogue of free and open-source Android apps. Its build server co
 |---|---|---|
 | Code licence | Apache License 2.0, SPDX `Apache-2.0`; the Commons Clause removed | **Done 2026-10-20** (LICENSE, NOTICE, license.md) |
 | Application ID | `nl.pe1mew.zangbundel.app`, the same as on Play | Fixed (RUNBOOK Decisions). F-Droid rejects an ID that copies someone else's domain; `pe1mew.nl` is the owner's. |
-| Signing | Option B below (owner's own app signing key on Play and for F-Droid's reproducible build) recommended | **Open — decide before the first Play upload** (Step 3) |
+| Signing | Option B: the owner's own app signing key on Play, on GitHub Releases and, through a reproducible build, on F-Droid. Keystore `zangbundel-appsigning.jks` (alias `zangbundel`) created by the owner, a key of its own (not shared with another app), kept outside every repository | **Decided 2026-10-20** (Step 3) |
 | Artwork licence | App icon, launcher layers and store graphics under CC BY-SA 4.0 → no *NonFreeAssets* label | **Done 2026-10-20** (license.md) |
 | Background photograph | The owner's own photograph, no consent needed (children not recognisable); CC BY-SA 4.0 like the other app graphics; ships | **Done 2026-10-20** (license.md, `design/gui/README.md`) |
 | Anti-features | None | Holds while every shipped asset is free-licensed and there is no tracking (Step 4) |
@@ -74,8 +74,19 @@ Android installs an update only when it is signed with the same certificate as t
 | **B. One key: the owner's** (recommended) | Play: at the first upload, choose to upload the owner's own app signing key instead of a Google-generated one (Play Console → App signing; Play offers this at setup, verify the wording there). GitHub Releases: an APK built from the release tag and signed with that key. F-Droid: reproducible build with `Binaries` pointing at the GitHub APK and `AllowedAPKSigningKeys` set to the key's SHA-256; F-Droid then publishes the owner-signed APK. | One signature in every channel: updates work across Play, F-Droid, GitHub and offline sharing; `assetlinks.json` lists one fingerprint. Costs: the build must be reproducible (Step 7), and the owner holds the only copy of the signing key, so its loss would end updates in every channel. Keep it in the password manager and an offline backup, never in the repository (CLAUDE.md hard constraint). |
 | **C. F-Droid only signs, Play later** | Publish on F-Droid first with option A, decide Play later. | Postpones the problem; the first Play upload still fixes the Play key for good. |
 
-- [ ] Owner decides A or B and records it here and in RUNBOOK Decisions before RUNBOOK Step 6.
-- With B, the RUNBOOK Step 6 keystore becomes the **app signing key** rather than only an upload key; Play still asks for a separate upload key, which may be a second keystore.
+- [x] **Decided 2026-10-20: option B.** The owner created a dedicated keystore, `zangbundel-appsigning.jks` with alias `zangbundel` (RSA 4096, valid 30 years), outside every repository, and keeps it with its passwords in the password manager and an offline backup. It is not shared with the owner's other app: one key per app keeps a leak or a future hand-over of Zangbundel from touching anything else.
+- [x] **Certificate of the app signing key** (public, not a secret; read 2026-10-20 with `keytool -list -v -keystore <path>\zangbundel-appsigning.jks -alias zangbundel`):
+
+  | Field | Value |
+  |---|---|
+  | Owner and issuer | `CN=Remko Welling, O=PE1MEW, C=NL` (self-signed) |
+  | Key | RSA 4096, signature SHA384withRSA |
+  | Valid | 2026-10-20 to 2056-10-12 |
+  | SHA-256 | `57:86:7B:3F:C1:4D:1F:35:F6:38:40:A8:41:BB:05:F6:DD:FD:A9:C3:6D:C0:58:29:5F:87:F5:46:A2:C8:9B:10` |
+  | SHA-256, F-Droid form | `57867b3fc14d1f35f63840a841bb05f6ddfda9c36dc058295f87f546a2c89b10` |
+
+  It goes into `AllowedAPKSigningKeys` (Step 8) and `docs/app-links/assetlinks.template.json` (RUNBOOK Step 5c). Every APK of Zangbundel, from any channel, must show this SHA-256 in `apksigner verify --print-certs`; one that does not was not signed by the owner.
+- Play still asks for a separate **upload key**; RUNBOOK Step 6 creates it as a second keystore.
 
 ### Step 4 — Assets and anti-features
 
@@ -152,7 +163,7 @@ Builds:
     gradle:
       - yes
 
-AllowedAPKSigningKeys: <lowercase hex SHA-256 of the app signing certificate>
+AllowedAPKSigningKeys: 57867b3fc14d1f35f63840a841bb05f6ddfda9c36dc058295f87f546a2c89b10
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
 CurrentVersion: 1.0.0
@@ -160,7 +171,7 @@ CurrentVersionCode: 2026110101
 ```
 
 - No `AntiFeatures` field: none applies (Step 4). If one ever does, add it with the reason; `fdroid rewritemeta` brings it into the format the current fdroidserver expects.
-- Remove `Binaries` and `AllowedAPKSigningKeys` under option A.
+- `Binaries` and `AllowedAPKSigningKeys` stay: option B is decided (Step 3).
 - The version and code above are placeholders; fill them from the real first release.
 
 Test in the fdroidserver build container, which the F-Droid Quick Start Guide describes how to start (Git, Docker and fdroidserver needed). From `/build` in the container:

@@ -27,6 +27,7 @@ Status 2026-10-18 (evening): the Google Play developer account exists (personal,
 | Distribution | All countries, Android phones and tablets | Nothing in the app is region-bound. |
 | Minimum SDK | 26 (Android 8.0) | `startAdvertisingSet` (multiple advertising sets) is API 26; the BLE protocol's broadcast carousel needs it on leaders. Singers on older devices are not supported. |
 | Target SDK | 36 (Android 16) | Required for new apps from 31 August 2026. |
+| App signing key | The owner's own key, `zangbundel-appsigning.jks` (alias `zangbundel`), uploaded to Play App Signing at the first release and used for GitHub Releases and F-Droid's reproducible build | Decided 2026-10-20: one signature in every channel (`docs/FDROID-RUNBOOK.md` Step 3). Hard to change after the first upload. |
 | Packaging | Android App Bundle (`.aab`), Play App Signing | Mandatory on Play for new apps. The Play-signed universal APK from the App Bundle Explorer is what goes on GitHub Releases for offline sharing (FRD FR-DIST-05, Q11). |
 | Target audience | 13 and over; not designed for children | Selecting any under-13 age group puts the app under the Families policy with its own review. Scouts younger than 13 sing from a leader's or parent's phone. Revisit if the owner wants a Families listing. |
 | Version scheme | `versionName` semantic (`1.0.0`); `versionCode` strictly increasing integer, `YYYYMMDDnn` (e.g. `2026101801`) | Play refuses a bundle whose `versionCode` is not higher than every previous upload on any track. |
@@ -154,16 +155,19 @@ Nothing in the QR code or in the page changes between option 1 and option 2.
 
 ### Step 6 — Signing
 
-Play App Signing is mandatory: Google holds the app signing key; you hold an **upload key**. Generate it once, outside the repository:
+Play App Signing is mandatory, and Zangbundel uses it with **the owner's own app signing key** (decided 2026-10-20, `docs/FDROID-RUNBOOK.md` Step 3): one signature for Play, F-Droid, GitHub Releases and offline sharing, so a copy from any channel updates a copy from any other. Two keystores, both outside every repository:
+
+- **App signing key: done 2026-10-20.** `zangbundel-appsigning.jks`, alias `zangbundel`, a key of its own (not shared with another app). It signs the APKs on GitHub Releases and is handed to Google once, encrypted, at the first upload. Certificate SHA-256: `57:86:7B:3F:C1:4D:1F:35:F6:38:40:A8:41:BB:05:F6:DD:FD:A9:C3:6D:C0:58:29:5F:87:F5:46:A2:C8:9B:10` (details in `docs/FDROID-RUNBOOK.md` Step 3).
+- **Upload key:** what you sign each bundle with before uploading. Generate it once:
 
 ```bash
 keytool -genkeypair -v -keystore zangbundel-upload.jks -alias upload -keyalg RSA -keysize 4096 -validity 10950 -storetype PKCS12 -dname "CN=Remko Welling, O=PE1MEW, C=NL"
 ```
 
-- [ ] Store `zangbundel-upload.jks` and both passwords in the password manager and on one offline backup. Losing the upload key means a key-reset request through Play support with a new key; losing the Play-held signing key is not possible.
-- [ ] Create `keystore.properties` next to the Android project (ignored by git) with `storeFile`, `storePassword`, `keyAlias`, `keyPassword`; the Gradle signing config reads it and fails loudly when absent.
-- [ ] **Before the first upload, settle the signing decision in `docs/FDROID-RUNBOOK.md` Step 3.** A Google-generated app signing key means copies from Play and from F-Droid carry different signatures and cannot update each other; uploading the owner's own app signing key keeps one signature everywhere. The choice is hard to undo after the first upload.
-- [ ] On the first upload, Play Console → Setup → App signing: choose the key as decided above (Google-generated, or the owner's own key) and let the console register the upload certificate from the bundle. Record the **app signing key SHA-256** from that page in this file afterwards: it is the signature every installed copy carries, including the Play-signed universal APK used for offline sharing (FRD FR-DIST-05).
+- [x] App signing keystore created; stored with its passwords in the password manager and on one offline backup. Losing it ends updates in every channel; there is no reset for it.
+- [ ] Create the upload keystore above; store it and its passwords the same way. Losing the upload key means a key-reset request through Play support with a new key.
+- [ ] Create `keystore.properties` next to the Android project (ignored by git) with `storeFile`, `storePassword`, `keyAlias`, `keyPassword` for the upload key; the Gradle signing config reads it and fails loudly when absent.
+- [ ] On the first upload, Play Console → Setup → App signing: choose to use your own app signing key instead of a Google-generated one (verify the exact wording there; Play provides a tool that encrypts the key from `zangbundel-appsigning.jks` for upload), and register the upload certificate. Check that the App signing page shows the **app signing key SHA-256** recorded above (`57:86:7B:…:9B:10`); a different value means Play generated its own key and the decision was not applied. It is the signature every installed copy carries, including the universal APK used for offline sharing (FRD FR-DIST-05).
 
 ### Step 7 — Tracks and the closed-testing rule
 
