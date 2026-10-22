@@ -49,6 +49,7 @@ CLAUDE.md                     orientation file for AI coding agents
 | [design/ble-protocol.md](design/ble-protocol.md) | You work on anything that goes over the air: beacon, broadcast carousel, GATT service, payloads, security. |
 | [design/song-format.md](design/song-format.md) | You write or maintain a song library, or touch the content hash the protocol matches songs by. |
 | [design/architecture.md](design/architecture.md) | You are about to write app code: toolkit, modules, run-time structure, storage, dependencies, build and tests. |
+| [design/test-plan.md](design/test-plan.md) | You write tests, prepare a release, or want to help with a field test: what is tested, how, and what counts as a pass. |
 | [changelog.md](changelog.md) | You want to know what changed and when. |
 
 Dependency order: requirements → protocol → song format. Change upstream first.

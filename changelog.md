@@ -7,6 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- `design/test-plan.md` v0.1 (draft), the last design document before code. It covers:
+  - Test layers with when they run and what blocks a release.
+  - Unit-test coverage, including every report code and the resume-record encryption.
+  - The conformance corpus layout, shared with the library repository's validator.
+  - Protocol simulation scenarios S-01 to S-10, for delivery time, group size, degraded mode, repair, requests and delegates, loss, leader restart, and end and leave.
+  - Nine Jazzer fuzz targets with their bounds and budgets.
+  - Lint, UI and accessibility checks, and a 2,000-song synthetic search test.
+  - Device smoke tests D-01 to D-08.
+  - Field scenarios F-01 to F-11: capability survey, range, group size, leader and singer battery, loss and recovery, joining, requests, two gatherings, reading at the fire, sharing the app.
+  - Measuring delivery time by filming screens only.
+  - Participants and consent: the field-test build only on adult testers' phones; scouts only with the public store build and nothing recorded. Section 5.5 holds the consent text in Dutch and English (assessment SP-22).
+  - Security and privacy checks G-01 to G-10 per release.
+  - The device matrix and the Play closed test.
+  - Result files in `design/test-results/`, the release gate, a traceability table, and three open questions.
+
+  `design/architecture.md` v0.4 points at it. Linked from `CLAUDE.md`, `README.md` and `memory/MEMORY.md`.
 - `design/security-privacy-assessment.md` v0.4: the re-run for the architecture (section 7, item 1), against `design/architecture.md` v0.2, FRD v0.11 and BLE v0.13. New section 5.2 checks the earlier findings against the concrete choices:
   - SP-05 (backup) and SP-08 (phoning home and logs) are resolved in the design.
   - SP-09 (parsers) is designed, with two fuzz targets missing: the join-link payload and the leader's GATT write handlers.

@@ -4,7 +4,7 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.3 (draft) |
+| Document version | 0.4 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
@@ -15,6 +15,7 @@
 | 0.1 | 2026-10-22 | First draft, before any code: decisions A-01 to A-22, module layout, runtime structure, storage model, dependency list, build and release, test layers, the security checks the assessment asks for, open questions. |
 | 0.2 | 2026-10-22 | The owner decided every *Proposed* item as recommended: A-02 to A-08, A-11 to A-15 and A-17 to A-21 are now *Decided*. FRD Q7 and the package part of Q11, ble-protocol Q5, song-format Q11 and Q13 and guiDesign Q2 are marked resolved in those documents. The five inconsistencies of section 12 are fixed in the RUNBOOK and the BLE protocol. |
 | 0.3 | 2026-10-22 | Resolutions of assessment v0.4 applied, as the owner asked. A-06 sets the notification text: fixed and neutral, also on the lock screen (SP-17). The notification permission is asked only from leaders (A-06, section 9; SP-18). The leader's resume record is encrypted with a Keystore key (5.4, section 6; SP-19). A-18 shares only the app's own install and shows the signing fingerprint on the About screen (SP-20). A-20 sets the conditions for the field-test build (SP-22). Section 10 adds fuzz targets for the join-link payload and the leader's GATT write handlers (SP-09). No decision superseded. |
+| 0.4 | 2026-10-22 | `design/test-plan.md` v0.1 exists: sections 1.2 and 10 point at its scenarios instead of "still to write". No decision changed. |
 
 ---
 
@@ -26,7 +27,7 @@ The FRD says what the app must do; the protocol, the song format and the GUI des
 
 ### 1.2 Scope
 
-In scope: the Android app of phase 1 (P1), with room left for karaoke (P2) and instruments (P3), and the structure that keeps an iOS app possible later. Out of scope: the wire format (`design/ble-protocol.md`), the file formats (`design/song-format.md`), screens and texts (`design/guiDesign.md`), Play and F-Droid operations (`docs/RUNBOOK.md`, `docs/FDROID-RUNBOOK.md`), and field-test scenarios (`design/test-plan.md`, still to write).
+In scope: the Android app of phase 1 (P1), with room left for karaoke (P2) and instruments (P3), and the structure that keeps an iOS app possible later. Out of scope: the wire format (`design/ble-protocol.md`), the file formats (`design/song-format.md`), screens and texts (`design/guiDesign.md`), Play and F-Droid operations (`docs/RUNBOOK.md`, `docs/FDROID-RUNBOOK.md`), and field-test scenarios (`design/test-plan.md`).
 
 ### 1.3 Decision status
 
@@ -270,9 +271,9 @@ Not used, on purpose: Google Play Services, Firebase, ML Kit, Play Core, Play In
 | Conformance corpus | Test vectors: song files with their canonical bytes, hash, line list and report codes; setlists; archives good and bad (each A-code); protocol documents and frames with their bytes; sealed payloads opened with known keys | `android/core/testing/src/main/resources/conformance/`, run by the app's tests; the library repository's validator runs the song and archive vectors | A-21, A-22, NFR-MAINT-01 |
 | Protocol simulation | Leader and 50 singers over the simulated transport with loss, slot limits and latency: join, push, repair, request, delegate, leave, end, resume | `core/testing` and `core/protocol` tests | NFR-TEST-01; NFR-PERF-01 and FR-BLE-10 in simulation only |
 | Fuzzing | Jazzer targets for the song parser, setlist parser, library and manifest JSON, ZIP reader, DEFLATE with cap, CBOR decoder, frame reassembly, the join-link payload (base64url text as the camera app delivers it, then CBOR, ble-protocol 6.5) and the leader's GATT write handlers (Join, Request, Control, Transfer with its ranges); each run with its size and time bound | `core/*/src/test`, short runs in CI, long runs before a release | NFR-SEC-04, assessment SP-09 |
-| Device and field tests | Two-phone smoke tests (instrumented), then field tests with the `fieldtest` build and known groups: range, singer counts, battery, resume | `app/src/androidTest`; scenarios in `design/test-plan.md` (to write) | NFR-PERF-01, NFR-PERF-02, NFR-REL-01, ble-protocol Q2, Q3, Q9 |
+| Device and field tests | Two-phone smoke tests (instrumented), then field tests with the `fieldtest` build and known groups: range, singer counts, battery, resume | `app/src/androidTest`; scenarios D-01 to D-08 and F-01 to F-11 in `design/test-plan.md` | NFR-PERF-01, NFR-PERF-02, NFR-REL-01, ble-protocol Q2, Q3, Q9 |
 
-Field results are measurements, not this document's claims: until `design/test-plan.md` exists and has been run, the protocol's capacity and battery figures remain open questions.
+Field results are measurements, not this document's claims. Until the field scenarios of `design/test-plan.md` have run and their results are recorded, the protocol's capacity and battery figures remain open questions. The test plan sets the scenarios, pass criteria, budgets and release gate for every layer in this table.
 
 ---
 
