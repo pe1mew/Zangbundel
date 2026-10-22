@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
-  <!-- Adaptive launcher icon, background layer: night-blue gradient with the fire glow.
-       Full 108 dp canvas; the launcher masks it. -->
+  <!-- Adaptive launcher icon, background layer: night-blue gradient with the fire glow,
+       placed as in zangbundel-icon.svg at the foreground's scale. Full 108 dp canvas; the
+       launcher masks it. -->
   <defs>
     <linearGradient id="zb-bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#13315C"/>
       <stop offset="1" stop-color="#0B2545"/>
     </linearGradient>
-    <radialGradient id="zb-glow" cx="0.5" cy="0.56" r="0.5">
-      <stop offset="0" stop-color="#FF8A3D" stop-opacity="0.6"/>
+    <radialGradient id="zb-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FF8A3D" stop-opacity="0.55"/>
       <stop offset="1" stop-color="#FF8A3D" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="108" height="108" fill="url(#zb-bg)"/>
-  <circle cx="54" cy="58" r="40" fill="url(#zb-glow)"/>
+  <circle cx="54" cy="64" r="31" fill="url(#zb-glow)"/>
 </svg>

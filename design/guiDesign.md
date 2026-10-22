@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.9 (draft) |
-| Date | 2026-10-20 |
+| Document version | 0.10 (draft) |
+| Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.10, `design/icon/` (app icon decided 2026-10-18) |
+| Depends on | `design/functional-requirements.md` v0.10, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -21,6 +21,7 @@
 | 0.7 | 2026-10-19 | Section 6.3, leader mode, second part, from the owner's answers: the request tab (D-63), the singer list (D-64), checkbox selection with a counter in the setlist editor (D-54 amended), the song bar's *Wis* and language buttons (D-65), no download instruction for singers (D-66, Q21), resume after a crash (D-67), battery and other-gathering warnings (D-68), the closing bar at the end of the setlist (D-69), follow-the-leader at song level only (D-70, Q20). D-37 and D-61 adjusted. Q14 reduced to the join code at the fire and hand-over. Q21 resolved the same day: FRD v0.9 withdraws FR-LEAD-30 and 31 and rewords 32, so D-66 stands; this document now depends on FRD v0.9. Later the same day: D-71 (join code and QR-only fixed per gathering), D-72 (no hand-over in phase 1, FRD Q5 closed), D-73 (no singer list, delegates by helper code; D-64 superseded; FR-LEAD-40 amended), D-74 (unresolved setlist entries shown with their reason under the separator bar, counted in the block and before the start, never skipped silently), D-52 amended (library name shown on rows whose title occurs in more than one library), Q14 and Q18 resolved, Q22 for the protocol. |
 | 0.8 | 2026-10-20 | Section 8, languages, from the owner's decisions: two language layers (D-75), Dutch primary with English as the fallback (D-76), generated labels in the app language and untranslated library names (D-77), rules for every string enforced by the build (D-78), a glossary of fixed terms (D-79), adding a language, no further languages and no right-to-left for now (D-80). The delegate role is *assistent* in Dutch (Q15 resolved; D-46, D-61, D-73 updated). Traceability row for FR-LANG-06 corrected to D-41 as amended. Colour reference, traceability and open questions renumbered 9–11. Depends on FRD v0.10. |
 | 0.9 | 2026-10-20 | D-09 amended: consent is needed only for people who can be recognised; the background photograph was taken by the owner, who holds the copyright and judged the children in it unrecognisable, so no consent is needed (Q8 resolved). |
+| 0.10 | 2026-10-22 | The app icon is replaced by proposal 06 "Vuurboek in de kring" (seven singers in a half circle behind a fire that rises from an open white songbook, the Bluetooth sign alone in the top left corner). D-04 describes the new artwork; the colour reference notes that the sky blue no longer appears in the icon. |
 
 ---
 
@@ -75,7 +76,7 @@ The app has two kinds of screens that look deliberately different, so a user can
 
 ## 3. Welcome screen (*welkomstscherm*)
 
-**D-04 — The welcome screen shows the app name, the app version and the icon artwork, nothing else.** Content, top to bottom, centred: the icon artwork from `design/icon/zangbundel-icon.svg` (the five singers around the songbook, without the launcher's rounded background) at 96 dp; the name **Zangbundel** in the display size; the version line `versie 1.0.0` / `version 1.0.0` in the body size, using `versionName` from the build (`docs/RUNBOOK.md` Decisions). No tagline, no tips, no progress bar, no "powered by".
+**D-04 — The welcome screen shows the app name, the app version and the icon artwork, nothing else.** Content, top to bottom, centred: the icon artwork from `design/icon/zangbundel-icon.svg` (the seven singers, the fire and the open songbook with the Bluetooth sign, without the launcher's rounded background) at 96 dp; the name **Zangbundel** in the display size; the version line `versie 1.0.0` / `version 1.0.0` in the body size, using `versionName` from the build (`docs/RUNBOOK.md` Decisions). No tagline, no tips, no progress bar, no "powered by".
 
 **D-05 — Short and skippable.** The welcome screen is shown for at most **1.5 seconds** after the app is ready, or until the user taps it, whichever is first. It is never shown when the app is opened to resume a gathering from its resume data or from the join link, and never a second time while the app stays in memory. *Why:* a splash that delays the user is a cost; this one only makes the start recognisable and carries the version for support questions ("which version do you have?" is answered by restarting the app).
 
@@ -413,7 +414,7 @@ The Dutch term for the delegate role is *assistent* (Q15, resolved 2026-10-20). 
 | White | `#FFFFFF` | Text on configuration screens; night-theme lyric text; day-theme background |
 | Black | `#000000` | Night-theme background; day-theme lyric text |
 
-The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-graphic.svg`, so the icon, the store listing and the app share one palette.
+The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-graphic.svg`, so the icon, the store listing and the app share one palette. Since the icon of 2026-10-22 the sky blue is no longer in the icon (its Bluetooth sign is `#1E88E5` on its own, without ripples); it stays the app's Bluetooth colour.
 
 ---
 

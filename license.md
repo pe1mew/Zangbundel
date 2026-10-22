@@ -36,7 +36,7 @@ The artwork that ships inside the app or on its store listings is licensed under
 
 | File | What it is |
 |---|---|
-| `design/icon/zangbundel-icon.svg` | App icon master ("Kring van zangers") |
+| `design/icon/zangbundel-icon.svg` | App icon master ("Vuurboek in de kring", since 2026-10-22) |
 | `design/icon/ic_launcher_foreground.svg`, `design/icon/ic_launcher_background.svg` | Adaptive launcher icon layers |
 | `design/icon/feature-graphic.svg` | Feature graphic master |
 | `docs/store-listing/graphics/icon-512.png`, `docs/store-listing/graphics/feature-1024x500.png` | Store icon and feature graphic rendered from the masters |
