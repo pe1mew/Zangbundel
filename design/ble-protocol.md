@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.12 (draft) |
-| Date | 2026-10-20 |
+| Document version | 0.13 (draft) |
+| Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.10 |
+| Depends on | `design/functional-requirements.md` v0.11 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -25,6 +25,7 @@
 | 0.10 | 2026-10-19 | Depends on FRD v0.9, which withdraws FR-LEAD-30 and 31 (no library download instruction in phase 1, `design/guiDesign.md` D-66). The `download` document (6) and the `libs` fields in Info and Join stay defined but are reserved: phase 1 apps do not send them and ignore them when received. No wire change. |
 | 0.11 | 2026-10-19 | Two additive Control commands for any registered singer (9.8): op 9 *become delegate* with a helper code shown on the leader's screen (`design/guiDesign.md` D-73, Q22; FR-LEAD-40 as amended in FRD v0.9), and op 10 *leave*, so the leader's count drops at once (FR-GATH-07, FR-GATH-12). Error `0x8E`. Procedures 10.9, 10.11 and 10.12, security table and traceability updated. Protocol stays 1.0: new keys and ops only. |
 | 0.12 | 2026-10-20 | Depends on FRD v0.10 (Q8 closed, no protocol impact). Dutch UI term for the helper code is *assistentcode* (`design/guiDesign.md` Q15). Nothing language-dependent goes over the air: labels are rendered by each phone (guiDesign D-75). No wire change. |
+| 0.13 | 2026-10-22 | Depends on FRD v0.11. Q5 resolved: CBOR stays, encoded by the app's own bounded codec (`design/architecture.md` A-08). Fixes from architecture section 12: 10.1 step 2 and 10.9 persist and resume both key pairs with their secret keys and the delegate list `dlg`; 10.12 points at section 13 for the rate limits instead of 10.8; the 7.7 capacity table names its typical state record (15 frames) and gives the times for a maximum one (30 frames, 9.4); Q7 marked resolved by Control op 10. No wire change. |
 
 ---
 
@@ -358,14 +359,14 @@ A singer with the current song in its local library never starts a song repair t
 
 ### 7.7 Capacity of the legacy carrier
 
-| Data sets | Frames/s | Bytes/s (adv only) | State record (15 frames) | 2 kB song (125 frames), one pass |
+| Data sets | Frames/s | Bytes/s (adv only) | State record, typical (about 240 B, 15 frames) | 2 kB song (125 frames), one pass |
 |---|---|---|---|---|
 | 1 | 10 | 160 | 1.5 s | 12.5 s |
 | 2 | 20 | 320 | 0.8 s | 6.3 s |
 | 3 | 30 | 480 | 0.5 s | 4.2 s |
 | Extended | 10 × ~1 kB | ~10 000 | 0.1 s | 0.2–0.3 s |
 
-Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire.
+Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and still fits one extended frame.
 
 ### 7.8 Degraded mode (no broadcast data channel)
 
@@ -658,7 +659,7 @@ Op 8 is optional in 1.0; a leader without it answers `0x8A` and the delegate sho
 ### 10.1 Start a gathering (leader)
 
 1. **Pre-start scan** [FR-GATH-16]. Scan with the service UUID filter for at least 5 s. If any beacon with `ENDED` = 0 and `RELAY` = 0 is received, regardless of `gid`, do not start: show the gathering name(s) found and offer to join. A beacon with `ENDED` = 1 does not block. A device that cannot scan MUST NOT start a gathering.
-2. Generate the Ed25519 key pair, derive `gid`, set `seq` = random u16, `ts` = 0, `status` = 0; persist key, `gid`, name, join code, `seq` and the singer table until the gathering ends [FR-GATH-13].
+2. Generate the Ed25519 key pair, derive `gid`, set `seq` = random u16, `ts` = 0, `status` = 0; persist both key pairs with their secret keys (the Ed25519 signing key and the X25519 key behind `ek`, 8.4), `gid`, name, join code, `seq`, the singer table and the delegate list `dlg` until the gathering ends [FR-GATH-13]; without the X25519 secret a resumed leader cannot open sealed writes, and without `dlg` it loses its delegates. The record is app-private and deleted as FR-DATA-08 requires.
 3. Build the state, info and initial documents (an empty or prepared setlist [FR-LEAD-02]).
 4. Start the GATT server; start the beacon set; open legacy data sets until the stack refuses (max 3); start the extended set if supported. Set `BCAST`/`EXT` accordingly [FR-GATH-02].
 5. Start the carousel (section 7.4).
@@ -730,7 +731,7 @@ Connections now occur for registration, requests, delegate commands and repair. 
 
 - **Singer side.** Nothing received for 10 s → "reconnecting", keep the current lyrics [FR-GATH-10]. Beacon or frames return with the same `gid` → compare `seq`, continue; the carousel delivers whatever was missed, so normally no connection is needed. 5 min without anything → ended (10.11) [FR-GATH-11].
 - **Leader side.** A singer that leaves on purpose sends Control op 10 (9.8) and is removed from the count at once [FR-GATH-07, FR-GATH-12]. Singers that fall silent without it (walked away, phone off) are removed after 10 min without GATT activity; because registered singers rarely connect, "seen" includes any GATT activity, so the count can run high by the silent departures of the last ten minutes. (v0.11: the explicit leave replaces the earlier note that the count is only an upper bound.)
-- **Leader app restart.** On start, a persisted running gathering younger than the resume window (default 10 min) is offered for resumption [FR-GATH-13]. Resuming reuses key, `gid`, name, tokens and `seq` (+1, so a burst follows).
+- **Leader app restart.** On start, a persisted running gathering younger than the resume window (default 10 min) is offered for resumption [FR-GATH-13]. Resuming reuses both key pairs, `gid`, name, join code, the singer table with its tokens, the delegate list `dlg`, and `seq` (+1, so a burst follows), all from the record persisted in 10.1 step 2.
 
 ### 10.10 End a gathering (leader)
 
@@ -746,7 +747,7 @@ On `ENDED` in the beacon, `status` 1 in a verified state, or the 5-minute timeou
 
 ### 10.12 Delegates
 
-**Appoint with a helper code** [FR-LEAD-40, as amended in FRD v0.9]: the leader has no list of singers to pick from (`design/guiDesign.md` D-73). To appoint, the leader opens *Assistent toevoegen*; the leader's app generates a **helper code** `hc` of four decimal digits from a cryptographic random source, shows it large on the leader's screen and keeps it valid for **120 s** or until used, whichever is first; at most one code is valid at a time. The intended helper, a registered singer standing next to the leader, types the code; the singer app connects and writes Control op 9 `{tok, cid, op 9, hc, gid}` sealed to `ek` (9.8). The leader compares `hc` with the valid code: on a match it adds the writer's `sid` to `dlg`, `seq` + 1, signs and broadcasts; the code is consumed. On a mismatch it answers `0x8E` and counts a wrong try; after **3 wrong tries** against one code, or when the 120 s have passed, the code is invalid and every further op 9 gets `0x8E` until the leader shows a new code. A singer is limited to one op 9 per 2 s per connection (10.8 rate limits). The new delegate learns of its role from the next verified state (one carousel pass), shows the delegate UI and fetches document 8 over GATT [FR-LEAD-45]; the leader's drawer lists it by the display name from its Join.
+**Appoint with a helper code** [FR-LEAD-40, as amended in FRD v0.9]: the leader has no list of singers to pick from (`design/guiDesign.md` D-73). To appoint, the leader opens *Assistent toevoegen*; the leader's app generates a **helper code** `hc` of four decimal digits from a cryptographic random source, shows it large on the leader's screen and keeps it valid for **120 s** or until used, whichever is first; at most one code is valid at a time. The intended helper, a registered singer standing next to the leader, types the code; the singer app connects and writes Control op 9 `{tok, cid, op 9, hc, gid}` sealed to `ek` (9.8). The leader compares `hc` with the valid code: on a match it adds the writer's `sid` to `dlg`, `seq` + 1, signs and broadcasts; the code is consumed. On a mismatch it answers `0x8E` and counts a wrong try; after **3 wrong tries** against one code, or when the 120 s have passed, the code is invalid and every further op 9 gets `0x8E` until the leader shows a new code. A singer is limited to one op 9 per 2 s per connection, alongside the other per-connection rate limits of section 13. The new delegate learns of its role from the next verified state (one carousel pass), shows the delegate UI and fetches document 8 over GATT [FR-LEAD-45]; the leader's drawer lists it by the display name from its Join.
 
 **Revoke** [FR-LEAD-40, FR-LEAD-44]: leader-only, on the leader's screen: the leader removes the `sid` from `dlg`, `seq` + 1, sign, broadcast. After revocation a Control write with that token gets `0x89`. A delegate that leaves (op 10) is removed from `dlg` by the leave itself.
 
@@ -936,9 +937,9 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q2 | How many advertising sets, and what advertising-data update rate, do the Android phones scouting groups actually own support? This decides whether the legacy carrier alone meets the 5-second target for singers without the library. | 7.1, 7.7, 12.1 |
 | Q3 | Battery cost of continuous foreground scanning on singers and of 3–5 advertising sets at 100 ms on the leader, against NFR-PERF-02. | 12.3 |
 | Q4 | Use a 6-byte `gid` (2^48 forgery work) and move `pos` to a broadcast tick document, or keep 5 bytes + `pos` in the beacon? | Beacon layout, security margin |
-| Q5 | CBOR versus Protocol Buffers. | Encoding, tooling |
+| Q5 | *Resolved 2026-10-22:* CBOR stays; the app encodes and decodes it with its own bounded codec for the subset section 9 uses (`design/architecture.md` A-08). | Resolved |
 | Q6 | Should the leader's display name travel in Info so the gathering memory can record it (FR-DATA-03)? | Info payload, privacy |
-| Q7 | Explicit *leave* so the singer count drops at once, now that registered singers rarely connect? | FR-GATH-07, FR-GATH-12, 10.9 |
+| Q7 | *Resolved in v0.11:* yes. Control op 10 (9.8) is the explicit leave, one best-effort attempt when the singer leaves (10.11); the inactivity rule of 10.9 stays for singers that vanish without it. | Resolved |
 | Q8 | A shared static DEFLATE dictionary of common Dutch/English lyric words could cut song frames by 20–30 %. Worth the versioning cost? | 7.3 |
 | Q9 | Resume window (10 min) and inactivity rule (10 min) are guesses; confirm with field use. | 10.9 |
 | Q10 | Is the delegate upload (Control op 8) worth implementing in 1.0? | 9.8, FR-LEAD-42 |

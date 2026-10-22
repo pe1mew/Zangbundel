@@ -22,6 +22,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 | Working on the gathering, the beacon, lyric distribution, requests, delegates or anything on the air | `design/ble-protocol.md` — broadcast carousel, frame formats, GATT service, CBOR payloads, procedures, security. Its header names the FRD version it depends on. |
 | Working on song files, library repositories, metadata, the content hash or the line list | `design/song-format.md` — the ChordPro profile, library layout, canonicalisation rules the protocol hashes against, release archive, setlists. |
 | Designing or changing a screen, a control, a theme or what a singer or leader sees | `design/guiDesign.md` — numbered decisions D-nn (D-48 ranks above the rest), open questions at the end; `design/gui/` and `design/ble/` hold the assets and diagrams. Grep the FRD for the area's MUSTs before writing a decision. |
+| Writing or planning app code: toolkit, modules, storage, dependencies, build, tests | `design/architecture.md` — decisions A-nn (all taken 2026-10-22; a change supersedes, never edits), module layout and dependency rules, data lifecycle table, allowed dependency list. |
 | Wondering why a requirement or feature exists | `design/prompts.md` — the original ask, verbatim, dated. |
 | Adding or changing anything that touches personal data, a permission, the network, or bytes received over the air | `design/security-privacy-assessment.md` — the principles made concrete, findings SP-nn, accepted risks; add a finding or re-run the assessment. |
 | Changing deployment or infra, or anything about Google Play (account, tracks, signing, listing, releases) | `docs/RUNBOOK.md` — operational how-to; the fixed Play decisions (application ID, SDK levels, version scheme) live there. |
@@ -71,11 +72,12 @@ Zangbundel/
 │   ├── ble-protocol.md           ← how leader and singers talk (depends on FRD)
 │   ├── song-format.md            ← song file, library, release archive and setlist spec (depends on FRD and protocol)
 │   ├── guiDesign.md              ← GUI decisions D-nn for every screen (depends on FRD)
+│   ├── architecture.md           ← how the app is built: decisions A-nn, modules, storage, build, tests
 │   ├── security-privacy-assessment.md ← findings SP-nn, accepted risks
 │   ├── gui/                      ← backdrop photograph and exports, singer-mode flowchart (.puml/.svg/.png)
 │   ├── ble/                      ← BLE sequence diagrams per scenario (.puml/.svg/.png)
 │   ├── icon/                     ← app icon master, launcher layers, feature graphic
-│   └── icon-proposals/           ← the five icon proposals and their contact sheet
+│   └── icon-proposals/           ← the six icon proposals and their contact sheet
 ├── scripts/check-design.sh       ← cross-document consistency check
 ├── docs/
 │   ├── RUNBOOK.md                ← Google Play setup, signing, tracks, release flow
@@ -101,6 +103,7 @@ Dependency order among the specs: FRD → protocol → song format → GUI desig
 | `design/ble-protocol.md` | BLE protocol 1.0 (document version in its header): beacon, carousel, GATT, CBOR payloads, procedures, traceability table. |
 | `design/song-format.md` | Song file and library specification: ChordPro profile, metadata, canonical form, content hash, line list, release archive (`.zbl`), setlists (`.zbs`). |
 | `design/guiDesign.md` | GUI design: numbered decisions D-nn, screen families, singer and leader mode, traceability, open questions. |
+| `design/architecture.md` | Architecture: decisions A-nn, module layout under `android/`, runtime structure, data lifecycle, dependency list, build, test layers. Decisions taken by the owner 2026-10-22; open questions Q1–Q5 wait for builds and field tests. |
 | `design/gui/`, `design/ble/` | GUI assets and diagrams; BLE sequence diagrams. Each folder's README has the render command (PlantUML needs `-charset UTF-8` on Java 8). |
 | `design/prompts.md` | Dated record of the prompts that produced the specs. |
 | `design/security-privacy-assessment.md` | Secure-by-design and privacy-by-design principles, assessment of the design, findings and accepted risks. |

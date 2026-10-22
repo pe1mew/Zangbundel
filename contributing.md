@@ -10,7 +10,7 @@ Thank you for considering contributing to Zangbundel. The project is in its desi
 | Answer one of the open questions at the end of a design document | Open an issue with your reasoning or, better, measurements from real devices (BLE connection limits, advertising-set counts, battery). |
 | Work on the BLE protocol or the song format | Read `design/functional-requirements.md` first; the other documents state the FRD version they depend on. |
 | Contribute songs or lyrics | **Not here.** This repository contains no lyrics and does not accept any. Songs go in a library repository in the format of `design/song-format.md`, with their own licence metadata. |
-| Start on the Android app | Open an issue first so the architecture document can be written before code lands in `android/`. |
+| Start on the Android app | Read `design/architecture.md` (toolkit, modules, allowed dependencies) and open an issue before code lands in `android/`. |
 
 Discussion in English or Dutch is welcome; the documents themselves are in English, with Dutch UI terms in parentheses.
 

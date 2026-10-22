@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.10 (draft) |
-| Date | 2026-10-20 |
+| Version | 0.11 (draft) |
+| Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -20,6 +20,7 @@
 | 0.7 | 2026-10-18 | Joining by QR code, unforgeable because it carries the leader's key (FR-GATH-19 to 23); FR-GATH-18 amended; Q13. Assessment SP-04 resolution extended. |
 | 0.8 | 2026-10-18 | Q13 resolved: the join link is hosted on GitHub Pages from this repository; App Links verification prepared. No requirement changed. |
 | 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. Same day: FR-LEAD-40 amended (delegates appointed with a helper code, no singer list; note on FR-GATH-12), Q5 closed (no hand-over in P1; FR-GATH-14 stays a MAY). |
+| 0.11 | 2026-10-22 | `design/architecture.md` decided by the owner (v0.2): Q7 resolved (minimum SDK 26, tablets use the phone layouts in P1, A-01, A-02); Q11 resolved for the package (every install is one APK with bundle splits disabled, A-18), its store-update part stays open as architecture Q1. Section 19 marks the architecture document and the assessment's current version as existing. No requirement changed. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -586,11 +587,11 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q4 | Do we adopt ChordPro as the song format, or define our own Markdown/YAML-based format? | Song format spec, P3 |
 | Q5 | *Closed 2026-10-19 (v0.9):* not in P1. A leader who has to stop ends the gathering and another adult starts a new one from the same setlist (exported file or library setlist); singers rejoin. FR-GATH-14 stays a MAY for a later phase (`design/guiDesign.md` D-72). | Resolved |
 | Q6 | *Closed 2026-10-18 (assessment SP-02):* the gathering memory holds no names on either side; titles, date and count only (FR-DATA-03 v0.6). | Resolved |
-| Q7 | Minimum Android version and whether a tablet layout is in scope for P1. | Architecture |
+| Q7 | *Resolved 2026-10-22 (v0.11):* minimum SDK 26 (Android 8.0), as `docs/RUNBOOK.md` already fixed; tablets get the phone layouts with more room in P1, no tablet-only screens (`design/architecture.md` A-01, A-02). | Resolved |
 | Q8 | *Closed 2026-10-20 (v0.10):* none beyond Dutch and English for now, and no right-to-left support. Dutch is primary, English the fallback for unsupported phone languages; layouts use start and end so either can be added later without layout work (`design/guiDesign.md` D-76, D-78, D-80). | Resolved |
 | Q9 | Should FR-GATH-16 allow an override when the gathering in range is clearly abandoned (e.g. a forgotten phone still advertising), or is "ask that leader to end it" always acceptable? | FR-GATH-16, leader UI |
 | Q10 | Should singers see who pushed a song or handled their request (leader or which delegate), or is this detail only for the leader? | FR-LEAD-45, setlist display |
-| Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? | FR-DIST-05, constraint 12, architecture and release process |
+| Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? *Partly resolved 2026-10-22 (v0.11):* the App Bundle disables splits, so every install is one APK signed with the owner's key and the app shares its own installed APK (`design/architecture.md` A-18). Whether Play updates a copy installed by sharing stays open as architecture Q1, to check on the first internal test. | FR-DIST-05, constraint 12, architecture Q1 |
 | Q12 | Is the offline hotspot (FR-DIST-07) worth building, given that Quick Share already covers Android-to-Android and iOS cannot be served offline at all? | FR-DIST-07, scope P2 |
 | Q13 | *Resolved 2026-10-18:* no domain or server outside git. The link is `https://pe1mew.github.io/Zangbundel/j`, served by GitHub Pages from `docs/` in this repository, with the page's "Open in Zangbundel" button covering the unverified case; App Links verification follows later through a `pe1mew.github.io` repository holding `assetlinks.json` (`docs/RUNBOOK.md` Steps 5b, 5c). | Resolved |
 
@@ -600,12 +601,12 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 | Document | Content |
 |---|---|
-| `design/architecture.md` | App architecture, technology choices, module boundaries, Android/iOS strategy. |
+| `design/architecture.md` | *Exists (v0.2).* App architecture, technology choices, module boundaries, Android/iOS strategy. |
 | `design/ble-protocol.md` | Beacon format, join procedure, message types, chunking and compression, versioning, relay strategy. |
 | `design/song-format.md` | Song file and library metadata format, metadata fields, timing (P2) and notation (P3) extensions. |
 | `design/ui-flows.md` | Screen flows for leader and singer, day/night theme guidelines. |
 | `design/test-plan.md` | Field test scenarios (range, number of singers, battery), automated test strategy, parser fuzzing (NFR-SEC-04). |
-| `design/security-privacy-assessment.md` | *Exists (v0.1).* Principles made concrete, assessment of the design, findings and accepted risks; repeated at each architecture change and release. |
+| `design/security-privacy-assessment.md` | *Exists (v0.3).* Principles made concrete, assessment of the design, findings and accepted risks; repeated at each architecture change and release. |
 
 ---
 

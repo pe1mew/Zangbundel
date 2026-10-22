@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.10 (draft) |
+| Document version | 0.11 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.10, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.11, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -22,6 +22,7 @@
 | 0.8 | 2026-10-20 | Section 8, languages, from the owner's decisions: two language layers (D-75), Dutch primary with English as the fallback (D-76), generated labels in the app language and untranslated library names (D-77), rules for every string enforced by the build (D-78), a glossary of fixed terms (D-79), adding a language, no further languages and no right-to-left for now (D-80). The delegate role is *assistent* in Dutch (Q15 resolved; D-46, D-61, D-73 updated). Traceability row for FR-LANG-06 corrected to D-41 as amended. Colour reference, traceability and open questions renumbered 9–11. Depends on FRD v0.10. |
 | 0.9 | 2026-10-20 | D-09 amended: consent is needed only for people who can be recognised; the background photograph was taken by the owner, who holds the copyright and judged the children in it unrecognisable, so no consent is needed (Q8 resolved). |
 | 0.10 | 2026-10-22 | The app icon is replaced by proposal 06 "Vuurboek in de kring" (seven singers in a half circle behind a fire that rises from an open white songbook, the Bluetooth sign alone in the top left corner). D-04 describes the new artwork; the colour reference notes that the sky blue no longer appears in the icon. |
+| 0.11 | 2026-10-22 | Depends on FRD v0.11. Q2 resolved: no tablet layout in phase 1; tablets get the phone layouts with more room and no 2560 × 1600 export (`design/architecture.md` A-02). The toolkit is Jetpack Compose (A-03). |
 
 ---
 
@@ -487,7 +488,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | # | Question | Impact |
 |---|---|---|
 | Q1 | *Resolved 2026-10-19:* a photograph, taken by the owner at a campfire on 3 April 2026; files in `design/gui/`. Rights and the people in it are tracked under Q8. | Resolved |
-| Q2 | Is a tablet layout in phase 1 (FRD Q7)? If so, a 2560 × 1600 landscape export is added and D-13 gets a tablet rule. | D-11, D-13 |
+| Q2 | *Resolved 2026-10-22:* no tablet layout in phase 1. Tablets get the phone layouts with more room, and no 2560 × 1600 export is made (`design/architecture.md` A-02, FRD Q7). | Resolved |
 | Q3 | Is 1.5 seconds the right maximum for the welcome screen, or should it be shown only until the app is ready, with no minimum? | D-05 |
 | Q4 | Should the day theme also be allowed on configuration screens with a *light* scrim and dark text, for use in bright daylight, or is the white-on-dark-scrim design enough? | D-03, D-14 |
 | Q5 | Should the FRD's section 19 row `design/ui-flows.md` be renamed to this document, or should screen flows get a separate document after all? | FRD section 19 |

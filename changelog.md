@@ -7,12 +7,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- `design/architecture.md` v0.1 (draft): how the app is built. Decisions A-01 to A-22, each *Fixed* (repeated from the runbooks, the protocol, the song format or the GUI design) or *Proposed* for the owner. The main proposals are:
+  - Kotlin with Jetpack Compose in one activity.
+  - Pure-Kotlin core modules for the song format and the protocol, kept convertible to Kotlin Multiplatform for a later iOS app.
+  - One gathering engine per process, run as a single-thread actor inside a `connectedDevice` foreground service for both roles.
+  - The protocol's four transport primitives as the radio interface, with a simulated radio for 50 virtual singers.
+  - CBOR kept, encoded by its own bounded codec.
+  - libsodium through lazysodium behind a crypto interface.
+  - Libraries as release archives or snapshots only, with no git client.
+  - Room with FTS4, canonical song files with staged atomic updates, and a separate ephemeral gathering store with a startup sweep.
+  - Backup disabled.
+  - The platform HTTPS client with a fixed user agent.
+  - QR codes generated with ZXing and never scanned in-app.
+  - Bundle splits disabled, so every install is one APK the app can share itself.
+  - A pinned, reproducible build with `debug`, `release` and `fieldtest` build types.
+  - A logging policy.
+  - Five test layers around a shared conformance corpus.
+
+  The document also covers:
+  - the module layout and its dependency rules;
+  - the runtime structure and the leader's resume record;
+  - the data lifecycle table;
+  - the allowed dependency list;
+  - how assessment findings SP-05, SP-08, SP-09 and SP-15 map to the choices.
+
+  It answers or proposes answers to FRD Q7 and Q11, song-format Q11 and Q13, ble-protocol Q5 and guiDesign Q2. It lists five inconsistencies found in other documents: the GitHub Release APK source in the two runbooks, the protocol's resume record, a rate-limit cross-reference, the state frame count, and protocol Q7 still being open. It also has five open questions of its own.
+
+  Linked from `CLAUDE.md`, `README.md`, `contributing.md` and `memory/MEMORY.md`.
 - Icon proposal 06 "Vuurboek in de kring" (`design/icon-proposals/06-vuurboek-kring.svg`, 512 px render `06-vuurboek-kring.png`, card on the contact sheet): an open white songbook with black lines at the bottom, a yellow-to-red fire rising from its centre without wood, seven singers in a closed half circle behind it, the Bluetooth sign without ripples on its own in the top left corner (inside the round mask), on the night-blue background. Drawn for the project after the owner's reference icons, no shapes copied, so it can carry the app artwork licence. Adopted the same day as the app icon (see Changed).
 - `docs/RUNBOOK.md` Step 6 verified 2026-10-20: the app signing keystore exists outside every repository and the ignore rules hold; `keystore.properties` and the first upload wait for the Android project. The upload keystore was created the same evening (`zangbundel-upload.jks`, alias `upload`, outside the repositories); its certificate SHA-256 (`C0:A3:C6:…:95:17:2A`) is recorded in Step 6 so the upload certificate Play registers can be checked. The owner confirmed that both keystores and their passwords are in the password manager and on an offline backup; both boxes are ticked. The checkbox that also claimed a password-manager and offline backup is split off as the owner's to confirm, here and in `docs/FDROID-RUNBOOK.md` Step 3.
 - Signing decided 2026-10-20: the owner's own app signing key in every channel (Play App Signing with an uploaded key, GitHub Releases, F-Droid reproducible build), a dedicated keystore `zangbundel-appsigning.jks` created by the owner outside the repositories and not shared with another app. Recorded in `docs/FDROID-RUNBOOK.md` (Decisions, Step 3) and `docs/RUNBOOK.md` (Decisions table, Step 6 rewritten for two keystores: app signing key done, upload key still to create). The key's certificate SHA-256 (`57:86:7B:…:9B:10`, valid to 2056-10-12) is recorded in both runbooks, in the F-Droid metadata template (`AllowedAPKSigningKeys`) and in `docs/app-links/assetlinks.template.json`.
 - `docs/FDROID-RUNBOOK.md`: F-Droid runbook. What F-Droid requires and where the app stands, the signing decision that must precede the first Google Play upload (separate keys, or the owner's own key on Play plus a reproducible F-Droid build), anti-features (*NonFreeAssets* for the CC BY-NC artwork unless relicensed; no *Tracking*, *NonFreeNet* or *TetheredNet*), in-repository store metadata under `fastlane/metadata/android/`, release tags, a starting `fdroiddata` metadata file, the local fdroidserver test, merge request and updates. `docs/RUNBOOK.md` Step 6 now points at the signing decision. CLAUDE.md: hard constraint that the app stays free software with no Google proprietary dependency, a Before You Start row and key path for the new runbook. `NOTICE` added.
 
 ### Changed
+- Fixed the five inconsistencies listed in `design/architecture.md` section 12:
+  - `docs/RUNBOOK.md` (Decisions "Packaging", the automatic-protection row, Step 9 item 7): GitHub Releases now carry an APK built from the release tag and signed with the app signing key, named `zangbundel-<versionName>.apk`. This matches `docs/FDROID-RUNBOOK.md`, and Play installs are single APKs (A-18).
+  - `design/ble-protocol.md` v0.13, section 10.1 step 2 and section 10.9: the leader persists and resumes both key pairs with their secret keys and the delegate list `dlg`.
+  - Section 10.12 now points to section 13 for the rate limits.
+  - The section 7.7 capacity table names its typical state record and gives the times for a maximum one.
+  - Q7 is marked resolved by Control op 10.
+
+  No wire change.
+- Architecture decided (owner, 2026-10-22). `design/architecture.md` v0.2 marks every proposal Decided as recommended: A-02 to A-08, A-11 to A-15 and A-17 to A-21. The open questions it answers are resolved where they live:
+  - FRD v0.11: Q7 is resolved (minimum SDK 26, phone layouts on tablets) and Q11 is partly resolved (a single APK; whether Play updates a shared copy stays as architecture Q1). Section 19 marks `architecture.md` v0.2 and the assessment v0.3 as existing.
+  - BLE protocol v0.13: Q5 is resolved (CBOR, with the app's own codec).
+  - Song format v0.5: Q11 is resolved (the validator stays in the library repository, with a shared conformance corpus) and Q13 is resolved (archives only).
+  - GUI design v0.11: Q2 is resolved (no tablet layout).
+
+  Each document's dependency versions are updated, and no requirement, wire format or file format changed. `CLAUDE.md`, `README.md`, `contributing.md` and `memory/MEMORY.md` no longer call the decisions proposed.
+- `docs/RUNBOOK.md` store graphics: the new app icon and feature graphic were uploaded to the Play store listing on 2026-10-22, replacing the feature graphic with the 02 artwork.
 - App icon replaced by proposal 06 "Vuurboek in de kring" (2026-10-22): new master `design/icon/zangbundel-icon.svg`, adaptive launcher layers `ic_launcher_foreground.svg` (content scaled 33/250 into the 66 dp safe zone, Bluetooth sign included) and `ic_launcher_background.svg` (gradient and fire glow), feature graphic `design/icon/feature-graphic.svg` with the new artwork and without the faint beacon arcs, and the store renders `docs/store-listing/graphics/icon-512.png` and `feature-1024x500.png` (32-bit PNG). `design/guiDesign.md` v0.10 (D-04 artwork description, colour reference note), `license.md` artwork table, `docs/RUNBOOK.md` Step 8 and the proposals contact sheet updated. Licence unchanged: CC BY-SA 4.0.
 - Background photograph: rights and consent recorded on the owner's statement (`design/gui/README.md`): the owner took it in April 2026 and holds the copyright, and the children in it cannot be recognised, so no consent is needed. `design/guiDesign.md` v0.9 amends D-09 (consent only for recognisable people) and resolves Q8. The photograph, its Paint.NET project, masters and exports follow the app graphics licence, CC BY-SA 4.0 (`license.md` artwork table, `NOTICE`, `README.md`), so it ships in every channel with no F-Droid label. The runbook no longer says the library repository changed its licence: that repository stays out of F-Droid-driven decisions.
 - App artwork licence: the app icon (`design/icon/zangbundel-icon.svg`), the launcher layers, the feature graphic master and the store renders in `docs/store-listing/graphics/` are CC BY-SA 4.0 instead of CC BY-NC 4.0, so F-Droid needs no *NonFreeAssets* label (`license.md` section "App artwork", `NOTICE`, `README.md`). The background photograph is excluded and stays out of the app until the photographer's permission and the parents' consent are recorded (`design/gui/README.md`). `docs/FDROID-RUNBOOK.md` updated: no anti-features, rule for new artwork.

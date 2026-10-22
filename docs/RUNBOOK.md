@@ -28,10 +28,10 @@ Status 2026-10-18 (evening): the Google Play developer account exists (personal,
 | Minimum SDK | 26 (Android 8.0) | `startAdvertisingSet` (multiple advertising sets) is API 26; the BLE protocol's broadcast carousel needs it on leaders. Singers on older devices are not supported. |
 | Target SDK | 36 (Android 16) | Required for new apps from 31 August 2026. |
 | App signing key | The owner's own key, `zangbundel-appsigning.jks` (alias `zangbundel`), uploaded to Play App Signing at the first release and used for GitHub Releases and F-Droid's reproducible build | Decided 2026-10-20: one signature in every channel (`docs/FDROID-RUNBOOK.md` Step 3). Hard to change after the first upload. |
-| Packaging | Android App Bundle (`.aab`), Play App Signing | Mandatory on Play for new apps. The Play-signed universal APK from the App Bundle Explorer is what goes on GitHub Releases for offline sharing (FRD FR-DIST-05, Q11). |
+| Packaging | Android App Bundle (`.aab`), Play App Signing | Mandatory on Play for new apps. The bundle disables splits, so every Play install is one APK the app can share offline (`design/architecture.md` A-18, FRD FR-DIST-05, Q11). GitHub Releases carry an APK built from the release tag and signed with the app signing key, not the App Bundle Explorer APK: only the tag-built APK can be byte-identical to F-Droid's reproducible build (`docs/FDROID-RUNBOOK.md` Steps 3 and 6; fixed 2026-10-22). |
 | Target audience | 13 and over; not designed for children | Selecting any under-13 age group puts the app under the Families policy with its own review. Scouts younger than 13 sing from a leader's or parent's phone. Revisit if the owner wants a Families listing. |
 | Version scheme | `versionName` semantic (`1.0.0`); `versionCode` strictly increasing integer, `YYYYMMDDnn` (e.g. `2026101801`) | Play refuses a bundle whose `versionCode` is not higher than every previous upload on any track. |
-| Play "automatic protection" | **Off** (chosen at app creation, 2026-10-18; changeable under App integrity) | It adds an installer check that makes a copy installed from outside Play refuse to run, which would defeat offline sharing of the app (FRD FR-DIST-05) and the sideloadable universal APK. |
+| Play "automatic protection" | **Off** (chosen at app creation, 2026-10-18; changeable under App integrity) | It adds an installer check that makes a copy installed from outside Play refuse to run, which would defeat offline sharing of the app (FRD FR-DIST-05) and the sideloadable APK from GitHub Releases. |
 | Public contact e-mail and IARC rating e-mail | `zangbundel@rfsee.nl` | Project address, shown on the listing; the IARC certificate goes there too. |
 
 ## Google Play setup
@@ -190,8 +190,8 @@ Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.m
 
 | Asset | Spec |
 |---|---|
-| App icon | **Ready:** `docs/store-listing/graphics/icon-512.png` (512 × 512, 32-bit PNG, full square; Play applies its own mask), rendered from the master `design/icon/zangbundel-icon.svg`, chosen from proposal 06 "Vuurboek in de kring" on 2026-10-22 (replacing proposal 02 of 2026-10-18). Upload under Store listing → App icon. The adaptive launcher layers for the Android project are `design/icon/ic_launcher_foreground.svg` and `ic_launcher_background.svg` (Android Studio → Image Asset). |
-| Feature graphic | **Ready:** `docs/store-listing/graphics/feature-1024x500.png`, rendered from `design/icon/feature-graphic.svg` (icon artwork, name, Dutch tagline; no photo, so no consent question). Upload under Store listing → Feature graphic. A photo variant stays possible later; get consent from recognisable people, especially minors, first. |
+| App icon | **Uploaded 2026-10-22:** `docs/store-listing/graphics/icon-512.png` (512 × 512, 32-bit PNG, full square; Play applies its own mask), rendered from the master `design/icon/zangbundel-icon.svg`, chosen from proposal 06 "Vuurboek in de kring" on 2026-10-22 (replacing proposal 02 of 2026-10-18). Upload under Store listing → App icon. The adaptive launcher layers for the Android project are `design/icon/ic_launcher_foreground.svg` and `ic_launcher_background.svg` (Android Studio → Image Asset). |
+| Feature graphic | **Uploaded 2026-10-22** (replacing the earlier upload with the 02 artwork): `docs/store-listing/graphics/feature-1024x500.png`, rendered from `design/icon/feature-graphic.svg` (icon artwork, name, Dutch tagline; no photo, so no consent question). Upload under Store listing → Feature graphic. A photo variant stays possible later; get consent from recognisable people, especially minors, first. |
 | Phone screenshots | 2 to 8; 16:9 or 9:16; each side 320–3840 px; actual screenshots of the app, night theme included |
 | 7-inch and 10-inch tablet screenshots | Recommended since tablets are supported (FR 2.4) |
 | Short description | ≤ 80 characters, nl-NL and en-US |
@@ -208,7 +208,7 @@ The photos in `raw/` (untracked, 2–5 MB each) can serve the feature graphic af
 4. Upload to **Internal testing**; wait for the pre-launch report; install from the Play link on two phones and run a gathering between them.
 5. Promote the same bundle to **Closed testing**; write release notes in nl and en.
 6. After the 14 days and production access: promote to **Production** with a staged rollout; watch Android vitals (crashes, ANRs) for a week before 100 %.
-7. Download the signed universal APK from App Bundle Explorer and attach it to the GitHub release with the same version, for offline sharing.
+7. Build the APK from the release tag `v<versionName>` with `./gradlew assembleRelease` (signed with the app signing key through `keystore.properties`), name it `zangbundel-<versionName>.apk` and attach it to the GitHub release of that tag. This is the file F-Droid's `Binaries` URL points at (`docs/FDROID-RUNBOOK.md` Steps 6 and 7); do not use the App Bundle Explorer APK, which cannot be byte-identical to F-Droid's build.
 
 ### Post-deploy verification
 

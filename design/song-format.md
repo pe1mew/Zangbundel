@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.4 (draft) |
-| Date | 2026-10-20 |
+| Document version | 0.5 (draft) |
+| Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.10, `design/ble-protocol.md` v0.12 |
+| Depends on | `design/functional-requirements.md` v0.11, `design/ble-protocol.md` v0.13 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -17,6 +17,7 @@
 | 0.2 | 2026-10-18 | Added section 12: the release archive (`.zbl`), its manifest, repository snapshots, release index, build and load procedures, validation codes A001–A103. Later sections renumbered (examples 13, traceability 14, open questions 15). `release_index` in `zangbundel.json`; `releases.json` in the layout. Q12–Q14. |
 | 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.11 (v0.10 withdrew the download instruction, v0.11 added the helper code and the explicit leave; neither touches this format): FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. Section 13, setlists (`.zbs`), added as format 1.1 and archive 1.1: the setlist file, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104 (`design/guiDesign.md` D-59, Q18). Later sections renumbered (examples 14, traceability 15, open questions 16). |
 | 0.4 | 2026-10-20 | Q5 resolved: generated section labels follow the app language, as 7.1 already says. Q8 resolved: a library's `name` and `description` are not localisable; tag labels stay localisable. Depends on FRD v0.10 and BLE v0.12. No change to the format (`design/guiDesign.md` D-77). |
+| 0.5 | 2026-10-22 | Depends on FRD v0.11 and BLE protocol v0.13. Q11 resolved: the command-line validator and the release tool live in the library repository; the app has its own implementation, kept in step by a shared conformance corpus (`design/architecture.md` A-21, A-22). Q13 resolved: the app imports release archives and snapshots only and has no git client (A-11). No format change. |
 
 ---
 
@@ -1074,7 +1075,7 @@ Notes on this file:
 | # | Question | Impact |
 |---|---|---|
 | Q12 | Should release archives be signed (a detached signature over the manifest, public key in the repository), so that a compromised host cannot serve altered songs? HTTPS alone protects the transport, not the host. | 12.9, NFR-SEC-01, release tooling |
-| Q13 | Does the app implement git at all, or only release archives and snapshots? Archives cover FR-LIB-10/11 with far less code and no git credentials; git gives maintainers instant updates without cutting a release. | Architecture document, FR-LIB-10 |
+| Q13 | *Resolved 2026-10-22:* release archives and snapshots only; the app has no git client. FR-LIB-17 is met by the manifest's `revision` and `source` (`design/architecture.md` A-11). | Resolved |
 | Q14 | The release index convention (12.6) is written with GitHub Releases in mind. Which other hosts must the tooling support out of the box (GitLab, Codeberg, a plain web server)? | Release tooling |
 | Q1 | Is JSON acceptable for `zangbundel.json`, or do maintainers want YAML for its comments and multi-line strings despite the coercion risk (section 4.1)? | Library file, parser dependency |
 | Q2 | Timing is keyed by canonical line number (10.2). Inserting a lyric line shifts every later number, so timed songs need a renumbering tool or an inline alternative such as a timing directive immediately before each line. Which do maintainers prefer? | P2 format, maintainer tooling |
@@ -1086,4 +1087,4 @@ Notes on this file:
 | Q8 | *Resolved 2026-10-20:* no. `name` and `description` stay plain strings in the maintainer's language and are shown as written; only tag labels are localisable (`design/guiDesign.md` D-77). | Resolved |
 | Q9 | Chord-only lines are not canonical lines (9.1). Should a P3 musician view be able to follow the leader to an instrumental line, which would require numbering them? | Line list stability between P1 and P3 |
 | Q10 | The default library for FR-LIB-02: should this repository host it (under `library/` or as a separate repository), and who maintains licence checks on contributions? | FRD Q3, release planning |
-| Q11 | The command-line validator (11.4): part of this repository, or a separate tool shared with library maintainers? | Architecture document |
+| Q11 | *Resolved 2026-10-22:* a separate tool. `validate.py` and `release.py` live in the library repository `github.com/pe1mew/Zangbundel-bibliotheek`; the app has its own implementation of the same rules, and both run a shared conformance corpus (`design/architecture.md` A-21, A-22). | Resolved |
