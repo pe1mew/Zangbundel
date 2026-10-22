@@ -43,5 +43,7 @@ Versions are pinned in `gradle/libs.versions.toml`; a new dependency needs a row
 section 8 in the same change. `gradle/verification-metadata.xml` is regenerated with
 `./gradlew --no-configuration-cache --refresh-dependencies --write-verification-metadata sha256 assembleDebug check assembleRelease`
 whenever a dependency changes; `--refresh-dependencies` matters, or poms already in the local cache are left out.
+The `aapt2` entries for `-linux` and `-osx` are added by hand from Google Maven's `.sha256` sidecars (a Windows
+machine records only `-windows`); a new AGP version needs them fetched again.
 
 Every source file starts with `SPDX-License-Identifier: Apache-2.0`.

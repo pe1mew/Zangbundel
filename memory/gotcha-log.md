@@ -115,6 +115,11 @@
 **Root cause**: The metadata had been written with `--write-verification-metadata sha256` after several builds had already filled `~/.gradle/caches`; Gradle recorded the artefacts it resolved in that run and silently left out three poms it only had from the cache (`kotlinx-coroutines-bom` 1.8.0 and 1.10.2, `guava-parent` 33.2.1-jre). CI starts from an empty cache, fetches them, and finds no checksum.
 **Fix**: Regenerate with every dependency re-fetched and the configuration cache off: `./gradlew --no-configuration-cache --refresh-dependencies --write-verification-metadata sha256 assembleDebug check assembleRelease`; the three missing components appeared. If the metadata is regenerated after a dependency change, then always pass `--refresh-dependencies`, and read the CI run of the push rather than trusting the local pass.
 
+### Verification metadata written on Windows lacks the Linux aapt2 jar (2026-10-22) [RESOLVED]
+**Problem**: The second CI run failed in `:platform:ble:androidApis`: "One artifact failed verification: aapt2-8.13.2-14304508-linux.jar", after the pom gap had been closed.
+**Root cause**: AGP resolves `com.android.tools.build:aapt2` with a classifier for the host OS; a write pass on this machine records only `-windows.jar`. The Ubuntu runner fetches `-linux.jar`, which has no entry. The same holds for any future artifact with an OS classifier.
+**Fix**: Google Maven publishes `.sha256` sidecars: added the `-linux.jar` and `-osx.jar` entries by hand (origin says so) next to the Windows one in `android/gradle/verification-metadata.xml`. Write mode keeps hand-added entries, so a regeneration does not drop them, but a new AGP version brings a new aapt2 version and needs the two sidecars fetched again. If CI fails verification on an artifact whose name ends in an OS, then fetch its sidecar checksum from the repository and add it; do not loosen verification.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
