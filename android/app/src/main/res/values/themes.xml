@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <!-- System splash in night blue (guiDesign D-05); the Compose theme takes over afterwards. -->
+    <style name="Theme.Zangbundel.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/night_blue_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.Zangbundel</item>
+    </style>
+
+    <style name="Theme.Zangbundel" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/night_blue_dark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

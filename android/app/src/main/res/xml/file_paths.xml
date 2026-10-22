@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Only the share cache is exposed through the FileProvider (architecture A-18, section 6). -->
+<paths>
+    <cache-path name="share" path="share/" />
+</paths>

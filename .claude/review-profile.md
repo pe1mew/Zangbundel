@@ -6,16 +6,17 @@
 Read by `review-changes` Step 1. **This file is Zangbundel's half of that skill.** The skill
 ships identically to every project; everything in this file is ours and never travels.
 
-The repository is in its design phase: the three documents under `design/` are the product
-until code exists, and other documents (and later the app) are built from them. A wrong
-sentence in a spec reaches every reader who builds on it, which is why specs are HIGH here.
+The documents under `design/` are the specification the app is built from; a wrong sentence in a
+spec reaches every reader who builds on it, which is why specs are HIGH. Since 2026-10-22 the Gradle
+project under `android/` exists too: the parts of it that are wire format, canonical form, crypto,
+network, permissions, signing or the pinned toolchain are HIGH as well; the rest is MEDIUM.
 
 ## Risk tiers
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
-| **HIGH** | `design/functional-requirements.md`, `design/ble-protocol.md`, `design/song-format.md`, `design/security-privacy-assessment.md`, `CLAUDE.md`, `.claude/review-profile.md`, `scripts/**`, `.gitignore`, `LICENSE`, `license.md`, `docs/privacy-policy.md` | Full battery (3-4 lenses) |
-| **MEDIUM** | `design/**` (anything else under design, e.g. a future architecture or UI-flow document), `android/**` (re-tier to HIGH for published interfaces once code exists), `docs/RUNBOOK.md`, `README.md`, `contributing.md` | Two lenses (adversarial + doc-accuracy) |
+| **HIGH** | `design/functional-requirements.md`, `design/ble-protocol.md`, `design/song-format.md`, `design/security-privacy-assessment.md`, `CLAUDE.md`, `.claude/review-profile.md`, `scripts/**`, `.gitignore`, `LICENSE`, `license.md`, `docs/privacy-policy.md`, `android/core/protocol/**`, `android/core/songformat/**`, `android/platform/crypto/**`, `android/platform/net/**`, `android/**/AndroidManifest.xml`, `android/app/build.gradle.kts`, `android/app/proguard-rules.pro`, `android/gradle/**`, `android/settings.gradle.kts`, `android/gradle.properties`, `.github/workflows/**` | Full battery (3-4 lenses) |
+| **MEDIUM** | `design/**` (anything else under design), `android/**` (anything else under android: model, testing, ble, storage, app code and resources), `docs/RUNBOOK.md`, `docs/FDROID-RUNBOOK.md`, `README.md`, `contributing.md` | Two lenses (adversarial + doc-accuracy) |
 | **LOW** | `memory/**`, `design/prompts.md`, `changelog.md`, `code_of_conduct.md` | One lens (adversarial) |
 
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific
@@ -31,15 +32,21 @@ Every path here sits in the HIGH row above.
 - `scripts/check-design.sh`: the gate named in `CLAUDE.md` Hard Constraints. It must exit non-zero on a seeded failure (a cited-but-undefined ID), or it is a silent hook.
 - `docs/privacy-policy.md`: linked from the Google Play listing and read by users and reviewers. Every statement in it must stay true of the app (no data to the developer, no location read, Bluetooth data deleted at the end of a gathering); a feature that breaks one of these sentences needs the policy changed first.
 - `.gitignore`: guarantees that keystores, `keystore.properties` and build output never enter the repository while `.claude/review-profile.md` stays trackable.
+- `android/core/protocol/**`: the constants, frame layouts, CBOR keys and error codes are the wire format of `design/ble-protocol.md`; a value here that differs from the document breaks interoperability with every other build, including iOS later.
+- `android/core/songformat/**`: `Canonical` decides the content hash two phones compare; any change to it needs the format-version bump the song format demands.
+- `android/platform/crypto/**`, `android/platform/net/**`: the only code that signs, seals or opens a socket (NFR-SEC-03, A-09, A-14); a change may not add a network peer, weaken a check, or log a key.
+- `android/**/AndroidManifest.xml`, `android/app/build.gradle.kts`: permissions exactly as RUNBOOK Step 5, `allowBackup="false"`, the application ID `nl.pe1mew.zangbundel.app`, min SDK 26, target SDK 36, signing only from `keystore.properties`, no dependency metadata, no bundle splits.
+- `android/gradle/libs.versions.toml`, `android/gradle/verification-metadata.xml`, `.github/workflows/**`: the pinned toolchain and checksums (A-19, NFR-SEC-05) and the CI that has no secrets; a new dependency without an architecture section 8 row and regenerated checksums is a defect.
 
 ## Test baseline
 
 ```bash
 bash scripts/check-design.sh
+cd android && ./gradlew check        # unit tests of every module and lint, through the wrapper
 ```
 
-That is the whole test surface today. When application code lands in `android/`, add its build and
-unit-test command here and name the Gradle wrapper (`./gradlew`), not a system Gradle.
+Run both before and after reading a diff that touches `android/`; a design-only diff needs the
+first. `./gradlew check` needs JDK 17 and an Android SDK with platform 36 (`android/README.md`).
 
 ## Always-full-depth carve-outs (project additions)
 

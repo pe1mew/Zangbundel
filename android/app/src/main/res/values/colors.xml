@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Palette of design/guiDesign.md section 9, for XML resources; Compose uses ui/theme/Theme.kt. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <color name="night_blue_dark">#0B2545</color>
+    <color name="night_blue">#13315C</color>
+    <color name="fire_orange">#FF8A3D</color>
+    <color name="fire_orange_light">#FFB36B</color>
+    <color name="sky_blue">#4FC3F7</color>
+    <color name="off_white">#CFE6FF</color>
+    <color name="ic_launcher_background">#0B2545</color>
+</resources>

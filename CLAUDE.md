@@ -10,7 +10,7 @@ framework: agent-ready-projects v1.49.2
 <!-- Canonical project file for Claude Code. No AGENTS.md exists; if one is
      added later, this file stays canonical and AGENTS.md should say so. -->
 
-Zangbundel is a campfire songbook app for scouting groups. One phone is the **leader**: it starts a gathering, advertises a BLE beacon and broadcasts the lyrics of the current song to every **singer** phone around the fire, with no internet involved. Lyrics come from external git-hosted libraries so copyright stays outside the app. Phase 1 is the songbook over BLE, phase 2 karaoke, phase 3 chords and notation. The repository currently holds the specifications only; the Android app has not been started.
+Zangbundel is a campfire songbook app for scouting groups. One phone is the **leader**: it starts a gathering, advertises a BLE beacon and broadcasts the lyrics of the current song to every **singer** phone around the fire, with no internet involved. Lyrics come from external git-hosted libraries so copyright stays outside the app. Phase 1 is the songbook over BLE, phase 2 karaoke, phase 3 chords and notation. The specifications are complete for phase 1. The Android project in `android/` is scaffolded as the architecture prescribes (modules, build, manifest, resources, a first test per core module); the protocol, parsers, storage and screens are being written against it.
 
 ## Before You Start
 
@@ -22,6 +22,7 @@ Zangbundel is a campfire songbook app for scouting groups. One phone is the **le
 | Working on the gathering, the beacon, lyric distribution, requests, delegates or anything on the air | `design/ble-protocol.md` — broadcast carousel, frame formats, GATT service, CBOR payloads, procedures, security. Its header names the FRD version it depends on. |
 | Working on song files, library repositories, metadata, the content hash or the line list | `design/song-format.md` — the ChordPro profile, library layout, canonicalisation rules the protocol hashes against, release archive, setlists. |
 | Designing or changing a screen, a control, a theme or what a singer or leader sees | `design/guiDesign.md` — numbered decisions D-nn (D-48 ranks above the rest), open questions at the end; `design/gui/` and `design/ble/` hold the assets and diagrams. Grep the FRD for the area's MUSTs before writing a decision. |
+| Building, testing, or adding a dependency to the app | `android/README.md` — build and test commands, module table, `keystore.properties`, version catalog rules. |
 | Writing or planning app code: toolkit, modules, storage, dependencies, build, tests | `design/architecture.md` — decisions A-nn (all taken 2026-10-22; a change supersedes, never edits), module layout and dependency rules, data lifecycle table, allowed dependency list. |
 | Writing tests, preparing a release, or planning a field test | `design/test-plan.md`: test layers with pass criteria, simulation S-nn, device D-nn, field F-nn, release checks G-nn, the field-test consent text, the release gate; results go in `design/test-results/`. |
 | Wondering why a requirement or feature exists | `design/prompts.md` — the original ask, verbatim, dated. |
@@ -92,7 +93,8 @@ Zangbundel/
 ├── .claude/                      ← review-profile.md, launch.json (preview servers)
 ├── raw/                          ← owner's scratch folder, ignored by git
 ├── README.md, changelog.md, contributing.md, code_of_conduct.md, license.md, LICENSE, NOTICE
-└── android/                      ← empty; the app goes here
+├── .github/workflows/android.yml ← CI: design check, unit tests, lint, unsigned release APK
+└── android/                      ← the Gradle project: core/{model,songformat,protocol,testing}, platform/{ble,crypto,storage,net}, app
 ```
 
 Dependency order among the specs: FRD → protocol → song format → GUI design. Change upstream first. The song library itself lives in a separate repository, `github.com/pe1mew/Zangbundel-bibliotheek`, with the validator and release tool that implement song-format sections 11 to 13.
@@ -118,21 +120,28 @@ Dependency order among the specs: FRD → protocol → song format → GUI desig
 | `docs/RUNBOOK.md` | Google Play: fixed decisions, account and app setup, data safety, permissions declarations, signing, tracks and the 12-tester rule, store listing, release flow. |
 | `docs/privacy-policy.md` | The privacy policy the Play listing links to. A published surface: wording changes are reviewed at full depth. |
 | `license.md`, `LICENSE`, `NOTICE` | Code: Apache 2.0 (Commons Clause removed 2026-10-20 for F-Droid). App graphics (icon, store graphics, background photograph): CC BY-SA 4.0. Other content: CC BY-NC 4.0. Lyrics: not in this repo. |
+| `android/README.md` | Build and test commands, module table, where `keystore.properties` goes. |
+| `android/gradle/libs.versions.toml` | Every toolchain and dependency version, pinned (A-19); a new dependency needs a row in architecture section 8. `gradle/verification-metadata.xml` holds the checksums. |
+| `android/app/build.gradle.kts` | Application ID, `versionCode`/`versionName`, build types, signing from `keystore.properties`, lint rules, bundle splits off. |
 | `docs/FDROID-RUNBOOK.md` | F-Droid: requirements check, signing decision, anti-features, in-repo store metadata, fdroiddata metadata file, local test, merge request, updates. |
 
 ## How to Work Here
 
 ```bash
-# Consistency check across the design documents (the only test there is today)
+# Consistency check across the design documents
 bash scripts/check-design.sh
 
-# Stage design changes — never commit
-git add design/
+# The app (JDK 17 on JAVA_HOME; Android SDK platform 36 in android/local.properties or ANDROID_HOME)
+cd android
+./gradlew check            # unit tests of every module and lint; missing translations are errors
+./gradlew assembleDebug    # debug APK (application id suffix .debug, pseudo-locales on)
+./gradlew assembleRelease  # unsigned without keystore.properties; bundleRelease refuses without it
+
+# Stage changes — never commit
+git add design/ android/
 ```
 
-Every notable change gets a line under `[Unreleased]` in `changelog.md` in the same staging step.
-
-There is no build, test suite or deployment yet. When application code lands in `android/`, add its build and test commands here and re-tier `android/**` in `.claude/review-profile.md`.
+Every notable change gets a line under `[Unreleased]` in `changelog.md` in the same staging step. A new dependency gets its row in `design/architecture.md` section 8 and a regenerated `android/gradle/verification-metadata.xml` (`./gradlew --write-verification-metadata sha256 assembleDebug check assembleRelease`) in the same change. Every source file starts with `SPDX-License-Identifier: Apache-2.0`.
 
 ## Commit Conventions
 

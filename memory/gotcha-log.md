@@ -95,6 +95,21 @@
 **Root cause**: A follow-up session started from a proposal card worked in the same checkout at the same time, first amending and then reverting the same files. Its reverts rewrote them with LF endings in a checkout whose `core.autocrlf` expects CRLF, which git reports as modified until it next touches the files.
 **Fix**: Re-read a file right before editing it when another session is linked and working in the same folder; treat an empty `git diff` with a "modified" status as a line-ending artefact; when two sessions touch one document, send the second a scope message and let it finish before editing the same file.
 
+### local.properties with single backslashes mangles the SDK path (2026-10-22) [RESOLVED]
+**Problem**: The first Gradle run failed with a Dutch Windows IOException ("De syntaxis van de bestandsnaam ... is onjuist") on `:app:compileDebugJavaWithJavac`, with no file named.
+**Root cause**: `android/local.properties` is a Java properties file: `\U` and `\:` are escapes, so `C\:\Users\drasv\...` was read as `C:UsersdrasvAppDataLocalAndroidSdk`, a relative path AGP then tried to use.
+**Fix**: Write `sdk.dir=C\:/Users/drasv/AppData/Local/Android/Sdk` (escaped colon, forward slashes); lint's PropertyEscape check flags the unescaped form. If a Gradle error is a bare Windows path-syntax exception, then check the properties files for backslashes first.
+
+### lazysodium-android drags the JNA jar next to the JNA aar (2026-10-22) [RESOLVED]
+**Problem**: `:app:checkDebugDuplicateClasses` failed with `com.sun.jna.*` found twice (jna aar and jna jar); and `cryptoSignVerifyDetached` refused a `Long` length.
+**Root cause**: `lazysodium-android` declares a transitive dependency on the plain `jna` jar, while Android needs the `@aar` artefact with the native libraries. In the Android build of lazysodium, `cryptoSignVerifyDetached` takes an `int` message length while `cryptoSignDetached` and the box calls take `long`.
+**Fix**: `implementation(libs.lazysodium.android) { exclude(group = "net.java.dev.jna", module = "jna") }` plus `implementation(libs.jna) { artifact { type = "aar" } }` in `android/platform/crypto/build.gradle.kts`; pass `message.size` without `.toLong()` to the verify call. If a native-backed library is added, then check its pom for a jar/aar double of the same module.
+
+### Newest AndroidX requires compile SDK 37 (2026-10-22) [RESOLVED]
+**Problem**: After pinning the versions lint reported as newest (core 1.19.1, lifecycle 2.11.0, navigation 2.10.2, Compose BOM 2026.09.00), `:app:checkDebugAarMetadata` failed with 32 "requires compile against version 37" issues.
+**Root cause**: The aar metadata (`META-INF/com/android/build/gradle/aar-metadata.properties`, `minCompileSdk`) of those releases says 37; the machine has platforms 35 and 36 and the project's decided target is 36.
+**Fix**: Downloaded the candidate aars from `dl.google.com/dl/android/maven2` and read `minCompileSdk` directly: core 1.18.0, lifecycle 2.10.0, navigation 2.9.8 and Compose BOM 2026.06.01 (Compose 1.11.4) are the newest at 36; pinned those and said so in `libs.versions.toml`. Raising `compileSdk` to 37 is a decision for the owner (RUNBOOK Decisions keep target 36). If lint's "newer version available" is followed blindly, then expect the compile-SDK ceiling to bite; check `minCompileSdk` before bumping.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

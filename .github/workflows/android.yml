@@ -1,0 +1,35 @@
+# CI per design/architecture.md section 9: design check, unit tests and lint, unsigned release APK. No secrets.
+name: android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Design consistency check
+        run: bash scripts/check-design.sh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+      - name: Unit tests and lint
+        working-directory: android
+        run: ./gradlew --no-daemon check
+      - name: Unsigned release APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-unsigned
+          path: android/app/build/outputs/apk/release/*.apk

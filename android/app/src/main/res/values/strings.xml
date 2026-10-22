@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- English, the fallback (guiDesign D-76). Dutch, the primary language, is in values-nl. -->
+<resources>
+    <string name="app_name">Zangbundel</string>
+    <string name="notification_channel_gathering">Gathering</string>
+    <!-- Fixed and neutral, also on the lock screen (architecture A-06, assessment SP-17). -->
+    <string name="notification_gathering_running">Campfire running</string>
+</resources>

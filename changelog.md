@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- The Android project in `android/`, scaffolded as `design/architecture.md` section 4 prescribes and building, with unit tests and lint, on 2026-10-22:
+  - Gradle 8.14.6 wrapper (checksum pinned), AGP 8.13.2, Kotlin 2.4.21, KSP 2.3.9, JDK 17 toolchain; every dependency pinned in `gradle/libs.versions.toml` with SHA-256 checksums in `gradle/verification-metadata.xml` (A-19). AndroidX core, lifecycle, navigation and the Compose BOM are the newest releases that compile against SDK 36; later ones require compile SDK 37.
+  - Modules `core/model` (ids, content hash, song reference, states), `core/songformat` (canonical form and hash per song-format section 8, limits, report codes), `core/protocol` (`Transport` and `Crypto` interfaces, protocol constants), `core/testing` (fake clock, simulated transport skeleton, conformance corpus folder), `platform/ble` (`AndroidTransport` with capability detection, Bluetooth permissions), `platform/crypto` (`SodiumCrypto` on lazysodium), `platform/storage` (Room database, `StartupSweep`), `platform/net` (`HttpsFetcher`: HTTPS only, no redirect to http, fixed user agent, size cap), and `app` (`ZangbundelApp`, `AppContainer`, `MainActivity`, Compose theme with the guiDesign palette, `GatheringService` with the neutral notification, manifest per RUNBOOK Step 5 with backup off and the join-link intent filters, English and Dutch strings, `locales_config.xml`, adaptive launcher icon with a placeholder foreground).
+  - Build types `debug`, `release`, `fieldtest`; `versionCode` 2026102201, `versionName` 0.1.0; signing from `keystore.properties` with `bundleRelease` refusing without it; bundle splits and dependency metadata off; lint treats missing translations as errors.
+  - `.github/workflows/android.yml`: design check, `./gradlew check`, unsigned release APK; no secrets.
+  - `android/README.md` with the commands and module table. `CLAUDE.md`, `README.md`, `.claude/review-profile.md` (android paths re-tiered) and `memory/MEMORY.md` updated.
 - `design/test-plan.md` v0.1 (draft), the last design document before code. It covers:
   - Test layers with when they run and what blocks a release.
   - Unit-test coverage, including every report code and the resume-record encryption.

@@ -2,7 +2,7 @@
 
 Zangbundel ("songbook" in Dutch) is a mobile songbook app for singing together around a campfire, for example at scouting events. One phone is the **leader** (*kampvuurleider*): it starts a gathering, advertises a Bluetooth Low Energy beacon and broadcasts the lyrics of the current song to every **singer** (*zanger*) phone around the fire. No internet, Wi-Fi or hotspot is involved. Lyrics come from external, git-hosted song libraries, so copyright and licences are managed outside the app.
 
-**Status: design phase.** The repository holds the specifications. The Android app has not been started; an iOS version is planned to follow and must interoperate over BLE.
+**Status: implementation started.** The specifications are complete for phase 1 and the Android project under `android/` is scaffolded as the architecture prescribes; the protocol, parsers and screens are being written against it. An iOS version is planned to follow and must interoperate over BLE.
 
 ## What the app will do
 
@@ -37,7 +37,7 @@ design/
 scripts/
   check-design.sh             cross-document consistency check
 memory/                       working memory for AI coding agents (index + gotcha log)
-android/                      the Android app (empty until implementation starts)
+android/                      the Android app: Gradle project with core, platform and app modules
 CLAUDE.md                     orientation file for AI coding agents
 ```
 
@@ -56,7 +56,7 @@ Dependency order: requirements → protocol → song format. Change upstream fir
 
 ## Getting started
 
-There is nothing to build yet. To work on the specifications:
+To build the app you need JDK 17 and an Android SDK with platform 36; see `android/README.md` for the commands (`./gradlew check`, `./gradlew assembleDebug`). To work on the specifications:
 
 1. Clone the repository.
 2. Read `design/functional-requirements.md` first; the other two documents state which version of it they depend on.

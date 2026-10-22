@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Nederlands, de primaire taal (guiDesign D-76). -->
+<resources>
+    <string name="app_name">Zangbundel</string>
+    <string name="notification_channel_gathering">Kampvuur</string>
+    <string name="notification_gathering_running">Kampvuur actief</string>
+</resources>
