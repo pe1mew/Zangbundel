@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Added
+- `design/security-privacy-assessment.md` v0.4: the re-run for the architecture (section 7, item 1), against `design/architecture.md` v0.2, FRD v0.11 and BLE v0.13. New section 5.2 checks the earlier findings against the concrete choices:
+  - SP-05 (backup) and SP-08 (phoning home and logs) are resolved in the design.
+  - SP-09 (parsers) is designed, with two fuzz targets missing: the join-link payload and the leader's GATT write handlers.
+  - SP-15 (supply chain) is designed, with an accepted residual for the prebuilt libsodium and JNA native libraries.
+
+  New findings, each with a proposed resolution for the owner:
+  - SP-17: the gathering notification's lock-screen text should be fixed and neutral.
+  - SP-18 (Medium): never ask singers for `POST_NOTIFICATIONS`, only leaders; it is missing from RUNBOOK Step 5.
+  - SP-19: encrypt the leader's resume record with an Android Keystore key.
+  - SP-20: a shared APK cannot be told from a modified one; accept, and show the signing fingerprint on the About screen.
+  - SP-21: the privacy policy wording lags the design (the leader instruction, the opt-in update check, GitHub's download host).
+  - SP-22: conditions for the field-test build.
+
+  Section 4 gains three rows on what the architecture does well. No other document is changed by this pass.
 - `design/architecture.md` v0.1 (draft): how the app is built. Decisions A-01 to A-22, each *Fixed* (repeated from the runbooks, the protocol, the song format or the GUI design) or *Proposed* for the owner. The main proposals are:
   - Kotlin with Jetpack Compose in one activity.
   - Pure-Kotlin core modules for the song format and the protocol, kept convertible to Kotlin Multiplatform for a later iOS app.
