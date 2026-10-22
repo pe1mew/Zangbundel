@@ -18,6 +18,14 @@ Phase 1 — songbook over BLE:
 
 Phase 2 adds karaoke mode (timed, synchronised lyric highlighting). Phase 3 adds chords and notation for instrument players.
 
+## Checking a copy of the app
+
+Copies of the app on Google Play, F-Droid and GitHub Releases are all signed with one key. A copy shared from phone to phone is too. The app's About screen shows the short fingerprint of that key; a genuine copy shows:
+
+`57:86:7B:…:9B:10`
+
+The full SHA-256 is `57:86:7B:3F:C1:4D:1F:35:F6:38:40:A8:41:BB:05:F6:DD:FD:A9:C3:6D:C0:58:29:5F:87:F5:46:A2:C8:9B:10`. If a copy shows anything else, uninstall it and install from a store.
+
 ## Repository structure
 
 ```

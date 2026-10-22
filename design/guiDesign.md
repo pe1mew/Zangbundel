@@ -4,7 +4,7 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.11 (draft) |
+| Document version | 0.12 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -23,6 +23,7 @@
 | 0.9 | 2026-10-20 | D-09 amended: consent is needed only for people who can be recognised; the background photograph was taken by the owner, who holds the copyright and judged the children in it unrecognisable, so no consent is needed (Q8 resolved). |
 | 0.10 | 2026-10-22 | The app icon is replaced by proposal 06 "Vuurboek in de kring" (seven singers in a half circle behind a fire that rises from an open white songbook, the Bluetooth sign alone in the top left corner). D-04 describes the new artwork; the colour reference notes that the sky blue no longer appears in the icon. |
 | 0.11 | 2026-10-22 | Depends on FRD v0.11. Q2 resolved: no tablet layout in phase 1; tablets get the phone layouts with more room and no 2560 × 1600 export (`design/architecture.md` A-02). The toolkit is Jetpack Compose (A-03). |
+| 0.12 | 2026-10-22 | Section 7, version display: the About screen also shows the short app signing fingerprint (assessment SP-20). |
 
 ---
 
@@ -350,7 +351,7 @@ Resolution happens by itself when the missing library is installed (D-59). *Why:
 
 **System bars.** Configuration screens are drawn edge to edge: the status bar is transparent over the image, the navigation bar is transparent over the scrim, and the content keeps the system insets. Gathering screens colour both bars in the theme's background colour; the status bar is hidden in the lyric view while a gathering runs and the keep-screen-on setting is active, so the full height goes to the lyrics.
 
-**Version display.** The welcome screen shows `versionName`. The About screen [FR-GEN-07] shows `versionName (versionCode)`, the supported song-format, archive and BLE protocol versions [NFR-MAINT-01], and the version and revision of each installed library with the date of its release archive.
+**Version display.** The welcome screen shows `versionName`. The About screen [FR-GEN-07] shows `versionName (versionCode)`, the supported song-format, archive and BLE protocol versions [NFR-MAINT-01], and the version and revision of each installed library with the date of its release archive. It also shows the short fingerprint of the app signing certificate (`57:86:7B:…:9B:10`) under the heading *Ondertekening* / *Signature*. With it, an adult can check that a copy shared from phone to phone is the genuine app, because the README states the same fingerprint (`design/security-privacy-assessment.md` SP-20, `design/architecture.md` A-18).
 
 ---
 

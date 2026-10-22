@@ -54,6 +54,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - `docs/FDROID-RUNBOOK.md`: F-Droid runbook. What F-Droid requires and where the app stands, the signing decision that must precede the first Google Play upload (separate keys, or the owner's own key on Play plus a reproducible F-Droid build), anti-features (*NonFreeAssets* for the CC BY-NC artwork unless relicensed; no *Tracking*, *NonFreeNet* or *TetheredNet*), in-repository store metadata under `fastlane/metadata/android/`, release tags, a starting `fdroiddata` metadata file, the local fdroidserver test, merge request and updates. `docs/RUNBOOK.md` Step 6 now points at the signing decision. CLAUDE.md: hard constraint that the app stays free software with no Google proprietary dependency, a Before You Start row and key path for the new runbook. `NOTICE` added.
 
 ### Changed
+- Applied the resolutions of assessment v0.4, as the owner asked:
+  - `design/architecture.md` v0.3, A-06: the gathering notification text is fixed and neutral (*Kampvuur actief*), also on the lock screen (SP-17).
+  - A-06 and section 9: `POST_NOTIFICATIONS` is asked only from a leader at the first start, never from a singer (SP-18). `docs/RUNBOOK.md` Step 5 gains the permission row.
+  - Sections 5.4 and 6: the leader's resume record is encrypted with AES-GCM under an Android Keystore key (SP-19).
+  - A-18: the app shares only its own install. `design/guiDesign.md` v0.12 section 7 puts the short signing fingerprint on the About screen, and the README gains "Checking a copy of the app" with the fingerprint (SP-20).
+  - A-20: conditions for the `fieldtest` build (SP-22).
+  - Section 10: fuzz targets for the join-link payload and the leader's GATT write handlers (SP-09).
+
+  SP-21: the privacy policy is updated in both languages and in the rendered page (`docs/privacy-policy.md`, `docs/privacy/index.html`), effective 22 October 2026, after the owner approved the wording. Network use is now described exactly: only the song libraries you add and their hosts' download servers, only on import or update or with the opt-in Wi-Fi update check, and the host sees the phone's internet address. The obsolete mention of a gathering leader choosing libraries is gone.
 - Fixed the five inconsistencies listed in `design/architecture.md` section 12:
   - `docs/RUNBOOK.md` (Decisions "Packaging", the automatic-protection row, Step 9 item 7): GitHub Releases now carry an APK built from the release tag and signed with the app signing key, named `zangbundel-<versionName>.apk`. This matches `docs/FDROID-RUNBOOK.md`, and Play installs are single APKs (A-18).
   - `design/ble-protocol.md` v0.13, section 10.1 step 2 and section 10.9: the leader persists and resumes both key pairs with their secret keys and the delegate list `dlg`.
