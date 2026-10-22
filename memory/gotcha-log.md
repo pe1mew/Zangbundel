@@ -110,6 +110,11 @@
 **Root cause**: The aar metadata (`META-INF/com/android/build/gradle/aar-metadata.properties`, `minCompileSdk`) of those releases says 37; the machine has platforms 35 and 36 and the project's decided target is 36.
 **Fix**: Downloaded the candidate aars from `dl.google.com/dl/android/maven2` and read `minCompileSdk` directly: core 1.18.0, lifecycle 2.10.0, navigation 2.9.8 and Compose BOM 2026.06.01 (Compose 1.11.4) are the newest at 36; pinned those and said so in `libs.versions.toml`. Raising `compileSdk` to 37 is a decision for the owner (RUNBOOK Decisions keep target 36). If lint's "newer version available" is followed blindly, then expect the compile-SDK ceiling to bite; check `minCompileSdk` before bumping.
 
+### Verification metadata written from a warm cache misses parent and BOM poms (2026-10-22) [RESOLVED]
+**Problem**: The first CI run of `android.yml` failed at configuration: "Dependency verification failed for configuration 'classpath': kotlinx-coroutines-bom-1.8.0.pom", although `./gradlew check` passed locally with the same `gradle/verification-metadata.xml`.
+**Root cause**: The metadata had been written with `--write-verification-metadata sha256` after several builds had already filled `~/.gradle/caches`; Gradle recorded the artefacts it resolved in that run and silently left out three poms it only had from the cache (`kotlinx-coroutines-bom` 1.8.0 and 1.10.2, `guava-parent` 33.2.1-jre). CI starts from an empty cache, fetches them, and finds no checksum.
+**Fix**: Regenerate with every dependency re-fetched and the configuration cache off: `./gradlew --no-configuration-cache --refresh-dependencies --write-verification-metadata sha256 assembleDebug check assembleRelease`; the three missing components appeared. If the metadata is regenerated after a dependency change, then always pass `--refresh-dependencies`, and read the CI run of the push rather than trusting the local pass.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

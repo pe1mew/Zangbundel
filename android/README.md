@@ -41,6 +41,7 @@ keyPassword=...
 
 Versions are pinned in `gradle/libs.versions.toml`; a new dependency needs a row in architecture
 section 8 in the same change. `gradle/verification-metadata.xml` is regenerated with
-`./gradlew --write-verification-metadata sha256 help` whenever a dependency changes.
+`./gradlew --no-configuration-cache --refresh-dependencies --write-verification-metadata sha256 assembleDebug check assembleRelease`
+whenever a dependency changes; `--refresh-dependencies` matters, or poms already in the local cache are left out.
 
 Every source file starts with `SPDX-License-Identifier: Apache-2.0`.

@@ -141,7 +141,7 @@ cd android
 git add design/ android/
 ```
 
-Every notable change gets a line under `[Unreleased]` in `changelog.md` in the same staging step. A new dependency gets its row in `design/architecture.md` section 8 and a regenerated `android/gradle/verification-metadata.xml` (`./gradlew --write-verification-metadata sha256 assembleDebug check assembleRelease`) in the same change. Every source file starts with `SPDX-License-Identifier: Apache-2.0`.
+Every notable change gets a line under `[Unreleased]` in `changelog.md` in the same staging step. A new dependency gets its row in `design/architecture.md` section 8 and a regenerated `android/gradle/verification-metadata.xml` (`./gradlew --no-configuration-cache --refresh-dependencies --write-verification-metadata sha256 assembleDebug check assembleRelease`; without `--refresh-dependencies` poms already in the local cache are left out and CI fails) in the same change. Every source file starts with `SPDX-License-Identifier: Apache-2.0`.
 
 ## Commit Conventions
 
