@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package nl.pe1mew.zangbundel.core.protocol
 
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -39,7 +40,10 @@ interface Transport {
     suspend fun startScan(mode: ScanMode)
     suspend fun stopScan()
 
-    /** Open a GATT connection to the device a scan result came from. */
+    /**
+     * Open a GATT connection to the device a scan result came from and negotiate the largest MTU
+     * (8.2). Throws [GattException] when the connection cannot be made (Android status 133, timeout).
+     */
     suspend fun connect(address: DeviceAddress): Connection
 
     /** Server side: the leader's GATT server, publishing writes and reads from singers. */
@@ -71,12 +75,20 @@ interface Transport {
     @JvmInline
     value class DeviceAddress(val value: String)
 
-    /** One GATT client connection, used for registration, requests, control and repair. */
+    /**
+     * One GATT client connection, used for registration, requests, control and repair. Every call
+     * throws [GattException] when the connection fails or the leader answers with an error status.
+     */
     interface Connection {
         val mtu: Int
         suspend fun read(characteristic: Int): ByteArray
+        /** Write with response; a refused write throws [GattException] with the leader's status (8.3). */
         suspend fun write(characteristic: Int, value: ByteArray)
-        fun notifications(characteristic: Int): Flow<ByteArray>
+        /**
+         * Enables notifications and returns once the leader has them on (9.7: subscribe before writing
+         * Transfer). The channel buffers every notification until read and closes with the connection.
+         */
+        suspend fun subscribe(characteristic: Int): ReceiveChannel<ByteArray>
         suspend fun close()
     }
 
@@ -90,11 +102,19 @@ interface Transport {
     }
 
     interface ClientHandle {
+        /** The MTU agreed with this client; DATA chunks are MTU − 6 bytes (9.7). */
+        val mtu: Int
+        /** Sends one notification and returns when the stack has sent it (15.1: pacing); throws [GattException] when the client is gone. */
         suspend fun notify(characteristic: Int, value: ByteArray)
         suspend fun disconnect()
     }
 
+    /** A failed connection or GATT operation; [status] is the ATT or application status (8.3), or [CONNECTION_FAILED]. */
+    class GattException(val status: Int, message: String) : Exception(message)
+
     companion object {
         const val EXTENDED_SET = -1
+        /** [GattException.status] for a connection that could not be made or was lost. */
+        const val CONNECTION_FAILED = -1
     }
 }

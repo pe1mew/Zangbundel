@@ -126,11 +126,13 @@
 **Root cause**: `open(..., 'w')` truncates before `write` runs, so an exception during encoding loses the old content.
 **Fix**: Restored from the last commit with `git show HEAD:<path> > <path>` (read-only). If an edit carries non-ASCII or escape sequences, then use the Edit tool, or encode the text to bytes first and open the file only after that succeeded.
 
-### A size limit stated with its reason is false when computed (2026-10-25) [x4] [PROMOTED]
+### A size limit stated with its reason is false when computed (2026-10-25) [x5] [PROMOTED]
 **Problem**: Three numbers in `design/ble-protocol.md` failed the first time code computed them: the extended frame of up to 1000 bytes in one manufacturer-data field cannot be sent (one AD structure holds 255 bytes; measured 251 on a Samsung A52); legal values make a 558-byte state body against the 440-byte MUST of 9.4; Control op 8's 432 bytes of data "so the sealed write stays within 512" make a 527-byte write.
 **Root cause**: Each limit was written with its justification but the worst case was never summed: field encodings, CBOR headers, the seal overhead, the AD header. Reading the sentence makes it look checked.
 **Fix**: Protocol v0.14 (247-byte frames), v0.16 (417-byte chunks), v0.17 (fit rule, largest body 405 bytes); each figure is now pinned by a unit test that builds the worst case. Promoted to `memory/MEMORY.md` Recently Promoted.
 **Again after promotion, 2026-10-25**: ble-protocol 6.5 gave the join link as 60–130 characters of URL and QR version 5 or 6; the encoder makes 99 to 170 (223 with accented names), versions 6 to 9 (11). The 60–130 was the base64 part alone. Caught by the rule itself: the encoder's test asserts the computed sizes. Protocol v0.19.
+
+**Again, 2026-10-25 (GATT)**: 9.7's DATA chunks of MTU − 6 make 514-byte notifications at MTU 517, but an attribute value is at most 512 bytes and Android cut every full chunk by 2; and the HEADER, about 40 bytes, cannot fit the 20 bytes of MTU 23 that 8.2 requires. The first showed only on the phones (6 bytes missing from a 2 kB song), the second only when a test asserted the size. Fixed: chunks capped at 509 (v0.22); the HEADER is ble-protocol Q22.
 
 ### ADB on the test phones: sleeping screens and Samsung's hidden switch (2026-10-25) [RESOLVED]
 **Problem**: `adb shell am start -W` hung for minutes on the Huawei; the Samsung A52 showed no ADB interface in Windows although USB debugging was on.
@@ -141,6 +143,11 @@
 **Problem**: Error `0x8A` in ble-protocol 8.3 pointed at "(9.9)", a section that never existed, and `scripts/check-design.sh` passed.
 **Root cause**: The check matches only references written "section N.M"; the protocol mostly cites bare numbers in parentheses.
 **Fix**: Corrected by hand in protocol v0.16. A wider check is proposed in the Mechanized table. If a design document cites "(N.M)", then confirm the heading exists; the script will not.
+
+### Git Bash rewrites paths for adb, or with MSYS_NO_PATHCONV not at all (2026-10-25)
+**Problem**: `adb shell cat /sdcard/ui.xml` failed with `C:/Program Files/Git/sdcard/ui.xml`; with `MSYS_NO_PATHCONV=1` set to stop that, `adb install /c/Users/...apk` failed with "failed to stat".
+**Root cause**: MSYS converts any argument that looks like a POSIX path for a Windows program: device paths get the Git root prefixed. Switching conversion off also leaves `/c/...` host paths unconverted, which adb.exe cannot open.
+**Fix**: Set `MSYS_NO_PATHCONV=1` for adb commands and give host files as `C:/...` paths.
 
 ## Promoted
 

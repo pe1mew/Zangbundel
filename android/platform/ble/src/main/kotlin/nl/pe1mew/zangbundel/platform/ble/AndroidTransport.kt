@@ -15,6 +15,9 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +33,7 @@ import java.util.UUID
  * `setAdvertisingData`, the beacon connectable with the service UUID and never the device name, one
  * continuous scan per gathering with filters on the service UUID and the company identifier.
  *
- * GATT (connect, server) is not written yet.
+ * GATT: the server and the client connection are in `AndroidGatt.kt`.
  *
  * Callers hold the runtime permissions before calling: `BLUETOOTH_ADVERTISE`, `BLUETOOTH_SCAN` and
  * `BLUETOOTH_CONNECT` on Android 12 and later, location on Android 8 to 11 for scanning.
@@ -202,6 +205,8 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
         val manufacturer = record?.getManufacturerSpecificData(ProtocolConstants.COMPANY_ID)
         val service = record?.serviceUuids?.contains(ParcelUuid(SERVICE_UUID)) == true
         if (manufacturer == null && !service) return      // the app's own filter when the controller's is off
+        // The device object keeps the address type a random address needs to be connected to (8.2).
+        synchronized(devices) { devices[r.device.address] = r.device }
         results.tryEmit(
             Transport.ScanResult(
                 address = Transport.DeviceAddress(r.device.address),
@@ -237,11 +242,29 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
         adapter.bluetoothLeScanner?.stopScan(scanCallback)
     }
 
-    // ---- GATT: not written yet ----
+    // ---- GATT (AndroidGatt.kt) ----
 
-    override suspend fun connect(address: Transport.DeviceAddress): Transport.Connection = TODO("GATT client")
-    override suspend fun startServer(handler: Transport.ServerHandler) = TODO("GATT server")
-    override suspend fun stopServer() = TODO("GATT server")
+    /** GATT callbacks arrive on binder threads; the handler's suspending calls run here. */
+    private val gattScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val devices = object : LinkedHashMap<String, BluetoothDevice>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, BluetoothDevice>?) = size > 64
+    }
+    private var server: AndroidGattServer? = null
+
+    override suspend fun connect(address: Transport.DeviceAddress): Transport.Connection {
+        val device = synchronized(devices) { devices[address.value] } ?: adapter.getRemoteDevice(address.value)
+        return AndroidGattConnection.open(context, device)
+    }
+
+    override suspend fun startServer(handler: Transport.ServerHandler) {
+        stopServer()
+        server = AndroidGattServer(context, gattScope, handler).also { it.start() }
+    }
+
+    override suspend fun stopServer() {
+        server?.stop()
+        server = null
+    }
 
     companion object {
         val SERVICE_UUID: UUID = UUID.fromString(ProtocolConstants.uuidOf(ProtocolConstants.CHAR_SERVICE))

@@ -31,9 +31,9 @@ keyPassword=...
 |---|---|---|
 | `core/model` | Kotlin/JVM | ids, song references, setlist entries, gathering and role states |
 | `core/songformat` | Kotlin/JVM | canonical form, hash, limits, report codes; parser, line list, archive reader to come |
-| `core/protocol` | Kotlin/JVM | `Transport` and `Crypto` interfaces, protocol constants, bounded CBOR codec (`cbor/`), erasure code (`fec/`), coded frame codec, framer and reassembler (`frame/`), section 9 payloads, the signed state, DEFLATE and sealed payloads (`payload/`), `ProtocolError` with the 8.3 codes, the carousel scheduler (`carousel/`), singer, leader and slot state machines (`engine/`), beacon and join-link codecs (`beacon/`); the engine that drives them to come |
-| `core/testing` | Kotlin/JVM | fake clock, `JvmSodiumCrypto` (lazysodium-java), simulated transport skeleton, conformance corpus (test fixture, never ships) |
-| `platform/ble` | Android | `AndroidTransport`: beacon, legacy and extended data sets, continuous scan (GATT not yet); `AdvertisingProbe` for the radio check; Bluetooth permissions |
+| `core/protocol` | Kotlin/JVM | `Transport` and `Crypto` interfaces, protocol constants, bounded CBOR codec (`cbor/`), erasure code (`fec/`), coded frame codec, framer and reassembler (`frame/`), section 9 payloads, the signed state, DEFLATE and sealed payloads (`payload/`), `ProtocolError` with the 8.3 codes, the carousel scheduler (`carousel/`), singer, leader and slot state machines with `SingerEngine` and `LeaderSession` that run them against a `Transport` (`engine/`), the GATT service, client and Data stream (`gatt/`), beacon and join-link codecs (`beacon/`) |
+| `core/testing` | Kotlin/JVM | fake clock, `JvmSodiumCrypto` (lazysodium-java), `SimulatedAir` and `SimulatedTransport` (advertising with loss, GATT with slots and latency, in virtual time), conformance corpus (test fixture, never ships) |
+| `platform/ble` | Android | `AndroidTransport`: beacon, legacy and extended data sets, continuous scan, GATT server and client (`AndroidGatt.kt`); `AdvertisingProbe` for the radio check; Bluetooth permissions |
 | `platform/crypto` | Android | `SodiumCrypto` on lazysodium-android |
 | `platform/storage` | Android | Room database (one table so far), `StartupSweep` |
 | `platform/net` | Android | `HttpsFetcher`: HTTPS only, no http redirects, fixed user agent, size cap |

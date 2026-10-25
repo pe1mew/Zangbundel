@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.21 (draft) |
+| Document version | 0.22 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -34,6 +34,7 @@
 | 0.19 | 2026-10-25 | 6.5: the size of the join link corrected from the encoder in `core/protocol` (`JoinLink`): 45 to 98 bytes of payload with ASCII names, 99 to 170 characters of URL, up to 223 with a 40-character accented name; QR versions 6 to 9 at level M, 11 in the worst case. v0.18 said 60–130 characters of URL, which was the length of the base64 part alone, and versions 5 or 6. No wire change. |
 | 0.20 | 2026-10-25 | Depends on FRD v0.12. Open question Q21: erasure coding across frames on both carriers, GATT repair as the fallback and the library as the fast path, chosen in principle by the owner after `design/test-results/2026-10-25-D-05.md`; the detailed change is proposed in `design/proposals/2026-10-25-erasure-coding.md` and not yet part of this document. No wire change yet. |
 | 0.21 | 2026-10-25 | Q21 resolved: the erasure-coding proposal (`design/proposals/2026-10-25-erasure-coding.md`) approved by the owner and moved in. 7.2: legacy frame of 26 bytes with `k`, `idx` and `len`; extended header of 14 bytes, `fs` ≤ 233. 7.3: systematic Reed–Solomon over GF(2⁸) with Cauchy coefficients, `r = min(2k, 256 − k)`, every broadcast document coded. 7.4: a pass is all `n` frames, sources before repairs in a burst, coded state frames cycled. 7.5: decode from any `k` distinct frames. 7.6: the fixed repair timers replaced by a rule on the singer's own rate (3 s without progress; `k` not expected within 10 s legacy, 4 s extended). 7.7, 12.1: figures with the code, simulated with the implementation at 40 % reception: 13.3 s on three legacy sets, 2.7 s extended. 9.7: a repair asks only for the source frames still needed. Wire change inside the draft protocol 1.0. |
+| 0.22 | 2026-10-25 | Found while building GATT registration and repair in `core/protocol` and `platform/ble` and running it on three phones; accepted by the owner as written 2026-10-25, Q22 and Q23 left open. 7.6: a document named in the newest verified state's manifest that the singer lacks is watched from the moment that state is applied, so a singer that hears none of its frames (a leader whose extended set is not heard, D-05 runs 12–16) still repairs it; before, only a group with a frame received could ever be repaired. 9.7: DATA chunks are at most 509 bytes, because an attribute value is at most 512 bytes and Android cuts a longer notification (at MTU 517 every full chunk lost 2 bytes). Q22 (HEADER larger than MTU − 3 at MTU 23) and Q23 (a leader whose extended set is not heard) added. |
 
 ---
 
@@ -365,7 +366,7 @@ The leader publishes the *pass time* (the time one full pass of the current song
 
 ### 7.6 Repair: requesting what was missed [FR-BLE-16]
 
-A singer watches every (`doc`, `dv`) group from its first frame (or, for the state, from the beacon's new `seq`) and repairs it when either holds:
+A singer watches every (`doc`, `dv`) group from its first frame (or, for the state, from the beacon's new `seq`; for a document named in the newest verified state's manifest that the singer lacks, from the moment that state is applied, v0.22) and repairs it when either holds:
 
 - nothing new has arrived for the group for **3 s**; or
 - from its own rate of new distinct frames over the last **2 s**, it does not expect to reach `k` within **10 s** on the legacy carrier or **4 s** on the extended carrier. The estimate is first made 2 s after the group's first frame.
@@ -632,7 +633,7 @@ The singer MUST subscribe to Data notifications before writing Transfer. One tra
 | Type | Layout | Meaning |
 |---|---|---|
 | `0x01` HEADER | `0x01` + CBOR `{1: dv, 2: len (stream length), 3: enc (0 raw · 1 DEFLATE · 2 DEFLATE then sealed to the requester's `xk`, document 8 only), 4: dh (bstr 8), 5: ranges (echo, or `[[0, len]]`)}` | Once per transfer. |
-| `0x02` DATA | `0x02` + `u16 chunk index` + bytes | Bytes of the requested ranges, concatenated in order, in chunks of MTU − 6, sent in order without waiting. |
+| `0x02` DATA | `0x02` + `u16 chunk index` + bytes | Bytes of the requested ranges, concatenated in order, in chunks of MTU − 6 and at most 509 bytes (an attribute value is at most 512; v0.22), sent in order without waiting. |
 | `0x03` END | `0x03` + `u16 count` | Number of DATA chunks sent. |
 | `0x7F` ERROR | `0x7F` + `u8 code` | Ends the transfer. |
 
@@ -976,3 +977,5 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q19 | *Resolved 2026-10-25 (owner):* a document inflates to at most 67 584 bytes (64 KiB + 2 KiB) (7.3). | 7.3 |
 | Q20 | *Resolved 2026-10-25 (owner):* document 8's `dh` covers the compressed bytes, as for every document, and is checked before inflating (8.4). | 8.4, 5 |
 | Q21 | *Resolved 2026-10-25 (owner):* erasure coding across frames on both carriers, GATT repair as the fallback, the library as the fast path; approved as proposed in `design/proposals/2026-10-25-erasure-coding.md` and moved into 7.2–7.7, 9.7 and 12.1 (v0.21). NFR-PERF-01 remains FRD Q14. | 7.2–7.7, 9.7, 12.1 |
+| Q22 | The HEADER notification (9.7) is a CBOR map with `dh` and the echoed ranges: about 40 bytes for three ranges and up to about 200 for 32. 8.2 requires implementations to work at MTU 23, where a notification carries 20 bytes, so the HEADER does not fit. Options: split the HEADER over several notifications; drop the ranges echo, which the singer already knows; or require MTU ≥ 185 for Transfer, with Info and State reads still working at 23. Found 2026-10-25 by the size test of `TransferStreamTest`; the phones negotiated MTU 517. | 8.2, 9.7 |
+| Q23 | A phone can report extended advertising, open the extended set and confirm every data update, and still not be heard on it (the Galaxy A52, D-05 runs 12–16). Singers on the extended carrier then get everything by repair (7.6 as of v0.22), which works but loads the leader's GATT slots. Options: singers report the carrier they receive at registration (`caps` bit 1, 9.3) and the leader drops `EXT` when no extended-capable singer receives it; singers fall back to the legacy carrier when `EXT` is set but no extended frame arrives within a few seconds; or a list of known phones. | 7.1, 7.5, 9.3 |

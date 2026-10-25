@@ -30,8 +30,17 @@ class SingerMachine(private val random: Random = Random.Default) {
         data class Selected(override val now: Long, val gid: GatheringId, val carrier: Carrier, val pk: ByteArray? = null) : Event
         /** Info collected and `SHA-256(pk)[0..5] == gid` checked (9.2). */
         data class InfoVerified(override val now: Long, val pk: ByteArray, val major: Int) : Event
-        /** A state record verified against the pinned key and newer by `ts` (9.4). */
-        data class StateApplied(override val now: Long, val seq: Int, val ended: Boolean, val songIsLocal: Boolean) : Event
+        /**
+         * A state record verified against the pinned key and newer by `ts` (9.4). [missing] are the
+         * (`doc`, `dv`) groups its manifest names that the singer does not hold; 7.6 watches them from now.
+         */
+        data class StateApplied(
+            override val now: Long,
+            val seq: Int,
+            val ended: Boolean,
+            val songIsLocal: Boolean,
+            val missing: List<Pair<Int, Int>> = emptyList(),
+        ) : Event
         /**
          * A new distinct frame of a document version arrived: [have] distinct frames of the [needed]
          * (`k`) that decode it (7.3). Drives the repair rule of 7.6.
@@ -51,7 +60,10 @@ class SingerMachine(private val random: Random = Random.Default) {
     sealed interface Effect {
         data object StartScan : Effect
         data object StopScan : Effect
-        /** Connect after [delayMs], write the sealed Join, read the answer (10.2). */
+        /**
+         * Connect after [delayMs], write the sealed Join, read the answer (10.2). When Info or the state
+         * has not come by broadcast, the engine reads it on this connection first and verifies it.
+         */
         data class Register(val delayMs: Long) : Effect
         /** Connect after [delayMs] and fetch the missing ranges of these (`doc`, `dv`) groups (10.4). */
         data class Repair(val groups: List<Pair<Int, Int>>, val delayMs: Long) : Effect
@@ -85,6 +97,7 @@ class SingerMachine(private val random: Random = Random.Default) {
     private var stateSeen = false
     private var registerAsked = false
     private var registrationRetryAt: Long? = null
+    private var selectedAt = 0L
     private var repairRetryAt: Long? = null
     private var backoffMs = BACKOFF_START_MS
     /** Progress of one document version for the repair rule of 7.6. */
@@ -153,6 +166,7 @@ class SingerMachine(private val random: Random = Random.Default) {
         carrier = e.carrier
         pinnedPk = e.pk?.copyOf()
         lastHeard = e.now
+        selectedAt = e.now
     }
 
     private fun info(e: Event.InfoVerified, fx: MutableList<Effect>) {
@@ -176,6 +190,8 @@ class SingerMachine(private val random: Random = Random.Default) {
         collecting.keys.removeAll { it.first == DocumentType.STATE }
         if (songIsLocal) collecting.keys.removeAll { it.first == DocumentType.SONG }
         if (e.ended) { end(fx); return }
+        // 7.6 (v0.22): a document the manifest names is watched from now, even if no frame of it ever comes.
+        for (g in e.missing) if (!(g.first == DocumentType.SONG && songIsLocal)) collecting.getOrPut(g) { Collecting(e.now) }
         // 10.2: Join needs `ek` from a verified state, so registration starts only now.
         if (state == SingerState.REGISTERING && !registerAsked) fx += register()
     }
@@ -259,7 +275,11 @@ class SingerMachine(private val random: Random = Random.Default) {
             return
         }
         registrationRetryAt?.let { at ->
-            if (now >= at && !registered && stateSeen) { registrationRetryAt = null; fx += register() }
+            if (now >= at && !registered && (stateSeen || state == SingerState.REGISTERING)) { registrationRetryAt = null; fx += register() }
+        }
+        // 10.2: Info not collected within 1.5 s: read it, and the state, on the registration connection.
+        if (state == SingerState.REGISTERING && !registerAsked && !stateSeen && registrationRetryAt == null && now - selectedAt >= INFO_WAIT_MS) {
+            fx += register()
         }
         when (state) {
             SingerState.LISTENING -> {
@@ -321,6 +341,8 @@ class SingerMachine(private val random: Random = Random.Default) {
 
     companion object {
         const val RECONNECTING_AFTER_MS = 10_000L
+        /** 10.2: Info not collected by broadcast within this long is read over the registration connection. */
+        const val INFO_WAIT_MS = 1_500L
         const val ENDED_AFTER_MS = 5 * 60_000L
         const val REGISTRATION_RETRY_MIN_MS = 30_000L
         const val REGISTRATION_RETRY_MAX_MS = 60_000L

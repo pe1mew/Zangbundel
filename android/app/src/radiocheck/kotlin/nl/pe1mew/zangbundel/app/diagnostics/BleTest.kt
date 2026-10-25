@@ -36,6 +36,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -47,111 +49,81 @@ import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.Log
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.core.model.GatheringId
+import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.beacon.Beacon
 import nl.pe1mew.zangbundel.core.protocol.beacon.BeaconCodec
-import nl.pe1mew.zangbundel.core.protocol.carousel.Carousel
-import nl.pe1mew.zangbundel.core.protocol.frame.Carrier
+import nl.pe1mew.zangbundel.core.protocol.engine.LeaderSession
+import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
 import nl.pe1mew.zangbundel.core.protocol.frame.FrameCodec
 import nl.pe1mew.zangbundel.core.protocol.frame.Framer
-import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
+import nl.pe1mew.zangbundel.platform.crypto.SodiumCrypto
 import kotlin.random.Random
 
 /**
  * Two-phone broadcast test (debug and fieldtest builds only; assessment SP-24). One phone leads: a
  * beacon named [TEST_NAME] and the real carousel over the data sets it can open, pushing a new
- * synthetic document of random bytes (never lyrics) every [PUSH_INTERVAL_MS]. The other listens:
- * the real codecs and reassembler, timing each push from the beacon's new `seq` to the complete
- * document. Nothing is stored; results are on screen and in the debug log. *Lead extended only*
+ * synthetic document of random bytes (never lyrics) every [PUSH_INTERVAL_MS], with a signed state,
+ * Info and the GATT service ([LeaderSession]). The other listens with [SingerEngine]: it registers
+ * and repairs over GATT as the protocol says, and each push is timed from the beacon's new `seq` to
+ * the verified song, by broadcast or by repair. Nothing is stored; results are on screen and in the debug log. *Lead extended only*
  * opens no legacy data sets, to tell whether a phone's extended set suffers from the legacy sets
  * beside it (D-05 run 12). *Probe the extended set* steps the extended set through secondary PHY,
  * data-update rate and frame size, a minute each, for a listener to count (D-05 run 15).
  */
-class BleTestRunner(private val transport: AndroidTransport) {
+class BleTestRunner(private val transport: AndroidTransport, private val crypto: Crypto = SodiumCrypto()) {
     private val _lines = MutableStateFlow(listOf<String>())
     val lines: StateFlow<List<String>> = _lines
 
     private fun show(vararg rows: String) { _lines.value = rows.toList() }
     private fun log(line: String) = Log.i("bletest $line")
 
-    suspend fun lead(extendedOnly: Boolean = false) {
+    suspend fun lead(extendedOnly: Boolean = false) = coroutineScope {
         val random = Random(SystemClock.elapsedRealtimeNanos())
-        val gid = GatheringId(random.nextBytes(GatheringId.SIZE))
-        val gid16 = ((gid.bytes[0].toInt() and 0xFF) shl 8) or (gid.bytes[1].toInt() and 0xFF)
-        var seq = random.nextInt(0x10000)
+        val session = LeaderSession(transport, crypto, this, SystemClock::elapsedRealtime, TEST_NAME, extendedOnly, random)
         try {
-            // The beacon first: a phone with one advertising instance (degraded mode, 7.8) still sends it.
             try {
-                transport.setBeacon(BeaconCodec.encodeA(Beacon(1, gid, seq, 0, 0, TEST_NAME)))
+                session.start(random.nextBytes(TEST_DOCUMENT_BYTES))
             } catch (e: IllegalStateException) {
                 // Seen on the Huawei with Wi-Fi off: its single advertising instance refused (status 2).
-                log("lead beacon_refused ${e.message?.replace(' ', '_')}")
-                show("leader  $TEST_NAME", "beacon refused by the phone: ${e.message}")
-                return
+                log("lead refused ${e.message?.replace(' ', '_')}")
+                show("leader  $TEST_NAME", "refused by the phone: ${e.message}")
+                return@coroutineScope
             }
-            val legacy = if (extendedOnly) 0 else transport.openLegacyDataSets(Carousel.MAX_LEGACY_DATA_SETS)
-            val extended = transport.openExtendedDataSet()
-            if (extendedOnly && !extended) {
+            if (extendedOnly && !session.extendedSet) {
                 log("lead extended_only refused")
                 show("leader  $TEST_NAME", "extended_set  false", "this phone did not open an extended set")
-                return
+                return@coroutineScope
             }
-            if (legacy == 0 && !extendedOnly) {
-                log("lead legacy=0 beacon only")
-                show("leader  $TEST_NAME", "legacy_data_sets  0", "degraded mode: beacon only, 10 per second")
-                while (kotlinx.coroutines.currentCoroutineContext().isActive) delay(1_000)
-                return
-            }
-            val flags = ProtocolConstants.FLAG_BCAST or (if (extended) ProtocolConstants.FLAG_EXT else 0)
-            transport.setBeacon(BeaconCodec.encodeA(Beacon(1, gid, seq, flags, 0, TEST_NAME)))
-            // The carousel needs a legacy set; with extended only its legacy lane is built but never sent.
-            val carousel = Carousel(gid16, legacy.coerceAtLeast(1), extended)
-            fun documents(songSeed: Int) = listOf(
-                Carousel.Document(DocumentType.STATE, seq, random.nextBytes(240)),
-                Carousel.Document(DocumentType.INFO, 0x1111, ByteArray(150) { 0x11 }),
-                Carousel.Document(DocumentType.SONG, songSeed and 0xFFFF, random.nextBytes(TEST_DOCUMENT_BYTES)),
-            )
-            carousel.publish(documents(random.nextInt()))
-            log("lead legacy=$legacy extended=$extended extended_only=$extendedOnly gid16=$gid16 scannable_data_sets=${transport.scannableDataSets}")
+            log("lead legacy=${session.legacySets} extended=${session.extendedSet} extended_only=$extendedOnly gid=${session.gid} gatt=on")
             var pushes = 0
-            var frames = 0L
             var nextPush = SystemClock.elapsedRealtime() + PUSH_INTERVAL_MS
-            val laneIndex = carousel.lanes.filter { !extendedOnly || it == Carousel.Lane.Extended }.associateWith { lane ->
-                when (lane) {
-                    Carousel.Lane.Small -> 0
-                    is Carousel.Lane.Large -> lane.index
-                    Carousel.Lane.Extended -> Transport.EXTENDED_SET
-                }
-            }
-            while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+            while (isActive) {
                 val now = SystemClock.elapsedRealtime()
                 if (now >= nextPush) {
-                    seq = (seq + 1) and 0xFFFF
+                    session.push(random.nextBytes(TEST_DOCUMENT_BYTES))
                     pushes++
-                    carousel.publish(documents(random.nextInt()))
-                    transport.setBeacon(BeaconCodec.encodeA(Beacon(1, gid, seq, flags, 0, TEST_NAME)))
-                    log("lead push=$pushes seq=$seq")
+                    log("lead push=$pushes seq=${session.seq} singers=${session.service.singerCount} transfers=${session.service.transfersServed}")
                     nextPush = now + PUSH_INTERVAL_MS
                 }
-                for ((lane, index) in laneIndex) {
-                    carousel.next(lane)?.let { transport.setFrame(index, FrameCodec.encode(it)); frames++ }
-                }
                 show(
-                    "leader  $TEST_NAME  gid16=$gid16",
-                    "legacy_data_sets  $legacy",
-                    "extended_set  $extended",
-                    "seq  $seq",
+                    "leader  $TEST_NAME",
+                    "legacy_data_sets  ${session.legacySets}",
+                    "extended_set  ${session.extendedSet}",
+                    "seq  ${session.seq}",
                     "pushes  $pushes",
-                    "frames_sent  $frames",
+                    "frames_sent  ${session.framesSent}",
+                    "singers  ${session.service.singerCount}",
+                    "transfers_served  ${session.service.transfersServed}",
                     "next_push_in_s  ${(nextPush - now) / 1000}",
                 )
-                delay(Carousel.ADVERTISING_INTERVAL_MS)
+                delay(1_000)
             }
         } finally {
-            withContext(NonCancellable) { transport.stopAdvertising() }
+            withContext(NonCancellable) { session.stop() }
         }
     }
 
@@ -209,64 +181,59 @@ class BleTestRunner(private val transport: AndroidTransport) {
         }
     }
 
-    suspend fun listen() {
-        val carrier = if (transport.capabilities.extendedAdvertising) Carrier.EXTENDED else Carrier.LEGACY
-        var gid: GatheringId? = null
-        var reassembler: Reassembler? = null
-        var lastSeq: Int? = null
-        var pushSeenAt: Long? = null
-        var lastSongDv: Int? = null
-        val deliveries = ArrayList<Long>()
-        var beacons = 0
-        var frames = 0
-        var rssi = 0
+    suspend fun listen() = coroutineScope {
+        val engine = SingerEngine(transport, crypto, this, SystemClock::elapsedRealtime, { it.name == TEST_NAME })
         val started = SystemClock.elapsedRealtime()
-        try {
-            transport.startScan(Transport.ScanMode.GATHERING)
-            log("listen carrier=$carrier hardware_filters=${transport.hardwareFilters}")
-            transport.scanResults().collect { r ->
-                val data = r.manufacturerData ?: return@collect
-                val now = SystemClock.elapsedRealtime()
-                val beacon = BeaconCodec.decodeA(data)
-                if (beacon != null) {
-                    if (beacon.name != TEST_NAME) return@collect
-                    if (gid == null) {
-                        gid = beacon.gid
-                        reassembler = Reassembler(((beacon.gid.bytes[0].toInt() and 0xFF) shl 8) or (beacon.gid.bytes[1].toInt() and 0xFF), carrier)
+        var pushSeenAt: Long? = null
+        var joined = "-"
+        val broadcast = ArrayList<Long>()
+        val repaired = ArrayList<Long>()
+        var repairs = 0
+        var repairsFailed = 0
+        var repairMs = 0L
+        var lastSong: ByteArray? = null
+        fun render() {
+            val all = (broadcast + repaired).sorted()
+            show(
+                "singer  carrier=${engine.carrier}  hardware_filters=${transport.hardwareFilters}",
+                "joined  $joined",
+                "state  ${engine.state?.body?.seq ?: "-"}",
+                "deliveries  ${all.size}  (broadcast ${broadcast.size}, repair ${repaired.size})",
+                "median_ms  ${all.getOrNull(all.size / 2) ?: "-"}",
+                "max_ms  ${all.maxOrNull() ?: "-"}",
+                "repairs  $repairs  (failed $repairsFailed, last $repairMs ms)",
+                "running_s  ${(SystemClock.elapsedRealtime() - started) / 1000}",
+                "scan_error  ${transport.scanFailure ?: "-"}",
+            )
+        }
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            engine.events.collect { e ->
+                when (e) {
+                    is SingerEngine.Event.NewSeq -> { pushSeenAt = e.at; log("listen seq=${e.seq}") }
+                    is SingerEngine.Event.Joined -> { joined = "result ${e.result} after ${(e.at - started) / 1000} s"; log("listen joined result=${e.result} ms=${e.at - started} carrier=${engine.carrier} extended_scan=${transport.capabilities.extendedAdvertising}") }
+                    is SingerEngine.Event.Repaired -> {
+                        repairs++
+                        if (!e.ok) repairsFailed++
+                        repairMs = e.ms
+                        log("listen repair groups=${e.groups.joinToString(",") { "${it.first}/${it.second}" }} ok=${e.ok} ms=${e.ms} failure=${e.failure?.replace(' ', '_')}")
                     }
-                    if (beacon.gid != gid) return@collect
-                    beacons++
-                    rssi = r.rssi
-                    if (lastSeq != null && beacon.seq != lastSeq) { pushSeenAt = now; log("listen seq=${beacon.seq}") }
-                    lastSeq = beacon.seq
-                } else {
-                    val frame = FrameCodec.decode(data) ?: return@collect
-                    val result = reassembler?.accept(frame) ?: return@collect
-                    frames++
-                    if (result is Reassembler.Result.Complete && result.doc == DocumentType.SONG && result.dv != lastSongDv) {
+                    is SingerEngine.Event.Delivered -> if (e.doc == DocumentType.SONG && !e.bytes.contentEquals(lastSong)) {
+                        lastSong = e.bytes
                         val since = pushSeenAt
-                        if (since != null && lastSongDv != null) {
-                            deliveries += now - since
-                            log("listen delivery_ms=${now - since} size=${result.bytes.size}")
+                        if (since != null) {
+                            (if (e.viaRepair) repaired else broadcast) += e.at - since
+                            log("listen delivery_ms=${e.at - since} via=${if (e.viaRepair) "repair" else "broadcast"} size=${e.bytes.size}")
+                            pushSeenAt = null
                         }
-                        lastSongDv = result.dv
-                        pushSeenAt = null
                     }
                 }
-                val elapsed = ((now - started) / 1000).coerceAtLeast(1)
-                show(
-                    "singer  carrier=$carrier  hardware_filters=${transport.hardwareFilters}",
-                    "gathering  ${if (gid == null) "searching" else TEST_NAME}",
-                    "rssi  $rssi",
-                    "beacons  $beacons  (${"%.1f".format(java.util.Locale.ROOT, beacons * 1000.0 / (now - started).coerceAtLeast(1))}/s)",
-                    "frames  $frames  (${frames / elapsed}/s)",
-                    "deliveries  ${deliveries.size}",
-                    "last_ms  ${deliveries.lastOrNull() ?: "-"}",
-                    "median_ms  ${deliveries.sorted().getOrNull(deliveries.size / 2) ?: "-"}",
-                    "max_ms  ${deliveries.maxOrNull() ?: "-"}",
-                    "scan_error  ${transport.scanFailure ?: "-"}",
-                )
+                render()
             }
+        }
+        engine.start()
+        log("listen hardware_filters=${transport.hardwareFilters}")
+        try {
+            while (isActive) { render(); delay(1_000) }
         } finally {
             withContext(NonCancellable) { transport.stopScan() }
         }

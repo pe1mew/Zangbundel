@@ -278,4 +278,33 @@ class SingerMachineTest {
         assertEquals(listOf(Effect.StartScan), m.handle(Event.DiscoveryStarted(3_000)))
         assertEquals(SingerState.IDLE, m.state)
     }
+
+    @Test
+    fun `without Info by broadcast within 1·5 s the singer registers anyway, reading Info and State on that connection`() {
+        val m = machine()
+        m.handle(Event.Selected(0, gid, Carrier.EXTENDED))
+        assertTrue(m.handle(Event.Tick(1_400)).none { it is Effect.Register })
+        assertIs<Effect.Register>(m.handle(Event.Tick(1_500)).single())
+        assertTrue(m.handle(Event.Tick(1_750)).none { it is Effect.Register })          // asked once
+        m.handle(Event.ConnectionFailed(1_800))
+        val retry = (1_900L..4_000L step 250).flatMap { m.handle(Event.Tick(it)) }
+        assertEquals(1, retry.count { it is Effect.Register })                           // after the backoff
+    }
+
+    @Test
+    fun `a document the manifest names is repaired 3 s after the state even if none of its frames comes`() {
+        val m = listening()
+        m.handle(Event.BeaconSeen(2_000, gid, 11, ended = false, busy = false))
+        m.handle(Event.StateApplied(2_500, seq = 11, ended = false, songIsLocal = false, missing = listOf(SONG to 0x4242)))
+        assertTrue(m.handle(Event.Tick(5_250)).none { it is Effect.Repair })
+        val repair = assertIs<Effect.Repair>(m.handle(Event.Tick(5_500)).single())
+        assertEquals(listOf(SONG to 0x4242), repair.groups)
+    }
+
+    @Test
+    fun `a local song is not watched from the manifest`() {
+        val m = listening(songLocal = true)
+        m.handle(Event.StateApplied(2_500, seq = 11, ended = false, songIsLocal = true, missing = listOf(SONG to 0x4242)))
+        assertTrue((2_500L..10_000L step 250).flatMap { m.handle(Event.Tick(it)) }.none { it is Effect.Repair })
+    }
 }
