@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.24 (draft) |
+| Document version | 0.25 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -37,6 +37,7 @@
 | 0.22 | 2026-10-25 | Found while building GATT registration and repair in `core/protocol` and `platform/ble` and running it on three phones; accepted by the owner as written 2026-10-25, Q22 and Q23 left open. 7.6: a document named in the newest verified state's manifest that the singer lacks is watched from the moment that state is applied, so a singer that hears none of its frames (a leader whose extended set is not heard, D-05 runs 12–16) still repairs it; before, only a group with a frame received could ever be repaired. 9.7: DATA chunks are at most 509 bytes, because an attribute value is at most 512 bytes and Android cuts a longer notification (at MTU 517 every full chunk lost 2 bytes). Q22 (HEADER larger than MTU − 3 at MTU 23) and Q23 (a leader whose extended set is not heard) added. |
 | 0.23 | 2026-10-25 | Q22 and Q23 resolved by the owner, and a third decision from D-05 run 17. 9.7: the HEADER spans as many `0x01` notifications as the MTU needs, so Transfer works at MTU 23 (Q22). 7.1: a singer on the extended carrier falls back to the legacy carrier when no extended frame of the gathering arrives within 3 s of selecting it (Q23). 10.2, 10.4: after reading or repairing the state over GATT, a singer fetches on the same connection every manifest document of which it holds no frame. 7.8: degraded mode implemented as written. Q24 to Q26 opened from the simulation scenarios S-01 to S-06 (`design/test-results/2026-10-25-S-01-06.md`). |
 | 0.24 | 2026-10-25 | Q24 to Q26 resolved by the owner after the simulation scenarios (`design/test-results/2026-10-25-S-01-06.md`). 7.4: every burst pass opens with the whole state record, its repair frames included (Q24). 7.3: documents over 128 source frames keep the code as it is and rely on repair, the extended carrier and the library (Q25). 7.6: the repair limit is counted from the group's start and is 5 s on both carriers (Q26). |
+| 0.25 | 2026-10-25 | Decided by the owner after D-05 run 18, where the Huawei fetched the song and the new state on two connections: 7.6 and 10.4, when a repair comes due the connection fetches every document the singer is still collecting, the state record first, not only those whose repair is due. |
 
 ---
 
@@ -375,7 +376,7 @@ A singer watches every (`doc`, `dv`) group from its first frame (or, for the sta
 
 The rule replaces the fixed timers of v0.20, which at the measured reception rates would have sent nearly every singer to GATT. A singer that hears 40 % of the legacy frames reaches `k` for a 2 kB song in about 13 s, by simulation; the Huawei, hearing about 13 % with Wi-Fi on, took 38–40 s on the phones (`design/test-results/2026-10-25-D-05.md`, run 11). Under the rule of v0.21 the first would wait for the broadcast and the second would go to GATT after 2 s; under v0.24 both go to GATT after 2 s, and so does a singer receiving a 4 kB song at a steady 27 frames a second, which before never repaired and waited 12–23 s (`design/test-results/2026-10-25-S-01-06.md`).
 
-When the rule calls for repair, the singer waits a random 0–400 ms (longer, 0–2 s, while the beacon shows `BUSY`), connects, and fetches **only as many missing source frames as it still needs to reach `k`**, as byte ranges with a Transfer request (section 9.7). It then disconnects. The repair connection is also used to flush any queued request. Singers that just registered fetch anything incomplete on the registration connection, so late joiners never wait for the carousel [FR-GATH-06].
+When the rule calls for repair, the singer waits a random 0–400 ms (longer, 0–2 s, while the beacon shows `BUSY`), connects, and fetches **only as many missing source frames as it still needs to reach `k`**, as byte ranges with a Transfer request (section 9.7). The same connection fetches the missing ranges of **every** document the singer is still collecting, whether or not its own repair is due yet, the state record first (v0.25): once a connection is open, waiting for the rest of a document by broadcast saves nothing and may cost a second connection. It then disconnects. The repair connection is also used to flush any queued request. Singers that just registered fetch anything incomplete on the registration connection, so late joiners never wait for the carousel [FR-GATH-06].
 
 A singer with the current song in its local library never repairs the song; a singer whose user is not looking at the lyric view (browsing the library) SHOULD let the carousel finish instead of repairing.
 
@@ -723,7 +724,7 @@ Routine operation never opens a connection:
 
 ### 10.4 Repair (singer)
 
-Connect after the random delay, request the missing ranges of one or more documents (one Transfer per document), send any queued request, disconnect. When the state arrives on this connection, the singer also fetches, on the same connection, every document its manifest names of which the singer holds no frame (v0.23); a singer that had to repair the state is unlikely to collect those soon by broadcast. Retry with exponential backoff starting at 300 ms, doubling, capped at 2 s, with ±25 % jitter, on connection failure (Android status 133, timeout) or `0x84`. While repairing, keep listening: frames that arrive by broadcast reduce the ranges still needed.
+Connect after the random delay, request the missing ranges of every document still being collected, the state record first (one Transfer per document, v0.25), send any queued request, disconnect. When the state arrives on this connection, the singer also fetches, on the same connection, every document its manifest names of which the singer holds no frame (v0.23); a singer that had to repair the state is unlikely to collect those soon by broadcast. Retry with exponential backoff starting at 300 ms, doubling, capped at 2 s, with ±25 % jitter, on connection failure (Android status 133, timeout) or `0x84`. While repairing, keep listening: frames that arrive by broadcast reduce the ranges still needed.
 
 ### 10.5 Push a song, message, setlist or download instruction (leader)
 

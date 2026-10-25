@@ -292,12 +292,13 @@ class SingerMachine(private val random: Random = Random.Default) {
         }
         when (state) {
             SingerState.LISTENING -> {
-                val due = collecting.filter { (_, c) -> repairDue(c, now) }.keys.toList()
-                if (due.isNotEmpty()) {
-                    due.forEach { collecting.remove(it) }
-                    repairing.clear(); repairing += due
+                if (collecting.any { (_, c) -> repairDue(c, now) }) {
+                    // 7.6, 10.4 (v0.25): one connection fetches everything still being collected, the state first.
+                    val groups = collecting.keys.sortedBy { if (it.first == DocumentType.STATE) 0 else 1 }
+                    collecting.clear()
+                    repairing.clear(); repairing += groups
                     state = SingerState.REPAIRING
-                    fx += Effect.Repair(due, repairDelay())
+                    fx += Effect.Repair(groups, repairDelay())
                 }
             }
             SingerState.REPAIRING -> repairRetryAt?.let { at ->

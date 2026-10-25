@@ -55,6 +55,8 @@ class SingerEngine(
     sealed interface Event {
         val at: Long
         data class NewSeq(override val at: Long, val seq: Int) : Event
+        /** No extended frame came within 3 s; the singer collects the legacy carrier now (7.1, v0.23). */
+        data class FellBackToLegacy(override val at: Long) : Event
         data class Joined(override val at: Long, val result: Int) : Event
         /** A verified document, by broadcast or by repair. */
         class Delivered(override val at: Long, val doc: Int, val dv: Int, val bytes: ByteArray, val viaRepair: Boolean) : Event
@@ -154,6 +156,7 @@ class SingerEngine(
         carrier = Carrier.LEGACY
         reassembler = Reassembler(gid16, Carrier.LEGACY)
         apply(machine.handle(SingerMachine.Event.CarrierChanged(now, Carrier.LEGACY)))
+        _events.tryEmit(Event.FellBackToLegacy(now))
     }
 
     // ---- verification (7.5) ----

@@ -316,4 +316,14 @@ class SingerMachineTest {
         m.handle(Event.StateApplied(2_500, seq = 11, ended = false, songIsLocal = true, missing = listOf(SONG to 0x4242)))
         assertTrue((2_500L..10_000L step 250).flatMap { m.handle(Event.Tick(it)) }.none { it is Effect.Repair })
     }
+
+    @Test
+    fun `a repair that comes due takes every document still being collected, the state first`() {
+        val m = listening()
+        m.handle(Event.FrameProgress(1_500, SONG, 7, have = 5, needed = 125))
+        m.handle(Event.BeaconSeen(2_000, gid, 11, ended = false, busy = false))    // a new state is awaited too
+        // The song stalls: due 3 s after its last new frame; the state's own repair is not due yet.
+        val repair = assertIs<Effect.Repair>((4_500L..4_750L step 250).flatMap { m.handle(Event.Tick(it)) }.single())
+        assertEquals(listOf(STATE to 11, SONG to 7), repair.groups)
+    }
 }
