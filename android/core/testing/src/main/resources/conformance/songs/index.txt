@@ -1,0 +1,10 @@
+chorus-before-definition
+duplicate-title
+fire-in-the-night
+invalid-utf8
+malformed-directive
+missing-language
+non-canonical
+unclosed-chorus
+vader-jacob
+vuur-in-de-nacht

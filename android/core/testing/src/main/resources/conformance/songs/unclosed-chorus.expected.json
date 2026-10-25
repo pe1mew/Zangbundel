@@ -1,0 +1,10 @@
+{
+  "accepted": false,
+  "codes": [
+    "S007",
+    "W002"
+  ],
+  "canonical_sha256": "62f72f4847fdc0a66c8168019b9d5a1d3272da7af9667b7e46130f6f6bc08ed8",
+  "hash": "62f72f4847fdc0a66c8168019b9d5a1d",
+  "canonical_equals_input": true
+}

@@ -1,0 +1,5 @@
+{title: Test}
+{meta: id malformed-directive}
+{meta: language nl}
+{start_of_verse
+Een regel.

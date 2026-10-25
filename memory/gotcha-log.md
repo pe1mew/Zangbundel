@@ -149,6 +149,11 @@
 **Root cause**: MSYS converts any argument that looks like a POSIX path for a Windows program: device paths get the Git root prefixed. Switching conversion off also leaves `/c/...` host paths unconverted, which adb.exe cannot open.
 **Fix**: Set `MSYS_NO_PATHCONV=1` for adb commands and give host files as `C:/...` paths.
 
+### Git converts CRLF in byte-exact test vectors (2026-10-25)
+**Problem**: The song vector `non-canonical.cho` (BOM, CRLF, trailing spaces) was staged with its CRLFs turned into LFs (`git ls-files --eol`: `i/lf w/crlf`); committed like that it would no longer test CRLF, and the test would still pass.
+**Root cause**: `core.autocrlf` is `true` on this machine and the repository had no attribute for the vectors.
+**Fix**: `.gitattributes` marks `conformance/songs/*.cho` `-text`; re-stage with `git add --renormalize`, then compare the staged blob with the file (`cmp <(git show :path) path`). Any new byte-exact fixture needs the same rule.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

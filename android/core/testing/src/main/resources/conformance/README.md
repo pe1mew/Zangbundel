@@ -4,7 +4,7 @@ Test vectors shared between this app and the library repository's validator (arc
 song files with their canonical bytes, hash, line list and report codes; setlists; archives good and bad
 (one per A-code); protocol documents and frames with their bytes; sealed payloads opened with known keys.
 
-Layout, to be filled with the first parser tests:
+Layout. `songs/index.txt` lists the song vectors by name, because a test reading them from a jar cannot list a directory:
 
 ```
 conformance/

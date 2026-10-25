@@ -1,0 +1,13 @@
+{
+  "accepted": true,
+  "codes": [
+    "W001",
+    "W002"
+  ],
+  "canonical_sha256": "08a7873c504a8c56cf07f063195e5a8ea7bbe01427e6688440cdfe5937cdd5d0",
+  "hash": "08a7873c504a8c56cf07f063195e5a8e",
+  "canonical_equals_input": false,
+  "lines": [
+    "Vader Jacob, Vader Jacob,"
+  ]
+}

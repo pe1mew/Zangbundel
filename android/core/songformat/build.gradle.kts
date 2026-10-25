@@ -15,4 +15,5 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(project(":core:testing")) // conformance vectors (test plan 3.2)
 }

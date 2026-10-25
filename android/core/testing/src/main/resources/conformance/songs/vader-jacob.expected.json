@@ -1,0 +1,13 @@
+{
+  "accepted": true,
+  "codes": [
+    "W002"
+  ],
+  "canonical_sha256": "750da7b1aa8ce93c624bdcdb0f1721904ec75c7d9ba5b6aa7b3d89d7c3688122",
+  "hash": "750da7b1aa8ce93c624bdcdb0f172190",
+  "canonical_equals_input": true,
+  "lines": [
+    "Vader Jacob, Vader Jacob,",
+    "slaapt gij nog, slaapt gij nog?"
+  ]
+}

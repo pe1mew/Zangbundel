@@ -1,0 +1,29 @@
+{
+  "accepted": true,
+  "codes": [
+    "I001"
+  ],
+  "canonical_sha256": "286408646729532eeb4c7d8d04500c34c7e3134c49e75dd6662639d3ea252c02",
+  "hash": "286408646729532eeb4c7d8d04500c34",
+  "canonical_equals_input": true,
+  "lines": [
+    "The sun is gone, the sky turns grey,",
+    "the first star rises, clear and bright.",
+    "We shuffle closer to the fire,",
+    "nobody's getting lost tonight.",
+    "Fire in the night, sparks up in the air,",
+    "sing along, sing along.",
+    "Fire in the night, the day has gone somewhere,",
+    "and the night joins in our song.",
+    "The tea is hot, the biscuits gone,",
+    "the smoke has settled in your coat.",
+    "We carry on from song to song,",
+    "until the last one clears their throat.",
+    "And when the fire burns down to red,",
+    "the song is still inside our head.",
+    "Fire in the night, sparks up in the air,",
+    "sing along, sing along.",
+    "Fire in the night, the day has gone somewhere,",
+    "and the night joins in our song."
+  ]
+}
