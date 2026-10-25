@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.13 (draft) |
+| Document version | 0.14 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.12, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.13, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -25,6 +25,7 @@
 | 0.11 | 2026-10-22 | Depends on FRD v0.11. Q2 resolved: no tablet layout in phase 1; tablets get the phone layouts with more room and no 2560 × 1600 export (`design/architecture.md` A-02). The toolkit is Jetpack Compose (A-03). |
 | 0.12 | 2026-10-22 | Section 7, version display: the About screen also shows the short app signing fingerprint (assessment SP-20). |
 | 0.13 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
+| 0.14 | 2026-10-25 | Depends on FRD v0.13. D-81, the reception bar [FR-SING-05], decided by the owner: switched on in settings, off at every start, a floating island at the bottom of the singer's screen, hidden by a tap; D-44 lists its switch; colour reference and traceability follow. |
 
 ---
 
@@ -231,7 +232,9 @@ Section 6.1 is the page the singer reads. This section is everything else a sing
 
 **D-43 — A new song is announced, not interrupted.** When the leader pushes a song the page scrolls to its start, its title row carries the orange bar of D-16 for one second, and the device vibrates twice briefly when *Trillen bij nieuw lied* is on in settings (default on) [FR-SING-02]. No sound, no dialog. The same cue plays when the singer is in browse state (D-40). *Why:* the cue must be noticed in the dark and in the noise, and must not need a tap to dismiss.
 
-**D-44 — Display name and vibration live in settings.** Settings has the group *Zingen* with: *Naam voor de leider* (the display name of FR-SING-01: at most 24 characters, hint *Alleen je voornaam of bijnaam*, never prefilled, empty allowed and shown to the leader as *Zanger n*), *Trillen bij nieuw lied* (D-43), *Volumeknoppen scrollen* [FR-SING-11], *Tijd tot "kampvuur niet gevonden"* [FR-GATH-11], and the magnifier switch should Q13 adopt it. A changed display name applies at the next join; while joined the setting says so. *Why:* FR-SING-01 asks the name once; it should still be findable without searching.
+**D-44 — Display name and vibration live in settings.** Settings has the group *Zingen* with: *Naam voor de leider* (the display name of FR-SING-01: at most 24 characters, hint *Alleen je voornaam of bijnaam*, never prefilled, empty allowed and shown to the leader as *Zanger n*), *Trillen bij nieuw lied* (D-43), *Volumeknoppen scrollen* [FR-SING-11], *Tijd tot "kampvuur niet gevonden"* [FR-GATH-11], *Ontvangst tonen* (D-81, off at every start), and the magnifier switch should Q13 adopt it. A changed display name applies at the next join; while joined the setting says so. *Why:* FR-SING-01 asks the name once; it should still be findable without searching.
+
+**D-81 — The reception bar: on only by choice, off at every start, gone with a tap.** *(Added in v0.14 at the owner's request.)* The settings group *Zingen* (D-44) has the switch *Ontvangst tonen*, which is off whenever the app starts, whatever it was before. When it is on, singer mode shows a floating island at the very bottom of the screen, above the system navigation and inset from the edges, on a night-blue-dark surface (`#0B2545`) in both themes so that all three colours read. The island has one row per document: *Lied* for the current song and *Lijst* for the setlist, each a row of the document's source blocks (`k` of them, ble-protocol 7.3), shrunk to fit the width and at least one pixel wide. A block is **green** when it was received, rebuilt by the erasure code, or fetched over GATT; **white** while it is still to come; **orange** when later blocks of the same document version have arrived and this one has not (missed; the code or a repair will cover it). A complete document is all green; a song from the singer's own library (ble-protocol 10.3 step 3) shows its row all green at once; a new version starts its row white again. Colours change; nothing moves, blinks or counts. The lyric page leaves room under its last line so that the island never covers the line being sung. Tapping anywhere on the island hides it and switches *Ontvangst tonen* off; it comes back only from the settings [FR-SING-05]. *Why:* the owner wants a singer to be able to see how a song and the setlist arrive and where the gaps are, which also helps explain a late song at the fire. *D-48:* a live bar is something to watch, so it stays off unless a singer looks for it in the settings, never survives a restart, and leaves with one tap.
 
 **D-45 — The song-info sheet shows the metadata of the song file, nothing invented.** From the toolbar or a long press on the title (D-33) the info sheet lists, in this order and only when present: title and subtitle; lyricist, composer, melody ("op de wijs van …"), year; copyright with the © sign; licence as its identifier or *licentie van bundel X* when the song carries none; source; tags with their labels; the library's name and the revision installed; the variant group's other members as links (D-41) [FR-SING-15, FR-LIB-20]. For a song received over the air without the library, the sheet says *Ontvangen van de leider* in place of the library line. The sheet is dark in the night theme and closes with a swipe down. *Why:* FR-LIB-20 and FR-LIB-23: show the metadata as it is, never alter it.
 
@@ -408,13 +411,14 @@ The Dutch term for the delegate role is *assistent* (Q15, resolved 2026-10-20). 
 
 | Name | Value | Used for |
 |---|---|---|
-| Night blue dark | `#0B2545` | System splash, scrim top, panels, text on orange buttons |
+| Night blue dark | `#0B2545` | System splash, scrim top, panels, text on orange buttons, the reception bar's surface (D-81) |
 | Night blue | `#13315C` | Icon gradient, accents on configuration screens |
-| Fire orange | `#FF8A3D` | Primary button, current-line bar, icon |
+| Fire orange | `#FF8A3D` | Primary button, current-line bar, icon, missed blocks in the reception bar (D-81) |
 | Fire orange light | `#FFB36B` | Secondary accent, tagline on the feature graphic |
 | Sky blue | `#4FC3F7` | Bluetooth state indicator, links |
 | Off-white | `#CFE6FF` | Secondary text on configuration screens |
-| White | `#FFFFFF` | Text on configuration screens; night-theme lyric text; day-theme background |
+| White | `#FFFFFF` | Text on configuration screens; night-theme lyric text; day-theme background; blocks still to come in the reception bar (D-81) |
+| Reception green | `#4CC36A` | Received blocks in the reception bar (D-81); nowhere else |
 | Black | `#000000` | Night-theme background; day-theme lyric text |
 
 The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-graphic.svg`, so the icon, the store listing and the app share one palette. Since the icon of 2026-10-22 the sky blue is no longer in the icon (its Bluetooth sign is `#1E88E5` on its own, without ripples); it stays the app's Bluetooth colour.
@@ -459,6 +463,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | FR-LANG-06 | Variant switch in the song-info sheet (D-41, as amended by D-48), language button on the song bar (D-65) |
 | FR-DISP-04 | Rotation keeps the line (D-42) |
 | FR-SING-01, FR-SING-02 | Display name and vibration in settings, new-song cue (D-43, D-44) |
+| FR-SING-05 | Reception bar, switched on in settings (D-81, D-44) |
 | FR-LIB-20, FR-LIB-23, FR-SING-15 | Song-info sheet (D-45) |
 | FR-LEAD-40, FR-LEAD-41, FR-LEAD-42, FR-LEAD-43, FR-LEAD-44, FR-LEAD-45, FR-LEAD-46 | Delegate tab in singer mode (D-46) |
 | FR-KAR-03, FR-KAR-09 | Room reserved for karaoke (6.2, "Room for phase 2") |

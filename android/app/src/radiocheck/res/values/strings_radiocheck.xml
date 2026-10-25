@@ -13,6 +13,7 @@
     <string name="bletest_title">Two-phone test</string>
     <string name="bletest_explanation">One phone leads: it sends a beacon named Testvuur and, every 60 seconds, a new test document of random bytes over the broadcast carousel. The other phone listens and measures how long each document takes to arrive. Nothing is stored.</string>
     <string name="bletest_lead">Lead</string>
+    <string name="bletest_reception_note">Stands here for Settings, Singing until the settings screen exists; off at every start.</string>
     <string name="bletest_lead_extended_only">Lead, extended set only</string>
     <string name="bletest_probe_extended">Probe the extended set</string>
     <string name="bletest_listen">Listen</string>

@@ -3,6 +3,7 @@ package nl.pe1mew.zangbundel.app
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import nl.pe1mew.zangbundel.app.settings.SingerSettings
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
@@ -19,6 +20,9 @@ class AppContainer(private val context: Context) {
     val database: ZangbundelDatabase by lazy { ZangbundelDatabase.open(context) }
 
     val crypto: Crypto by lazy { SodiumCrypto() }
+
+    /** Off at every start (D-81): created with the process, never stored. */
+    val singerSettings = SingerSettings()
 
     /** Null when the device has no Bluetooth adapter at all; such a device can neither lead nor join. */
     val transport: Transport? by lazy {

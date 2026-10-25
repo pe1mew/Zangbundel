@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.25 (draft) |
+| Document version | 0.26 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.12 |
+| Depends on | `design/functional-requirements.md` v0.13 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -38,6 +38,7 @@
 | 0.23 | 2026-10-25 | Q22 and Q23 resolved by the owner, and a third decision from D-05 run 17. 9.7: the HEADER spans as many `0x01` notifications as the MTU needs, so Transfer works at MTU 23 (Q22). 7.1: a singer on the extended carrier falls back to the legacy carrier when no extended frame of the gathering arrives within 3 s of selecting it (Q23). 10.2, 10.4: after reading or repairing the state over GATT, a singer fetches on the same connection every manifest document of which it holds no frame. 7.8: degraded mode implemented as written. Q24 to Q26 opened from the simulation scenarios S-01 to S-06 (`design/test-results/2026-10-25-S-01-06.md`). |
 | 0.24 | 2026-10-25 | Q24 to Q26 resolved by the owner after the simulation scenarios (`design/test-results/2026-10-25-S-01-06.md`). 7.4: every burst pass opens with the whole state record, its repair frames included (Q24). 7.3: documents over 128 source frames keep the code as it is and rely on repair, the extended carrier and the library (Q25). 7.6: the repair limit is counted from the group's start and is 5 s on both carriers (Q26). |
 | 0.25 | 2026-10-25 | Decided by the owner after D-05 run 18, where the Huawei fetched the song and the new state on two connections: 7.6 and 10.4, when a repair comes due the connection fetches every document the singer is still collecting, the state record first, not only those whose repair is due. |
+| 0.26 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 
 ---
 

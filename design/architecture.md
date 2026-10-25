@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.5 (draft) |
+| Document version | 0.6 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.12, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.13, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -17,6 +17,7 @@
 | 0.3 | 2026-10-22 | Resolutions of assessment v0.4 applied, as the owner asked. A-06 sets the notification text: fixed and neutral, also on the lock screen (SP-17). The notification permission is asked only from leaders (A-06, section 9; SP-18). The leader's resume record is encrypted with a Keystore key (5.4, section 6; SP-19). A-18 shares only the app's own install and shows the signing fingerprint on the About screen (SP-20). A-20 sets the conditions for the field-test build (SP-22). Section 10 adds fuzz targets for the join-link payload and the leader's GATT write handlers (SP-09). No decision superseded. |
 | 0.4 | 2026-10-22 | `design/test-plan.md` v0.1 exists: sections 1.2 and 10 point at its scenarios instead of "still to write". No decision changed. |
 | 0.5 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
+| 0.6 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 
 ---
 

@@ -10,6 +10,7 @@ import android.os.SystemClock
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -29,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -48,6 +51,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.Log
 import nl.pe1mew.zangbundel.app.R
+import nl.pe1mew.zangbundel.app.ZangbundelApp
+import nl.pe1mew.zangbundel.app.ui.singer.ReceptionIsland
 import nl.pe1mew.zangbundel.core.model.GatheringId
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
@@ -77,6 +82,9 @@ import kotlin.random.Random
 class BleTestRunner(private val transport: AndroidTransport, private val crypto: Crypto = SodiumCrypto()) {
     private val _lines = MutableStateFlow(listOf<String>())
     val lines: StateFlow<List<String>> = _lines
+    private val _reception = MutableStateFlow(listOf<SingerEngine.Reception>())
+    /** The reception bar's rows while listening (D-81). */
+    val reception: StateFlow<List<SingerEngine.Reception>> = _reception
 
     private fun show(vararg rows: String) { _lines.value = rows.toList() }
     private fun log(line: String) = Log.i("bletest $line")
@@ -182,6 +190,7 @@ class BleTestRunner(private val transport: AndroidTransport, private val crypto:
     }
 
     suspend fun listen() = coroutineScope {
+        _reception.value = emptyList()
         val engine = SingerEngine(transport, crypto, this, SystemClock::elapsedRealtime, { it.name == TEST_NAME })
         val started = SystemClock.elapsedRealtime()
         var pushSeenAt: Long? = null
@@ -235,7 +244,11 @@ class BleTestRunner(private val transport: AndroidTransport, private val crypto:
         engine.start()
         log("listen hardware_filters=${transport.hardwareFilters}")
         try {
-            while (isActive) { render(); delay(1_000) }
+            while (isActive) {
+                render()
+                _reception.value = engine.reception()
+                delay(RECEPTION_REFRESH_MS)
+            }
         } finally {
             withContext(NonCancellable) { transport.stopScan() }
         }
@@ -245,6 +258,7 @@ class BleTestRunner(private val transport: AndroidTransport, private val crypto:
         const val TEST_NAME = "Testvuur"
         const val PUSH_INTERVAL_MS = 60_000L
         const val PROBE_STEP_MS = 60_000L
+        const val RECEPTION_REFRESH_MS = 250L
         /** About a compressed song of 4 kB (NFR-PERF-01). Random bytes: incompressible, never lyrics. */
         const val TEST_DOCUMENT_BYTES = 2_000
     }
@@ -272,6 +286,10 @@ fun BleTestScreen() {
     var message by remember { mutableStateOf<Int?>(null) }
     var pending by remember { mutableStateOf<(suspend BleTestRunner.() -> Unit)?>(null) }
     val lines = runner?.lines?.collectAsState()
+    // Settings → Zingen → Ontvangst tonen (D-81) stands on this screen until the settings screen exists.
+    val settings = (context.applicationContext as ZangbundelApp).container.singerSettings
+    val showReception by settings.receptionBar.collectAsState()
+    val reception = runner?.reception?.collectAsState()
 
     fun start(scope: CoroutineScope, what: suspend BleTestRunner.() -> Unit) {
         val r = runner ?: run { message = R.string.radiocheck_no_bluetooth; return }
@@ -297,21 +315,35 @@ fun BleTestScreen() {
     }
 
     Scaffold { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(stringResource(R.string.bletest_title), style = MaterialTheme.typography.headlineSmall)
-            Text(stringResource(R.string.bletest_explanation), style = MaterialTheme.typography.bodyMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = { request { lead() } }) { Text(stringResource(R.string.bletest_lead)) }
-                Button(onClick = { request { listen() } }) { Text(stringResource(R.string.bletest_listen)) }
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            val rows = reception?.value.orEmpty()
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
+                    .padding(bottom = if (showReception && rows.isNotEmpty()) 72.dp else 0.dp),     // the island never covers the text
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(stringResource(R.string.bletest_title), style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.bletest_explanation), style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { request { lead() } }) { Text(stringResource(R.string.bletest_lead)) }
+                    Button(onClick = { request { listen() } }) { Text(stringResource(R.string.bletest_listen)) }
+                }
+                Button(onClick = { request { lead(extendedOnly = true) } }) { Text(stringResource(R.string.bletest_lead_extended_only)) }
+                Button(onClick = { request { probeExtended() } }) { Text(stringResource(R.string.bletest_probe_extended)) }
+                OutlinedButton(onClick = { job?.cancel(); job = null }) { Text(stringResource(R.string.bletest_stop)) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Switch(checked = showReception, onCheckedChange = { settings.receptionBar.value = it })
+                    Column {
+                        Text(stringResource(R.string.reception_setting))
+                        Text(stringResource(R.string.bletest_reception_note), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                message?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                lines?.value?.forEach { Text(it, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
             }
-            Button(onClick = { request { lead(extendedOnly = true) } }) { Text(stringResource(R.string.bletest_lead_extended_only)) }
-            Button(onClick = { request { probeExtended() } }) { Text(stringResource(R.string.bletest_probe_extended)) }
-            OutlinedButton(onClick = { job?.cancel(); job = null }) { Text(stringResource(R.string.bletest_stop)) }
-            message?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
-            lines?.value?.forEach { Text(it, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
+            if (showReception && rows.isNotEmpty()) {
+                ReceptionIsland(rows, onDismiss = { settings.receptionBar.value = false }, modifier = Modifier.align(Alignment.BottomCenter))
+            }
         }
     }
 }

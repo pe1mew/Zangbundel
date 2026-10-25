@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.frame.Carrier
+import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.testing.JvmSodiumCrypto
@@ -153,5 +154,20 @@ class SingerEngineTest {
         println("extended both sides: song after $t ms")
         assertTrue(t < 2_000, "$t ms")
         assertTrue(singers.single().events.none { it is SingerEngine.Event.Repaired })
+    }
+
+    @Test
+    fun `the reception bar shows the song arriving with gaps, then complete`() = runTest {
+        val (leader, singers) = gathering(listOf(0.5))
+        testScheduler.advanceTimeBy(30_000)
+        val engine = singers.single().engine
+        leader.push(song(2))
+        testScheduler.advanceTimeBy(2_500)                       // the song's first pass is under way
+        val during = engine.reception().single { it.doc == DocumentType.SONG }.blocks
+        println("song blocks 2.5 s after the push: ${during.groupingBy { it }.eachCount()}")
+        assertTrue(Reassembler.Block.RECEIVED in during && Reassembler.Block.MISSED in during, "$during")
+        testScheduler.advanceTimeBy(20_000)
+        val after = engine.reception().single { it.doc == DocumentType.SONG }.blocks
+        assertTrue(after.isNotEmpty() && after.all { it == Reassembler.Block.RECEIVED }, "$after")
     }
 }

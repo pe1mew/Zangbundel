@@ -124,6 +124,31 @@ class Reassembler(
 
     fun isComplete(doc: Int, dv: Int): Boolean = groups[doc]?.firstOrNull { it.dv == dv }?.complete == true
 
+    /** One source block of a version as the singer's reception bar shows it (FR-SING-05, guiDesign D-81). */
+    enum class Block { PENDING, RECEIVED, MISSED }
+
+    /**
+     * The `k` source blocks of a version: received (by broadcast or repair; every block once the
+     * version is complete, rebuilt ones included), missed when a later frame of the version has come
+     * (a source frame with a higher index, or any repair frame, which a pass sends after the sources),
+     * still to come otherwise. Null when the version is unknown here.
+     */
+    fun blocks(doc: Int, dv: Int): List<Block>? {
+        val group = groups[doc]?.firstOrNull { it.dv == dv } ?: return null
+        if (group.complete) return List(group.k) { Block.RECEIVED }
+        val passedUpTo = if (group.seen.nextSetBit(group.k) >= 0) group.k else group.seen.previousSetBit(group.k - 1)
+        return List(group.k) { i ->
+            when {
+                group.seen[i] -> Block.RECEIVED
+                i < passedUpTo -> Block.MISSED
+                else -> Block.PENDING
+            }
+        }
+    }
+
+    /** The version of [doc] seen most recently, for a bar shown before any manifest names one. */
+    fun latestVersion(doc: Int): Int? = groups[doc]?.lastOrNull()?.dv
+
     /** Drops a version, for example after it failed verification (7.5), so it is collected anew. */
     fun reset(doc: Int, dv: Int) {
         groups[doc]?.removeAll { it.dv == dv }

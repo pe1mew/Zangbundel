@@ -5,4 +5,9 @@
     <string name="app_name">Zangbundel</string>
     <string name="notification_channel_gathering">Kampvuur</string>
     <string name="notification_gathering_running">Kampvuur actief</string>
+    <!-- Ontvangstbalk (guiDesign D-81). -->
+    <string name="reception_song">Lied</string>
+    <string name="reception_setlist">Lijst</string>
+    <string name="reception_setting">Ontvangst tonen</string>
+    <string name="reception_description">Ontvangst van het lied en de lijst, blok voor blok. Tik om te verbergen.</string>
 </resources>

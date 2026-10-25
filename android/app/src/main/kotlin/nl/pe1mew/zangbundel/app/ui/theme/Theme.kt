@@ -17,6 +17,8 @@ object Palette {
     val OffWhite = Color(0xFFCFE6FF)
     val White = Color(0xFFFFFFFF)
     val Black = Color(0xFF000000)
+    /** Received blocks in the reception bar (D-81); nowhere else. */
+    val ReceptionGreen = Color(0xFF4CC36A)
 }
 
 /** Configuration screens: night blue with orange primary. The lyric view has its own day/night themes (FR-DISP-01). */

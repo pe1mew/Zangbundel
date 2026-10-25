@@ -37,7 +37,7 @@ keyPassword=...
 | `platform/crypto` | Android | `SodiumCrypto` on lazysodium-android |
 | `platform/storage` | Android | Room database (one table so far), `StartupSweep` |
 | `platform/net` | Android | `HttpsFetcher`: HTTPS only, no http redirects, fixed user agent, size cap |
-| `app` | Android | `ZangbundelApp`, `AppContainer`, `MainActivity`, Compose theme, `GatheringService`, manifest, resources; `src/radiocheck` (debug and fieldtest only) holds the radio check screen, `src/release` its empty stand-in |
+| `app` | Android | `ZangbundelApp`, `AppContainer`, `MainActivity`, Compose theme, `GatheringService`, singer settings that live only as long as the process (`settings/`), the reception bar island (`ui/singer/ReceptionIsland`, guiDesign D-81), manifest, resources; `src/radiocheck` (debug and fieldtest only) holds the radio check and two-phone test screens, `src/release` their empty stand-ins |
 
 Versions are pinned in `gradle/libs.versions.toml`; a new dependency needs a row in architecture
 section 8 in the same change. `gradle/verification-metadata.xml` is regenerated with

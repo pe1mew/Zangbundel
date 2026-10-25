@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.12 (draft) |
+| Version | 0.13 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -22,6 +22,7 @@
 | 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. Same day: FR-LEAD-40 amended (delegates appointed with a helper code, no singer list; note on FR-GATH-12), Q5 closed (no hand-over in P1; FR-GATH-14 stays a MAY). |
 | 0.11 | 2026-10-22 | `design/architecture.md` decided by the owner (v0.2): Q7 resolved (minimum SDK 26, tablets use the phone layouts in P1, A-01, A-02); Q11 resolved for the package (every install is one APK with bundle splits disabled, A-18), its store-update part stays open as architecture Q1. Section 19 marks the architecture document and the assessment's current version as existing. No requirement changed. |
 | 0.12 | 2026-10-25 | Open question Q14 on NFR-PERF-01 and FR-BLE-03, from the first two-phone measurements (`design/test-results/2026-10-25-D-05.md`) and the erasure-coding proposal (`design/proposals/2026-10-25-erasure-coding.md`). No requirement changed. |
+| 0.13 | 2026-10-25 | FR-SING-05 added at the owner's request: a singer can switch on a bar that shows the reception of the current song and the setlist block by block (green received, white still to come, orange missed); off at every app start, switched on only in the settings, hidden by a tap. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -391,6 +392,8 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 **FR-SING-03** (MUST, P1) — The singer MUST be able to see the setlist (songs already sung and, if the leader shares it, upcoming songs).
 
 **FR-SING-04** (MUST, P1) — The singer MUST see the connection state with the leader (connected / reconnecting / gathering ended).
+
+**FR-SING-05** (MUST, P1) — A singer MUST be able to see how the current song and the setlist are being received, as a bar of each document's blocks: **green** for a block received (or rebuilt from the other blocks, or fetched again from the leader), **white** for a block still to come, **orange** for a block that went by without arriving. The bar MUST be off whenever the app starts, MUST be switched on only in the settings, and MUST disappear, switching its setting off, when the singer taps it. *(Added in v0.13 at the owner's request; kept out of sight by default because the phone must not become the attraction, GUI design D-48.)*
 
 ### 9.2 Reading lyrics
 

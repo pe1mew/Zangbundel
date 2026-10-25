@@ -199,4 +199,30 @@ class ReassemblerTest {
             }
         }
     }
+
+    @Test
+    fun `blocks are received, missed behind a later frame, or still to come`() {
+        val r = legacy()
+        val frames = Framer.legacy(gid16, 3, 1, doc(100))                 // k = 7, then 14 repair frames
+        assertNull(r.blocks(3, 1))
+        listOf(0, 1, 3).forEach { r.accept(frames[it]) }
+        val R = Reassembler.Block.RECEIVED
+        val M = Reassembler.Block.MISSED
+        val P = Reassembler.Block.PENDING
+        assertEquals(listOf(R, R, M, R, P, P, P), r.blocks(3, 1))
+        r.accept(frames[8])                                                // a repair frame: every source has gone by
+        assertEquals(listOf(R, R, M, R, M, M, M), r.blocks(3, 1))
+        frames.drop(9).take(3).forEach { r.accept(it) }                    // k = 7 distinct frames: rebuilt, all received
+        assertEquals(List(7) { R }, r.blocks(3, 1))
+        assertEquals(1, r.latestVersion(3))
+    }
+
+    @Test
+    fun `a repaired range turns its blocks green`() {
+        val bytes = doc(70)
+        val r = legacy()
+        r.accept(Framer.legacy(gid16, 3, 1, bytes)[2])                    // k = 5; block 2 received, 0 and 1 missed
+        r.acceptRange(3, 1, 0, bytes.copyOfRange(0, 32), streamLength = 70)
+        assertEquals(listOf(Reassembler.Block.RECEIVED, Reassembler.Block.RECEIVED, Reassembler.Block.RECEIVED, Reassembler.Block.PENDING, Reassembler.Block.PENDING), r.blocks(3, 1))
+    }
 }

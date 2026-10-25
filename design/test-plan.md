@@ -4,17 +4,18 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.3 (draft) |
+| Document version | 0.4 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.12, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.13, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-22 | First draft. It covers: the test layers with their pass criteria; protocol simulation scenarios S-01 to S-10; fuzz targets and budgets; device smoke tests; security and privacy checks per release; field scenarios F-01 to F-11, with the measuring method; participants and consent, including the field-test build's consent text (assessment SP-22); the Play closed test; the release gate; how results are recorded; and a traceability table. |
 | 0.2 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); the pass criteria of S-02 and F-02 follow Q14 once it is decided; nothing else changes. |
 | 0.3 | 2026-10-25 | Fuzz target for the erasure-code decoder (section 3.4), from the approved proposal (`design/proposals/2026-10-25-erasure-coding.md`, ble-protocol v0.21); the frame-reassembly target covers coded frames. |
+| 0.4 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 
 ---
 

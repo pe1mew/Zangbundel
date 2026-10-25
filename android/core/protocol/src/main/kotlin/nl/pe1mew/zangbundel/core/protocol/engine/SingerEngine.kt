@@ -93,6 +93,32 @@ class SingerEngine(
     var token: ByteArray? = null
         private set
 
+    /** One row of the reception bar (FR-SING-05, guiDesign D-81): a document and its source blocks. */
+    class Reception(val doc: Int, val blocks: List<Reassembler.Block>)
+
+    /**
+     * The reception bar's rows: the current song, then the setlist. Each follows the newest version
+     * being collected while it is incomplete (a push shows at once, before its state is applied), and
+     * otherwise the version the newest verified manifest names. A document held in full, or a song from
+     * the singer's own library, is one received block; a version with no frame yet has no blocks. A
+     * document neither named nor seen has no row.
+     */
+    suspend fun reception(): List<Reception> = mutex.withLock {
+        val rs = reassembler ?: return@withLock emptyList()
+        listOf(DocumentType.SONG, DocumentType.SETLIST).mapNotNull { doc ->
+            val s = state
+            if (doc == DocumentType.SONG && s?.body?.cur?.let(hasSong) == true) return@mapNotNull Reception(doc, listOf(Reassembler.Block.RECEIVED))
+            val latest = rs.latestVersion(doc)?.takeIf { (doc to it) !in held && !rs.isComplete(doc, it) }
+            val dv = latest ?: s?.body?.docs?.get(doc)?.dv ?: rs.latestVersion(doc) ?: return@mapNotNull null
+            val blocks = rs.blocks(doc, dv)
+            when {
+                blocks != null -> Reception(doc, blocks)
+                (doc to dv) in held -> Reception(doc, listOf(Reassembler.Block.RECEIVED))
+                else -> Reception(doc, emptyList())
+            }
+        }
+    }
+
     /** Starts scanning and the 250 ms tick; runs until [scope] is cancelled. */
     fun start() {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

@@ -6,4 +6,9 @@
     <string name="notification_channel_gathering">Gathering</string>
     <!-- Fixed and neutral, also on the lock screen (architecture A-06, assessment SP-17). -->
     <string name="notification_gathering_running">Campfire running</string>
+    <!-- Reception bar (guiDesign D-81). -->
+    <string name="reception_song">Song</string>
+    <string name="reception_setlist">List</string>
+    <string name="reception_setting">Show reception</string>
+    <string name="reception_description">Reception of the song and the list, block by block. Tap to hide.</string>
 </resources>
