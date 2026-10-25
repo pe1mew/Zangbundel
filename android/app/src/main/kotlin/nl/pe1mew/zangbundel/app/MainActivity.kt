@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package nl.pe1mew.zangbundel.app
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -16,7 +18,14 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Every screen so far is dark (night blue, or white on black at the fire), so the system
+        // bars always get light icons. Left to the default, Android takes the icon colour from the
+        // phone's light or dark mode and draws dark icons on night blue in light mode.
+        // The lyric view's day theme (black on white) will switch to SystemBarStyle.light.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         setContent { ZangbundelUi() }
     }
 }

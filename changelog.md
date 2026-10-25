@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Fixed
+- The system bar icons were dark on the night-blue background on phones in light mode (seen on a Samsung A52, Android 14). `MainActivity` now declares both bars dark, so the icons stay light; checked on the A52 and a Huawei Mate 20 Lite (Android 10).
+
 ### Added
 - The Android project in `android/`, scaffolded as `design/architecture.md` section 4 prescribes and building, with unit tests and lint, on 2026-10-22:
   - Gradle 8.14.6 wrapper (checksum pinned), AGP 8.13.2, Kotlin 2.4.21, KSP 2.3.9, JDK 17 toolchain; every dependency pinned in `gradle/libs.versions.toml` with SHA-256 checksums in `gradle/verification-metadata.xml` (A-19). AndroidX core, lifecycle, navigation and the Compose BOM are the newest releases that compile against SDK 36; later ones require compile SDK 37.
