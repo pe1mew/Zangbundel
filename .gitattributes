@@ -3,3 +3,4 @@
 android/gradlew text eol=lf
 # Song conformance vectors are byte-exact test input (BOM, CRLF, invalid UTF-8): never convert them.
 android/core/testing/src/main/resources/conformance/songs/*.cho -text
+android/core/testing/src/main/resources/conformance/archives/*.zbl -text

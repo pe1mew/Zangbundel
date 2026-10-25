@@ -4,7 +4,7 @@ Test vectors shared between this app and the library repository's validator (arc
 song files with their canonical bytes, hash, line list and report codes; setlists; archives good and bad
 (one per A-code); protocol documents and frames with their bytes; sealed payloads opened with known keys.
 
-Layout. `songs/index.txt` lists the song vectors by name, because a test reading them from a jar cannot list a directory:
+Layout. `songs/index.txt` and `archives/index.txt` list the vectors by name, because a test reading them from a jar cannot list a directory. Archive vectors are `<name>.zbl` with `<name>.expected.json` (verdict, codes, and the SHA-256 of the vector itself, so a changed file is noticed):
 
 ```
 conformance/

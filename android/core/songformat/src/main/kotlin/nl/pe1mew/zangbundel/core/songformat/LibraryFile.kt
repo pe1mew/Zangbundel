@@ -107,8 +107,8 @@ object LibraryFileParser {
         return 0
     }
 
-    /** The deepest nesting of objects and arrays, strings skipped. */
-    private fun depth(text: String): Int {
+    /** The deepest nesting of objects and arrays, strings skipped; also bounds the archive manifest. */
+    internal fun depth(text: String): Int {
         var depth = 0
         var max = 0
         var inString = false

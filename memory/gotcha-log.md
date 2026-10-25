@@ -154,6 +154,11 @@
 **Root cause**: `core.autocrlf` is `true` on this machine and the repository had no attribute for the vectors.
 **Fix**: `.gitattributes` marks `conformance/songs/*.cho` `-text`; re-stage with `git add --renormalize`, then compare the staged blob with the file (`cmp <(git show :path) path`). Any new byte-exact fixture needs the same rule.
 
+### Python's zipfile quietly repairs attack vectors (2026-10-25)
+**Problem**: Archive vectors for a backslash name and an encrypted entry, built with Python `zipfile` on Windows, looked right when read back with `zipfile`, but its reading turns `\` into `/` again, and `writestr` resets `flag_bits`, so the encrypted vector had no encryption flag.
+**Root cause**: `ZipInfo` replaces `os.sep` with `/` and `_open_to_write` rewrites the flags; reading the file back through the same library hides both.
+**Fix**: Check attack vectors on their raw bytes (central and local headers), not through the library that wrote them; patch flags in both headers after writing. Each vector's `.expected.json` carries its SHA-256 so a regenerated or converted file is caught.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
