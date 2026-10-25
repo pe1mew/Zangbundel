@@ -78,6 +78,7 @@ Zangbundel/
 │   ├── test-plan.md              ← what is tested, how, pass criteria, field tests, release gate
 │   ├── security-privacy-assessment.md ← findings SP-nn, accepted risks
 │   ├── test-results/             ← one file per test run, YYYY-MM-DD-<id>.md
+│   ├── proposals/                ← dated change proposals awaiting the owner's approval
 │   ├── gui/                      ← backdrop photograph and exports, singer-mode flowchart (.puml/.svg/.png)
 │   ├── ble/                      ← BLE sequence diagrams per scenario (.puml/.svg/.png)
 │   ├── icon/                     ← app icon master, launcher layers, feature graphic

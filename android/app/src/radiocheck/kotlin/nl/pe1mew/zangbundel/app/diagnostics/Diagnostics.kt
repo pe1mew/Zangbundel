@@ -47,12 +47,16 @@ import nl.pe1mew.zangbundel.platform.ble.AdvertisingProbe
 object Diagnostics {
     const val AVAILABLE = true
     const val ROUTE = "radiocheck"
+    const val BLE_TEST_ROUTE = "bletest"
 }
 
-/** The home screen's way in. */
+/** The home screen's way in: the radio check and the two-phone test. */
 @Composable
-fun RadioCheckEntry(onOpen: () -> Unit) {
-    TextButton(onClick = onOpen) { Text(stringResource(R.string.radiocheck_title)) }
+fun DiagnosticsEntry(onOpen: (String) -> Unit) {
+    Row {
+        TextButton(onClick = { onOpen(Diagnostics.ROUTE) }) { Text(stringResource(R.string.radiocheck_title)) }
+        TextButton(onClick = { onOpen(Diagnostics.BLE_TEST_ROUTE) }) { Text(stringResource(R.string.bletest_title)) }
+    }
 }
 
 /**

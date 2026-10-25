@@ -11,6 +11,7 @@ Moved verbatim from `CLAUDE.md` on 2026-10-25 to keep the project file under abo
 | `design/architecture.md` | Architecture: decisions A-nn, module layout under `android/`, runtime structure, data lifecycle, dependency list, build, test layers. Decisions taken by the owner 2026-10-22; open questions Q1–Q5 wait for builds and field tests. |
 | `design/test-plan.md` | Test plan: layers and pass criteria, simulation S-01–S-10, fuzz targets, device D-01–D-08, field F-01–F-11, security checks G-01–G-10, consent text, closed test, release gate, traceability. |
 | `design/gui/`, `design/ble/` | GUI assets and diagrams; BLE sequence diagrams. Each folder's README has the render command (PlantUML needs `-charset UTF-8` on Java 8). |
+| `design/proposals/` | Dated change proposals; the first, `2026-10-25-erasure-coding.md`, is ble-protocol Q21 and FRD Q14. Approved content moves into the specification it changes. |
 | `design/prompts.md` | Dated record of the prompts that produced the specs. |
 | `design/security-privacy-assessment.md` | Secure-by-design and privacy-by-design principles, assessment of the design, findings and accepted risks. |
 | `scripts/check-design.sh` | Checks requirement IDs, cross-references and dependency versions across `design/`. |

@@ -11,7 +11,8 @@ import kotlin.random.Random
 
 /**
  * The singer's state machine (ble-protocol 3.3) with the procedures that drive it: discover,
- * verify and register (10.2), follow the carousel and repair (10.3, 10.4, 7.6), loss of contact
+ * verify and register (10.2), follow the carousel and repair (10.3, 10.4, 7.6: the rate-based rule
+ * of v0.21 for erasure-coded documents), loss of contact
  * (10.9), ended and leaving (10.11).
  *
  * Pure: every [Event] carries the time, [handle] returns the [Effect]s the engine must carry out,
@@ -30,9 +31,12 @@ class SingerMachine(private val random: Random = Random.Default) {
         /** Info collected and `SHA-256(pk)[0..5] == gid` checked (9.2). */
         data class InfoVerified(override val now: Long, val pk: ByteArray, val major: Int) : Event
         /** A state record verified against the pinned key and newer by `ts` (9.4). */
-        data class StateApplied(override val now: Long, val seq: Int, val ended: Boolean, val passTimeMs: Long?, val songIsLocal: Boolean) : Event
-        /** The first frame of a document version arrived (7.6: the repair timer starts). */
-        data class FrameSeen(override val now: Long, val doc: Int, val dv: Int) : Event
+        data class StateApplied(override val now: Long, val seq: Int, val ended: Boolean, val songIsLocal: Boolean) : Event
+        /**
+         * A new distinct frame of a document version arrived: [have] distinct frames of the [needed]
+         * (`k`) that decode it (7.3). Drives the repair rule of 7.6.
+         */
+        data class FrameProgress(override val now: Long, val doc: Int, val dv: Int, val have: Int, val needed: Int) : Event
         data class DocumentComplete(override val now: Long, val doc: Int, val dv: Int) : Event
         data class JoinAnswered(override val now: Long, val result: Int) : Event
         /** The user entered the join code again after result 1. */
@@ -77,14 +81,21 @@ class SingerMachine(private val random: Random = Random.Default) {
     private var lastHeard = 0L
     private var lastSeq: Int? = null
     private var busy = false
-    private var passTimeMs: Long? = null
     private var songIsLocal = false
     private var stateSeen = false
     private var registerAsked = false
     private var registrationRetryAt: Long? = null
     private var repairRetryAt: Long? = null
     private var backoffMs = BACKOFF_START_MS
-    private val repairDeadlines = LinkedHashMap<Pair<Int, Int>, Long>()
+    /** Progress of one document version for the repair rule of 7.6. */
+    private class Collecting(val since: Long) {
+        var lastNew = since
+        var have = 0
+        var needed: Int? = null
+        val samples = ArrayDeque<Pair<Long, Int>>()   // (time, have) over the last RATE_WINDOW_MS
+    }
+
+    private val collecting = LinkedHashMap<Pair<Int, Int>, Collecting>()
     private val repairing = ArrayList<Pair<Int, Int>>()
 
     private val inGathering: Boolean
@@ -99,8 +110,8 @@ class SingerMachine(private val random: Random = Random.Default) {
             is Event.Selected -> select(event)
             is Event.InfoVerified -> info(event, fx)
             is Event.StateApplied -> applied(event, fx)
-            is Event.FrameSeen -> if (inGathering) frameSeen(event)
-            is Event.DocumentComplete -> if (inGathering) { heard(event.now); repairDeadlines.remove(event.doc to event.dv) }
+            is Event.FrameProgress -> if (inGathering) progress(event)
+            is Event.DocumentComplete -> if (inGathering) { heard(event.now); collecting.remove(event.doc to event.dv) }
             is Event.JoinAnswered -> if (inGathering && registerAsked) joinAnswered(event, fx)
             is Event.CodeEntered -> if (state == SingerState.REGISTERING) fx += register()
             is Event.ConnectionFailed -> connectionFailed(event)
@@ -129,8 +140,8 @@ class SingerMachine(private val random: Random = Random.Default) {
         if (state == SingerState.RECONNECTING) { state = if (registered || stateSeen) SingerState.LISTENING else SingerState.REGISTERING; fx += Effect.ShowReconnected }
         heard(e.now)
         if (lastSeq != null && e.seq != lastSeq) {
-            // 10.3 step 1: a new seq means a new state record; its repair timer starts now.
-            repairDeadlines.putIfAbsent(DocumentType.STATE to e.seq, e.now + timeoutFor(DocumentType.STATE))
+            // 10.3 step 1: a new seq means a new state record; the repair rule watches it from now.
+            collecting.getOrPut(DocumentType.STATE to e.seq) { Collecting(e.now) }
         }
         lastSeq = e.seq
     }
@@ -161,20 +172,42 @@ class SingerMachine(private val random: Random = Random.Default) {
         heard(e.now)
         stateSeen = true
         lastSeq = e.seq
-        passTimeMs = e.passTimeMs
         songIsLocal = e.songIsLocal
-        repairDeadlines.keys.removeAll { it.first == DocumentType.STATE }
-        if (songIsLocal) repairDeadlines.keys.removeAll { it.first == DocumentType.SONG }
+        collecting.keys.removeAll { it.first == DocumentType.STATE }
+        if (songIsLocal) collecting.keys.removeAll { it.first == DocumentType.SONG }
         if (e.ended) { end(fx); return }
         // 10.2: Join needs `ek` from a verified state, so registration starts only now.
         if (state == SingerState.REGISTERING && !registerAsked) fx += register()
     }
 
-    private fun frameSeen(e: Event.FrameSeen) {
+    private fun progress(e: Event.FrameProgress) {
         heard(e.now)
         if (e.doc == DocumentType.SONG && songIsLocal) return     // 7.6: a singer with the song never repairs it
-        repairDeadlines.putIfAbsent(e.doc to e.dv, e.now + timeoutFor(e.doc))
+        val c = collecting.getOrPut(e.doc to e.dv) { Collecting(e.now) }
+        c.needed = e.needed
+        if (e.have > c.have) { c.have = e.have; c.lastNew = e.now }
+        c.samples.addLast(e.now to c.have)
+        while (c.samples.size > 1 && c.samples[1].first <= e.now - RATE_WINDOW_MS) c.samples.removeFirst()
     }
+
+    /**
+     * 7.6 (v0.21): repair when nothing new has arrived for [NO_PROGRESS_MS], or when, from the rate of
+     * new distinct frames over the last [RATE_WINDOW_MS], `k` will not be reached within the carrier's
+     * limit; the estimate is first made [RATE_WINDOW_MS] after the first frame.
+     */
+    private fun repairDue(c: Collecting, now: Long): Boolean {
+        if (now - c.lastNew >= NO_PROGRESS_MS) return true
+        val needed = c.needed ?: return false
+        if (now - c.since < RATE_WINDOW_MS) return false
+        val (t0, h0) = c.samples.firstOrNull() ?: return false
+        val span = (now - t0).coerceAtLeast(1)
+        val rate = (c.have - h0).toDouble() / span                // frames per millisecond
+        if (rate <= 0.0) return false                              // covered by NO_PROGRESS_MS
+        val etaMs = (needed - c.have) / rate
+        return etaMs > etaLimitMs()
+    }
+
+    private fun etaLimitMs(): Long = if (carrier == Carrier.EXTENDED) EXTENDED_ETA_LIMIT_MS else LEGACY_ETA_LIMIT_MS
 
     private fun joinAnswered(e: Event.JoinAnswered, fx: MutableList<Effect>) {
         heard(e.now)
@@ -230,9 +263,9 @@ class SingerMachine(private val random: Random = Random.Default) {
         }
         when (state) {
             SingerState.LISTENING -> {
-                val due = repairDeadlines.filterValues { it <= now }.keys.toList()
+                val due = collecting.filter { (_, c) -> repairDue(c, now) }.keys.toList()
                 if (due.isNotEmpty()) {
-                    due.forEach { repairDeadlines.remove(it) }
+                    due.forEach { collecting.remove(it) }
                     repairing.clear(); repairing += due
                     state = SingerState.REPAIRING
                     fx += Effect.Repair(due, repairDelay())
@@ -272,9 +305,9 @@ class SingerMachine(private val random: Random = Random.Default) {
 
     private fun clear() {
         gid = null; pinnedPk = null; registered = false; registerAsked = false; stateSeen = false
-        lastSeq = null; passTimeMs = null; songIsLocal = false; busy = false
+        lastSeq = null; songIsLocal = false; busy = false
         registrationRetryAt = null; repairRetryAt = null; backoffMs = BACKOFF_START_MS
-        repairDeadlines.clear(); repairing.clear()
+        collecting.clear(); repairing.clear()
     }
 
     private fun register(): Effect { registerAsked = true; return Effect.Register(repairDelay()) }
@@ -286,20 +319,6 @@ class SingerMachine(private val random: Random = Random.Default) {
 
     private fun jitter(ms: Long): Long = (ms * random.nextDouble(0.75, 1.25)).toLong()
 
-    /** Repair timer lengths of 7.6. */
-    internal fun timeoutFor(doc: Int): Long = when (carrier) {
-        Carrier.EXTENDED -> when (doc) {
-            DocumentType.STATE, DocumentType.INFO -> 1_500
-            DocumentType.SONG -> 2_000
-            else -> 6_000
-        }
-        Carrier.LEGACY -> when (doc) {
-            DocumentType.STATE, DocumentType.INFO -> 1_500
-            DocumentType.SONG -> passTimeMs?.let { minOf(it * 3 / 2, 3_000) } ?: 3_000
-            else -> passTimeMs?.let { minOf(it * 2, 20_000) } ?: 20_000
-        }
-    }
-
     companion object {
         const val RECONNECTING_AFTER_MS = 10_000L
         const val ENDED_AFTER_MS = 5 * 60_000L
@@ -309,5 +328,12 @@ class SingerMachine(private val random: Random = Random.Default) {
         const val BACKOFF_CAP_MS = 2_000L
         const val DELAY_MAX_MS = 400L
         const val BUSY_DELAY_MAX_MS = 2_000L
+        /** 7.6 (v0.21): nothing new for this long means repair. */
+        const val NO_PROGRESS_MS = 3_000L
+        /** 7.6 (v0.21): the window over which a singer measures its rate of new distinct frames. */
+        const val RATE_WINDOW_MS = 2_000L
+        /** 7.6 (v0.21): repair when `k` is not expected within this long, by carrier. */
+        const val LEGACY_ETA_LIMIT_MS = 10_000L
+        const val EXTENDED_ETA_LIMIT_MS = 4_000L
     }
 }

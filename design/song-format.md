@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.5 (draft) |
+| Document version | 0.6 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.11, `design/ble-protocol.md` v0.13 |
+| Depends on | `design/functional-requirements.md` v0.12, `design/ble-protocol.md` v0.13 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -18,6 +18,7 @@
 | 0.3 | 2026-10-19 | Depends on FRD v0.9 and BLE v0.11 (v0.10 withdrew the download instruction, v0.11 added the helper code and the explicit leave; neither touches this format): FR-LEAD-30 and 31 withdrawn, so the leader's download instruction in 12.1 and 12.7 is marked not used in phase 1. Section 13, setlists (`.zbs`), added as format 1.1 and archive 1.1: the setlist file, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104 (`design/guiDesign.md` D-59, Q18). Later sections renumbered (examples 14, traceability 15, open questions 16). |
 | 0.4 | 2026-10-20 | Q5 resolved: generated section labels follow the app language, as 7.1 already says. Q8 resolved: a library's `name` and `description` are not localisable; tag labels stay localisable. Depends on FRD v0.10 and BLE v0.12. No change to the format (`design/guiDesign.md` D-77). |
 | 0.5 | 2026-10-22 | Depends on FRD v0.11 and BLE protocol v0.13. Q11 resolved: the command-line validator and the release tool live in the library repository; the app has its own implementation, kept in step by a shared conformance corpus (`design/architecture.md` A-21, A-22). Q13 resolved: the app imports release archives and snapshots only and has no git client (A-11). No format change. |
+| 0.6 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
 
 ---
 

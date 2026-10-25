@@ -21,6 +21,9 @@ import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
  *   `i − 1` modulo the number of D sets (rule 2).
  * - **The extended set** (`Lane.Extended`): loops documents 1–7 and sends the whole state record
  *   again after every 8 document frames (rule 3).
+ * - **Erasure code** (7.3): every document is framed as `k` source and `r` repair frames; one pass
+ *   of a document is all `n = k + r` of them, and a burst sends the source frames of all changed
+ *   documents before their repair frames.
  * - **Burst** (rule 4): on [publish], every set restarts with the documents that changed, three
  *   complete passes, then returns to its normal loop. On the legacy carrier the sets share the
  *   burst (decided 2026-10-25): Set S sends the state record first, and every other changed frame
@@ -160,13 +163,21 @@ class Carousel(
         return song + setlist   // cycling gives song, setlist, song, setlist, …
     }
 
+    /**
+     * The extended loop (rule 3): the state record's `k` frames again after every 8 document frames,
+     * cycling through its coded frames so that each repetition brings singers new ones (7.3).
+     */
     private fun withStateRecordEvery8(documentFrames: List<Frame>): List<Frame> {
-        val stateRecord = docFrames(DocumentType.STATE, ::extendedFrames)
+        val stateFrames = docFrames(DocumentType.STATE, ::extendedFrames)
+        if (stateFrames.isEmpty()) return documentFrames
+        val k = stateFrames.first().k
+        var next = 0
+        fun stateRecord(): List<Frame> = List(k) { stateFrames[(next + it) % stateFrames.size] }.also { next = (next + k) % stateFrames.size }
         val out = ArrayList<Frame>()
-        out += stateRecord
+        out += stateRecord()
         documentFrames.forEachIndexed { i, f ->
             out += f
-            if ((i + 1) % STATE_FRAME_EVERY == 0 && i != documentFrames.lastIndex) out += stateRecord
+            if ((i + 1) % STATE_FRAME_EVERY == 0 && i != documentFrames.lastIndex) out += stateRecord()
         }
         return out
     }
@@ -181,14 +192,20 @@ class Carousel(
     private fun sharedLegacyPass(changed: Set<Int>): Map<Lane, List<Frame>> {
         val legacyLanes = lanes.filter { it != Lane.Extended }
         val assigned = legacyLanes.associateWith { ArrayList<Frame>() }
-        assigned.getValue(Lane.Small) += if (DocumentType.STATE in changed) docFrames(DocumentType.STATE, ::legacyFrames) else emptyList()
-        val rest = framesOf(BURST_ORDER.filter { it in changed }, ::legacyFrames)
+        val state = if (DocumentType.STATE in changed) docFrames(DocumentType.STATE, ::legacyFrames) else emptyList()
+        assigned.getValue(Lane.Small) += state.filter { it.isSource }
+        // Source frames of every changed document before any repair frame: without loss a pass ends as
+        // soon as the sources are out; with loss the repair frames that follow fill the gaps (7.3, 7.4).
+        val others = framesOf(BURST_ORDER.filter { it in changed }, ::legacyFrames)
+        val rest = others.filter { it.isSource } + state.filter { !it.isSource } + others.filter { !it.isSource }
         for (frame in rest) assigned.getValue(legacyLanes.minBy { assigned.getValue(it).size }) += frame
         return assigned
     }
 
-    private fun extendedPass(changed: Set<Int>): List<Frame> =
-        framesOf(EXTENDED_ORDER.filter { it in changed }, ::extendedFrames)
+    private fun extendedPass(changed: Set<Int>): List<Frame> {
+        val frames = framesOf(EXTENDED_ORDER.filter { it in changed }, ::extendedFrames)
+        return frames.filter { it.isSource } + frames.filter { !it.isSource }
+    }
 
     // ---- framing ----
 

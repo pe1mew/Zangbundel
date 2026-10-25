@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.12 (draft) |
+| Document version | 0.13 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.11, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.12, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -24,6 +24,7 @@
 | 0.10 | 2026-10-22 | The app icon is replaced by proposal 06 "Vuurboek in de kring" (seven singers in a half circle behind a fire that rises from an open white songbook, the Bluetooth sign alone in the top left corner). D-04 describes the new artwork; the colour reference notes that the sky blue no longer appears in the icon. |
 | 0.11 | 2026-10-22 | Depends on FRD v0.11. Q2 resolved: no tablet layout in phase 1; tablets get the phone layouts with more room and no 2560 × 1600 export (`design/architecture.md` A-02). The toolkit is Jetpack Compose (A-03). |
 | 0.12 | 2026-10-22 | Section 7, version display: the About screen also shows the short app signing fingerprint (assessment SP-20). |
+| 0.13 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
 
 ---
 

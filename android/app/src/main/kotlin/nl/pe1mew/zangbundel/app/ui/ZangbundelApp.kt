@@ -18,7 +18,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.diagnostics.Diagnostics
-import nl.pe1mew.zangbundel.app.diagnostics.RadioCheckEntry
+import nl.pe1mew.zangbundel.app.diagnostics.BleTestScreen
+import nl.pe1mew.zangbundel.app.diagnostics.DiagnosticsEntry
 import nl.pe1mew.zangbundel.app.diagnostics.RadioCheckScreen
 import nl.pe1mew.zangbundel.app.ui.theme.ZangbundelTheme
 
@@ -29,7 +30,10 @@ fun ZangbundelApp() {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = Routes.HOME) {
             composable(Routes.HOME) { HomeScreen(navController) }
-            if (Diagnostics.AVAILABLE) composable(Diagnostics.ROUTE) { RadioCheckScreen() }
+            if (Diagnostics.AVAILABLE) {
+                composable(Diagnostics.ROUTE) { RadioCheckScreen() }
+                composable(Diagnostics.BLE_TEST_ROUTE) { BleTestScreen() }
+            }
         }
     }
 }
@@ -50,7 +54,7 @@ private fun HomeScreen(navController: NavController) {
             // Debug and field-test builds only; the release stand-in draws nothing.
             if (Diagnostics.AVAILABLE) {
                 Column(modifier = Modifier.align(Alignment.BottomCenter)) {
-                    RadioCheckEntry { navController.navigate(Diagnostics.ROUTE) }
+                    DiagnosticsEntry { route -> navController.navigate(route) }
                 }
             }
         }

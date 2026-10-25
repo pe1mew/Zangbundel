@@ -2,22 +2,25 @@
 package nl.pe1mew.zangbundel.core.protocol.frame
 
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
+import nl.pe1mew.zangbundel.core.protocol.fec.ReedSolomon
 import java.util.BitSet
 
 /**
  * A singer's reassembly of broadcast documents (ble-protocol 7.5) for one gathering and one carrier.
  *
- * Frames are grouped by (`doc`, `dv`) with a bitmap of received indices; at most two versions per
- * document are kept, the two seen most recently. `dv` cannot be ordered: for ordinary documents it
- * is two bytes of the document hash, and `seq` of the state is compared for inequality only
- * (section 5). Repaired byte ranges from a GATT
- * Transfer (9.7) fill the same buffer. A complete document is handed out once as [Result.Complete];
- * verifying it against the signed state is the caller's job, and a document that fails verification
- * is [reset] so it can be collected again.
+ * Frames are grouped by (`doc`, `dv`). A group holds the distinct frames received; as soon as it
+ * has `k` of them, source or repair, it decodes the erasure code (7.3), strips the padding to `len`
+ * and hands the document out once as [Result.Complete]. Verifying it against the signed state is the
+ * caller's job; a document that fails verification is [reset] so it can be collected again.
  *
- * Bounds (NFR-SEC-04): only the broadcast documents 1 to 7 are collected, each group is at most
- * [maxDocumentBytes], so the whole reassembler holds at most 7 × 2 × [maxDocumentBytes]. Nothing
- * received can make it throw.
+ * At most two versions per document are kept, the two seen most recently: `dv` cannot be ordered,
+ * since for ordinary documents it is two bytes of the document hash and `seq` of the state is
+ * compared for inequality only (section 5). Repaired byte ranges from a GATT Transfer (9.7) count as
+ * the source frames they cover.
+ *
+ * Bounds (NFR-SEC-04): only broadcast documents 1 to 7, each at most [maxDocumentBytes], and a group
+ * stores at most `k` frames, so the reassembler holds at most 7 × 2 × ([maxDocumentBytes] plus one
+ * frame). Nothing received can make it throw.
  */
 class Reassembler(
     private val gid16: Int,
@@ -27,7 +30,7 @@ class Reassembler(
     sealed interface Result {
         /** Not for this gathering or carrier, not a broadcast document, inconsistent or too large. */
         data object Ignored : Result
-        /** New bytes stored; the document is not complete yet. */
+        /** A new frame stored; fewer than `k` distinct frames so far. */
         data object Stored : Result
         /** Nothing new: the frame was already received, or the document was already handed out. */
         data object Duplicate : Result
@@ -36,30 +39,26 @@ class Reassembler(
         }
     }
 
-    private class Group(val doc: Int, val dv: Int, val total: Int, val frameSize: Int) {
-        val buffer = ByteArray(total * frameSize)
-        val received = BitSet(total)
-        var length: Int? = null
+    private class Group(val doc: Int, val dv: Int, val k: Int, val frameSize: Int, val len: Int) {
+        val seen = BitSet(minOf(k + ReedSolomon.repairCount(k), ReedSolomon.MAX_FRAMES))
+        val frames = HashMap<Int, ByteArray>()
         var complete = false
-
-        fun frameEnd(i: Int): Int = if (i == total - 1) length ?: ((i + 1) * frameSize) else (i + 1) * frameSize
     }
 
     private val groups = HashMap<Int, MutableList<Group>>()
 
     fun accept(frame: Frame): Result {
         if (frame.carrier != carrier || frame.gid16 != gid16 || frame.doc !in BROADCAST_DOCUMENTS) return Result.Ignored
-        val group = groupFor(frame.doc, frame.dv, frame.total, frame.frameSize) ?: return Result.Ignored
-        if (group.complete || group.received[frame.idx]) return Result.Duplicate
-        if (frame.idx == group.total - 1) group.length = frame.idx * group.frameSize + frame.dataSize
-        frame.raw().copyInto(group.buffer, frame.idx * group.frameSize)
-        group.received.set(frame.idx)
+        val group = groupFor(frame.doc, frame.dv, frame.k, frame.frameSize, frame.len) ?: return Result.Ignored
+        if (group.complete || group.seen[frame.idx]) return Result.Duplicate
+        group.seen.set(frame.idx)
+        group.frames[frame.idx] = frame.raw().copyOf()
         return completeOrStored(group)
     }
 
     /**
-     * Bytes of a repair (9.7): [bytes] starts at [offset] of the framed document whose length the
-     * Transfer HEADER gave as [streamLength]. Only frames the range covers completely are filled.
+     * Bytes of a repair (9.7): [bytes] starts at [offset] of the document whose length the Transfer
+     * HEADER gave as [streamLength]. Every source frame the range covers completely is stored.
      * Without a group, only a range holding the whole document is taken.
      */
     fun acceptRange(doc: Int, dv: Int, offset: Int, bytes: ByteArray, streamLength: Int): Result {
@@ -69,47 +68,47 @@ class Reassembler(
         if (group == null) {
             if (offset != 0 || bytes.size != streamLength) return Result.Ignored
             val size = defaultFrameSize()
-            val created = groupFor(doc, dv, maxOf(1, (streamLength + size - 1) / size), size) ?: return Result.Ignored
-            created.length = streamLength
-            bytes.copyInto(created.buffer)
-            created.received.set(0, created.total)
-            return completeOrStored(created)
+            val created = groupFor(doc, dv, maxOf(1, (streamLength + size - 1) / size), size, streamLength) ?: return Result.Ignored
+            created.complete = true
+            return Result.Complete(doc, dv, bytes)
         }
         if (group.complete) return Result.Duplicate
-        if (!fitsFrames(group, streamLength) || (group.length != null && group.length != streamLength)) return Result.Ignored
-        group.length = streamLength
+        if (group.len != streamLength) return Result.Ignored
         val end = offset + bytes.size
         var stored = false
-        for (i in 0 until group.total) {
+        for (i in 0 until group.k) {
+            if (group.seen[i]) continue
             val from = i * group.frameSize
-            val to = group.frameEnd(i)
-            if (group.received[i] || from < offset || to > end || (from == to && offset != from)) continue
-            bytes.copyInto(group.buffer, from, from - offset, to - offset)
-            group.received.set(i)
+            val to = minOf(from + group.frameSize, group.len)
+            if (from < offset || to > end || (from == to && offset != from)) continue
+            group.seen.set(i)
+            group.frames[i] = bytes.copyOfRange(from - offset, to - offset).copyOf(group.frameSize)
             stored = true
         }
         return if (stored) completeOrStored(group) else Result.Duplicate
     }
 
     /**
-     * The byte ranges `[offset, length]` still missing for a document, ascending and merged, at most
+     * The byte ranges `[offset, length]` to ask for in a repair: only as many missing source frames as
+     * the group still needs to reach `k` (any `k` distinct frames decode), merged and ascending, at most
      * [maxRanges] (9.7 allows 32; the tail is merged into the last range). Null when the document is
-     * unknown, so the caller asks for the whole of it. When the last frame was never received, pass
-     * the document's framed length from the verified state manifest (`len`, 9.4) as [knownLength]
-     * (9.7, decided 2026-10-25, Q18); a value that does not fit the frames is ignored, and without
-     * it the last range runs to the end of a full frame, which the leader clamps.
+     * unknown, so the caller asks for the whole of it.
      */
-    fun missingRanges(doc: Int, dv: Int, knownLength: Int? = null, maxRanges: Int = MAX_REPAIR_RANGES): List<Pair<Int, Int>>? {
+    fun missingRanges(doc: Int, dv: Int, maxRanges: Int = MAX_REPAIR_RANGES): List<Pair<Int, Int>>? {
         val group = groups[doc]?.firstOrNull { it.dv == dv } ?: return null
         if (group.complete) return emptyList()
-        if (group.length == null && knownLength != null && fitsFrames(group, knownLength)) group.length = knownLength
+        var needed = group.k - group.frames.size
         val ranges = ArrayList<IntArray>()
-        for (i in 0 until group.total) {
-            if (group.received[i]) continue
-            val from = i * group.frameSize
-            val to = group.frameEnd(i)
-            val last = ranges.lastOrNull()
-            if (last != null && last[1] == from) last[1] = to else ranges += intArrayOf(from, to)
+        var i = 0
+        while (needed > 0 && i < group.k) {
+            if (!group.seen[i]) {
+                val from = i * group.frameSize
+                val to = minOf(from + group.frameSize, group.len)
+                val last = ranges.lastOrNull()
+                if (last != null && last[1] == from) last[1] = to else ranges += intArrayOf(from, to)
+                needed--
+            }
+            i++
         }
         if (ranges.size > maxRanges) {
             val keep = ranges.subList(0, maxRanges).toMutableList()
@@ -119,6 +118,10 @@ class Reassembler(
         return ranges.map { it[0] to it[1] - it[0] }
     }
 
+    /** Distinct frames held for a version and the `k` it needs, for the singer's repair rule (7.6). */
+    fun progress(doc: Int, dv: Int): Pair<Int, Int>? =
+        groups[doc]?.firstOrNull { it.dv == dv }?.let { (if (it.complete) it.k else it.frames.size) to it.k }
+
     fun isComplete(doc: Int, dv: Int): Boolean = groups[doc]?.firstOrNull { it.dv == dv }?.complete == true
 
     /** Drops a version, for example after it failed verification (7.5), so it is collected anew. */
@@ -126,29 +129,27 @@ class Reassembler(
         groups[doc]?.removeAll { it.dv == dv }
     }
 
-    /** Whether a document of [length] bytes is framed as [group] says. */
-    private fun fitsFrames(group: Group, length: Int): Boolean =
-        if (group.total == 1) length in 0..group.frameSize
-        else length > (group.total - 1) * group.frameSize && length <= group.total * group.frameSize
-
     private fun completeOrStored(group: Group): Result {
-        if (group.received.cardinality() < group.total) return Result.Stored
+        if (group.frames.size < group.k) return Result.Stored
+        val source = ReedSolomon.decode(group.k, group.frameSize, group.frames) ?: return Result.Stored
         group.complete = true
-        val length = group.length ?: group.buffer.size
-        return Result.Complete(group.doc, group.dv, group.buffer.copyOf(length))
+        group.frames.clear()
+        val out = ByteArray(group.k * group.frameSize)
+        source.forEachIndexed { i, s -> s.copyInto(out, i * group.frameSize) }
+        return Result.Complete(group.doc, group.dv, out.copyOf(group.len))
     }
 
-    /** The group for (`doc`, `dv`), created inside the version window; null when the frame falls outside it. */
-    private fun groupFor(doc: Int, dv: Int, total: Int, frameSize: Int): Group? {
+    /** The group for (`doc`, `dv`), created inside the version window; null when the document is too large. */
+    private fun groupFor(doc: Int, dv: Int, k: Int, frameSize: Int, len: Int): Group? {
         val versions = groups.getOrPut(doc) { ArrayList(MAX_VERSIONS) }
         val existing = versions.firstOrNull { it.dv == dv }
         if (existing != null) {
-            if (existing.total == total && existing.frameSize == frameSize) return existing
+            if (existing.k == k && existing.frameSize == frameSize && existing.len == len) return existing
             versions.remove(existing) // same version framed differently: start again with this framing
         }
-        if (total.toLong() * frameSize > maxDocumentBytes) return null
+        if (len > maxDocumentBytes) return null
         if (versions.size >= MAX_VERSIONS) versions.removeAt(0) // versions are kept in the order first seen
-        return Group(doc, dv, total, frameSize).also { versions += it }
+        return Group(doc, dv, k, frameSize, len).also { versions += it }
     }
 
     private fun defaultFrameSize(): Int = when (carrier) {
@@ -161,7 +162,7 @@ class Reassembler(
         val BROADCAST_DOCUMENTS = 1..7
         const val MAX_VERSIONS = 2
         const val MAX_REPAIR_RANGES = 32
-        /** Bound for one document; the song file limit of song-format 5.5 is 64 KiB before compression. */
+        /** Bound for one document: the framed limit of 9.8 (op 8 refuses uploads over 64 kB). */
         const val DEFAULT_MAX_DOCUMENT_BYTES = 64 * 1024
     }
 }

@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.11 (draft) |
-| Date | 2026-10-22 |
+| Version | 0.12 (draft) |
+| Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -21,6 +21,7 @@
 | 0.8 | 2026-10-18 | Q13 resolved: the join link is hosted on GitHub Pages from this repository; App Links verification prepared. No requirement changed. |
 | 0.9 | 2026-10-19 | No library download instruction in phase 1 (`design/guiDesign.md` D-66, Q21): FR-LEAD-30 and FR-LEAD-31 withdrawn, FR-LEAD-32 reworded (lyrics always go over BLE to singers that lack them), FR-LIB-12, FR-BLE-06 and FR-LEAD-44 no longer mention the instruction; section 20 updated. Same day: FR-LEAD-40 amended (delegates appointed with a helper code, no singer list; note on FR-GATH-12), Q5 closed (no hand-over in P1; FR-GATH-14 stays a MAY). |
 | 0.11 | 2026-10-22 | `design/architecture.md` decided by the owner (v0.2): Q7 resolved (minimum SDK 26, tablets use the phone layouts in P1, A-01, A-02); Q11 resolved for the package (every install is one APK with bundle splits disabled, A-18), its store-update part stays open as architecture Q1. Section 19 marks the architecture document and the assessment's current version as existing. No requirement changed. |
+| 0.12 | 2026-10-25 | Open question Q14 on NFR-PERF-01 and FR-BLE-03, from the first two-phone measurements (`design/test-results/2026-10-25-D-05.md`) and the erasure-coding proposal (`design/proposals/2026-10-25-erasure-coding.md`). No requirement changed. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -594,6 +595,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? *Partly resolved 2026-10-22 (v0.11):* the App Bundle disables splits, so every install is one APK signed with the owner's key and the app shares its own installed APK (`design/architecture.md` A-18). Whether Play updates a copy installed by sharing stays open as architecture Q1, to check on the first internal test. | FR-DIST-05, constraint 12, architecture Q1 |
 | Q12 | Is the offline hotspot (FR-DIST-07) worth building, given that Quick Share already covers Android-to-Android and iOS cannot be served offline at all? | FR-DIST-07, scope P2 |
 | Q13 | *Resolved 2026-10-18:* no domain or server outside git. The link is `https://pe1mew.github.io/Zangbundel/j`, served by GitHub Pages from `docs/` in this repository, with the page's "Open in Zangbundel" button covering the unverified case; App Links verification follows later through a `pe1mew.github.io` repository holding `assetlinks.json` (`docs/RUNBOOK.md` Steps 5b, 5c). | Resolved |
+| Q14 | NFR-PERF-01 and FR-BLE-03 require a pushed song of up to 4 kB that singers do not have to be visible within 5 s. On two phones singers heard only 17–40 % of the advertising events (`design/test-results/2026-10-25-D-05.md`). With the erasure coding the owner chose on 2026-10-25 (`design/proposals/2026-10-25-erasure-coding.md`), a 2 kB compressed song is simulated to arrive in about 12 s (40 %) to 31 s (17 %) on the legacy carrier, and in about 2 to 6 s on the extended carrier; a singer holding the song needs only the beacon, which arrived within about 1 s. Options: (a) keep 5 s for singers who receive extended advertising or hold the library, and set a longer target for legacy-only singers without the song (for example 15 s); (b) keep 5 s for everyone and record legacy-only phones as not meeting it; (c) decide after the field tests F-01 to F-03, which measure the phones scouts actually own. | NFR-PERF-01, FR-BLE-03, ble-protocol 12.1 and Q21, test plan S-02 and F-02 |
 
 ---
 

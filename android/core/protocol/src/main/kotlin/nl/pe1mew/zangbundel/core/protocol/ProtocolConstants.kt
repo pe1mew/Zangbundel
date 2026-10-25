@@ -14,9 +14,11 @@ object ProtocolConstants {
     const val MAGIC_EXTENDED_FRAME = 0xD2
 
     const val LEGACY_FRAME_DATA_BYTES = 16
-    /** Extended frame: one manufacturer-data structure (7.1, protocol document v0.14). */
+    /** Legacy frame: 10-byte header (magic, gid16, doc, dv, k, idx, len) and 16 data bytes (7.2, v0.21). */
+    const val LEGACY_FRAME_HEADER_BYTES = 10
+    /** Extended frame: one manufacturer-data structure (7.1); 14-byte header since v0.21 (k, idx, fs, len). */
     const val EXTENDED_FRAME_MAX_BYTES = 247
-    const val EXTENDED_FRAME_HEADER_BYTES = 12
+    const val EXTENDED_FRAME_HEADER_BYTES = 14
     const val EXTENDED_FRAME_MAX_DATA_BYTES = EXTENDED_FRAME_MAX_BYTES - EXTENDED_FRAME_HEADER_BYTES
     /** Length byte, AD type and company identifier in front of the frame. */
     const val MANUFACTURER_AD_OVERHEAD_BYTES = 4

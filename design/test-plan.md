@@ -4,15 +4,17 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.1 (draft) |
+| Document version | 0.3 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.11, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.12, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-22 | First draft. It covers: the test layers with their pass criteria; protocol simulation scenarios S-01 to S-10; fuzz targets and budgets; device smoke tests; security and privacy checks per release; field scenarios F-01 to F-11, with the measuring method; participants and consent, including the field-test build's consent text (assessment SP-22); the Play closed test; the release gate; how results are recorded; and a traceability table. |
+| 0.2 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); the pass criteria of S-02 and F-02 follow Q14 once it is decided; nothing else changes. |
+| 0.3 | 2026-10-25 | Fuzz target for the erasure-code decoder (section 3.4), from the approved proposal (`design/proposals/2026-10-25-erasure-coding.md`, ble-protocol v0.21); the frame-reassembly target covers coded frames. |
 
 ---
 
@@ -128,7 +130,8 @@ Jazzer runs one target per parser of untrusted input (NFR-SEC-04, assessment SP-
 | ZIP reader | Archive bytes | Entry count, total size, ratio, path rules (song-format 12.2, 12.8) |
 | DEFLATE | Raw stream | Output cap equal to the document limit |
 | CBOR decoder | Payload bytes | Size given in advance, depth ≤ 8, no indefinite lengths |
-| Frame reassembly | Sequences of legacy and extended frames | Two versions per document, bitmap bounds |
+| Frame reassembly | Sequences of legacy and extended frames, source and repair (ble-protocol 7.3) | Two versions per document, at most `k` frames held per group |
+| Erasure-code decoder | Any set of frames with indices, `k` and `fs` | `n` ≤ 256, frame sizes checked, no exception for any subset |
 | Join-link payload | URL or intent text as the camera app delivers it | base64url length, then the CBOR bound (ble-protocol 6.5) |
 | Leader's GATT write handlers | Join, Request, Control and Transfer writes, sealed or plain | 512-byte values, ranges ≤ 32, rate limits |
 

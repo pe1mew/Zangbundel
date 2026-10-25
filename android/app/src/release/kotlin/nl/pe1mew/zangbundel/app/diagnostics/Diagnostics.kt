@@ -10,11 +10,15 @@ import androidx.compose.runtime.Composable
 object Diagnostics {
     const val AVAILABLE = false
     const val ROUTE = "radiocheck"
+    const val BLE_TEST_ROUTE = "bletest"
 }
 
 @Suppress("UNUSED_PARAMETER")
 @Composable
-fun RadioCheckEntry(onOpen: () -> Unit) = Unit
+fun DiagnosticsEntry(onOpen: (String) -> Unit) = Unit
 
 @Composable
 fun RadioCheckScreen() = Unit
+
+@Composable
+fun BleTestScreen() = Unit

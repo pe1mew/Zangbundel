@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.19 (draft) |
+| Document version | 0.21 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.11 |
+| Depends on | `design/functional-requirements.md` v0.12 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -32,6 +32,8 @@
 | 0.17 | 2026-10-25 | Q17 to Q20 decided by the owner. 9.4: a body over 440 bytes loses `title`, then `rev` of `cur`, then `pt`, as far as needed; without them the largest body is 405 bytes. 9.7: singers end the last range at the manifest `len`, and the leader clamps every range at the document end; `0x8C` only for a range starting at or past it (8.3). 7.3: a document inflates to at most 67 584 bytes. 8.4: document 8's `dh` covers the compressed bytes, as section 5 says for every document, and is checked before inflating. Normative changes inside the draft protocol 1.0. |
 | 0.18 | 2026-10-25 | Found while implementing the carousel in `core/protocol`: under rules 1 and 2 of 7.4 Set S carries no song, so with three legacy sets a pushed 2 kB song took 6.3 s, missing the 5 s of NFR-PERF-01, while 7.7 and 12.1 assumed all sets carry it. Decided by the owner: during a burst the legacy sets share the changed documents (rule 4), Set S sending the state first; the normal loop keeps the roles. Simulated without loss: 4.7 s with three sets, 7.0 s with two, 14.0 s with one, 1.1 s on the extended carrier. 7.7 notes the normal-loop pass times; 12.1's one-set figure is 14 s, not 13. Rule 3 no longer says the extended set behaves "as Set S does": Set S inserts one state frame, the extended set the whole record. |
 | 0.19 | 2026-10-25 | 6.5: the size of the join link corrected from the encoder in `core/protocol` (`JoinLink`): 45 to 98 bytes of payload with ASCII names, 99 to 170 characters of URL, up to 223 with a 40-character accented name; QR versions 6 to 9 at level M, 11 in the worst case. v0.18 said 60–130 characters of URL, which was the length of the base64 part alone, and versions 5 or 6. No wire change. |
+| 0.20 | 2026-10-25 | Depends on FRD v0.12. Open question Q21: erasure coding across frames on both carriers, GATT repair as the fallback and the library as the fast path, chosen in principle by the owner after `design/test-results/2026-10-25-D-05.md`; the detailed change is proposed in `design/proposals/2026-10-25-erasure-coding.md` and not yet part of this document. No wire change yet. |
+| 0.21 | 2026-10-25 | Q21 resolved: the erasure-coding proposal (`design/proposals/2026-10-25-erasure-coding.md`) approved by the owner and moved in. 7.2: legacy frame of 26 bytes with `k`, `idx` and `len`; extended header of 14 bytes, `fs` ≤ 233. 7.3: systematic Reed–Solomon over GF(2⁸) with Cauchy coefficients, `r = min(2k, 256 − k)`, every broadcast document coded. 7.4: a pass is all `n` frames, sources before repairs in a burst, coded state frames cycled. 7.5: decode from any `k` distinct frames. 7.6: the fixed repair timers replaced by a rule on the singer's own rate (3 s without progress; `k` not expected within 10 s legacy, 4 s extended). 7.7, 12.1: figures with the code, simulated with the implementation at 40 % reception: 13.3 s on three legacy sets, 2.7 s extended. 9.7: a repair asks only for the source frames still needed. Wire change inside the draft protocol 1.0. |
 
 ---
 
@@ -123,7 +125,7 @@ In scope: everything that travels over the air during a gathering. Out of scope:
 2. **Connections only when they carry something upstream, or to recover.** A singer connects once to register (to be counted and get a token), when it sends a request, when it acts as delegate, and when the carousel has not completed a document for it in a reasonable time ("repair") [FR-BLE-16]. In a gathering where most singers have the library, a singer typically opens one connection for the whole evening.
 3. **Content-addressed songs.** A song is identified by the hash of its file. A singer with that file, from any library revision, needs only the state record and never collects the song frames [FR-BLE-12].
 4. **Signed state.** The leader generates a key pair per gathering. The gathering identifier is a fingerprint of the public key; the state record is signed and lists the hash of every other document. Nothing received by broadcast is used until it is verified against the signed state [NFR-SEC-02]. This makes broadcast, repair over GATT and relays equally trustworthy.
-5. **Two carriers, one framing.** Documents are framed for legacy advertising (16 data bytes per frame) and, when the leader supports it, for extended advertising (up to 235 data bytes per frame, one manufacturer-data structure). Repair over GATT sends the same bytes by range, so there is one reassembly path.
+5. **Two carriers, one framing.** Documents are framed for legacy advertising (16 data bytes per frame) and, when the leader supports it, for extended advertising (up to 233 data bytes per frame, one manufacturer-data structure), with an erasure code across the frames of every document (7.3). Repair over GATT sends the same bytes by range, so there is one reassembly path.
 6. **One encoding, CBOR.** All structured payloads are CBOR maps with small integer keys. Unknown keys are ignored, which gives minor-version extensibility for free [FR-BLE-07].
 7. **Delegates act through the leader.** A delegate is a registered singer whose ID the leader lists in the signed state. It sends control commands over GATT; the leader applies them, re-signs the state and broadcasts it [FR-LEAD-43].
 8. **One gathering per area.** A device scans before it starts a gathering and refuses to start while another running gathering is in range [FR-GATH-16].
@@ -277,7 +279,7 @@ Size, as the encoder produces it: 45 bytes of payload without `code` and `name` 
 | Carrier | Advertising set(s) | Frame data size | When |
 |---|---|---|---|
 | **Legacy** | 1 to `n` non-connectable advertising sets (Android `startAdvertisingSet`, legacy mode), interval 100 ms, no service UUID, one manufacturer-data structure per advertisement; the scan response MAY carry the next frame of the same set. | 16 bytes | MUST run whenever the leader can start at least one extra advertising set. `BCAST` = 1. |
-| **Extended** | 1 non-connectable extended advertising set (legacy mode off, 1M primary PHY, 2M or coded secondary PHY), interval 100 ms, advertising data one manufacturer-data structure of at most 251 bytes (length, type, company identifier, frame ≤ 247 bytes). | up to 235 bytes | SHOULD run in addition to the legacy carrier when `isLeExtendedAdvertisingSupported()`. `EXT` = 1. |
+| **Extended** | 1 non-connectable extended advertising set (legacy mode off, 1M primary PHY, 2M or coded secondary PHY), interval 100 ms, advertising data one manufacturer-data structure of at most 251 bytes (length, type, company identifier, frame ≤ 247 bytes). | up to 233 bytes | SHOULD run in addition to the legacy carrier when `isLeExtendedAdvertisingSupported()`. `EXT` = 1. |
 | **GATT repair** | Not a broadcast: section 9.7. | by byte range | Always available. |
 
 The leader determines `n` at start by opening sets until the stack refuses (`ADVERTISE_FAILED_TOO_MANY_ADVERTISERS`), keeping one instance for the beacon and using at most 3 for data. Singers receiving the extended carrier ignore legacy data frames; singers that cannot receive it use legacy frames. Both carry the same documents.
@@ -288,7 +290,7 @@ An extended frame is one manufacturer-data structure because that is what Androi
 
 All frames are manufacturer-specific data with company identifier `0xFFFF`. The first payload byte distinguishes beacon (`0x01` = `ver`) from data frames.
 
-**Legacy frame (24 bytes):**
+**Legacy frame (26 bytes):**
 
 | Offset | Field | Type | Meaning |
 |---|---|---|---|
@@ -296,11 +298,12 @@ All frames are manufacturer-specific data with company identifier `0xFFFF`. The 
 | 1–2 | `gid16` | 2 bytes | First 2 bytes of `gid`. |
 | 3 | `doc` | u8 | Document type (section 7.3). |
 | 4–5 | `dv` | u16 | Document version. |
-| 6 | `total` | u8 | Number of frames in this document version (1–255). |
-| 7 | `idx` | u8 | Frame index, 0-based. |
-| 8–23 | `data` | 16 bytes | Document bytes `idx × 16 … idx × 16 + 15`. The last frame carries the remainder and is shorter. |
+| 6 | `k` | u8 | Number of source frames of this document version (1–255). |
+| 7 | `idx` | u8 | Frame index: 0 … k − 1 source frames, k … n − 1 repair frames (7.3). |
+| 8–9 | `len` | u16 | Document length in bytes, to strip the padding of the last source frame. |
+| 10–25 | `data` | 16 bytes | Source frame `idx`: document bytes `idx × 16 … idx × 16 + 15`, the last one padded with zero bytes; or a repair frame. Always 16 bytes. |
 
-A document framed for the legacy carrier is at most 255 × 16 = 4080 bytes. A larger document is marked *GATT only* in the state (section 9.4) and fetched by repair.
+The 26 bytes fit the 27 a legacy manufacturer-data structure leaves after its length, type and company identifier. A document framed for the legacy carrier is at most 255 × 16 = 4080 bytes. A larger document is marked *GATT only* in the state (section 9.4) and fetched by repair.
 
 **Extended frame (≤ 247 bytes):**
 
@@ -310,10 +313,13 @@ A document framed for the legacy carrier is at most 255 × 16 = 4080 bytes. A la
 | 1–2 | `gid16` | 2 bytes | |
 | 3 | `doc` | u8 | |
 | 4–5 | `dv` | u16 | |
-| 6–7 | `total` | u16 | Number of frames. |
-| 8–9 | `idx` | u16 | Frame index. |
-| 10–11 | `fs` | u16 | Frame data size used for this document version (≤ 235); the same in every frame of it. |
-| 12… | `data` | ≤ `fs` bytes | Document bytes `idx × fs …`. |
+| 6–7 | `k` | u16 | Number of source frames. |
+| 8–9 | `idx` | u16 | Frame index, as on the legacy carrier. |
+| 10–11 | `fs` | u16 | Frame data size for this document version (≤ 233); the same in every frame of it. |
+| 12–13 | `len` | u16 | Document length in bytes. |
+| 14… | `data` | `fs` bytes | Source frame `idx` (document bytes `idx × fs …`, the last padded) or a repair frame. |
+
+Because every frame carries `len`, the state record and Info, which have no manifest entry, are coded like the rest.
 
 ### 7.3 Documents carried
 
@@ -330,40 +336,45 @@ A document framed for the legacy carrier is at most 255 × 16 = 4080 bytes. A la
 
 Documents 3–7 are DEFLATE-compressed (raw, RFC 1951) before framing when that saves at least 10 %; the state manifest says which (section 9.4). The state record and info are never compressed. A framed document is at most 64 kB (the upload limit of 9.8, op 8); after inflating, a document is at most 67 584 bytes (64 KiB + 2 KiB, room for a 64 KiB song file with its reference and licence), and a receiver stops inflating and discards the document beyond that.
 
+**Erasure code.** Every broadcast document (1–7) is framed as `k` source frames followed by `r` repair frames of a systematic Reed–Solomon code over GF(2⁸), so a singer that has any `k` distinct frames of the `n = k + r` reconstructs the document, and one that has all source frames needs no decoding. Approved by the owner 2026-10-25 after singers heard only 17–40 % of the advertising events (`design/test-results/2026-10-25-D-05.md`; the comparison of options is in `design/proposals/2026-10-25-erasure-coding.md`).
+
+- Field: GF(2⁸) with the polynomial x⁸ + x⁴ + x³ + x² + 1 (`0x11D`).
+- Repair frame `j` (0 ≤ j < r), byte position `b`: `R_j[b] = Σᵢ c(j, i) · S_i[b]` over the source frames `i` (0 ≤ i < k), with `c(j, i) = 1 / (x_j ⊕ y_i)`, `y_i = i`, `x_j = k + j`. Every square submatrix of a Cauchy matrix is invertible, so any `k` rows of the identity stacked on the Cauchy matrix decode. Test vector: source frames `010203` and `040506` give repair frames `79028d` and `f67902`.
+- Redundancy `r = min(2k, 256 − k)`, so `n ≤ 256`: a typical state record (`k` = 15) gets 30 repair frames, a 2 kB song on the legacy carrier (`k` = 125) 131, the same song on the extended carrier (`k` = 9) 18. A document with `k > 255` (only on the extended carrier, above about 59 kB) is sent uncoded and relies on repair.
+
 ### 7.4 Scheduling: burst, then carousel
 
 The leader keeps one frame queue per data set and fills them by these rules [FR-BLE-15]:
 
 1. **Set S (first legacy data set) – small documents.** Loops continuously: *state*, *info*, *reqstat*, *message*, *download*, state again, … The state record therefore repeats about once per second on a single set.
-2. **Sets D1…D(n−1) – large documents.** Loop: *song*, *setlist*, *song*, … interleaved so that two sets send different frames of the same document (set D1 sends even frames, D2 odd frames). With only one data set, Set S carries everything and inserts a state frame after every 8 document frames.
-3. **Extended set.** Loops all documents 1–7 in order and sends the whole state record again after every 8 document frames (two frames for a typical record). A typical cycle takes about 3 s; the state record recurs about once a second.
-4. **Burst on change.** When `seq` increments, every set restarts its loop at the changed documents and sends each changed document **three complete passes** before resuming the normal loop. The new state record is always first. On the legacy carrier the data sets **share** the burst, whatever their roles in the normal loop: Set S sends the state record first, and every other changed frame goes to the set with the fewest frames queued, so that all sets finish each pass together. With three sets, a new state record (15 frames) and a 2 kB song (125 frames) take 47 advertising events, 4.7 s.
+2. **Sets D1…D(n−1) – large documents.** Loop: *song*, *setlist*, *song*, … interleaved so that two sets send different frames of the same document (set D1 sends even frames, D2 odd frames). With only one data set, Set S carries everything and inserts one state frame after every 8 document frames, cycling through the state record's coded frames.
+3. **Extended set.** Loops all documents 1–7 in order and sends `k` frames of the state record again after every 8 document frames, cycling through its coded frames (two frames for a typical record). A typical cycle takes about 3 s; the state record recurs about once a second.
+4. **Burst on change.** When `seq` increments, every set restarts its loop at the changed documents and sends each changed document **three complete passes** before resuming the normal loop; a pass of a document is all its `n` frames (7.3). The new state record is always first, and within a pass the source frames of all changed documents go before their repair frames. On the legacy carrier the data sets **share** the burst, whatever their roles in the normal loop: Set S sends the state record first, and every other changed frame goes to the set with the fewest frames queued, so that all sets finish each pass together. With three sets, a new state record (15 frames) and a 2 kB song (125 frames) take 47 advertising events, 4.7 s.
 5. **Position changes** (`pos`) go only to the beacon; the carousel is not restarted.
 6. **Advertising interval** is 100 ms on all data sets (Android minimum). Each set therefore delivers 10 frames/s; a scan response, when it is received, doubles that for the scanner that asked.
 
-The leader publishes the measured *pass time* (the time one full pass of the current song takes on the legacy carrier) in the state record so singers know how long to wait before repairing (section 7.6).
+The leader publishes the *pass time* (the time one full pass of the current song's `n` frames takes on the legacy carrier) in the state record. Since v0.21 the repair rule of 7.6 no longer uses it; it stays informational.
 
 ### 7.5 Receiving and reassembly (singer)
 
 - While in a gathering the singer scans continuously in the foreground (Android `SCAN_MODE_LOW_LATENCY`, `CALLBACK_TYPE_ALL_MATCHES`, a `ScanFilter` on manufacturer data with a mask selecting company `0xFFFF` + `magic` + `gid16`; iOS `scanForPeripherals(withServices: nil)` with duplicates allowed, which is permitted in the foreground). Singers that support extended scanning enable it (`setLegacy(false)`).
-- Frames are grouped by (`doc`, `dv`). The singer keeps a bitmap of received indices and the data per group; at most two versions per `doc` are kept (the newest and the one before), older groups are dropped.
-- When a group is complete, the singer verifies it: *state* by signature with the pinned `pk`; *info* by `SHA-256(pk)[0..5] == gid`; every other document by its `dh` against the manifest in the newest verified state. A document that fails verification is discarded and the group is reset.
+- Frames are grouped by (`doc`, `dv`). The singer keeps the distinct frames received per group; at most two versions per `doc` are kept (the two seen most recently, since `dv` has no order, section 5), older groups are dropped.
+- When a group has `k` distinct frames, source or repair, the singer decodes it (7.3), strips the padding to `len`, and verifies it: *state* by signature with the pinned `pk`; *info* by `SHA-256(pk)[0..5] == gid`; every other document by its `dh` against the manifest in the newest verified state. A document that fails verification is discarded and the group is reset.
 - A verified state record is applied only if its `ts` is newer than the last applied one (section 9.4). A verified song is shown only if its `ref.hash` equals `cur.hash` in the applied state [FR-BLE-04].
 - The singer MUST NOT connect for anything it can still expect from the carousel; section 7.6 defines when the expectation lapses.
 
 ### 7.6 Repair: requesting what was missed [FR-BLE-16]
 
-A singer starts a *repair timer* for a (`doc`, `dv`) group when it first sees a frame of it (or, for the state, when the beacon `seq` changes). The timer expires after:
+A singer watches every (`doc`, `dv`) group from its first frame (or, for the state, from the beacon's new `seq`) and repairs it when either holds:
 
-| Document | Legacy carrier | Extended carrier |
-|---|---|---|
-| state, info | 1.5 s | 1.5 s |
-| song (needed to sing now) | min(1.5 × pass time, 3 s) | 2 s |
-| setlist, reqstat, message, download | 2 × pass time, max 20 s | 6 s |
+- nothing new has arrived for the group for **3 s**; or
+- from its own rate of new distinct frames over the last **2 s**, it does not expect to reach `k` within **10 s** on the legacy carrier or **4 s** on the extended carrier. The estimate is first made 2 s after the group's first frame.
 
-When the timer expires with frames still missing, the singer waits a random 0–400 ms (longer, 0–2 s, while the beacon shows `BUSY`), connects, and fetches **only the missing byte ranges** with a Transfer request (section 9.7). It then disconnects. The repair connection is also used to flush any queued request. Singers that just registered fetch anything incomplete on the registration connection, so late joiners never wait for the carousel [FR-GATH-06].
+The rule replaces the fixed timers of v0.20, which at the measured reception rates would have sent nearly every singer to GATT. A singer that hears 40 % of the legacy frames reaches `k` for a 2 kB song in about 13 s, by simulation; the Huawei, hearing about 13 % with Wi-Fi on, took 38–40 s on the phones (`design/test-results/2026-10-25-D-05.md`, run 11). Under this rule the first would wait for the broadcast and the second would go to GATT after 2 s.
 
-A singer with the current song in its local library never starts a song repair timer; a singer whose user is not looking at the lyric view (browsing the library) SHOULD let the carousel finish instead of repairing.
+When the rule calls for repair, the singer waits a random 0–400 ms (longer, 0–2 s, while the beacon shows `BUSY`), connects, and fetches **only as many missing source frames as it still needs to reach `k`**, as byte ranges with a Transfer request (section 9.7). It then disconnects. The repair connection is also used to flush any queued request. Singers that just registered fetch anything incomplete on the registration connection, so late joiners never wait for the carousel [FR-GATH-06].
+
+A singer with the current song in its local library never repairs the song; a singer whose user is not looking at the lyric view (browsing the library) SHOULD let the carousel finish instead of repairing.
 
 ### 7.7 Capacity of the legacy carrier
 
@@ -372,9 +383,9 @@ A singer with the current song in its local library never starts a song repair t
 | 1 | 10 | 160 | 1.5 s | 12.5 s |
 | 2 | 20 | 320 | 0.8 s | 6.3 s |
 | 3 | 30 | 480 | 0.5 s | 4.2 s |
-| Extended | 10 × 235 B | ~2 350 | 0.2 s (2 frames) | 0.9 s (9 frames) |
+| Extended | 10 × 233 B | ~2 330 | 0.2 s (2 frames) | 0.9 s (9 frames) |
 
-The song column is for a burst, in which all legacy sets share the frames (7.4 rule 4). In the normal loop Set S carries no song, so one pass takes 6.3 s with three sets and 12.5 s with two; that is the pass time `pt` of 7.6. Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and three extended frames (0.3 s).
+The song column is for a burst, in which all legacy sets share the frames (7.4 rule 4). In the normal loop Set S carries no song, so one pass takes 6.3 s with three sets and 12.5 s with two; that is the pass time `pt` of 7.6. With the erasure code a pass is all `n` frames (256 for this song); the table gives the time for the source frames, which is all a singer needs without loss. Scan responses, when received, roughly halve these times for that singer. The figures assume no loss, and the first phones heard far less: 17–40 % of the advertising events (`design/test-results/2026-10-25-D-05.md`). With the erasure code, the implementation in `core/protocol` simulated at 40 % reception delivers the state and a 2 kB song in a median of 13.3 s on three legacy sets and 2.7 s on the extended carrier. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and three extended frames (0.3 s).
 
 ### 7.8 Degraded mode (no broadcast data channel)
 
@@ -540,7 +551,7 @@ The value is a CBOR array `[body (bstr), sig (bstr 64)]`. `sig` is the Ed25519 s
 | 10 | `docs` | map | yes | Manifest: `{doc: [dh (bstr 8), enc (0 raw · 1 DEFLATE), len (uint, framed length), gatt (bool, optional: true = too large for the legacy carrier, fetch by repair)]}` for documents 3–7 that exist. A missing entry means the document does not exist. |
 | 11 | `rseq` | uint | yes | Request sequence; increments whenever any request status changes. |
 | 12 | `dlg` | array of bstr 8 | no | Singer IDs of the current delegates [FR-LEAD-40]; at most 8. |
-| 13 | `pt` | uint | no | Measured pass time of the current song on the legacy carrier, ms (section 7.6). |
+| 13 | `pt` | uint | no | Pass time of the current song's `n` frames on the legacy carrier, ms (7.4); informational since v0.21. |
 | 14 | `ek` | bstr 32 | yes | Leader's X25519 public key for sealed payloads (8.4). Signed with the rest of the body, so it cannot be substituted. |
 
 The signed body MUST stay ≤ 440 bytes so the whole record fits a 512-byte characteristic and 30 legacy frames. When a body would be larger, the leader leaves out, in this order and each only if still needed: `title` (7), the library revision `rev` inside `cur` (6), then `pt` (13). Without those three the largest body the other limits allow is 405 bytes, so every state fits. Singers MUST verify `sig` with the pinned `pk`, MUST verify `gid`, and MUST discard a state whose `ts` is not greater than the last accepted one unless `status` is 1.
@@ -612,7 +623,7 @@ The singer MUST subscribe to Data notifications before writing Transfer. One tra
 | 1 | `doc` | uint | yes | Document type 1–8 (section 7.3). |
 | 2 | `dv` | uint | no | Document version the singer is collecting; `0x86` if the leader no longer has it. Omit to get the current version. |
 | 3 | `hash` | bstr 16 | doc 3 | Song content hash (safety check against `dv` collisions). |
-| 4 | `ranges` | array | no | `[[off, len], …]` byte ranges of the *framed* document still missing, in ascending order, at most 32. Omit for the whole document. |
+| 4 | `ranges` | array | no | `[[off, len], …]` byte ranges of the *framed* document still missing, in ascending order, at most 32; a singer asks only for as many source frames as it still needs to reach `k` (7.3). Omit for the whole document. |
 | 5 | `tok` | bstr 16 | doc 8 | Delegate token. A request for document 8 is sealed (framing byte `0x01`, section 8.4); every other Transfer request is plaintext (`0x00`). |
 | 6 | `gid` | bstr 5 | doc 8 | Gathering ID; binds the sealed request. |
 
@@ -701,11 +712,11 @@ sequenceDiagram
 
 Routine operation never opens a connection:
 
-1. The beacon `seq` changes → the singer expects a new state record and starts its repair timer.
+1. The beacon `seq` changes → the singer expects a new state record and starts watching it for repair (7.6).
 2. State frames arrive (first pass within 0.5–1.5 s on the legacy carrier); the record is verified and applied. `cur`, `title`, `docs`, `dlg`, `rseq` are compared with what the singer has.
 3. For the current song: local library file with `cur.hash` → use it, ignore song frames. Otherwise collect song frames; show "receiving…" with the title meanwhile.
 4. Other documents are collected as their frames come round; the user sees the setlist or message update when the group completes and verifies.
-5. Only when a repair timer expires does the singer connect (section 7.6).
+5. Only when the repair rule calls for it does the singer connect (section 7.6).
 
 ### 10.4 Repair (singer)
 
@@ -808,19 +819,20 @@ Relays implement FR-BLE-11 and fit the broadcast design naturally: a relay **rep
 | Song complete (legacy, 1 / 3 data sets, no loss) | – | 12.5 / 4.2 s |
 | Song complete (extended, 2 kB) | – | 0.9 s |
 | **Total, legacy 3 sets** | **≈ 1.0 s, no connection** (target 2 s) | **≈ 4.7 s, no connection** (target 5 s, borderline; simulated without loss 2026-10-25) |
-| **Total, legacy 1 set** | **≈ 2.0 s, no connection** | ≈ 14 s by broadcast; the 3-second repair cap makes singers fetch over GATT instead: ≈ 4–6 s for 25 singers over 6 slots |
+| **Total, legacy 1 set** | **≈ 2.0 s, no connection** | ≈ 14 s by broadcast; slower singers are sent to GATT by the repair rule of 7.6: ≈ 4–6 s for 25 singers over 6 slots (estimate, GATT not yet built) |
 | **Total, extended** | **≈ 0.7 s** | **≈ 1.6 s** |
+| **At the measured 40 % reception, with the erasure code** (simulated with the implementation, median) | beacon about 1 s (measured), then the state record | **≈ 13 s, legacy 3 sets; ≈ 2.7 s, extended** |
 
-These figures do not depend on the number of singers except in the last row's repair path. Connections per song push: zero for singers with the song; zero on the extended carrier; a repair connection only for legacy singers that lost frames. With document v0.1 every push cost one connection per singer.
+All rows but the last assume every frame arrives; the last uses the reception measured on the first phones (`design/test-results/2026-10-25-D-05.md`) and shows that NFR-PERF-01's 5 s holds only for singers with the song or on the extended carrier (FRD Q14). These figures do not depend on the number of singers except in the repair path. Connections per song push: zero for singers with the song; zero on the extended carrier; a repair connection only for legacy singers that lost frames. With document v0.1 every push cost one connection per singer.
 
 ### 12.2 Loss handling
 
 | Failure | Handling |
 |---|---|
-| Frames lost at the fire (bodies, distance) | Three-pass burst, then the background carousel; repair by byte range after the timer. |
+| Frames lost at the fire (bodies, distance) | Erasure code: any `k` distinct frames complete a document (7.3); three-pass burst, then the background carousel; repair of the source frames still needed when the rule of 7.6 calls for it. |
 | Scan responses not received | Never relied on. |
 | Repair connection dropped | Ranges recomputed from what arrived; repair repeated with backoff. |
-| Corrupt or truncated document | `dh`/`hash` mismatch → group reset; the carousel refills it; repair if the timer expires again; after two failures "reception failed, tap to retry" [FR-BLE-04]. |
+| Corrupt or truncated document | `dh`/`hash` mismatch → group reset; the carousel refills it; repair if the rule of 7.6 calls for it again; after two failures "reception failed, tap to retry" [FR-BLE-04]. |
 | State older than current (relay lag, replay) | `ts` check → ignored. |
 | Impostor beacon or frames with the same `gid` | Signature or `dh` fails → ignored. |
 | Leader stack exhausted | `BUSY` + immediate disconnect + singer backoff; routine delivery is unaffected because it is broadcast. |
@@ -963,3 +975,4 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q18 | *Resolved 2026-10-25 (owner):* both sides. Singers end the last range at the manifest `len`; the leader clamps every range and answers `0x8C` only for a range starting at or past the end (9.7, 8.3). | 9.7, 8.3 |
 | Q19 | *Resolved 2026-10-25 (owner):* a document inflates to at most 67 584 bytes (64 KiB + 2 KiB) (7.3). | 7.3 |
 | Q20 | *Resolved 2026-10-25 (owner):* document 8's `dh` covers the compressed bytes, as for every document, and is checked before inflating (8.4). | 8.4, 5 |
+| Q21 | *Resolved 2026-10-25 (owner):* erasure coding across frames on both carriers, GATT repair as the fallback, the library as the fast path; approved as proposed in `design/proposals/2026-10-25-erasure-coding.md` and moved into 7.2–7.7, 9.7 and 12.1 (v0.21). NFR-PERF-01 remains FRD Q14. | 7.2–7.7, 9.7, 12.1 |
