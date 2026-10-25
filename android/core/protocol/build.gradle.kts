@@ -16,4 +16,5 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(project(":core:testing")) // JvmSodiumCrypto, fake clock
 }

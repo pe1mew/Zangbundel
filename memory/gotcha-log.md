@@ -105,10 +105,11 @@
 **Root cause**: `lazysodium-android` declares a transitive dependency on the plain `jna` jar, while Android needs the `@aar` artefact with the native libraries. In the Android build of lazysodium, `cryptoSignVerifyDetached` takes an `int` message length while `cryptoSignDetached` and the box calls take `long`.
 **Fix**: `implementation(libs.lazysodium.android) { exclude(group = "net.java.dev.jna", module = "jna") }` plus `implementation(libs.jna) { artifact { type = "aar" } }` in `android/platform/crypto/build.gradle.kts`; pass `message.size` without `.toLong()` to the verify call. If a native-backed library is added, then check its pom for a jar/aar double of the same module.
 
-### Newest AndroidX requires compile SDK 37 (2026-10-22) [RESOLVED]
+### Newest AndroidX requires compile SDK 37 (2026-10-22) [x2] [RESOLVED]
 **Problem**: After pinning the versions lint reported as newest (core 1.19.1, lifecycle 2.11.0, navigation 2.10.2, Compose BOM 2026.09.00), `:app:checkDebugAarMetadata` failed with 32 "requires compile against version 37" issues.
 **Root cause**: The aar metadata (`META-INF/com/android/build/gradle/aar-metadata.properties`, `minCompileSdk`) of those releases says 37; the machine has platforms 35 and 36 and the project's decided target is 36.
 **Fix**: Downloaded the candidate aars from `dl.google.com/dl/android/maven2` and read `minCompileSdk` directly: core 1.18.0, lifecycle 2.10.0, navigation 2.9.8 and Compose BOM 2026.06.01 (Compose 1.11.4) are the newest at 36; pinned those and said so in `libs.versions.toml`. Raising `compileSdk` to 37 is a decision for the owner (RUNBOOK Decisions keep target 36). If lint's "newer version available" is followed blindly, then expect the compile-SDK ceiling to bite; check `minCompileSdk` before bumping.
+**Again 2026-10-25**: lazysodium-java had been bumped to 5.2.0 the same way while nothing used it; the first test that did failed resolution because 5.2.0 targets Java 21 and the build runs on JDK 17. Pinned at 5.1.4. Generalised: a version bump taken from lint's list is untested until something compiles and runs against it; check the artefact's minimum JVM and compile SDK, and bump only what is in use.
 
 ### Verification metadata written from a warm cache misses parent and BOM poms (2026-10-22) [RESOLVED]
 **Problem**: The first CI run of `android.yml` failed at configuration: "Dependency verification failed for configuration 'classpath': kotlinx-coroutines-bom-1.8.0.pom", although `./gradlew check` passed locally with the same `gradle/verification-metadata.xml`.

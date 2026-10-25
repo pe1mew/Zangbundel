@@ -20,7 +20,8 @@ object ProtocolConstants {
     const val EXTENDED_FRAME_MAX_DATA_BYTES = EXTENDED_FRAME_MAX_BYTES - EXTENDED_FRAME_HEADER_BYTES
     /** Length byte, AD type and company identifier in front of the frame. */
     const val MANUFACTURER_AD_OVERHEAD_BYTES = 4
-    const val LEGACY_DOCUMENT_MAX_BYTES = 255 * LEGACY_FRAME_DATA_BYTES
+    const val LEGACY_MAX_FRAMES = 255
+    const val LEGACY_DOCUMENT_MAX_BYTES = LEGACY_MAX_FRAMES * LEGACY_FRAME_DATA_BYTES
 
     /** Beacon flag bits (6.1). */
     const val FLAG_CODE = 1 shl 0

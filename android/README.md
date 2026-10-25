@@ -31,8 +31,8 @@ keyPassword=...
 |---|---|---|
 | `core/model` | Kotlin/JVM | ids, song references, setlist entries, gathering and role states |
 | `core/songformat` | Kotlin/JVM | canonical form, hash, limits, report codes; parser, line list, archive reader to come |
-| `core/protocol` | Kotlin/JVM | `Transport` and `Crypto` interfaces, protocol constants; CBOR, frames, carousel, state machines to come |
-| `core/testing` | Kotlin/JVM | fake clock, simulated transport skeleton, conformance corpus (test fixture, never ships) |
+| `core/protocol` | Kotlin/JVM | `Transport` and `Crypto` interfaces, protocol constants, bounded CBOR codec (`cbor/`), frame codec, framer and reassembler (`frame/`), section 9 payloads, the signed state and DEFLATE (`payload/`); sealing, carousel and state machines to come |
+| `core/testing` | Kotlin/JVM | fake clock, `JvmSodiumCrypto` (lazysodium-java), simulated transport skeleton, conformance corpus (test fixture, never ships) |
 | `platform/ble` | Android | `AndroidTransport` with capability detection; `AdvertisingProbe` for the radio check; Bluetooth permissions |
 | `platform/crypto` | Android | `SodiumCrypto` on lazysodium-android |
 | `platform/storage` | Android | Room database (one table so far), `StartupSweep` |

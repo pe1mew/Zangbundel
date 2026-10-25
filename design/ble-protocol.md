@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.14 (draft) |
+| Document version | 0.15 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -27,6 +27,7 @@
 | 0.12 | 2026-10-20 | Depends on FRD v0.10 (Q8 closed, no protocol impact). Dutch UI term for the helper code is *assistentcode* (`design/guiDesign.md` Q15). Nothing language-dependent goes over the air: labels are rendered by each phone (guiDesign D-75). No wire change. |
 | 0.13 | 2026-10-22 | Depends on FRD v0.11. Q5 resolved: CBOR stays, encoded by the app's own bounded codec (`design/architecture.md` A-08). Fixes from architecture section 12: 10.1 step 2 and 10.9 persist and resume both key pairs with their secret keys and the delegate list `dlg`; 10.12 points at section 13 for the rate limits instead of 10.8; the 7.7 capacity table names its typical state record (15 frames) and gives the times for a maximum one (30 frames, 9.4); Q7 marked resolved by Control op 10. No wire change. |
 | 0.14 | 2026-10-25 | Extended frame fits one manufacturer-data structure, decided by the owner after the first radio check (`design/test-results/2026-10-25-F-01.md`): a Samsung A52 on Android 14 refuses any single advertising data structure above 251 bytes although it reports 1650, and Android's `AdvertiseData` takes one manufacturer-data entry per company identifier, so the v0.13 frame of up to 1000 bytes could not be sent. Extended frame now at most 247 bytes with `fs` ≤ 235 (7.1, 7.2); the leader lowers `fs` at start if its stack refuses 247. The extended loop repeats the state record after every 8 document frames (7.4), its repair timers are longer (7.6), and the extended figures in 2.2, 4, 7.7 and 12.1 are recomputed. 15.1: the 100 ms interval is `INTERVAL_LOW` (160), not `INTERVAL_HIGH`; the measured update times are noted. Q2 notes the first sample. Wire change inside the draft protocol 1.0, which has no released implementation, so no major version bump. The architecture (v0.4), the song format (v0.5) and the test plan (v0.1) still name protocol v0.13; nothing they say depends on the extended frame size. |
+| 0.15 | 2026-10-25 | Open questions Q17 to Q19, found while implementing the payloads and reassembly in `core/protocol`: the 440-byte state body can be exceeded by legal values (9.4), the end of a repair range for a last frame never seen (9.7), and the size limit of a decoded document (7.3, 9.5). No normative change. |
 
 ---
 
@@ -953,3 +954,6 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q14 | *Adopted 2026-10-18 as section 8.4 and FR-BLE-17.* A separate X25519 key published in the signed state was chosen over deriving it from the Ed25519 key, because iOS CryptoKit has no Ed25519-to-X25519 conversion. | Resolved |
 | Q15 | libsodium sealed box (chosen, one library on both platforms) versus HPKE (RFC 9180, native in CryptoKit on iOS 17+ and in Tink on Android). Revisit if libsodium becomes a problem on either platform. | 8.4, 15 |
 | Q16 | *Resolved 2026-10-18 with FRD Q13:* GitHub Pages hosts the page in this repository; App Links verification is prepared for a `pe1mew.github.io` repository (`docs/RUNBOOK.md` Step 5b, 5c). | Resolved |
+| Q17 | The signed state body MUST stay ≤ 440 bytes (9.4), but legal values exceed it: library and song ids of 64 characters, a 60-character title in accented letters, five manifest entries and eight delegates make 558 bytes, and a title in four-byte characters makes more. What does the leader leave out, and in which order (for example `title` first, then `rev` of `cur`), or should the limits on ids and `title` be tightened? The implementation refuses to sign an oversized body until this is settled. | 9.4, 5 (`ref`), song-format 3.2 |
+| Q18 | When a singer repairs a document whose last frame it never received, it does not know the document's length, so the last requested range runs to the end of a full frame and may pass the end of the document. Does the leader clamp such a range to the document length, or must the singer first learn the length (from the manifest `len` in the state)? | 9.7, 7.6, 9.4 (`docs`) |
+| Q19 | Only the framed size of a document is bounded (Control op 8 refuses uploads over 64 kB, 9.8). A song file may itself be 64 KiB (song-format 5.5), so its document is slightly larger before compression. The implementation caps an inflated document at 64 KiB + 2 KiB. Should the protocol state the decoded limit, or lower the song file limit for broadcast? | 7.3, 9.5, 9.8, song-format 5.5 |

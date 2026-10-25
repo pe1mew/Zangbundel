@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":core:songformat"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.test)
+    implementation(libs.lazysodium.java) // test-only crypto (architecture section 8)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
 }
