@@ -33,11 +33,11 @@ keyPassword=...
 | `core/songformat` | Kotlin/JVM | canonical form, hash, limits, report codes; parser, line list, archive reader to come |
 | `core/protocol` | Kotlin/JVM | `Transport` and `Crypto` interfaces, protocol constants; CBOR, frames, carousel, state machines to come |
 | `core/testing` | Kotlin/JVM | fake clock, simulated transport skeleton, conformance corpus (test fixture, never ships) |
-| `platform/ble` | Android | `AndroidTransport` with capability detection; Bluetooth permissions |
+| `platform/ble` | Android | `AndroidTransport` with capability detection; `AdvertisingProbe` for the radio check; Bluetooth permissions |
 | `platform/crypto` | Android | `SodiumCrypto` on lazysodium-android |
 | `platform/storage` | Android | Room database (one table so far), `StartupSweep` |
 | `platform/net` | Android | `HttpsFetcher`: HTTPS only, no http redirects, fixed user agent, size cap |
-| `app` | Android | `ZangbundelApp`, `AppContainer`, `MainActivity`, Compose theme, `GatheringService`, manifest, resources |
+| `app` | Android | `ZangbundelApp`, `AppContainer`, `MainActivity`, Compose theme, `GatheringService`, manifest, resources; `src/radiocheck` (debug and fieldtest only) holds the radio check screen, `src/release` its empty stand-in |
 
 Versions are pinned in `gradle/libs.versions.toml`; a new dependency needs a row in architecture
 section 8 in the same change. `gradle/verification-metadata.xml` is regenerated with

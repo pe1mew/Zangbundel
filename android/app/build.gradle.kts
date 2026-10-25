@@ -60,6 +60,17 @@ android {
         }
     }
 
+    // Developer and field-test tools (the radio check of test-plan F-01) exist in debug and
+    // fieldtest only; release compiles the empty stand-in in src/release (assessment SP-23).
+    sourceSets {
+        listOf("debug", "fieldtest").forEach { name ->
+            maybeCreate(name).apply {
+                java.srcDir("src/radiocheck/kotlin")
+                res.srcDir("src/radiocheck/res")
+            }
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = false // no build time, user or path in the APK (A-19)

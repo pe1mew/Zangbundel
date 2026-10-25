@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Radio check (test-plan F-01): debug and fieldtest builds only. Dutch in values-nl. -->
+<resources>
+    <string name="radiocheck_title">Radio check</string>
+    <string name="radiocheck_explanation">Measures what this phone\'s Bluetooth can send: how many advertising sets open at once, how fast their data can change, and whether extended advertising works. For a few seconds it sends test signals without any name, and it keeps nothing.</string>
+    <string name="radiocheck_run">Run check</string>
+    <string name="radiocheck_running">Measuring…</string>
+    <string name="radiocheck_share">Share results</string>
+    <string name="radiocheck_no_bluetooth">This phone has no Bluetooth.</string>
+    <string name="radiocheck_bluetooth_off">Bluetooth is off. Switch it on and run the check again.</string>
+    <string name="radiocheck_permission_denied">Without permission to send Bluetooth signals the check cannot run.</string>
+</resources>

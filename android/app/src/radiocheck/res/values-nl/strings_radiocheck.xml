@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Radiocheck (testplan F-01): alleen in de debug- en fieldtest-build. -->
+<resources>
+    <string name="radiocheck_title">Radiocheck</string>
+    <string name="radiocheck_explanation">Meet wat de Bluetooth van deze telefoon kan uitzenden: hoeveel advertentiesets tegelijk opengaan, hoe snel hun gegevens kunnen veranderen en of extended advertising werkt. De test zendt een paar seconden testsignalen zonder naam uit en bewaart niets.</string>
+    <string name="radiocheck_run">Test starten</string>
+    <string name="radiocheck_running">Bezig met meten…</string>
+    <string name="radiocheck_share">Resultaten delen</string>
+    <string name="radiocheck_no_bluetooth">Deze telefoon heeft geen Bluetooth.</string>
+    <string name="radiocheck_bluetooth_off">Bluetooth staat uit. Zet het aan en start de test opnieuw.</string>
+    <string name="radiocheck_permission_denied">Zonder toestemming om Bluetooth-signalen uit te zenden kan de test niet draaien.</string>
+</resources>

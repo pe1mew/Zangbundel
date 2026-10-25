@@ -5,8 +5,8 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.13 (draft) |
-| Date | 2026-10-22 |
+| Document version | 0.14 (draft) |
+| Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
 | Depends on | `design/functional-requirements.md` v0.11 |
@@ -26,6 +26,7 @@
 | 0.11 | 2026-10-19 | Two additive Control commands for any registered singer (9.8): op 9 *become delegate* with a helper code shown on the leader's screen (`design/guiDesign.md` D-73, Q22; FR-LEAD-40 as amended in FRD v0.9), and op 10 *leave*, so the leader's count drops at once (FR-GATH-07, FR-GATH-12). Error `0x8E`. Procedures 10.9, 10.11 and 10.12, security table and traceability updated. Protocol stays 1.0: new keys and ops only. |
 | 0.12 | 2026-10-20 | Depends on FRD v0.10 (Q8 closed, no protocol impact). Dutch UI term for the helper code is *assistentcode* (`design/guiDesign.md` Q15). Nothing language-dependent goes over the air: labels are rendered by each phone (guiDesign D-75). No wire change. |
 | 0.13 | 2026-10-22 | Depends on FRD v0.11. Q5 resolved: CBOR stays, encoded by the app's own bounded codec (`design/architecture.md` A-08). Fixes from architecture section 12: 10.1 step 2 and 10.9 persist and resume both key pairs with their secret keys and the delegate list `dlg`; 10.12 points at section 13 for the rate limits instead of 10.8; the 7.7 capacity table names its typical state record (15 frames) and gives the times for a maximum one (30 frames, 9.4); Q7 marked resolved by Control op 10. No wire change. |
+| 0.14 | 2026-10-25 | Extended frame fits one manufacturer-data structure, decided by the owner after the first radio check (`design/test-results/2026-10-25-F-01.md`): a Samsung A52 on Android 14 refuses any single advertising data structure above 251 bytes although it reports 1650, and Android's `AdvertiseData` takes one manufacturer-data entry per company identifier, so the v0.13 frame of up to 1000 bytes could not be sent. Extended frame now at most 247 bytes with `fs` ≤ 235 (7.1, 7.2); the leader lowers `fs` at start if its stack refuses 247. The extended loop repeats the state record after every 8 document frames (7.4), its repair timers are longer (7.6), and the extended figures in 2.2, 4, 7.7 and 12.1 are recomputed. 15.1: the 100 ms interval is `INTERVAL_LOW` (160), not `INTERVAL_HIGH`; the measured update times are noted. Q2 notes the first sample. Wire change inside the draft protocol 1.0, which has no released implementation, so no major version bump. The architecture (v0.4), the song format (v0.5) and the test plan (v0.1) still name protocol v0.13; nothing they say depends on the extended frame size. |
 
 ---
 
@@ -81,7 +82,7 @@ In scope: everything that travels over the air during a gathering. Out of scope:
 |---|---|
 | Legacy BLE advertising carries 31 bytes of advertisement data plus 31 bytes of scan response per advertising event. The minimum advertising interval an Android app can set is 100 ms. | A legacy broadcast carries at most a few hundred bytes per second per advertising set. Documents are split into small frames and repeated. |
 | Android devices that support multiple advertising sets (API 26+, most phones since 2018) can run several independent advertisements at once; each set carries its own 31 + 31 bytes. | The leader runs one discovery beacon set plus one or more data sets. Throughput scales with the number of sets the chip allows. |
-| Extended advertising (BLE 5) carries up to 1650 bytes per advertisement. Sending requires a BLE 5 chip and Android 8+; receiving requires Android 8+ or iOS 13+ with supporting hardware. It is not universal and an iOS app cannot send it. | Extended advertising is the preferred carrier when available; a legacy carrier MUST always run alongside it for singers that cannot receive it. |
+| Extended advertising (BLE 5) carries up to 1650 bytes per advertisement, but one advertising data structure holds at most 255 bytes, Android's `AdvertiseData` takes one manufacturer-data entry per company identifier, and at least one Android 14 phone refuses any single structure above 251 bytes (`design/test-results/2026-10-25-F-01.md`). Sending requires a BLE 5 chip and Android 8+; receiving requires Android 8+ or iOS 13+ with supporting hardware. It is not universal and an iOS app cannot send it. | Extended advertising is the preferred carrier when available; a legacy carrier MUST always run alongside it for singers that cannot receive it. An extended frame fits one manufacturer-data structure (7.1). |
 | Android cannot put an app-chosen local name in an advertisement without renaming the user's Bluetooth adapter. It can send manufacturer-specific data. | Android leaders carry all beacon and data frames in manufacturer data. |
 | An iOS app can advertise only a local name and service UUIDs, and only while in the foreground. | An iOS leader cannot run the broadcast data channel. It runs the discovery beacon in text form (encoding B) and serves everything over GATT (degraded mode, section 7.8). |
 | The number of simultaneous GATT connections an Android device accepts as a server is set by its Bluetooth stack and is not exposed to apps. In practice it ranges from about 4 to 15. | Connections are the scarce resource. The protocol uses them only for upstream traffic and recovery, never for routine delivery. |
@@ -117,7 +118,7 @@ In scope: everything that travels over the air during a gathering. Out of scope:
 2. **Connections only when they carry something upstream, or to recover.** A singer connects once to register (to be counted and get a token), when it sends a request, when it acts as delegate, and when the carousel has not completed a document for it in a reasonable time ("repair") [FR-BLE-16]. In a gathering where most singers have the library, a singer typically opens one connection for the whole evening.
 3. **Content-addressed songs.** A song is identified by the hash of its file. A singer with that file, from any library revision, needs only the state record and never collects the song frames [FR-BLE-12].
 4. **Signed state.** The leader generates a key pair per gathering. The gathering identifier is a fingerprint of the public key; the state record is signed and lists the hash of every other document. Nothing received by broadcast is used until it is verified against the signed state [NFR-SEC-02]. This makes broadcast, repair over GATT and relays equally trustworthy.
-5. **Two carriers, one framing.** Documents are framed for legacy advertising (16 data bytes per frame) and, when the leader supports it, for extended advertising (up to about 1 kB per frame). Repair over GATT sends the same bytes by range, so there is one reassembly path.
+5. **Two carriers, one framing.** Documents are framed for legacy advertising (16 data bytes per frame) and, when the leader supports it, for extended advertising (up to 235 data bytes per frame, one manufacturer-data structure). Repair over GATT sends the same bytes by range, so there is one reassembly path.
 6. **One encoding, CBOR.** All structured payloads are CBOR maps with small integer keys. Unknown keys are ignored, which gives minor-version extensibility for free [FR-BLE-07].
 7. **Delegates act through the leader.** A delegate is a registered singer whose ID the leader lists in the signed state. It sends control commands over GATT; the leader applies them, re-signs the state and broadcasts it [FR-LEAD-43].
 8. **One gathering per area.** A device scans before it starts a gathering and refuses to start while another running gathering is in range [FR-GATH-16].
@@ -148,7 +149,7 @@ A singer is *listening* from the moment it has verified the gathering's public k
 | **A. Persistent GATT connections** | Every singer stays connected; leader notifies all. | Simple; instant push. | Hard limit of 4–15 connections; fails FR-BLE-10 on most phones. |
 | **B. Beacon-driven short-lived connections** (document v0.1) | Beacon carries a sequence number; singers connect briefly on every change. | Works everywhere; a few slots serve dozens. | One connection per singer per change: with 50 singers every song push is a burst of 50 connections; latency grows with group size; iOS and busy leaders struggle. |
 | **C. Broadcast carousel over legacy advertising sets** | Leader cycles document frames in 1–3 non-connectable advertising sets; singers reassemble; GATT only for upstream and repair. | Unlimited singers; zero connections for routine delivery; works on every Android leader with multiple-advertisement support. | 160–480 B/s per direction; a 2 kB song takes 4–12 s per pass; needs frame reassembly logic. |
-| **D. Broadcast carousel over extended advertising** | Same as C with ~1 kB frames. | A whole song in one or two frames; sub-second delivery to any number of singers. | Not on every device; never from an iOS leader. |
+| **D. Broadcast carousel over extended advertising** | Same as C with frames of up to 247 bytes. | A song in about ten frames; delivery in about a second to any number of singers. | Not on every device; never from an iOS leader. |
 | **E. Relay rebroadcast** | Singers that have verified documents repeat the carousel. | Extends range and adds throughput without any leader involvement. | Peripheral mode and battery on relays. |
 
 ### 4.1 Why broadcast and not multicast
@@ -271,10 +272,12 @@ Typical size: 45–95 bytes of payload, 60–130 characters of URL; a QR code of
 | Carrier | Advertising set(s) | Frame data size | When |
 |---|---|---|---|
 | **Legacy** | 1 to `n` non-connectable advertising sets (Android `startAdvertisingSet`, legacy mode), interval 100 ms, no service UUID, one manufacturer-data structure per advertisement; the scan response MAY carry the next frame of the same set. | 16 bytes | MUST run whenever the leader can start at least one extra advertising set. `BCAST` = 1. |
-| **Extended** | 1 non-connectable extended advertising set (legacy mode off, 1M primary PHY, 2M or coded secondary PHY), interval 100 ms, advertising data ≤ 1000 bytes. | up to 984 bytes | SHOULD run in addition to the legacy carrier when `isLeExtendedAdvertisingSupported()`. `EXT` = 1. |
+| **Extended** | 1 non-connectable extended advertising set (legacy mode off, 1M primary PHY, 2M or coded secondary PHY), interval 100 ms, advertising data one manufacturer-data structure of at most 251 bytes (length, type, company identifier, frame ≤ 247 bytes). | up to 235 bytes | SHOULD run in addition to the legacy carrier when `isLeExtendedAdvertisingSupported()`. `EXT` = 1. |
 | **GATT repair** | Not a broadcast: section 9.7. | by byte range | Always available. |
 
 The leader determines `n` at start by opening sets until the stack refuses (`ADVERTISE_FAILED_TOO_MANY_ADVERTISERS`), keeping one instance for the beacon and using at most 3 for data. Singers receiving the extended carrier ignore legacy data frames; singers that cannot receive it use legacy frames. Both carry the same documents.
+
+An extended frame is one manufacturer-data structure because that is what Android can send reliably: the structure is limited to 255 bytes by the Bluetooth specification, `AdvertiseData` holds one manufacturer-data entry per company identifier, and the first measured phone refused any structure above 251 bytes (`design/test-results/2026-10-25-F-01.md`). The limit of 247 frame bytes comes from that one phone. A leader whose stack refuses a 247-byte frame (`ADVERTISE_FAILED_DATA_TOO_LARGE`) lowers `fs` at start until the frame is accepted; `fs` is carried in every extended frame (7.2), so singers need no other signal. The F-01 survey may show that a lower default is needed.
 
 ### 7.2 Frame formats
 
@@ -294,7 +297,7 @@ All frames are manufacturer-specific data with company identifier `0xFFFF`. The 
 
 A document framed for the legacy carrier is at most 255 × 16 = 4080 bytes. A larger document is marked *GATT only* in the state (section 9.4) and fetched by repair.
 
-**Extended frame (≤ 1000 bytes):**
+**Extended frame (≤ 247 bytes):**
 
 | Offset | Field | Type | Meaning |
 |---|---|---|---|
@@ -304,7 +307,7 @@ A document framed for the legacy carrier is at most 255 × 16 = 4080 bytes. A la
 | 4–5 | `dv` | u16 | |
 | 6–7 | `total` | u16 | Number of frames. |
 | 8–9 | `idx` | u16 | Frame index. |
-| 10–11 | `fs` | u16 | Frame data size used for this document version (≤ 984); the same in every frame of it. |
+| 10–11 | `fs` | u16 | Frame data size used for this document version (≤ 235); the same in every frame of it. |
 | 12… | `data` | ≤ `fs` bytes | Document bytes `idx × fs …`. |
 
 ### 7.3 Documents carried
@@ -328,7 +331,7 @@ The leader keeps one frame queue per data set and fills them by these rules [FR-
 
 1. **Set S (first legacy data set) – small documents.** Loops continuously: *state*, *info*, *reqstat*, *message*, *download*, state again, … The state record therefore repeats about once per second on a single set.
 2. **Sets D1…D(n−1) – large documents.** Loop: *song*, *setlist*, *song*, … interleaved so that two sets send different frames of the same document (set D1 sends even frames, D2 odd frames). With only one data set, Set S carries everything and inserts a state frame after every 8 document frames.
-3. **Extended set.** Loops all documents 1–7 in order; a 1 kB frame each, so one full cycle takes under a second.
+3. **Extended set.** Loops all documents 1–7 in order and sends the state record again after every 8 document frames, as Set S does with a single data set. A typical cycle takes about 3 s; the state record recurs about once a second.
 4. **Burst on change.** When `seq` increments, every set restarts its loop at the changed documents and sends each changed document **three complete passes** before resuming the normal loop. The new state record is always first.
 5. **Position changes** (`pos`) go only to the beacon; the carousel is not restarted.
 6. **Advertising interval** is 100 ms on all data sets (Android minimum). Each set therefore delivers 10 frames/s; a scan response, when it is received, doubles that for the scanner that asked.
@@ -349,9 +352,9 @@ A singer starts a *repair timer* for a (`doc`, `dv`) group when it first sees a 
 
 | Document | Legacy carrier | Extended carrier |
 |---|---|---|
-| state, info | 1.5 s | 0.5 s |
-| song (needed to sing now) | min(1.5 × pass time, 3 s) | 1 s |
-| setlist, reqstat, message, download | 2 × pass time, max 20 s | 2 s |
+| state, info | 1.5 s | 1.5 s |
+| song (needed to sing now) | min(1.5 × pass time, 3 s) | 2 s |
+| setlist, reqstat, message, download | 2 × pass time, max 20 s | 6 s |
 
 When the timer expires with frames still missing, the singer waits a random 0–400 ms (longer, 0–2 s, while the beacon shows `BUSY`), connects, and fetches **only the missing byte ranges** with a Transfer request (section 9.7). It then disconnects. The repair connection is also used to flush any queued request. Singers that just registered fetch anything incomplete on the registration connection, so late joiners never wait for the carousel [FR-GATH-06].
 
@@ -364,9 +367,9 @@ A singer with the current song in its local library never starts a song repair t
 | 1 | 10 | 160 | 1.5 s | 12.5 s |
 | 2 | 20 | 320 | 0.8 s | 6.3 s |
 | 3 | 30 | 480 | 0.5 s | 4.2 s |
-| Extended | 10 × ~1 kB | ~10 000 | 0.1 s | 0.2–0.3 s |
+| Extended | 10 × 235 B | ~2 350 | 0.2 s (2 frames) | 0.9 s (9 frames) |
 
-Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and still fits one extended frame.
+Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and three extended frames (0.3 s).
 
 ### 7.8 Degraded mode (no broadcast data channel)
 
@@ -795,12 +798,12 @@ Relays implement FR-BLE-11 and fit the broadcast design naturally: a relay **rep
 |---|---|---|
 | Beacon change seen | ≤ 0.5 s | ≤ 0.5 s |
 | State record complete (legacy, 1 / 3 data sets) | 1.5 / 0.5 s | 1.5 / 0.5 s |
-| State record complete (extended) | 0.1 s | 0.1 s |
+| State record complete (extended) | 0.2 s | 0.2 s |
 | Song complete (legacy, 1 / 3 data sets, no loss) | – | 12.5 / 4.2 s |
-| Song complete (extended) | – | 0.3 s |
+| Song complete (extended, 2 kB) | – | 0.9 s |
 | **Total, legacy 3 sets** | **≈ 1.0 s, no connection** (target 2 s) | **≈ 4.7 s, no connection** (target 5 s, borderline) |
 | **Total, legacy 1 set** | **≈ 2.0 s, no connection** | ≈ 13 s by broadcast; the 3-second repair cap makes singers fetch over GATT instead: ≈ 4–6 s for 25 singers over 6 slots |
-| **Total, extended** | **≈ 0.6 s** | **≈ 0.9 s** |
+| **Total, extended** | **≈ 0.7 s** | **≈ 1.6 s** |
 
 These figures do not depend on the number of singers except in the last row's repair path. Connections per song push: zero for singers with the song; zero on the extended carrier; a repair connection only for legacy singers that lost frames. With document v0.1 every push cost one connection per singer.
 
@@ -864,7 +867,8 @@ Link-layer encryption is deliberately not used: it would require system pairing,
 
 - Permissions: Android 12+ `BLUETOOTH_SCAN` (with `neverForLocation`), `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT`; Android 6–11 `ACCESS_FINE_LOCATION` for scanning plus legacy `BLUETOOTH`/`BLUETOOTH_ADMIN` [FR-GEN-05].
 - Leader capability: `getBluetoothLeAdvertiser()` non-null and `isMultipleAdvertisementSupported()` for the broadcast channel; `isLeExtendedAdvertisingSupported()` and `getLeMaximumAdvertisingDataLength()` for the extended carrier. Without multiple-advertisement support the device leads in degraded mode (7.8).
-- Advertising sets: `BluetoothLeAdvertiser.startAdvertisingSet` with `AdvertisingSetParameters` (`setLegacyMode(true)`, `setConnectable(false)`, `setScannable(true)` for legacy data sets; `setLegacyMode(false)`, `setPrimaryPhy(LE_1M)`, `setSecondaryPhy(LE_2M)` for the extended set; `setInterval(INTERVAL_HIGH)` = 100 ms). Frame content is replaced with `AdvertisingSet.setAdvertisingData` / `setScanResponseData` every 100 ms per set; the stack accepts updates at this rate on tested chips, to be confirmed (Q3).
+- Advertising sets: `BluetoothLeAdvertiser.startAdvertisingSet` with `AdvertisingSetParameters` (`setLegacyMode(true)`, `setConnectable(false)`, `setScannable(true)` for legacy data sets; `setLegacyMode(false)`, `setPrimaryPhy(LE_1M)`, `setSecondaryPhy(LE_2M)` for the extended set; `setInterval(INTERVAL_LOW)` = 160 units = 100 ms; `INTERVAL_HIGH` is 1 s). Frame content is replaced with `AdvertisingSet.setAdvertisingData` / `setScanResponseData` every 100 ms per set; the first radio check measured 6–17 ms per update on two phones (`design/test-results/2026-10-25-F-01.md`), and battery cost remains open (Q3).
+- Extended frames: one `addManufacturerData(0xFFFF, frame)` entry and nothing else in the `AdvertiseData`; no device name, no TX power level. On `ADVERTISE_FAILED_DATA_TOO_LARGE` lower `fs` (7.1).
 - Scanning: one continuous scan with `ScanFilter.setManufacturerData(0xFFFF, data, mask)` (two filters: beacon and data frames) plus the service UUID filter; `SCAN_MODE_LOW_LATENCY`, `CALLBACK_TYPE_ALL_MATCHES`, `setLegacy(false)` where supported. Do not restart scans (Android throttles more than 5 starts in 30 s).
 - GATT server: notifications serialised on `onNotificationSent`; `cancelConnection` to shed load; expect status 133 on singers when saturated.
 - Foreground service with the "connected device" type on the leader so advertising survives screen-off [FR-GATH-15].
@@ -934,7 +938,7 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | # | Question | Impact |
 |---|---|---|
 | Q1 | Company identifier `0xFFFF` is for testing only. Register a Bluetooth SIG company identifier before public release, or use a Service Data AD type with a 16-bit UUID? | Beacon and frame encoding |
-| Q2 | How many advertising sets, and what advertising-data update rate, do the Android phones scouting groups actually own support? This decides whether the legacy carrier alone meets the 5-second target for singers without the library. | 7.1, 7.7, 12.1 |
+| Q2 | How many advertising sets, and what advertising-data update rate, do the Android phones scouting groups actually own support? This decides whether the legacy carrier alone meets the 5-second target for singers without the library. First sample 2026-10-25 (`design/test-results/2026-10-25-F-01.md`): 16 sets on a Samsung A52 (Android 14), one on a Huawei Mate 20 Lite (Android 10, degraded mode); advertising-data updates 6–17 ms. Open until the survey of scout phones. | 7.1, 7.7, 12.1 |
 | Q3 | Battery cost of continuous foreground scanning on singers and of 3–5 advertising sets at 100 ms on the leader, against NFR-PERF-02. | 12.3 |
 | Q4 | Use a 6-byte `gid` (2^48 forgery work) and move `pos` to a broadcast tick document, or keep 5 bytes + `pos` in the beacon? | Beacon layout, security margin |
 | Q5 | *Resolved 2026-10-22:* CBOR stays; the app encodes and decodes it with its own bounded codec for the subset section 9 uses (`design/architecture.md` A-08). | Resolved |

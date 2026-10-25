@@ -12,6 +12,13 @@ class ProtocolConstantsTest {
     }
 
     @Test
+    fun `an extended frame fits the largest structure measured on Android`() {
+        // ble-protocol 7.1: at most 251 bytes per structure on the first measured phone.
+        assertEquals(235, ProtocolConstants.EXTENDED_FRAME_MAX_DATA_BYTES)
+        assertEquals(251, ProtocolConstants.EXTENDED_FRAME_MAX_BYTES + ProtocolConstants.MANUFACTURER_AD_OVERHEAD_BYTES)
+    }
+
+    @Test
     fun `legacy document limit is 255 frames of 16 bytes`() {
         assertEquals(4080, ProtocolConstants.LEGACY_DOCUMENT_MAX_BYTES)
     }
