@@ -158,23 +158,32 @@ class SingerMachineTest {
     }
 
     @Test
-    fun `a rate that reaches k in time never repairs`() {
-        // 12 new frames per second, as at 40 % reception on three legacy sets: about 10 s for k = 125.
+    fun `a rate that reaches k within 5 s of the start never repairs`() {
+        // 30 new frames per second towards k = 125: done 4.2 s after the first frame (v0.24, Q26).
         val m = listening()
-        val fx = m.arrive(SONG, 7, needed = 125, perSecond = 13.0, from = 2_000, to = 11_500)
+        val fx = m.arrive(SONG, 7, needed = 125, perSecond = 30.0, from = 2_000, to = 6_100)
         assertTrue(fx.none { it is Effect.Repair }, "$fx")
-        m.handle(Event.DocumentComplete(11_600, SONG, 7))
+        m.handle(Event.DocumentComplete(6_200, SONG, 7))
         assertTrue(m.handle(Event.Tick(20_000)).none { it is Effect.Repair })
     }
 
     @Test
-    fun `the extended carrier allows 4 s`() {
-        // 1 new frame per second towards k = 9: 6 s to go after 2 s of measuring; too slow on extended.
+    fun `a rate that would take 10 s repairs 2 s after the start`() {
+        // 13 new frames per second towards k = 125, as at 40 % on three legacy sets: about 10 s. v0.21 waited.
+        val fx = listening().arrive(SONG, 7, needed = 125, perSecond = 13.0, from = 2_000, to = 4_300)
+        assertEquals(1, fx.filterIsInstance<Effect.Repair>().size)
+    }
+
+    @Test
+    fun `both carriers have the same 5 s deadline`() {
+        // 1 new frame per second towards k = 9: 9 s in all, too slow on either carrier (v0.24).
         val ext = listening(carrier = Carrier.EXTENDED).arrive(SONG, 7, needed = 9, perSecond = 1.0, from = 2_000, to = 4_000)
         assertEquals(1, ext.filterIsInstance<Effect.Repair>().size)
-        // The same rate is fine on legacy, where 10 s is allowed.
         val legacy = listening().arrive(SONG, 7, needed = 9, perSecond = 1.0, from = 2_000, to = 4_000)
-        assertTrue(legacy.none { it is Effect.Repair })
+        assertEquals(1, legacy.filterIsInstance<Effect.Repair>().size)
+        // 3 frames per second towards k = 9: done 3 s after the start, on time on either.
+        val quick = listening(carrier = Carrier.EXTENDED).arrive(SONG, 7, needed = 9, perSecond = 3.0, from = 2_000, to = 4_600)
+        assertTrue(quick.none { it is Effect.Repair })
     }
 
     @Test

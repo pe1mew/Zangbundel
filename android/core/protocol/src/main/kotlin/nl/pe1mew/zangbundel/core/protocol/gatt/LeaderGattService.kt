@@ -78,6 +78,15 @@ class LeaderGattService(
     /** Transfers served since start, for diagnostics. */
     @Volatile var transfersServed: Int = 0
         private set
+    /** Bytes of document data sent in DATA chunks, for diagnostics (test plan S-06: only missing ranges). */
+    @Volatile var bytesServed: Long = 0
+        private set
+    /** The most connections open at once, and connections dropped for want of a slot (10.8). */
+    @Volatile var peakConnections: Int = 0
+        private set
+    @Volatile var refusedConnections: Int = 0
+        private set
+    val maxConnections: Int get() = synchronized(lock) { slots.maxConn }
 
     /** The current Info value (9.2) and signed state record (9.4), and the documents the carousel now sends. */
     fun publish(info: ByteArray, state: ByteArray, seq: Int, documents: List<Served>) = synchronized(lock) {
@@ -107,6 +116,7 @@ class LeaderGattService(
         val slot = synchronized(lock) {
             val slot = slots.accept()
             clients[client] = Client(slot)
+            if (slot == null) refusedConnections++ else peakConnections = maxOf(peakConnections, slots.open)
             updateBusy()
             slot
         }
@@ -198,6 +208,7 @@ class LeaderGattService(
             }
             val ranges = ByteRange.clamp(request.ranges ?: listOf(ByteRange(0, served.bytes.size)), served.bytes.size)
             val header = TransferHeader(served.dv, served.bytes.size, served.enc, served.dh, ranges)
+            bytesServed += ranges.sumOf { it.len }
             TransferStream.notifications(header, served.bytes, client.mtu)
         }
         val job = scope.launch {

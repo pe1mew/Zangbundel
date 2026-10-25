@@ -185,26 +185,27 @@ class Carousel(
     // ---- burst (7.4 rule 4) ----
 
     /**
-     * One pass of the changed documents over the legacy sets: the state record on Set S first, then
-     * every other changed frame to the set with the fewest frames queued (Set S first on a tie), so
-     * that all sets finish the pass together.
+     * One pass of the changed documents over the legacy sets: the state record's source frames on Set
+     * S first, its repair frames next, then every other changed frame, each to the set with the fewest
+     * frames queued (Set S first on a tie), so that all sets finish the pass together.
      */
     private fun sharedLegacyPass(changed: Set<Int>): Map<Lane, List<Frame>> {
         val legacyLanes = lanes.filter { it != Lane.Extended }
         val assigned = legacyLanes.associateWith { ArrayList<Frame>() }
         val state = if (DocumentType.STATE in changed) docFrames(DocumentType.STATE, ::legacyFrames) else emptyList()
         assigned.getValue(Lane.Small) += state.filter { it.isSource }
-        // Source frames of every changed document before any repair frame: without loss a pass ends as
-        // soon as the sources are out; with loss the repair frames that follow fill the gaps (7.3, 7.4).
+        // v0.24 (Q24): the whole state record opens the pass, so a singer missing a few of its frames
+        // completes it at once; then the sources of the other documents before their repair frames (7.3, 7.4).
         val others = framesOf(BURST_ORDER.filter { it in changed }, ::legacyFrames)
-        val rest = others.filter { it.isSource } + state.filter { !it.isSource } + others.filter { !it.isSource }
+        val rest = state.filter { !it.isSource } + others.filter { it.isSource } + others.filter { !it.isSource }
         for (frame in rest) assigned.getValue(legacyLanes.minBy { assigned.getValue(it).size }) += frame
         return assigned
     }
 
     private fun extendedPass(changed: Set<Int>): List<Frame> {
-        val frames = framesOf(EXTENDED_ORDER.filter { it in changed }, ::extendedFrames)
-        return frames.filter { it.isSource } + frames.filter { !it.isSource }
+        val state = if (DocumentType.STATE in changed) docFrames(DocumentType.STATE, ::extendedFrames) else emptyList()
+        val others = framesOf(EXTENDED_ORDER.filter { it in changed && it != DocumentType.STATE }, ::extendedFrames)
+        return state + others.filter { it.isSource } + others.filter { !it.isSource }
     }
 
     // ---- framing ----

@@ -24,8 +24,11 @@ class SingerMachine(private val random: Random = Random.Default) {
     sealed interface Event {
         val now: Long
         data class DiscoveryStarted(override val now: Long) : Event
-        /** A beacon (6.1) of any gathering while discovering, or of the joined one afterwards. */
-        data class BeaconSeen(override val now: Long, val gid: GatheringId, val seq: Int, val ended: Boolean, val busy: Boolean) : Event
+        /**
+         * A beacon (6.1) of any gathering while discovering, or of the joined one afterwards. [broadcast]
+         * false is `BCAST` = 0: degraded mode (7.8), where everything comes over GATT.
+         */
+        data class BeaconSeen(override val now: Long, val gid: GatheringId, val seq: Int, val ended: Boolean, val busy: Boolean, val broadcast: Boolean = true) : Event
         /** The user picked a gathering; [pk] when it came from the join QR code (6.5), which pins it at once. */
         data class Selected(override val now: Long, val gid: GatheringId, val carrier: Carrier, val pk: ByteArray? = null) : Event
         /** Info collected and `SHA-256(pk)[0..5] == gid` checked (9.2). */
@@ -47,6 +50,8 @@ class SingerMachine(private val random: Random = Random.Default) {
          */
         data class FrameProgress(override val now: Long, val doc: Int, val dv: Int, val have: Int, val needed: Int) : Event
         data class DocumentComplete(override val now: Long, val doc: Int, val dv: Int) : Event
+        /** The engine fell back to another carrier (7.1, v0.23); the repair rule's limit follows it. */
+        data class CarrierChanged(override val now: Long, val carrier: Carrier) : Event
         data class JoinAnswered(override val now: Long, val result: Int) : Event
         /** The user entered the join code again after result 1. */
         data class CodeEntered(override val now: Long) : Event
@@ -93,6 +98,7 @@ class SingerMachine(private val random: Random = Random.Default) {
     private var lastHeard = 0L
     private var lastSeq: Int? = null
     private var busy = false
+    private var noBroadcast = false
     private var songIsLocal = false
     private var stateSeen = false
     private var registerAsked = false
@@ -125,6 +131,7 @@ class SingerMachine(private val random: Random = Random.Default) {
             is Event.StateApplied -> applied(event, fx)
             is Event.FrameProgress -> if (inGathering) progress(event)
             is Event.DocumentComplete -> if (inGathering) { heard(event.now); collecting.remove(event.doc to event.dv) }
+            is Event.CarrierChanged -> carrier = event.carrier
             is Event.JoinAnswered -> if (inGathering && registerAsked) joinAnswered(event, fx)
             is Event.CodeEntered -> if (state == SingerState.REGISTERING) fx += register()
             is Event.ConnectionFailed -> connectionFailed(event)
@@ -150,6 +157,7 @@ class SingerMachine(private val random: Random = Random.Default) {
         if (!inGathering || e.gid != gid) return
         if (e.ended) { end(fx); return }
         busy = e.busy
+        noBroadcast = !e.broadcast
         if (state == SingerState.RECONNECTING) { state = if (registered || stateSeen) SingerState.LISTENING else SingerState.REGISTERING; fx += Effect.ShowReconnected }
         heard(e.now)
         if (lastSeq != null && e.seq != lastSeq) {
@@ -207,11 +215,12 @@ class SingerMachine(private val random: Random = Random.Default) {
     }
 
     /**
-     * 7.6 (v0.21): repair when nothing new has arrived for [NO_PROGRESS_MS], or when, from the rate of
-     * new distinct frames over the last [RATE_WINDOW_MS], `k` will not be reached within the carrier's
-     * limit; the estimate is first made [RATE_WINDOW_MS] after the first frame.
+     * 7.6: repair when nothing new has arrived for [NO_PROGRESS_MS], or when, from the rate of new
+     * distinct frames over the last [RATE_WINDOW_MS], `k` will not be reached within [DEADLINE_MS] of
+     * the group's start (v0.24, Q26); the estimate is first made [RATE_WINDOW_MS] after the start.
      */
     private fun repairDue(c: Collecting, now: Long): Boolean {
+        if (noBroadcast) return true                              // 7.8: nothing will come by broadcast
         if (now - c.lastNew >= NO_PROGRESS_MS) return true
         val needed = c.needed ?: return false
         if (now - c.since < RATE_WINDOW_MS) return false
@@ -220,10 +229,8 @@ class SingerMachine(private val random: Random = Random.Default) {
         val rate = (c.have - h0).toDouble() / span                // frames per millisecond
         if (rate <= 0.0) return false                              // covered by NO_PROGRESS_MS
         val etaMs = (needed - c.have) / rate
-        return etaMs > etaLimitMs()
+        return (now - c.since) + etaMs > DEADLINE_MS
     }
-
-    private fun etaLimitMs(): Long = if (carrier == Carrier.EXTENDED) EXTENDED_ETA_LIMIT_MS else LEGACY_ETA_LIMIT_MS
 
     private fun joinAnswered(e: Event.JoinAnswered, fx: MutableList<Effect>) {
         heard(e.now)
@@ -278,7 +285,9 @@ class SingerMachine(private val random: Random = Random.Default) {
             if (now >= at && !registered && (stateSeen || state == SingerState.REGISTERING)) { registrationRetryAt = null; fx += register() }
         }
         // 10.2: Info not collected within 1.5 s: read it, and the state, on the registration connection.
-        if (state == SingerState.REGISTERING && !registerAsked && !stateSeen && registrationRetryAt == null && now - selectedAt >= INFO_WAIT_MS) {
+        if (state == SingerState.REGISTERING && !registerAsked && !stateSeen && registrationRetryAt == null &&
+            (noBroadcast || now - selectedAt >= INFO_WAIT_MS)
+        ) {
             fx += register()
         }
         when (state) {
@@ -325,7 +334,7 @@ class SingerMachine(private val random: Random = Random.Default) {
 
     private fun clear() {
         gid = null; pinnedPk = null; registered = false; registerAsked = false; stateSeen = false
-        lastSeq = null; songIsLocal = false; busy = false
+        lastSeq = null; songIsLocal = false; busy = false; noBroadcast = false
         registrationRetryAt = null; repairRetryAt = null; backoffMs = BACKOFF_START_MS
         collecting.clear(); repairing.clear()
     }
@@ -354,8 +363,7 @@ class SingerMachine(private val random: Random = Random.Default) {
         const val NO_PROGRESS_MS = 3_000L
         /** 7.6 (v0.21): the window over which a singer measures its rate of new distinct frames. */
         const val RATE_WINDOW_MS = 2_000L
-        /** 7.6 (v0.21): repair when `k` is not expected within this long, by carrier. */
-        const val LEGACY_ETA_LIMIT_MS = 10_000L
-        const val EXTENDED_ETA_LIMIT_MS = 4_000L
+        /** 7.6 (v0.24, Q26): repair when `k` is not expected within this long of the group's start, on either carrier (NFR-PERF-01). */
+        const val DEADLINE_MS = 5_000L
     }
 }

@@ -6,8 +6,9 @@ import nl.pe1mew.zangbundel.core.protocol.payload.PayloadException
 import nl.pe1mew.zangbundel.core.protocol.payload.TransferHeader
 
 /**
- * The Data notifications of a transfer (ble-protocol 9.7): one HEADER, DATA chunks of the requested
- * ranges concatenated in order, END with the chunk count, or ERROR ending the transfer.
+ * The Data notifications of a transfer (ble-protocol 9.7): the HEADER, in as many `0x01`
+ * notifications as the MTU needs (v0.23), DATA chunks of the requested ranges concatenated in
+ * order, END with the chunk count, or ERROR ending the transfer.
  */
 object TransferStream {
     const val DATA: Byte = 0x02
@@ -24,13 +25,17 @@ object TransferStream {
         return minOf(mtu - 6, MAX_VALUE - 3)
     }
 
-    /** Every notification of one transfer: HEADER, DATA chunks, END (9.7). [ranges] are clamped already. */
+    /** Every notification of one transfer: HEADER parts, DATA chunks, END (9.7). [ranges] are clamped already. */
     fun notifications(header: TransferHeader, stream: ByteArray, mtu: Int): List<ByteArray> {
         val bytes = concatenate(stream, header.ranges)
         val size = chunkSize(mtu)
         val chunks = (bytes.indices step size).map { bytes.copyOfRange(it, minOf(it + size, bytes.size)) }
         require(chunks.size <= 0xFFFF) { "too many chunks for a u16 index" }
-        return listOf(header.encode()) +
+        // v0.23 (Q22): the HEADER's CBOR in parts of MTU − 4, at most 511 bytes, each behind the type byte.
+        val cbor = header.encode().let { it.copyOfRange(1, it.size) }
+        val part = minOf(mtu - 4, MAX_VALUE - 1)
+        val headerParts = (cbor.indices step part).map { byteArrayOf(TransferHeader.TYPE) + cbor.copyOfRange(it, minOf(it + part, cbor.size)) }
+        return headerParts +
             chunks.mapIndexed { i, c -> byteArrayOf(DATA, (i ushr 8).toByte(), i.toByte()) + c } +
             byteArrayOf(END, (chunks.size ushr 8).toByte(), chunks.size.toByte())
     }
@@ -59,6 +64,7 @@ object TransferStream {
         var failure: String? = null
             private set
         private var expected = 0
+        private val headerBytes = java.io.ByteArrayOutputStream()
         private var next = 0
         private var buffer = ByteArray(0)
         private var filled = 0
@@ -69,15 +75,18 @@ object TransferStream {
             if (notification.isEmpty()) return fail("empty notification")
             when (notification[0]) {
                 TransferHeader.TYPE -> {
-                    if (header != null) return fail("second HEADER")
-                    val h = try { TransferHeader.decode(notification) } catch (e: PayloadException) { return fail("HEADER: ${e.message}") }
+                    if (header != null) return fail("HEADER part after the HEADER was complete")
+                    headerBytes.write(notification, 1, notification.size - 1)
+                    if (headerBytes.size() > MAX_HEADER_BYTES) return fail("HEADER over $MAX_HEADER_BYTES bytes")
+                    // Parts are appended until the CBOR map decodes (v0.23); a definite-length map never decodes early.
+                    val h = try { TransferHeader.decode(byteArrayOf(TransferHeader.TYPE) + headerBytes.toByteArray()) } catch (e: PayloadException) { return false }
                     expected = h.ranges.sumOf { it.len }
                     if (expected > maxBytes) return fail("HEADER announces $expected bytes")
                     header = h
                     buffer = ByteArray(expected)
                 }
                 DATA -> {
-                    if (header == null || notification.size < 3) return fail("DATA before HEADER or too short")
+                    if (header == null || notification.size < 3) return fail("DATA before a complete HEADER, or too short")
                     val index = ((notification[1].toInt() and 0xFF) shl 8) or (notification[2].toInt() and 0xFF)
                     val n = notification.size - 3
                     if (index != next) return fail("DATA $index where $next was due")
@@ -87,7 +96,7 @@ object TransferStream {
                     next++
                 }
                 END -> {
-                    if (header == null || notification.size != 3) return fail("END before HEADER or malformed")
+                    if (header == null || notification.size != 3) return fail("END before a complete HEADER, or malformed")
                     val count = ((notification[1].toInt() and 0xFF) shl 8) or (notification[2].toInt() and 0xFF)
                     if (count != next || filled != expected) return fail("END says $count chunks, $next came with $filled of $expected bytes")
                     done = true
@@ -119,6 +128,8 @@ object TransferStream {
     }
 
     const val MIN_MTU = 23
+    /** A HEADER with 32 ranges of the largest offsets is under 300 bytes; more is not a HEADER. */
+    const val MAX_HEADER_BYTES = 512
     /** The largest attribute value (Bluetooth Core, ATT): no notification is longer. */
     const val MAX_VALUE = 512
     private const val MALFORMED = 0x83

@@ -18,13 +18,15 @@ import kotlin.random.Random
  * virtual device, all sharing a [SimulatedAir]. [reception] overrides the air's loss for what this
  * device hears, so one test can mix a phone that hears 13 % with one that hears everything;
  * [extendedReception] does the same for extended advertisements alone (D-05 runs 12–16: a leader
- * whose extended set is hardly heard).
+ * whose extended set is hardly heard), [dataReception] for data frames of both carriers, beacons
+ * excluded.
  */
 class SimulatedTransport(
     private val air: SimulatedAir,
     override val capabilities: Transport.Capabilities = DEFAULT_CAPABILITIES,
     var reception: Double? = null,
     var extendedReception: Double? = null,
+    var dataReception: Double? = null,
 ) : Transport {
     companion object {
         /** A legacy-only phone. */
@@ -55,16 +57,18 @@ class SimulatedTransport(
 /**
  * The shared medium between simulated transports, in virtual time when [scope] runs under
  * `runTest`. Every open advertising set sends its current payload every [intervalMs]; each scanning
- * device hears it with probability 1 − loss. GATT connections go straight to the server's handler
- * after [latencyMs]; at most [connectionSlots] are open per server, the stack's own limit, beyond
- * which a connection fails as Android's status 133 does. Notifications take [notificationMs] each.
+ * device hears it with probability 1 − loss. A GATT connection takes [connectMs] (connect, MTU,
+ * discovery), every read or write [latencyMs], every notification [notificationMs]: defaults from
+ * the phones, where a repair connection took 0.5–1.7 s (D-05 run 17). At most [connectionSlots] are
+ * open per server, the stack's own limit, beyond which a connection fails as status 133 does.
  */
 class SimulatedAir(
     private val scope: CoroutineScope,
     val frameLoss: Double = 0.0,
     val connectionSlots: Int = 7,
-    val latencyMs: Long = 20L,
-    val notificationMs: Long = 8L,
+    val connectMs: Long = 600L,
+    val latencyMs: Long = 30L,
+    val notificationMs: Long = 10L,
     val mtu: Int = 185,
     val intervalMs: Long = 100L,
     private val random: Random = Random(20261025),
@@ -127,8 +131,8 @@ class SimulatedAir(
                 to.results.tryEmit(Transport.ScanResult(from.address, payload.copyOf(), null, beacon, -50))
             }
             deliver(s.beacon, true)
-            s.legacy.forEach { deliver(it, false) }
-            if (to.capabilities.extendedAdvertising) deliver(s.extended, false, to.extendedReception ?: hears)
+            s.legacy.forEach { deliver(it, false, to.dataReception ?: hears) }
+            if (to.capabilities.extendedAdvertising) deliver(s.extended, false, to.extendedReception ?: to.dataReception ?: hears)
         }
     }
 
@@ -141,7 +145,7 @@ class SimulatedAir(
     fun stopServer(who: SimulatedTransport) { servers.remove(who) }
 
     suspend fun connect(from: SimulatedTransport, address: Transport.DeviceAddress): Transport.Connection {
-        delay(latencyMs)
+        delay(connectMs)
         val server = byAddress(address) ?: throw Transport.GattException(Transport.CONNECTION_FAILED, "no such device")
         val handler = servers[server] ?: throw Transport.GattException(Transport.CONNECTION_FAILED, "no GATT server")
         if ((open[server] ?: 0) >= connectionSlots) throw Transport.GattException(Transport.CONNECTION_FAILED, "status 133: no slot")

@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import nl.pe1mew.zangbundel.core.protocol.Transport
+import nl.pe1mew.zangbundel.core.protocol.frame.Carrier
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.testing.JvmSodiumCrypto
@@ -31,6 +32,7 @@ class SingerEngineTest {
         extendedSingers: Boolean = false,
         leaderExtended: Boolean = false,
         extendedReception: Double? = null,
+        dataReception: Double? = null,
     ): Pair<LeaderSession, List<Singer>> {
         val air = SimulatedAir(backgroundScope)
         val clock = { testScheduler.currentTime }
@@ -38,7 +40,7 @@ class SingerEngineTest {
         val leader = LeaderSession(SimulatedTransport(air, if (leaderExtended) ext else SimulatedTransport.DEFAULT_CAPABILITIES), crypto, backgroundScope, clock, "Testvuur", random = Random(9))
         leader.start(song(1))
         val singers = receptions.mapIndexed { i, r ->
-            val t = SimulatedTransport(air, if (extendedSingers) ext else SimulatedTransport.DEFAULT_CAPABILITIES, reception = r, extendedReception = extendedReception)
+            val t = SimulatedTransport(air, if (extendedSingers) ext else SimulatedTransport.DEFAULT_CAPABILITIES, reception = r, extendedReception = extendedReception, dataReception = dataReception)
             val engine = SingerEngine(t, crypto, backgroundScope, clock, { it.name == "Testvuur" }, random = Random(100 + i))
             val events = ArrayList<SingerEngine.Event>()
             backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { engine.events.collect { events += it } }
@@ -62,16 +64,17 @@ class SingerEngineTest {
     }
 
     @Test
-    fun `at full reception the singer registers once and needs no repair`() = runTest {
+    fun `at full reception the singer registers once and has each push within 5 s`() = runTest {
         val (leader, singers) = gathering(listOf(1.0))
         testScheduler.advanceTimeBy(20_000)
         val s = singers.single()
         assertEquals(listOf(JoinResponse.ACCEPTED), s.events.filterIsInstance<SingerEngine.Event.Joined>().map { it.result })
         assertEquals(1, leader.service.singerCount)
         val t = pushAndTime(leader, singers, 2).single()!!
-        println("full reception, 3 legacy sets: song after $t ms")
-        assertTrue(t < 6_000, "$t ms")
-        assertTrue(s.events.none { it is SingerEngine.Event.Repaired })
+        println("full reception, 3 legacy sets: song after $t ms, repairs ${s.events.count { it is SingerEngine.Event.Repaired }}")
+        // v0.24: the whole state opens the burst, so a 2 kB song by broadcast would take about 5.7 s on
+        // three legacy sets; the 5 s deadline of 7.6 sends even this singer to GATT for it.
+        assertTrue(t < 5_000, "$t ms")
         assertContentEquals(song(2), s.events.filterIsInstance<SingerEngine.Event.Delivered>().last { it.doc == DocumentType.SONG }.bytes)
     }
 
@@ -106,19 +109,40 @@ class SingerEngineTest {
         testScheduler.advanceTimeBy(20_000)
         val t = pushAndTime(leader, singers, 2).single()
         println("extended singer, legacy-only leader: song after $t ms")
-        assertTrue(t != null && t < 6_000, "$t")
-        assertTrue(singers.single().events.none { it is SingerEngine.Event.Repaired })
+        assertTrue(t != null && t < 5_000, "$t")
+        assertEquals(Carrier.LEGACY, singers.single().engine.carrier)
     }
 
     @Test
-    fun `a leader whose extended set is not heard, as the A52's, the extended singer gets every push by repair`() = runTest {
+    fun `a leader whose extended set is not heard, as the A52's, the extended singer falls back to legacy after 3 s`() = runTest {
         val (leader, singers) = gathering(listOf(1.0), extendedSingers = true, leaderExtended = true, extendedReception = 0.0)
         testScheduler.advanceTimeBy(30_000)
         assertEquals(1, leader.service.singerCount)
+        assertEquals(Carrier.LEGACY, singers.single().engine.carrier)
         val times = (2..4).map { pushAndTime(leader, singers, it, limitMs = 30_000).single() }
-        println("extended set not heard, with repair: $times ms")
-        assertTrue(times.all { it != null && it < 8_000 }, "$times")
-        assertTrue(singers.single().events.filterIsInstance<SingerEngine.Event.Delivered>().filter { it.doc == DocumentType.SONG }.all { it.viaRepair })
+        println("extended set not heard, after the fallback: $times ms")
+        assertTrue(times.all { it != null && it < 5_000 }, "$times")
+    }
+
+    @Test
+    fun `an extended singer that hears the extended set stays on it`() = runTest {
+        val (_, singers) = gathering(listOf(1.0), extendedSingers = true, leaderExtended = true)
+        testScheduler.advanceTimeBy(10_000)
+        assertEquals(Carrier.EXTENDED, singers.single().engine.carrier)
+    }
+
+    @Test
+    fun `a singer that hears beacons but no frames gets each push on one repair connection`() = runTest {
+        val (leader, singers) = gathering(listOf(1.0), dataReception = 0.0)
+        testScheduler.advanceTimeBy(30_000)
+        assertEquals(1, leader.service.singerCount)
+        val s = singers.single()
+        assertTrue(s.events.filterIsInstance<SingerEngine.Event.Delivered>().any { it.doc == DocumentType.SONG }, "the first song, on the registration connection")
+        val before = s.events.count { it is SingerEngine.Event.Repaired }
+        val times = (2..5).map { pushAndTime(leader, singers, it, limitMs = 30_000).single() }
+        println("no frames heard, state and song on one connection: $times ms")
+        assertTrue(times.all { it != null && it < 6_000 }, "$times")
+        assertEquals(4, s.events.count { it is SingerEngine.Event.Repaired } - before, "one repair connection per push")
     }
 
     @Test

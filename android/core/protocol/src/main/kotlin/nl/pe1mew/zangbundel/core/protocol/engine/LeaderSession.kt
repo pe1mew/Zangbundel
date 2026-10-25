@@ -45,6 +45,7 @@ class LeaderSession(
     val name: String,
     private val extendedOnly: Boolean = false,
     random: Random = Random.Default,
+    maxSingers: Int = LeaderGattService.DEFAULT_MAX_SINGERS,
 ) {
     private val signing = crypto.generateSigningKeyPair()
     val gid: GatheringId = gatheringIdOf(signing.publicKey, crypto)
@@ -60,7 +61,7 @@ class LeaderSession(
     private var carousel: Carousel? = null
     private var loop: Job? = null
 
-    val service = LeaderGattService(gid, ek, crypto, scope, clock, onBusyChanged = { b -> scope.launch { busyChanged(b) } })
+    val service = LeaderGattService(gid, ek, crypto, scope, clock, maxSingers = maxSingers, onBusyChanged = { b -> scope.launch { busyChanged(b) } })
 
     var legacySets: Int = 0
         private set

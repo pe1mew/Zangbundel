@@ -26,9 +26,7 @@ class TransferStreamTest {
         val ranges = listOf(ByteRange(16, 16), ByteRange(480, 33), ByteRange(1984, 16))
         for (mtu in listOf(23, 185, 517)) {
             val ns = TransferStream.notifications(header(ranges), stream, mtu)
-            assertTrue(ns.drop(1).all { it.size <= minOf(mtu - 3, 512) }, "no DATA or END over MTU − 3 or 512 bytes")
-            // The HEADER fits from MTU 185; at MTU 23 it does not (ble-protocol Q22, open).
-            if (mtu >= 185) assertTrue(ns[0].size <= mtu - 3, "HEADER of ${ns[0].size} bytes at MTU $mtu")
+            assertTrue(ns.all { it.size <= minOf(mtu - 3, 512) }, "no notification over MTU − 3 or 512 bytes")
             val got = receive(ns).result()!!
             assertEquals(ranges, got.map { it.first })
             got.forEach { (r, b) -> assertContentEquals(stream.copyOfRange(r.off, r.off + r.len), b) }
@@ -83,5 +81,24 @@ class TransferStreamTest {
             }
             r.result()
         }
+    }
+
+    @Test
+    fun `at MTU 23 a HEADER with 32 ranges spans notifications and still decodes`() {
+        val ranges = List(32) { ByteRange(it * 60, 20) }
+        val ns = TransferStream.notifications(header(ranges), stream, 23)
+        val parts = ns.takeWhile { it[0] == 0x01.toByte() }
+        assertTrue(parts.size > 5, "${parts.size} HEADER parts")
+        assertTrue(ns.all { it.size <= 20 })
+        assertEquals(ranges, receive(ns).result()!!.map { it.first })
+    }
+
+    @Test
+    fun `DATA before the HEADER is complete fails the transfer`() {
+        val ns = TransferStream.notifications(header(listOf(ByteRange(0, 100))), stream, 23)
+        val r = TransferStream.Receiver(64 * 1024)
+        r.accept(ns[0])
+        assertTrue(r.accept(ns.first { it[0] == TransferStream.DATA }))
+        assertEquals(0x83, r.errorCode)
     }
 }

@@ -210,6 +210,7 @@ class BleTestRunner(private val transport: AndroidTransport, private val crypto:
             engine.events.collect { e ->
                 when (e) {
                     is SingerEngine.Event.NewSeq -> { pushSeenAt = e.at; log("listen seq=${e.seq}") }
+                    is SingerEngine.Event.LocalSong -> {}           // the test pushes random bytes; no singer holds them
                     is SingerEngine.Event.Joined -> { joined = "result ${e.result} after ${(e.at - started) / 1000} s"; log("listen joined result=${e.result} ms=${e.at - started} carrier=${engine.carrier} extended_scan=${transport.capabilities.extendedAdvertising}") }
                     is SingerEngine.Event.Repaired -> {
                         repairs++

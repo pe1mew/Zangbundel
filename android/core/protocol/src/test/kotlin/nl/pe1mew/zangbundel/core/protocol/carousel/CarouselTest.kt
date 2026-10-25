@@ -45,7 +45,7 @@ class CarouselTest {
     }
 
     @Test
-    fun `a burst sends the changed documents three times, state sources first, shared over the legacy sets`() {
+    fun `a burst sends the changed documents three times, the whole state first, shared over the legacy sets`() {
         val c = Carousel(gid16, 3, extended = false)
         c.publish(documents(seq = 1))
         repeat(1000) { for (lane in c.lanes) c.next(lane) }
@@ -53,9 +53,11 @@ class CarouselTest {
         c.publish(next)                                   // state (45 frames) and message (15) changed: 60 per pass
         assertEquals(listOf(60, 60, 60), listOf(Lane.Small, Lane.Large(1), Lane.Large(2)).map { c.burstRemaining(it) })
         assertTrue(c.take(Lane.Small, 15).all { it.doc == STATE && it.dv == 2 && it.isSource })
-        val pass = c.take(Lane.Small, 5) + c.take(Lane.Large(1), 20) + c.take(Lane.Large(2), 20)
-        assertEquals(30 + 15, pass.size)                   // the rest of one pass: state repairs and the message
-        assertEquals(setOf(STATE, MESSAGE), pass.map { it.doc }.toSet())
+        // v0.24: the state's 30 repair frames come next, on the other two sets, before the message.
+        val stateRepairs = c.take(Lane.Large(1), 15) + c.take(Lane.Large(2), 15)
+        assertTrue(stateRepairs.all { it.doc == STATE && !it.isSource })
+        val rest = c.take(Lane.Small, 5) + c.take(Lane.Large(1), 5) + c.take(Lane.Large(2), 5)
+        assertTrue(rest.all { it.doc == MESSAGE })
     }
 
     @Test
@@ -154,10 +156,10 @@ class CarouselTest {
 
     @Test
     fun `delivery of a pushed 2 kB song, no loss`() {
-        assertEquals(1_100L, deliveryMs(1, extended = true))   // 2 state + 9 song source frames
-        assertEquals(4_700L, deliveryMs(3, extended = false))  // 15 state + 125 song frames shared over 3 sets
-        assertEquals(7_000L, deliveryMs(2, extended = false))
-        assertEquals(14_000L, deliveryMs(1, extended = false))
+        assertEquals(1_500L, deliveryMs(1, extended = true))   // the whole state (6 frames, v0.24), then 9 song source frames
+        assertEquals(5_700L, deliveryMs(3, extended = false))  // the whole state (45 frames, v0.24) and 125 song frames over 3 sets
+        assertEquals(8_500L, deliveryMs(2, extended = false))
+        assertEquals(17_000L, deliveryMs(1, extended = false))
     }
 
     @Test
