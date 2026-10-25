@@ -144,6 +144,15 @@ class PayloadTest {
     }
 
     @Test
+    fun `the leader clamps ranges at the document end`() {
+        // Q18: cut at the end; a range starting at or past the end is 0x8C.
+        assertEquals(listOf(ByteRange(16, 16), ByteRange(48, 22)), ByteRange.clamp(listOf(ByteRange(16, 16), ByteRange(48, 32)), 70))
+        val e = assertFailsWith<nl.pe1mew.zangbundel.core.protocol.ProtocolError> { ByteRange.clamp(listOf(ByteRange(70, 4)), 70) }
+        assertEquals(0x8C, e.code)
+        assertEquals(listOf(ByteRange(0, 0)), ByteRange.clamp(listOf(ByteRange(0, 16)), 0))
+    }
+
+    @Test
     fun `control commands carry what their op needs`() {
         val cid = byteArrayOf(1, 1, 1, 1)
         val push = ControlCommand(tok, cid, ControlCommand.PUSH_SONG, ref = ref, gid = gid)

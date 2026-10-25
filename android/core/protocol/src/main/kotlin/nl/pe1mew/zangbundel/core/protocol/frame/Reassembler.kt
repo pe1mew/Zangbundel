@@ -76,9 +76,7 @@ class Reassembler(
             return completeOrStored(created)
         }
         if (group.complete) return Result.Duplicate
-        val fits = if (group.total == 1) streamLength <= group.frameSize
-        else streamLength > (group.total - 1) * group.frameSize && streamLength <= group.total * group.frameSize
-        if (!fits || (group.length != null && group.length != streamLength)) return Result.Ignored
+        if (!fitsFrames(group, streamLength) || (group.length != null && group.length != streamLength)) return Result.Ignored
         group.length = streamLength
         val end = offset + bytes.size
         var stored = false
@@ -96,12 +94,15 @@ class Reassembler(
     /**
      * The byte ranges `[offset, length]` still missing for a document, ascending and merged, at most
      * [maxRanges] (9.7 allows 32; the tail is merged into the last range). Null when the document is
-     * unknown, so the caller asks for the whole of it. When the last frame was never received the
-     * document length is unknown, and the last range runs to the end of a full frame.
+     * unknown, so the caller asks for the whole of it. When the last frame was never received, pass
+     * the document's framed length from the verified state manifest (`len`, 9.4) as [knownLength]
+     * (9.7, decided 2026-10-25, Q18); a value that does not fit the frames is ignored, and without
+     * it the last range runs to the end of a full frame, which the leader clamps.
      */
-    fun missingRanges(doc: Int, dv: Int, maxRanges: Int = MAX_REPAIR_RANGES): List<Pair<Int, Int>>? {
+    fun missingRanges(doc: Int, dv: Int, knownLength: Int? = null, maxRanges: Int = MAX_REPAIR_RANGES): List<Pair<Int, Int>>? {
         val group = groups[doc]?.firstOrNull { it.dv == dv } ?: return null
         if (group.complete) return emptyList()
+        if (group.length == null && knownLength != null && fitsFrames(group, knownLength)) group.length = knownLength
         val ranges = ArrayList<IntArray>()
         for (i in 0 until group.total) {
             if (group.received[i]) continue
@@ -124,6 +125,11 @@ class Reassembler(
     fun reset(doc: Int, dv: Int) {
         groups[doc]?.removeAll { it.dv == dv }
     }
+
+    /** Whether a document of [length] bytes is framed as [group] says. */
+    private fun fitsFrames(group: Group, length: Int): Boolean =
+        if (group.total == 1) length in 0..group.frameSize
+        else length > (group.total - 1) * group.frameSize && length <= group.total * group.frameSize
 
     private fun completeOrStored(group: Group): Result {
         if (group.received.cardinality() < group.total) return Result.Stored

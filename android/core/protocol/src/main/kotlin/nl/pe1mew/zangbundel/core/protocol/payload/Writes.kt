@@ -3,6 +3,8 @@ package nl.pe1mew.zangbundel.core.protocol.payload
 
 import nl.pe1mew.zangbundel.core.model.GatheringId
 import nl.pe1mew.zangbundel.core.model.SongRef
+import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
+import nl.pe1mew.zangbundel.core.protocol.ProtocolError
 import nl.pe1mew.zangbundel.core.protocol.cbor.Cbor
 import nl.pe1mew.zangbundel.core.protocol.cbor.CborArray
 import nl.pe1mew.zangbundel.core.protocol.cbor.CborBool
@@ -171,6 +173,20 @@ class RequestWrite(
 /** A byte range `[off, len]` of a framed document (9.7). */
 data class ByteRange(val off: Int, val len: Int) {
     init { require(off >= 0 && len >= 0) { "ranges are unsigned" } }
+
+    companion object {
+        /**
+         * The leader's side of 9.7 (decided 2026-10-25, Q18): every range is cut at the end of the
+         * document; a range that starts at or past the end is refused with `0x8C`. An empty
+         * document answers `[0, 0]` with nothing.
+         */
+        fun clamp(ranges: List<ByteRange>, documentLength: Int): List<ByteRange> = ranges.map { r ->
+            if (r.off >= documentLength && !(r.off == 0 && documentLength == 0)) {
+                throw ProtocolError(ProtocolConstants.ERR_RANGE, "range at ${r.off} starts past the document's $documentLength bytes")
+            }
+            ByteRange(r.off, minOf(r.len, documentLength - r.off))
+        }
+    }
 }
 
 private fun rangesToCbor(ranges: List<ByteRange>) = CborArray(ranges.map { CborArray(it.off.cbor(), it.len.cbor()) })

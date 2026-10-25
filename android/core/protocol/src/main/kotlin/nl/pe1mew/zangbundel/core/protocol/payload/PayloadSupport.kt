@@ -26,8 +26,9 @@ object PayloadLimits {
     /** A framed document: Control op 8 refuses uploads over 64 kB (9.8). */
     const val DOCUMENT_FRAMED = 64 * 1024
     /**
-     * A document after inflating. Not stated by the protocol: a song file may itself be 64 KiB
-     * (song-format 5.5), so its document needs room for the reference and licence next to it.
+     * A document after inflating, 64 KiB + 2 KiB = 67 584 bytes (ble-protocol 7.3, decided
+     * 2026-10-25, Q19): a song file may itself be 64 KiB (song-format 5.5), so its document needs
+     * room for the reference and licence next to it.
      */
     const val DOCUMENT_DECODED = 64 * 1024 + 2048
 }

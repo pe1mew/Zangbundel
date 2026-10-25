@@ -77,22 +77,20 @@ object Sealed {
 
     /**
      * Document 8 for a delegate: the Transfer stream with `enc` = 2 (9.7) is the DEFLATE-compressed
-     * document sealed to the requester's `xk`. Returns the stream and the `dh` for the HEADER. `dh`
-     * is taken over the inflated bytes, as 8.4 says for this document; section 5 defines `dh` over
-     * framed bytes, a conflict recorded as ble-protocol Q20.
+     * document sealed to the requester's `xk`. Returns the stream and the `dh` for the HEADER, taken
+     * over the compressed bytes as for every document (section 5; 8.4 as decided 2026-10-25, Q20).
      */
     fun requestsStream(document: RequestsDocument, xk: ByteArray, crypto: Crypto): Pair<ByteArray, ByteArray> {
-        val bytes = document.encode()
-        val stream = crypto.seal(Deflate.compress(bytes), xk)
-        return stream to DocEntry.hashOf(bytes, crypto)
+        val compressed = Deflate.compress(document.encode())
+        return crypto.seal(compressed, xk) to DocEntry.hashOf(compressed, crypto)
     }
 
     fun openRequestsStream(stream: ByteArray, dh: ByteArray, xk: Crypto.BoxKeyPair, crypto: Crypto): RequestsDocument {
         if (stream.size > PayloadLimits.DOCUMENT_FRAMED + Crypto.SEAL_OVERHEAD_BYTES) throw PayloadException("document 8 stream too large")
         val compressed = crypto.open(stream, xk) ?: throw PayloadException("document 8 cannot be opened")
-        val bytes = Deflate.inflate(compressed, PayloadLimits.DOCUMENT_DECODED)
-        if (!DocEntry.hashOf(bytes, crypto).contentEquals(dh)) throw PayloadException("document 8 does not match dh")
-        return RequestsDocument.decode(bytes)
+        // dh is checked before inflating, so bytes that fail it are never decompressed.
+        if (!DocEntry.hashOf(compressed, crypto).contentEquals(dh)) throw PayloadException("document 8 does not match dh")
+        return RequestsDocument.decode(Deflate.inflate(compressed, PayloadLimits.DOCUMENT_DECODED))
     }
 
     // ---- shared ----

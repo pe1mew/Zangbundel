@@ -121,6 +121,11 @@
 **Root cause**: AGP resolves `com.android.tools.build:aapt2` with a classifier for the host OS; a write pass on this machine records only `-windows.jar`. The Ubuntu runner fetches `-linux.jar`, which has no entry. The same holds for any future artifact with an OS classifier.
 **Fix**: Google Maven publishes `.sha256` sidecars: added the `-linux.jar` and `-osx.jar` entries by hand (origin says so) next to the Windows one in `android/gradle/verification-metadata.xml`. Write mode keeps hand-added entries, so a regeneration does not drop them, but a new AGP version brings a new aapt2 version and needs the two sidecars fetched again. If CI fails verification on an artifact whose name ends in an OS, then fetch its sidecar checksum from the repository and add it; do not loosen verification.
 
+### A failed Python write empties the file it was rewriting (2026-10-25) [RESOLVED]
+**Problem**: An edit script read `StateTest.kt`, built new text, and called `open(p, 'w').write(s)`; the write raised `UnicodeEncodeError` (a lone surrogate from a `\uD83D` escape in the Python string) and left the file with one line.
+**Root cause**: `open(..., 'w')` truncates before `write` runs, so an exception during encoding loses the old content.
+**Fix**: Restored from the last commit with `git show HEAD:<path> > <path>` (read-only). If an edit carries non-ASCII or escape sequences, then use the Edit tool, or encode the text to bytes first and open the file only after that succeeded.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

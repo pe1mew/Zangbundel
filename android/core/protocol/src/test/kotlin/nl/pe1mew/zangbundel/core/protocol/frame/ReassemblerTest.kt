@@ -101,6 +101,18 @@ class ReassemblerTest {
     }
 
     @Test
+    fun `the manifest length ends the last range at the document end`() {
+        val r = legacy()
+        val frames = Framer.legacy(gid16, 3, 1, doc(70))
+        r.accept(frames[0]); r.accept(frames[2])
+        // Q18: the verified state's manifest says len = 70, so the last range stops there.
+        assertEquals(listOf(16 to 16, 48 to 22), r.missingRanges(3, 1, knownLength = 70))
+        val other = legacy()
+        other.accept(frames[0]); other.accept(frames[2])
+        assertEquals(listOf(16 to 16, 48 to 32), other.missingRanges(3, 1, knownLength = 200)) // does not fit 5 frames: ignored
+    }
+
+    @Test
     fun `more than 32 gaps merge into the last range`() {
         val r = legacy()
         val frames = Framer.legacy(gid16, 3, 1, doc(16 * 100))

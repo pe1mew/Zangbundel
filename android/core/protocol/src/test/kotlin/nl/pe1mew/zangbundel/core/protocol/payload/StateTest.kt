@@ -65,30 +65,42 @@ class StateTest {
         assertTrue(signed.encode().size <= PayloadLimits.GATT_VALUE)
     }
 
-    /**
-     * Open point for the protocol: legal values can exceed the 440-byte body limit of 9.4 (558 bytes
-     * here: 64-character ids, a 60-character accented title, five manifest entries, eight
-     * delegates), and 9.4 does not say what the leader leaves out. [SignedState.sign] refuses such a
-     * body. When the protocol settles it, this test changes with it.
-     */
+    private fun worstCase(title: String?, rev: String?, pt: Long?) = StateBody(
+        gid = gid, seq = 0xFFFF, ts = Long.MAX_VALUE, status = 0, flags = 0xFF,
+        cur = SongRef(LibraryId("a".repeat(64)), SongId("b".repeat(64)), ContentHash(ByteArray(16)), rev), title = title,
+        pos = 255, singers = Long.MAX_VALUE,
+        docs = (3..7).associateWith { DocEntry(ByteArray(8) { 0x7F }, Deflate.ENC_DEFLATE, PayloadLimits.DOCUMENT_FRAMED, gatt = true) },
+        rseq = Long.MAX_VALUE, dlg = List(8) { ByteArray(8) }, pt = pt, ek = ek,
+    )
+
     @Test
-    fun `the worst-case body exceeds 440 bytes`() {
-        val docs = (3..7).associateWith { DocEntry(ByteArray(8) { 0x7F }, Deflate.ENC_DEFLATE, PayloadLimits.DOCUMENT_FRAMED, gatt = true) }
-        val longRef = SongRef(LibraryId("a".repeat(64)), SongId("b".repeat(64)), ContentHash(ByteArray(16)), "c".repeat(40))
-        val big = StateBody(
-            gid = gid, seq = 0xFFFF, ts = 100_000_000, status = 0, flags = 0xFF, cur = longRef, title = "é".repeat(60),
-            pos = 255, singers = 100, docs = docs, rseq = 0xFFFF, dlg = List(8) { ByteArray(8) }, pt = 60_000, ek = ek,
-        )
-        assertEquals(558, big.encode().size)
-        assertTrue(big.encode().size > PayloadLimits.STATE_BODY)
+    fun `an oversized body loses title, then rev, then pt, and is signed`() {
+        // 9.4 (Q17, decided 2026-10-25): leave out title, then cur's rev, then pt, as far as needed.
+        val accented = worstCase(title = "é".repeat(60), rev = "c".repeat(40), pt = 60_000)
+        assertTrue(accented.encode().size > PayloadLimits.STATE_BODY)
+        val signed = SignedState.sign(accented, keys.secretKey, crypto)
+        assertEquals(null, signed.body.title)
+        assertTrue(signed.bodyBytes.size <= PayloadLimits.STATE_BODY)
+        assertTrue(signed.encode().size <= PayloadLimits.GATT_VALUE)
+
+        val huge = worstCase(title = "🔥".repeat(60), rev = "r".repeat(500), pt = Long.MAX_VALUE)
+        val fitted = SignedState.sign(huge, keys.secretKey, crypto).body
+        assertEquals(null, fitted.title)
+        assertEquals(null, fitted.cur!!.revision)
+        assertTrue(fitted.encode().size <= PayloadLimits.STATE_BODY)
     }
 
     @Test
-    fun `a body over 440 bytes is not signed`() {
-        val docs = (3..7).associateWith { DocEntry(ByteArray(8), 1, 1000, gatt = true) }
-        val huge = SongRef(LibraryId("a".repeat(64)), SongId("b".repeat(64)), ContentHash(ByteArray(16)), "r".repeat(200))
-        val body = StateBody(gid = gid, seq = 1, ts = 1, status = 0, flags = 0, cur = huge, docs = docs, rseq = 1, ek = ek)
-        assertFailsWith<IllegalArgumentException> { SignedState.sign(body, keys.secretKey, crypto) }
+    fun `with title, rev and pt left out the largest body fits`() {
+        val bare = worstCase(title = null, rev = null, pt = null)
+        // The figure 9.4 quotes for the largest body once the three fields are left out.
+        assertEquals(405, bare.encode().size)
+    }
+
+    @Test
+    fun `a body that fits is signed unchanged`() {
+        val b = body()
+        assertContentEquals(b.encode(), SignedState.sign(b, keys.secretKey, crypto).bodyBytes)
     }
 
     @Test

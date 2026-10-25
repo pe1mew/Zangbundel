@@ -88,6 +88,27 @@ class StateBody(
         require(this.ek.size == FieldSizes.KEY) { "ek must be 32 bytes" }
     }
 
+    /**
+     * The body as the leader signs it (9.4, decided 2026-10-25, Q17): when it exceeds [limit], leave
+     * out `title`, then the library revision `rev` inside `cur`, then `pt`, each only if still needed.
+     * Null when even that does not fit, which the other limits make impossible.
+     */
+    fun fittedTo(limit: Int = PayloadLimits.STATE_BODY): StateBody? {
+        var b = this
+        if (b.encode().size <= limit) return b
+        b = b.with(title = null)
+        if (b.encode().size <= limit) return b
+        b = b.with(cur = b.cur?.copy(revision = null))
+        if (b.encode().size <= limit) return b
+        b = b.with(pt = null)
+        return b.takeIf { it.encode().size <= limit }
+    }
+
+    private fun with(title: String? = this.title, cur: SongRef? = this.cur, pt: Long? = this.pt) = StateBody(
+        gid = gid, seq = seq, ts = ts, status = status, flags = flags, cur = cur, title = title, pos = pos,
+        singers = singers, docs = docs, rseq = rseq, dlg = dlg, pt = pt, ek = ek,
+    )
+
     fun encode(): ByteArray = Cbor.encode(
         payload(
             1L to gid.cbor(),
@@ -164,11 +185,14 @@ class SignedState private constructor(val body: StateBody, bodyBytes: ByteArray,
     fun supersedes(lastTs: Long?): Boolean = lastTs == null || body.ts > lastTs || body.status == StateBody.STATUS_ENDED
 
     companion object {
-        /** Signs a body with the gathering's Ed25519 secret key. The body must fit 440 bytes. */
+        /**
+         * Signs a body with the gathering's Ed25519 secret key, after fitting it to 440 bytes
+         * ([StateBody.fittedTo]); [SignedState.body] is the body as signed.
+         */
         fun sign(body: StateBody, secretKey: ByteArray, crypto: Crypto): SignedState {
-            val bytes = body.encode()
-            require(bytes.size <= PayloadLimits.STATE_BODY) { "state body of ${bytes.size} bytes exceeds ${PayloadLimits.STATE_BODY}" }
-            return SignedState(body, bytes, crypto.sign(bytes, secretKey))
+            val fitted = requireNotNull(body.fittedTo()) { "state body does not fit ${PayloadLimits.STATE_BODY} bytes" }
+            val bytes = fitted.encode()
+            return SignedState(fitted, bytes, crypto.sign(bytes, secretKey))
         }
 
         /**
