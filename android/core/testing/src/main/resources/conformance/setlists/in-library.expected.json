@@ -1,0 +1,14 @@
+{
+  "library": "zangbundel-voorbeeld",
+  "accepted": true,
+  "codes": [
+    "I004",
+    "SL101"
+  ],
+  "sha256": "fa0f9d8bec337e3e1bff7de1a74e3d1b40e5da85e7b66bd389051176bd863b52",
+  "resolution": [
+    "resolved zangbundel-voorbeeld/vuur-in-de-nacht",
+    "unresolved SONG_UNKNOWN",
+    "resolved andere-bundel/kanon"
+  ]
+}

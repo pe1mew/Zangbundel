@@ -123,6 +123,8 @@ object ArchiveImport {
             } else {
                 report += ReportEntry(ReportLevel.WARNING, "A102", "")
                 entries.keys.filter { it.startsWith(NOTATION) && entries.getValue(it).size <= NOTATION_CAP }.forEach { files[it] = reader.read(entries.getValue(it)) }
+                entries.keys.filter { it.startsWith(LibraryImport.SETLISTS) && it.endsWith(SetlistParser.EXTENSION) && entries.getValue(it).size <= Limits.SONG_FILE_MAX_BYTES }
+                    .forEach { files[it] = reader.read(entries.getValue(it)) }
             }
 
             val checked = LibraryImport.check(files, appVersion, url, installed)
@@ -144,7 +146,8 @@ object ArchiveImport {
         out[LibraryFileParser.PATH] = files.getValue(LibraryFileParser.PATH)
         out[library.license.file] = files.getValue(library.license.file)
         checked.songs.forEach { out[it.path] = it.song.canonical.toByteArray(Charsets.UTF_8) }
-        files.filterKeys { !it.startsWith(LibraryImport.SONGS) && it !in out }.forEach { (k, v) -> out[k] = v }
+        checked.setlists.forEach { out[it.path] = it.setlist.canonical.toByteArray(Charsets.UTF_8) }
+        files.filterKeys { !it.startsWith(LibraryImport.SONGS) && !it.startsWith(LibraryImport.SETLISTS) && it !in out }.forEach { (k, v) -> out[k] = v }
         return out
     }
 

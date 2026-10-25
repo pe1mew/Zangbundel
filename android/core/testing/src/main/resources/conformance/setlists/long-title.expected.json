@@ -1,0 +1,11 @@
+{
+  "library": null,
+  "accepted": true,
+  "codes": [
+    "SL104"
+  ],
+  "sha256": "fbde05b34ad0e9f5fb418626f8741c095fdeb44a38c57db0a5ec3ac4387db702",
+  "resolution": [
+    "resolved zangbundel-voorbeeld/vader-jacob"
+  ]
+}

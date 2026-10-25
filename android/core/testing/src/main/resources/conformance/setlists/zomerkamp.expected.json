@@ -1,0 +1,15 @@
+{
+  "library": null,
+  "accepted": true,
+  "codes": [
+    "I005"
+  ],
+  "sha256": "c9cbf0b031639201779a8b4094ddc088eb90f1010370e4ea35cf35a4f3c1452e",
+  "resolution": [
+    "unresolved LIBRARY_NOT_INSTALLED",
+    "unresolved LIBRARY_NOT_INSTALLED",
+    "unresolved LIBRARY_NOT_INSTALLED",
+    "resolved zangbundel-voorbeeld/vuur-in-de-nacht",
+    "unresolved NO_SINGLE_TITLE_MATCH 2"
+  ]
+}

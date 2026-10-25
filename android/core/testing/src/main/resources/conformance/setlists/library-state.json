@@ -1,0 +1,23 @@
+{
+  "zangbundel-voorbeeld": [
+    {
+      "id": "vuur-in-de-nacht",
+      "title": "Vuur in de nacht"
+    },
+    {
+      "id": "vader-jacob",
+      "title": "Vader Jacob"
+    }
+  ],
+  "andere-bundel": [
+    {
+      "id": "vader-jacob-canon",
+      "title": "Vader Jacob"
+    },
+    {
+      "id": "kanon",
+      "title": "Kânon",
+      "sorttitle": "Kanon"
+    }
+  ]
+}
