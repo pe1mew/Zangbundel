@@ -13,6 +13,8 @@
     <string name="bletest_title">Two-phone test</string>
     <string name="bletest_explanation">One phone leads: it sends a beacon named Testvuur and, every 60 seconds, a new test document of random bytes over the broadcast carousel. The other phone listens and measures how long each document takes to arrive. Nothing is stored.</string>
     <string name="bletest_lead">Lead</string>
+    <string name="bletest_lead_extended_only">Lead, extended set only</string>
+    <string name="bletest_probe_extended">Probe the extended set</string>
     <string name="bletest_listen">Listen</string>
     <string name="bletest_stop">Stop</string>
     <string name="bletest_location_off">Android needs location switched on to scan for Bluetooth on this phone. Switch it on and try again; the test reads no location.</string>

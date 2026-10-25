@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicInteger
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import java.util.UUID
@@ -51,6 +52,13 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
             set = advertisingSet
             started.complete(status)
         }
+        val dataSet = AtomicInteger()
+        val dataFailed = AtomicInteger()
+        @Volatile var lastDataStatus: Int? = null
+        override fun onAdvertisingDataSet(advertisingSet: AdvertisingSet?, status: Int) {
+            if (status == ADVERTISE_SUCCESS) dataSet.incrementAndGet() else dataFailed.incrementAndGet()
+            lastDataStatus = status
+        }
     }
 
     /**
@@ -59,6 +67,17 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
      * only with its scan response. Takes effect for sets opened afterwards.
      */
     @Volatile var scannableDataSets: Boolean = true
+
+    /**
+     * Whether the extended set uses the 2M secondary PHY where supported, as ble-protocol 15.1 says.
+     * Off (1M) is a diagnostic for phones whose extended set is not heard (D-05 run 14). Takes effect
+     * for an extended set opened afterwards.
+     */
+    @Volatile var extendedSecondaryPhy2M: Boolean = true
+
+    /** Diagnostic: data updates of the extended set the stack confirmed, refused, and the last status. */
+    fun extendedDataResults(): Triple<Int, Int, Int?>? =
+        extendedSet?.let { Triple(it.dataSet.get(), it.dataFailed.get(), it.lastDataStatus) }
 
     private var beaconSet: SetHandle? = null
     private val legacySets = ArrayList<SetHandle>()
@@ -143,7 +162,7 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
     private fun extendedParameters() = AdvertisingSetParameters.Builder()
         .setLegacyMode(false).setConnectable(false).setScannable(false)
         .setPrimaryPhy(BluetoothDevice.PHY_LE_1M)
-        .setSecondaryPhy(if (adapter.isLe2MPhySupported) BluetoothDevice.PHY_LE_2M else BluetoothDevice.PHY_LE_1M)
+        .setSecondaryPhy(if (extendedSecondaryPhy2M && adapter.isLe2MPhySupported) BluetoothDevice.PHY_LE_2M else BluetoothDevice.PHY_LE_1M)
         .setInterval(AdvertisingSetParameters.INTERVAL_LOW)
         .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
         .build()

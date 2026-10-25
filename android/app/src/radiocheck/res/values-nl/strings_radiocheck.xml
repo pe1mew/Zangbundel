@@ -13,6 +13,8 @@
     <string name="bletest_title">Test met twee telefoons</string>
     <string name="bletest_explanation">Eén telefoon leidt: die zendt een baken met de naam Testvuur en elke 60 seconden een nieuw testdocument van willekeurige bytes over de carrousel. De andere telefoon luistert en meet hoe lang elk document onderweg is. Er wordt niets bewaard.</string>
     <string name="bletest_lead">Leiden</string>
+    <string name="bletest_lead_extended_only">Leiden, alleen extended set</string>
+    <string name="bletest_probe_extended">Extended set onderzoeken</string>
     <string name="bletest_listen">Luisteren</string>
     <string name="bletest_stop">Stoppen</string>
     <string name="bletest_location_off">Android heeft locatie nodig om op deze telefoon naar Bluetooth te zoeken. Zet locatie aan en probeer opnieuw; de test leest geen locatie.</string>
