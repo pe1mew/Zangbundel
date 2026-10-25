@@ -8,6 +8,8 @@ object Limits {
     const val TITLE_MAX_CHARS = 60
     const val LYRIC_LINE_MAX_CHARS = 120
     const val CANONICAL_LINES_MAX = 254
+    /** `zangbundel.json` is a few hundred bytes; 64 KiB bounds it before parsing (assessment SP-09). */
+    const val LIBRARY_FILE_MAX_BYTES = 64 * 1024
     const val ARCHIVE_MAX_BYTES = 64L * 1024 * 1024
     const val ARCHIVE_WARN_BYTES = 16L * 1024 * 1024
     const val ARCHIVE_UNCOMPRESSED_MAX_BYTES = 256L * 1024 * 1024
