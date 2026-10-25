@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.17 (draft) |
+| Document version | 0.18 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -30,6 +30,7 @@
 | 0.15 | 2026-10-25 | Open questions Q17 to Q19, found while implementing the payloads and reassembly in `core/protocol`: the 440-byte state body can be exceeded by legal values (9.4), the end of a repair range for a last frame never seen (9.7), and the size limit of a decoded document (7.3, 9.5). No normative change. |
 | 0.16 | 2026-10-25 | Corrections found while implementing the sealed payloads in `core/protocol`. Control op 8 carries at most **417** bytes of `data` per write, not 432 (8.4, 9.8): in the worst case, chunk 0 with `len` = 65 536, the other keys take 46 bytes, so 432 made a sealed write of 527 bytes against the 512-byte limit the same sentence promises. Error `0x8A` points at 9.8 op 8 instead of a non-existent 9.9. Open question Q20: section 5 and 8.4 disagree over which bytes document 8's `dh` covers. Wire change inside the draft protocol 1.0 (no released implementation), so no major version bump. |
 | 0.17 | 2026-10-25 | Q17 to Q20 decided by the owner. 9.4: a body over 440 bytes loses `title`, then `rev` of `cur`, then `pt`, as far as needed; without them the largest body is 405 bytes. 9.7: singers end the last range at the manifest `len`, and the leader clamps every range at the document end; `0x8C` only for a range starting at or past it (8.3). 7.3: a document inflates to at most 67 584 bytes. 8.4: document 8's `dh` covers the compressed bytes, as section 5 says for every document, and is checked before inflating. Normative changes inside the draft protocol 1.0. |
+| 0.18 | 2026-10-25 | Found while implementing the carousel in `core/protocol`: under rules 1 and 2 of 7.4 Set S carries no song, so with three legacy sets a pushed 2 kB song took 6.3 s, missing the 5 s of NFR-PERF-01, while 7.7 and 12.1 assumed all sets carry it. Decided by the owner: during a burst the legacy sets share the changed documents (rule 4), Set S sending the state first; the normal loop keeps the roles. Simulated without loss: 4.7 s with three sets, 7.0 s with two, 14.0 s with one, 1.1 s on the extended carrier. 7.7 notes the normal-loop pass times; 12.1's one-set figure is 14 s, not 13. Rule 3 no longer says the extended set behaves "as Set S does": Set S inserts one state frame, the extended set the whole record. |
 
 ---
 
@@ -334,8 +335,8 @@ The leader keeps one frame queue per data set and fills them by these rules [FR-
 
 1. **Set S (first legacy data set) – small documents.** Loops continuously: *state*, *info*, *reqstat*, *message*, *download*, state again, … The state record therefore repeats about once per second on a single set.
 2. **Sets D1…D(n−1) – large documents.** Loop: *song*, *setlist*, *song*, … interleaved so that two sets send different frames of the same document (set D1 sends even frames, D2 odd frames). With only one data set, Set S carries everything and inserts a state frame after every 8 document frames.
-3. **Extended set.** Loops all documents 1–7 in order and sends the state record again after every 8 document frames, as Set S does with a single data set. A typical cycle takes about 3 s; the state record recurs about once a second.
-4. **Burst on change.** When `seq` increments, every set restarts its loop at the changed documents and sends each changed document **three complete passes** before resuming the normal loop. The new state record is always first.
+3. **Extended set.** Loops all documents 1–7 in order and sends the whole state record again after every 8 document frames (two frames for a typical record). A typical cycle takes about 3 s; the state record recurs about once a second.
+4. **Burst on change.** When `seq` increments, every set restarts its loop at the changed documents and sends each changed document **three complete passes** before resuming the normal loop. The new state record is always first. On the legacy carrier the data sets **share** the burst, whatever their roles in the normal loop: Set S sends the state record first, and every other changed frame goes to the set with the fewest frames queued, so that all sets finish each pass together. With three sets, a new state record (15 frames) and a 2 kB song (125 frames) take 47 advertising events, 4.7 s.
 5. **Position changes** (`pos`) go only to the beacon; the carousel is not restarted.
 6. **Advertising interval** is 100 ms on all data sets (Android minimum). Each set therefore delivers 10 frames/s; a scan response, when it is received, doubles that for the scanner that asked.
 
@@ -372,7 +373,7 @@ A singer with the current song in its local library never starts a song repair t
 | 3 | 30 | 480 | 0.5 s | 4.2 s |
 | Extended | 10 × 235 B | ~2 350 | 0.2 s (2 frames) | 0.9 s (9 frames) |
 
-Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and three extended frames (0.3 s).
+The song column is for a burst, in which all legacy sets share the frames (7.4 rule 4). In the normal loop Set S carries no song, so one pass takes 6.3 s with three sets and 12.5 s with two; that is the pass time `pt` of 7.6. Scan responses, when received, roughly halve these times for that singer. The figures assume no loss; the three-pass burst covers typical loss at the fire. The state column is for a typical record; a maximum-size record (440-byte body plus signature, 30 legacy frames, 9.4) takes twice as long on the legacy carrier (3 s, 1.5 s and 1 s for one, two and three sets) and three extended frames (0.3 s).
 
 ### 7.8 Degraded mode (no broadcast data channel)
 
@@ -805,8 +806,8 @@ Relays implement FR-BLE-11 and fit the broadcast design naturally: a relay **rep
 | State record complete (extended) | 0.2 s | 0.2 s |
 | Song complete (legacy, 1 / 3 data sets, no loss) | – | 12.5 / 4.2 s |
 | Song complete (extended, 2 kB) | – | 0.9 s |
-| **Total, legacy 3 sets** | **≈ 1.0 s, no connection** (target 2 s) | **≈ 4.7 s, no connection** (target 5 s, borderline) |
-| **Total, legacy 1 set** | **≈ 2.0 s, no connection** | ≈ 13 s by broadcast; the 3-second repair cap makes singers fetch over GATT instead: ≈ 4–6 s for 25 singers over 6 slots |
+| **Total, legacy 3 sets** | **≈ 1.0 s, no connection** (target 2 s) | **≈ 4.7 s, no connection** (target 5 s, borderline; simulated without loss 2026-10-25) |
+| **Total, legacy 1 set** | **≈ 2.0 s, no connection** | ≈ 14 s by broadcast; the 3-second repair cap makes singers fetch over GATT instead: ≈ 4–6 s for 25 singers over 6 slots |
 | **Total, extended** | **≈ 0.7 s** | **≈ 1.6 s** |
 
 These figures do not depend on the number of singers except in the last row's repair path. Connections per song push: zero for singers with the song; zero on the extended carrier; a repair connection only for legacy singers that lost frames. With document v0.1 every push cost one connection per singer.
