@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.18 (draft) |
+| Document version | 0.19 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -31,6 +31,7 @@
 | 0.16 | 2026-10-25 | Corrections found while implementing the sealed payloads in `core/protocol`. Control op 8 carries at most **417** bytes of `data` per write, not 432 (8.4, 9.8): in the worst case, chunk 0 with `len` = 65 536, the other keys take 46 bytes, so 432 made a sealed write of 527 bytes against the 512-byte limit the same sentence promises. Error `0x8A` points at 9.8 op 8 instead of a non-existent 9.9. Open question Q20: section 5 and 8.4 disagree over which bytes document 8's `dh` covers. Wire change inside the draft protocol 1.0 (no released implementation), so no major version bump. |
 | 0.17 | 2026-10-25 | Q17 to Q20 decided by the owner. 9.4: a body over 440 bytes loses `title`, then `rev` of `cur`, then `pt`, as far as needed; without them the largest body is 405 bytes. 9.7: singers end the last range at the manifest `len`, and the leader clamps every range at the document end; `0x8C` only for a range starting at or past it (8.3). 7.3: a document inflates to at most 67 584 bytes. 8.4: document 8's `dh` covers the compressed bytes, as section 5 says for every document, and is checked before inflating. Normative changes inside the draft protocol 1.0. |
 | 0.18 | 2026-10-25 | Found while implementing the carousel in `core/protocol`: under rules 1 and 2 of 7.4 Set S carries no song, so with three legacy sets a pushed 2 kB song took 6.3 s, missing the 5 s of NFR-PERF-01, while 7.7 and 12.1 assumed all sets carry it. Decided by the owner: during a burst the legacy sets share the changed documents (rule 4), Set S sending the state first; the normal loop keeps the roles. Simulated without loss: 4.7 s with three sets, 7.0 s with two, 14.0 s with one, 1.1 s on the extended carrier. 7.7 notes the normal-loop pass times; 12.1's one-set figure is 14 s, not 13. Rule 3 no longer says the extended set behaves "as Set S does": Set S inserts one state frame, the extended set the whole record. |
+| 0.19 | 2026-10-25 | 6.5: the size of the join link corrected from the encoder in `core/protocol` (`JoinLink`): 45 to 98 bytes of payload with ASCII names, 99 to 170 characters of URL, up to 223 with a 40-character accented name; QR versions 6 to 9 at level M, 11 in the worst case. v0.18 said 60–130 characters of URL, which was the length of the base64 part alone, and versions 5 or 6. No wire change. |
 
 ---
 
@@ -259,7 +260,7 @@ The app also accepts the same payload as a path segment of its own scheme, `zang
 | 4 | `code` | tstr ≤ 8 | no | The join code, when the gathering requires one (`CODE` flag). In QR-only mode this is a random 8-character code that exists nowhere else [FR-GATH-21]. |
 | 5 | `name` | tstr ≤ 40 | no | Gathering name, for the "joining …" screen. Optional; it is the only human-readable field and carries no personal data by FR-GATH-01. |
 
-Typical size: 45–95 bytes of payload, 60–130 characters of URL; a QR code of version 5 or 6 at error-correction level M, which a phone camera reads from arm's length at the size FR-DIST-02 prescribes. The leader regenerates the code when the join code changes; nothing else in it changes during a gathering.
+Size, as the encoder produces it: 45 bytes of payload without `code` and `name` (99 characters of URL, QR version 6 at error-correction level M), 98 bytes with an 8-character code and a 40-character ASCII name (170 characters, version 9); a 40-character name in accented letters takes twice the bytes (223 characters, version 11). Byte-mode capacity at level M is 106 characters for version 6, 152 for version 8 and 180 for version 9. Whether a phone camera reads versions 9 to 11 from arm's length at the size FR-DIST-02 prescribes is untested; the join test (F-07) will show it. The leader regenerates the code when the join code changes; nothing else in it changes during a gathering.
 
 **Verification by the scanner.** `SHA-256(pk)[0..5]` MUST equal `gid`, else the code is rejected as malformed. The app then scans for a beacon with that `gid`; when found, it collects or reads the state record and verifies its signature with the `pk` from the code, **not** with a key from Info. A beacon with the right `gid` whose state does not verify is ignored, and the app keeps looking. After verification the normal registration follows (10.2) with `code` from the QR code when present. If no verified gathering appears within 30 s the app says the gathering is not in range and offers to retry.
 

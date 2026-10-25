@@ -126,10 +126,11 @@
 **Root cause**: `open(..., 'w')` truncates before `write` runs, so an exception during encoding loses the old content.
 **Fix**: Restored from the last commit with `git show HEAD:<path> > <path>` (read-only). If an edit carries non-ASCII or escape sequences, then use the Edit tool, or encode the text to bytes first and open the file only after that succeeded.
 
-### A size limit stated with its reason is false when computed (2026-10-25) [x3] [PROMOTED]
+### A size limit stated with its reason is false when computed (2026-10-25) [x4] [PROMOTED]
 **Problem**: Three numbers in `design/ble-protocol.md` failed the first time code computed them: the extended frame of up to 1000 bytes in one manufacturer-data field cannot be sent (one AD structure holds 255 bytes; measured 251 on a Samsung A52); legal values make a 558-byte state body against the 440-byte MUST of 9.4; Control op 8's 432 bytes of data "so the sealed write stays within 512" make a 527-byte write.
 **Root cause**: Each limit was written with its justification but the worst case was never summed: field encodings, CBOR headers, the seal overhead, the AD header. Reading the sentence makes it look checked.
 **Fix**: Protocol v0.14 (247-byte frames), v0.16 (417-byte chunks), v0.17 (fit rule, largest body 405 bytes); each figure is now pinned by a unit test that builds the worst case. Promoted to `memory/MEMORY.md` Recently Promoted.
+**Again after promotion, 2026-10-25**: ble-protocol 6.5 gave the join link as 60–130 characters of URL and QR version 5 or 6; the encoder makes 99 to 170 (223 with accented names), versions 6 to 9 (11). The 60–130 was the base64 part alone. Caught by the rule itself: the encoder's test asserts the computed sizes. Protocol v0.19.
 
 ### ADB on the test phones: sleeping screens and Samsung's hidden switch (2026-10-25) [RESOLVED]
 **Problem**: `adb shell am start -W` hung for minutes on the Huawei; the Samsung A52 showed no ADB interface in Windows although USB debugging was on.
@@ -166,7 +167,7 @@
 | Date | Gotcha | Occurrences | Promoted to |
 |------|--------|-------------|-------------|
 | 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
-| 2026-10-25 | A size limit stated with its reason is false when computed | **3** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16) | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-25 | A size limit stated with its reason is false when computed | **4** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19) | `memory/MEMORY.md` Recently Promoted |
 
 ## Mechanized
 
