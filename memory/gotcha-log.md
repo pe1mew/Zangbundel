@@ -126,6 +126,21 @@
 **Root cause**: `open(..., 'w')` truncates before `write` runs, so an exception during encoding loses the old content.
 **Fix**: Restored from the last commit with `git show HEAD:<path> > <path>` (read-only). If an edit carries non-ASCII or escape sequences, then use the Edit tool, or encode the text to bytes first and open the file only after that succeeded.
 
+### A size limit stated with its reason is false when computed (2026-10-25) [x3] [PROMOTED]
+**Problem**: Three numbers in `design/ble-protocol.md` failed the first time code computed them: the extended frame of up to 1000 bytes in one manufacturer-data field cannot be sent (one AD structure holds 255 bytes; measured 251 on a Samsung A52); legal values make a 558-byte state body against the 440-byte MUST of 9.4; Control op 8's 432 bytes of data "so the sealed write stays within 512" make a 527-byte write.
+**Root cause**: Each limit was written with its justification but the worst case was never summed: field encodings, CBOR headers, the seal overhead, the AD header. Reading the sentence makes it look checked.
+**Fix**: Protocol v0.14 (247-byte frames), v0.16 (417-byte chunks), v0.17 (fit rule, largest body 405 bytes); each figure is now pinned by a unit test that builds the worst case. Promoted to `memory/MEMORY.md` Recently Promoted.
+
+### ADB on the test phones: sleeping screens and Samsung's hidden switch (2026-10-25) [RESOLVED]
+**Problem**: `adb shell am start -W` hung for minutes on the Huawei; the Samsung A52 showed no ADB interface in Windows although USB debugging was on.
+**Root cause**: The Huawei's screen had gone to sleep behind its lock screen, and `-W` waits for a launch that cannot complete. The Samsung (One UI 6.1) exposes debugging only after an unplug and replug, and Auto Blocker blocks commands over USB.
+**Fix**: The owner unlocked both phones and set stay-awake while charging; for the Samsung: Auto Blocker off, authorisations revoked, cable replugged. If a launch over ADB hangs, then check `dumpsys power` for `mWakefulness` and the lock screen before anything else; if Windows lists a Samsung only as MTP and modem, then replug and check Auto Blocker.
+
+### Bare section references escape the check (2026-10-25) [RESOLVED]
+**Problem**: Error `0x8A` in ble-protocol 8.3 pointed at "(9.9)", a section that never existed, and `scripts/check-design.sh` passed.
+**Root cause**: The check matches only references written "section N.M"; the protocol mostly cites bare numbers in parentheses.
+**Fix**: Corrected by hand in protocol v0.16. A wider check is proposed in the Mechanized table. If a design document cites "(N.M)", then confirm the heading exists; the script will not.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
@@ -151,6 +166,7 @@
 | Date | Gotcha | Occurrences | Promoted to |
 |------|--------|-------------|-------------|
 | 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-25 | A size limit stated with its reason is false when computed | **3** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16) | `memory/MEMORY.md` Recently Promoted |
 
 ## Mechanized
 
@@ -178,5 +194,6 @@
 | Date | Finding shape | Check | Status | Occurrences |
 |------|---------------|-------|--------|-------------|
 | 2026-10-18 | A requirement ID cited in a design document that no FRD entry defines, or defined twice | `scripts/check-design.sh` | live | 0 |
-| 2026-10-18 | A "section N.M" reference in `design/ble-protocol.md` pointing at a heading that no longer exists after renumbering | `scripts/check-design.sh` | live | 0 |
+| 2026-10-18 | A "section N.M" reference in `design/ble-protocol.md` pointing at a heading that no longer exists after renumbering | `scripts/check-design.sh` | live | 1 (2026-10-25: caught "section 9.9" in a change row) |
+| 2026-10-25 | A bare "(N.M)" reference in `design/ble-protocol.md` pointing at a heading that does not exist (the "(9.9)" of error `0x8A`) | `scripts/check-design.sh`, extended to parenthesised numbers | proposed | 1 |
 | 2026-10-18 | A downstream spec whose "Depends on" header names an FRD version other than the FRD's current one | `scripts/check-design.sh` | live | 0 |
