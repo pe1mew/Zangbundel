@@ -63,6 +63,7 @@ object ProtocolConstants {
     const val ERR_UPLOAD_REJECTED = 0x8B
     const val ERR_RANGE = 0x8C
     const val ERR_SEALED = 0x8D
+    const val ERR_HELPER_CODE = 0x8E
 
     /** Write framing byte (8.4). */
     const val FRAMING_PLAINTEXT = 0x00

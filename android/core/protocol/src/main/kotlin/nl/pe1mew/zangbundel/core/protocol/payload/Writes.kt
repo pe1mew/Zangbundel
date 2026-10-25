@@ -327,8 +327,12 @@ class ControlCommand(
         const val UPLOAD_CHUNK = 8
         const val BECOME_DELEGATE = 9
         const val LEAVE = 10
-        /** Op 8 keeps the sealed write inside 512 bytes (9.8). */
-        const val UPLOAD_CHUNK_MAX_BYTES = 432
+        /**
+         * Op 8 keeps the sealed write inside 512 bytes (9.8): 1 framing byte, 48 bytes of seal and
+         * 46 bytes of the other keys in the worst case (chunk 0 with `len` = 65 536) leave 417.
+         * Protocol v0.15 said 432, which overruns by 15 bytes.
+         */
+        const val UPLOAD_CHUNK_MAX_BYTES = 417
 
         fun decode(bytes: ByteArray): ControlCommand = decoding("control command") {
             val m = decodeMap(bytes, PayloadLimits.GATT_VALUE)

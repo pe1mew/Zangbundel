@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.15 (draft) |
+| Document version | 0.16 (draft) |
 | Date | 2026-10-25 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -28,6 +28,7 @@
 | 0.13 | 2026-10-22 | Depends on FRD v0.11. Q5 resolved: CBOR stays, encoded by the app's own bounded codec (`design/architecture.md` A-08). Fixes from architecture section 12: 10.1 step 2 and 10.9 persist and resume both key pairs with their secret keys and the delegate list `dlg`; 10.12 points at section 13 for the rate limits instead of 10.8; the 7.7 capacity table names its typical state record (15 frames) and gives the times for a maximum one (30 frames, 9.4); Q7 marked resolved by Control op 10. No wire change. |
 | 0.14 | 2026-10-25 | Extended frame fits one manufacturer-data structure, decided by the owner after the first radio check (`design/test-results/2026-10-25-F-01.md`): a Samsung A52 on Android 14 refuses any single advertising data structure above 251 bytes although it reports 1650, and Android's `AdvertiseData` takes one manufacturer-data entry per company identifier, so the v0.13 frame of up to 1000 bytes could not be sent. Extended frame now at most 247 bytes with `fs` ≤ 235 (7.1, 7.2); the leader lowers `fs` at start if its stack refuses 247. The extended loop repeats the state record after every 8 document frames (7.4), its repair timers are longer (7.6), and the extended figures in 2.2, 4, 7.7 and 12.1 are recomputed. 15.1: the 100 ms interval is `INTERVAL_LOW` (160), not `INTERVAL_HIGH`; the measured update times are noted. Q2 notes the first sample. Wire change inside the draft protocol 1.0, which has no released implementation, so no major version bump. The architecture (v0.4), the song format (v0.5) and the test plan (v0.1) still name protocol v0.13; nothing they say depends on the extended frame size. |
 | 0.15 | 2026-10-25 | Open questions Q17 to Q19, found while implementing the payloads and reassembly in `core/protocol`: the 440-byte state body can be exceeded by legal values (9.4), the end of a repair range for a last frame never seen (9.7), and the size limit of a decoded document (7.3, 9.5). No normative change. |
+| 0.16 | 2026-10-25 | Corrections found while implementing the sealed payloads in `core/protocol`. Control op 8 carries at most **417** bytes of `data` per write, not 432 (8.4, 9.8): in the worst case, chunk 0 with `len` = 65 536, the other keys take 46 bytes, so 432 made a sealed write of 527 bytes against the 512-byte limit the same sentence promises. Error `0x8A` points at 9.8 op 8 instead of a non-existent 9.9. Open question Q20: section 5 and 8.4 disagree over which bytes document 8's `dh` covers. Wire change inside the draft protocol 1.0 (no released implementation), so no major version bump. |
 
 ---
 
@@ -419,7 +420,7 @@ Clients MUST tolerate additional characteristics they do not know. Servers MUST 
 | `0x87` | Protocol version not supported |
 | `0x88` | Gathering has ended |
 | `0x89` | Not a delegate |
-| `0x8A` | Leader does not have this song; upload it first (9.9) |
+| `0x8A` | Leader does not have this song; upload it first (9.8, op 8) |
 | `0x8B` | Upload rejected (hash mismatch or size limit) |
 | `0x8C` | Requested range outside the document |
 | `0x8D` | Sealed payload cannot be opened (wrong key, truncated, bad authentication tag) or unknown framing byte |
@@ -450,7 +451,7 @@ Join, Request and Control MUST use `0x01`. A Transfer request MUST use `0x01` wh
 
 **Binding and replay.** Every sealed plaintext carries the `gid` (Join key 9, Request key 6, Control key 9, Transfer key 6); the leader rejects a mismatch with `0x83`. A captured sealed write replayed later is harmless: Join with a known `sid` returns the same token, unreadable to the replayer; Request is idempotent by `rid`; Control by `cid`.
 
-**Sizes.** A Join request plaintext is at most about 250 bytes, so the sealed value stays well inside the 512-byte limit. Control op 8 (song upload) carries at most 432 bytes of `data` per write for the same reason (9.8).
+**Sizes.** A Join request plaintext is at most about 250 bytes, so the sealed value stays well inside the 512-byte limit. Control op 8 (song upload) carries at most 417 bytes of `data` per write for the same reason (9.8): a framing byte, 48 bytes of seal and, in the worst case, 46 bytes of the other keys leave that much of 512.
 
 **What stays in clear**, and why that is acceptable: the beacon (gathering name, flags, position), the carousel (state, info, lyrics, setlist, message, download instruction, anonymous request statuses) and Transfer of documents 1–7. None of it is personal data (section 13), which is what lets the Play Data safety form say "no data collected" (`docs/RUNBOOK.md` Step 4). The leader UI asks not to put a person's name in the gathering name.
 
@@ -650,7 +651,7 @@ Every Control write is sealed to the leader's `ek` (8.4) and carries the writer'
 | 5 | Accept request | Request `rid` → accepted, appended to the setlist. | FR-LEAD-41 |
 | 6 | Decline request | Request `rid` → declined. | FR-LEAD-41 |
 | 7 | Push request now | Request `rid` → accepted and current. | FR-LEAD-41 |
-| 8 | Upload song chunk | Delegate → leader transfer of a song the leader lacks, in writes of ≤ 432 bytes of `data`, in order (the sealed write stays within 512 bytes). The bytes are the framed song document (section 9.5, DEFLATE), so the leader can broadcast them unchanged. The leader verifies `ref.hash` after the last chunk; `0x8B` on mismatch or if `len` > 64 kB. Then the delegate sends op 1 or 4. | FR-LEAD-42 (SHOULD) |
+| 8 | Upload song chunk | Delegate → leader transfer of a song the leader lacks, in writes of ≤ 417 bytes of `data`, in order (the sealed write stays within 512 bytes; 8.4 shows the sum). The bytes are the framed song document (section 9.5, DEFLATE), so the leader can broadcast them unchanged. The leader verifies `ref.hash` after the last chunk; `0x8B` on mismatch or if `len` > 64 kB. Then the delegate sends op 1 or 4. | FR-LEAD-42 (SHOULD) |
 | 9 | Become delegate (any registered singer) | `hc` is compared with the helper code the leader is currently showing (10.12). Match: the writer's `sid` is added to `dlg`, `seq` + 1, sign, broadcast; the write succeeds. No match, expired, or code locked: `0x8E`. | FR-LEAD-40, 45 |
 | 10 | Leave (any registered singer) | The writer's `sid` is removed from the singer table and from `dlg` if present, its token is invalidated, `singers` − 1, `seq` + 1, sign, broadcast. A later Join from the same device registers anew. The write succeeds; an unknown token (`0x80`) is treated by the singer as already left. | FR-GATH-07, FR-GATH-12 |
 
@@ -957,3 +958,4 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q17 | The signed state body MUST stay ≤ 440 bytes (9.4), but legal values exceed it: library and song ids of 64 characters, a 60-character title in accented letters, five manifest entries and eight delegates make 558 bytes, and a title in four-byte characters makes more. What does the leader leave out, and in which order (for example `title` first, then `rev` of `cur`), or should the limits on ids and `title` be tightened? The implementation refuses to sign an oversized body until this is settled. | 9.4, 5 (`ref`), song-format 3.2 |
 | Q18 | When a singer repairs a document whose last frame it never received, it does not know the document's length, so the last requested range runs to the end of a full frame and may pass the end of the document. Does the leader clamp such a range to the document length, or must the singer first learn the length (from the manifest `len` in the state)? | 9.7, 7.6, 9.4 (`docs`) |
 | Q19 | Only the framed size of a document is bounded (Control op 8 refuses uploads over 64 kB, 9.8). A song file may itself be 64 KiB (song-format 5.5), so its document is slightly larger before compression. The implementation caps an inflated document at 64 KiB + 2 KiB. Should the protocol state the decoded limit, or lower the song file limit for broadcast? | 7.3, 9.5, 9.8, song-format 5.5 |
+| Q20 | Which bytes does document 8's `dh` cover? Section 5 defines `dh` over the framed bytes (after DEFLATE); 8.4 says the delegate verifies `dh` over the inflated bytes. For document 8 the stream is also sealed, so "framed" could mean the compressed bytes or the sealed ones. The implementation follows 8.4 (inflated bytes) until this is settled. | 5, 8.4, 9.7 |

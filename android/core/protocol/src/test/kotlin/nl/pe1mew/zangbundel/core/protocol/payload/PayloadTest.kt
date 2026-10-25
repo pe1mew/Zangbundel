@@ -157,9 +157,9 @@ class PayloadTest {
         }))
         assertFailsWith<PayloadException> { ControlCommand.decode(fiveDigits) }     // not cut to four digits
 
-        val chunk = ControlCommand(tok, cid, ControlCommand.UPLOAD_CHUNK, idx = 0, data = ByteArray(432), len = 2000, gid = gid)
-        assertEquals(432, ControlCommand.decode(chunk.encode()).data!!.size)
-        assertFailsWith<IllegalArgumentException> { ControlCommand(tok, cid, ControlCommand.UPLOAD_CHUNK, idx = 0, data = ByteArray(433), len = 2000, gid = gid) }
+        val chunk = ControlCommand(tok, cid, ControlCommand.UPLOAD_CHUNK, idx = 0, data = ByteArray(417), len = 2000, gid = gid)
+        assertEquals(417, ControlCommand.decode(chunk.encode()).data!!.size)
+        assertFailsWith<IllegalArgumentException> { ControlCommand(tok, cid, ControlCommand.UPLOAD_CHUNK, idx = 0, data = ByteArray(418), len = 2000, gid = gid) }
         assertFailsWith<IllegalArgumentException> { ControlCommand(tok, cid, ControlCommand.UPLOAD_CHUNK, idx = 0, data = ByteArray(10), gid = gid) }
         assertFailsWith<PayloadException> { ControlCommand.decode(Cbor.encode(CborMap((Cbor.decode(push.encode(), 512) as CborMap).entries.map {
             if (it.first == CborInt(3)) it.first to CborInt(11) else it
