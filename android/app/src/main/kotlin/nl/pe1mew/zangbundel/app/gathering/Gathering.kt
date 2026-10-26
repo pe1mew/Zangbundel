@@ -25,6 +25,9 @@ import nl.pe1mew.zangbundel.core.model.SongRef
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.beacon.BeaconCodec
+import nl.pe1mew.zangbundel.core.protocol.beacon.Fingerprint
+import nl.pe1mew.zangbundel.core.protocol.beacon.JoinLink
+import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.protocol.engine.LeaderSession
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
@@ -47,8 +50,7 @@ import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
  * two at once. It lives as long as the process; [GatheringService] keeps the process alive and shows
  * the neutral notification while a gathering runs.
  *
- * Not yet: join codes and the QR code, fingerprint words, requests and likes, delegates, resume after a
- * restart, follow the leader.
+ * Not yet: requests and likes, delegates, resume after a restart, follow the leader.
  */
 class Gathering(
     private val context: Context,
@@ -67,7 +69,29 @@ class Gathering(
     private val mutex = Mutex()
 
     /** A gathering heard nearby (D-22): its name and how strongly it is heard [FR-GATH-04]. */
-    data class Nearby(val gid: GatheringId, val name: String, val rssi: Int, val codeRequired: Boolean, val seenAt: Long)
+    data class Nearby(val gid: GatheringId, val name: String, val rssi: Int, val codeRequired: Boolean, val seenAt: Long) {
+        /** FR-GATH-18, ble-protocol 6.6: the two words the leader can say aloud. */
+        val fingerprint: String get() = Fingerprint.of(gid)
+    }
+
+    /**
+     * How a gathering is joined (FR-GATH-05, FR-GATH-21, guiDesign D-25, D-71): open, with a four-digit code
+     * the leader can say, or QR-only with a random eight-character code that exists only in the QR code.
+     * Fixed for the gathering.
+     */
+    sealed interface Protection {
+        val code: String?
+        data object Open : Protection { override val code: String? = null }
+        data class Code(override val code: String) : Protection
+        data class QrOnly(override val code: String) : Protection
+
+        companion object {
+            private val random = java.security.SecureRandom()
+            fun newCode(): Code = Code((0 until 4).map { random.nextInt(10) }.joinToString(""))
+            fun newQrOnly(): QrOnly = QrOnly((0 until 8).map { QR_ONLY_ALPHABET[random.nextInt(QR_ONLY_ALPHABET.length)] }.joinToString(""))
+            private const val QR_ONLY_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"
+        }
+    }
 
     /** A line of the leader's setlist: the installed song it names, or null when it cannot be pushed (*niet gevonden*, D-59). */
     data class LeaderSong(val entry: PreparedEntry, val song: SongbookEntry?) {
@@ -92,6 +116,11 @@ class Gathering(
             val progress: LeaderSession.PushProgress? = null,
             /** D-56 (v0.21): the share of singers helped over GATT in the last 5 s, 0 to 1. */
             val help: Float = 0f,
+            /** FR-GATH-18: the two words (D-36, D-61). */
+            val fingerprint: String = "",
+            val protection: Protection = Protection.Open,
+            /** FR-GATH-19, ble-protocol 6.5: the join link the QR code shows (D-57). */
+            val joinLink: String = "",
         ) : Mode
         data class Singing(
             val name: String,
@@ -102,6 +131,17 @@ class Gathering(
             val collecting: List<Reassembler.Block>? = null,
             /** D-81: the reception island's rows while *Ontvangst tonen* is on; empty otherwise. */
             val reception: List<SingerEngine.Reception> = emptyList(),
+            /** FR-GATH-18 (D-36). */
+            val fingerprint: String = "",
+            /** Joined from a QR code: the joining screen of D-35 shows until registered. */
+            val viaQr: Boolean = false,
+            /** The beacon of the chosen gathering was heard (D-35: *Gevonden, controleren…*). */
+            val found: Boolean = false,
+            /** The leader refused the join code (FR-GATH-05); the singer is asked for it. */
+            val needsCode: Boolean = false,
+            /** 6.5, D-35: a gathering with the code's id sends states the code's key does not sign. */
+            val notTheCampfire: Boolean = false,
+            val joiningSince: Long = 0,
         ) : Mode
     }
 
@@ -180,7 +220,7 @@ class Gathering(
     // ---- leading (D-25, D-55, D-56) ----
 
     /** Starts a gathering with a prepared setlist, or none (D-25); the page starts empty until the first *Nu* (D-55). */
-    suspend fun lead(name: String, setlistUid: Long?) = mutex.withLock {
+    suspend fun lead(name: String, setlistUid: Long?, protection: Protection = Protection.Open) = mutex.withLock {
         check(_mode.value == Mode.Idle) { "one gathering at a time (FR-GEN-02)" }
         stopScanning(stopRadio = false)
         val t = checkNotNull(transport()) { "no Bluetooth" }
@@ -188,7 +228,7 @@ class Gathering(
         val installed = songbook.entries()
         val songs = setlistUid?.let { setlists.entries(it) }.orEmpty().map { LeaderSong(it, resolve(it, installed)) }
         val s = CoroutineScope(scope.coroutineContext + Job(scope.coroutineContext[Job]))
-        val l = LeaderSession(t, crypto, s, clock, name)
+        val l = LeaderSession(t, crypto, s, clock, name, joinCode = protection.code)
         GatheringService.start(context)
         try {
             l.start()
@@ -203,7 +243,8 @@ class Gathering(
         startedWall = wallClock()
         pushedOrder.clear()
         peakSingers = 0
-        _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet())
+        _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
+            joinLink = JoinLink(l.gid, l.publicKey, protection.code, name).httpsUrl(testBuild()))
         s.launch {
             while (isActive) {
                 delay(1_000)
@@ -266,7 +307,30 @@ class Gathering(
 
     // ---- singing (D-26, D-27, D-29, D-34) ----
 
-    fun join(nearby: Nearby) {
+    /** From the list (D-22, D-26); [code] when the gathering needs one (FR-GATH-05). */
+    fun join(nearby: Nearby, code: String? = null) = sing(nearby.gid, nearby.name, pinnedKey = null, code = code, viaQr = false)
+
+    /**
+     * From a join QR code (FR-GATH-19, FR-GATH-20, ble-protocol 6.5, guiDesign D-35): the key is pinned
+     * from the code before anything is heard, and the code's join code is used without asking.
+     */
+    /** D-35: a join link that came in while Bluetooth was not ready; the home screen joins it once it is. */
+    val pendingLink = MutableStateFlow<JoinLink?>(null)
+
+    fun join(link: JoinLink) {
+        if (_mode.value is Mode.Singing && singer != null) return
+        if (_mode.value != Mode.Idle) return
+        sing(link.gid, link.name ?: Fingerprint.of(link.gid), pinnedKey = link.pk, code = link.code, viaQr = true)
+    }
+
+    /** After a wrong join code: tries again with [code]. */
+    fun enterCode(code: String) {
+        val engine = singer ?: return
+        (_mode.value as? Mode.Singing)?.let { _mode.value = it.copy(needsCode = false) }
+        scope.launch { engine.enterCode(code) }
+    }
+
+    private fun sing(gid: GatheringId, name: String, pinnedKey: ByteArray?, code: String?, viaQr: Boolean) {
         if (_mode.value != Mode.Idle) return
         stopScanning(stopRadio = false)
         val t = transport() ?: return
@@ -274,14 +338,15 @@ class Gathering(
         session = s
         currentRef = null
         startedWall = wallClock()
-        _mode.value = Mode.Singing(nearby.name, Connection.CONNECTING, emptyList(), null)
+        _mode.value = Mode.Singing(name, Connection.CONNECTING, emptyList(), null, fingerprint = Fingerprint.of(gid), viaQr = viaQr, joiningSince = clock())
         s.launch {
             // The discovery scan stops before the engine starts its own; a stop that came later would silence the singer.
             runCatching { t.stopScan() }
             val local = songbook.entries().filter { it.hash.isNotEmpty() }.associateBy { it.hash }
             // FR-SING-01, D-44: the name the singer chose in settings, sealed to the leader; none when empty.
-            val name = settings.displayName().ifEmpty { null }
-            val engine = SingerEngine(t, crypto, s, clock, chooses = { it.gid == nearby.gid }, name = name, hasSong = { it.hash.toHex() in local })
+            val singerName = settings.displayName().ifEmpty { null }
+            val engine = SingerEngine(t, crypto, s, clock, chooses = { it.gid == gid }, name = singerName, hasSong = { it.hash.toHex() in local },
+                pinnedKey = pinnedKey, code = code)
             singer = engine
             GatheringService.start(context)
             launch {
@@ -293,7 +358,12 @@ class Gathering(
                         else -> Log.d("singer ${e::class.simpleName}")
                     }
                     when (e) {
-                        is SingerEngine.Event.Joined -> connection(Connection.CONNECTED)
+                        is SingerEngine.Event.Joined -> when (e.result) {
+                            JoinResponse.ACCEPTED -> { singing { it.copy(needsCode = false) }; connection(Connection.CONNECTED) }
+                            JoinResponse.WRONG_CODE -> singing { it.copy(needsCode = true) }
+                            else -> Unit
+                        }
+                        is SingerEngine.Event.NotTheCampfire -> singing { it.copy(notTheCampfire = true) }
                         // The beacon's new seq comes before the state that names the song; the verified state moves the page.
                         is SingerEngine.Event.Delivered -> when (e.doc) {
                             DocumentType.STATE -> current(engine)
@@ -324,6 +394,7 @@ class Gathering(
                 while (isActive) {
                     delay(1_000)
                     if (engine.machine.state != last) { last = engine.machine.state; Log.d("singer state=$last") }
+                    if (engine.machine.state != SingerState.IDLE) singing { if (it.found) it else it.copy(found = true) }
                     val c = when (engine.machine.state) {
                         SingerState.RECONNECTING -> Connection.RECONNECTING
                         SingerState.LISTENING, SingerState.REPAIRING -> Connection.CONNECTED
@@ -368,6 +439,16 @@ class Gathering(
         val started = startedWall
         val ended = wallClock()
         scope.launch { runCatching { memories.add(name, started, ended, led, singers, songs) }.onFailure { Log.w("memory not written: ${it::class.simpleName}") } }
+    }
+
+    /**
+     * ble-protocol 6.5: a test build (application id `….debug`, `….fieldtest`) marks its join link with its
+     * name, so the join page opens that build instead of looking for the release app; a release build is null.
+     */
+    private fun testBuild(): String? = context.packageName.removePrefix(RELEASE_ID).removePrefix(".").ifEmpty { null }
+
+    private fun singing(change: (Mode.Singing) -> Mode.Singing) {
+        (_mode.value as? Mode.Singing)?.let { m -> change(m).takeIf { it != m }?.let { _mode.value = it } }
     }
 
     private fun connection(c: Connection) {
@@ -423,5 +504,7 @@ class Gathering(
         private const val COLLECTING_REFRESH_MS = 500L
         private const val STATUS_CURRENT = 1
         private const val STATUS_SUNG = 2
+        /** The release application id (RUNBOOK Decisions); test builds add a suffix to it. */
+        private const val RELEASE_ID = "nl.pe1mew.zangbundel.app"
     }
 }

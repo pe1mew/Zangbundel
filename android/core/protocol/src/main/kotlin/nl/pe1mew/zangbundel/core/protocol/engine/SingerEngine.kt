@@ -55,7 +55,17 @@ class SingerEngine(
     /** Whether the singer's library holds this song (10.3 step 3); the app answers from its index. */
     private val hasSong: (SongRef) -> Boolean = { false },
     private val random: Random = Random.Default,
+    /**
+     * The leader's key from a join QR code (6.5): pinned before anything is heard, so only a state signed
+     * by it is accepted and a key from Info is never used. Null when joining from the list.
+     */
+    pinnedKey: ByteArray? = null,
+    /** The join code (FR-GATH-05), from the QR code or typed; sent inside the sealed Join. */
+    @Volatile var code: String? = null,
 ) {
+    private val pinnedKey: ByteArray? = pinnedKey?.copyOf()
+    /** States heard with the right `gid` that the pinned key does not sign (6.5); reported once (D-35). */
+    private var foreignStates = 0
     sealed interface Event {
         val at: Long
         data class NewSeq(override val at: Long, val seq: Int) : Event
@@ -67,6 +77,8 @@ class SingerEngine(
             /** The document itself (7.3): [bytes] as framed, inflated when the manifest says DEFLATE, never past [maxOutput]. */
             fun document(maxOutput: Int = PayloadLimits.DOCUMENT_DECODED): ByteArray = Deflate.unframe(enc, bytes, maxOutput)
         }
+        /** 6.5, guiDesign D-35: a gathering with the code's `gid` sends states its key does not sign: not the campfire of the QR code. */
+        data class NotTheCampfire(override val at: Long) : Event
         /** 10.11: the gathering ended, by the beacon's `ENDED`, a final state, a refused Join, or 5 minutes of silence. */
         data class Ended(override val at: Long) : Event
         /** The current song is in the singer's own library (FR-BLE-04 with a local copy, 10.3 step 3); nothing to collect. */
@@ -168,6 +180,12 @@ class SingerEngine(
         }
     }
 
+    /** After a wrong join code (FR-GATH-05): registers again with [newCode]. */
+    suspend fun enterCode(newCode: String) {
+        code = newCode
+        mutex.withLock { apply(machine.handle(SingerMachine.Event.CodeEntered(clock()))) }
+    }
+
     /** Starts scanning and the 250 ms tick; runs until [scope] is cancelled. */
     fun start() {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -200,7 +218,8 @@ class SingerEngine(
                 carrier = if (transport.capabilities.extendedAdvertising && beacon.has(ProtocolConstants.FLAG_EXT)) Carrier.EXTENDED else Carrier.LEGACY
                 reassembler = Reassembler(gid16, carrier)
                 apply(machine.handle(SingerMachine.Event.BeaconSeen(now, beacon.gid, beacon.seq, beacon.ended, beacon.busy, beacon.has(ProtocolConstants.FLAG_BCAST))))
-                apply(machine.handle(SingerMachine.Event.Selected(now, beacon.gid, carrier)))
+                pinnedKey?.let { pk = it.copyOf() }
+                apply(machine.handle(SingerMachine.Event.Selected(now, beacon.gid, carrier, pinnedKey)))
             }
             if (beacon.gid != gid) return
             leader = r.address
@@ -242,6 +261,8 @@ class SingerEngine(
             DocumentType.INFO -> {
                 val info = try { Info.decode(c.bytes) } catch (e: Exception) { null }
                 if (info == null || info.gid != gid || !info.pkMatchesGid(crypto)) { reassembler?.reset(c.doc, c.dv); return }
+                // 6.5: with a key from the QR code, an Info naming another key belongs to another gathering.
+                if (pinnedKey != null && !info.pk.contentEquals(pinnedKey)) { reassembler?.reset(c.doc, c.dv); return }
                 if (pk == null) pk = info.pk.copyOf()
                 apply(machine.handle(SingerMachine.Event.InfoVerified(now, info.pk, info.major)))
                 deliver(c, viaRepair)
@@ -259,7 +280,11 @@ class SingerEngine(
     }
 
     private fun state(dv: Int, bytes: ByteArray, viaRepair: Boolean) {
-        val s = try { SignedState.verify(bytes, pk!!, gid!!, crypto) } catch (e: Exception) { reassembler?.reset(DocumentType.STATE, dv); return }
+        val s = try { SignedState.verify(bytes, pk!!, gid!!, crypto) } catch (e: Exception) {
+            reassembler?.reset(DocumentType.STATE, dv)
+            if (pinnedKey != null && ++foreignStates == FOREIGN_STATES_TO_REPORT) _events.tryEmit(Event.NotTheCampfire(clock()))
+            return
+        }
         if (!s.supersedes(state?.body?.ts)) return
         val wasLocal = state?.body?.cur?.let(hasSong) == true && state?.body?.cur == s.body.cur
         state = s
@@ -302,7 +327,7 @@ class SingerEngine(
         val (address, g) = mutex.withLock { leader to gid }
         if (address == null || g == null) return
         val caps = JoinRequest.CAP_LEGACY or (if (transport.capabilities.extendedAdvertising) JoinRequest.CAP_EXTENDED else 0)
-        val request = JoinRequest(ProtocolConstants.PROTOCOL_MAJOR, ProtocolConstants.PROTOCOL_MINOR, sid, name = name, caps = caps, gid = g, xk = xk.publicKey)
+        val request = JoinRequest(ProtocolConstants.PROTOCOL_MAJOR, ProtocolConstants.PROTOCOL_MINOR, sid, name = name, code = code, caps = caps, gid = g, xk = xk.publicKey)
         val client = try { GattClient(transport.connect(address), crypto) } catch (e: Transport.GattException) { failed(); return }
         try {
             if (mutex.withLock { pk == null }) {
@@ -406,6 +431,8 @@ class SingerEngine(
 
     companion object {
         const val TICK_MS = 250L
+        /** A forged state can also be a damaged one; three in a row are reported (D-35). */
+        const val FOREIGN_STATES_TO_REPORT = 3
         /** 10.11 (v0.29): the leave notice is tried, in the background, for at most this long. */
         const val LEAVE_BUDGET_MS = 10_000L
         const val LEAVE_RETRY_MS = 300L

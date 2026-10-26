@@ -16,6 +16,7 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -137,6 +138,19 @@ class JoinLinkTest {
         assertEquals(170, full.httpsUrl().length)
         // 40 accented characters take 80 bytes: 138 bytes of payload, 223 characters of URL.
         assertEquals(223, JoinLink(gid, keys.publicKey, code = "K7Q2M9XA", name = "é".repeat(40)).httpsUrl().length)
+    }
+
+    @Test
+    fun `a test build marks its link and the app reads it like any other`() {
+        val link = JoinLink(gid, keys.publicKey, code = "4711")
+        val debug = link.httpsUrl("debug")
+        assertTrue(debug.startsWith("https://pe1mew.github.io/Zangbundel/j/?app=debug#"))
+        assertEquals(link.httpsUrl().substringAfter('#'), debug.substringAfter('#'))
+        assertEquals("4711", assertNotNull(JoinLink.parse(debug, crypto)).code)
+        assertNotNull(JoinLink.parse(link.httpsUrl("fieldtest").replace("/j/?", "/j?"), crypto))
+        assertNull(JoinLink.parse(debug.replace("?app=debug", "?app=Debug"), crypto))
+        assertNull(JoinLink.parse(debug.replace("?app=debug", "?x=debug"), crypto))
+        assertFailsWith<IllegalArgumentException> { link.httpsUrl("de.bug") }
     }
 
     @Test

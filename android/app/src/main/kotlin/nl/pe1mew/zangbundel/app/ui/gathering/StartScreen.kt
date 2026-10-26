@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
+import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
@@ -46,7 +48,8 @@ import java.util.Date
 /**
  * Starting a gathering (guiDesign D-25): the proposed neutral name, never the device's name
  * [FR-GATH-01, assessment SP-01], and the prepared setlist to begin with, or none [FR-LEAD-02];
- * *Starten* switches into leader mode. The join code and the QR-only switch come with the QR code.
+ * how singers join (FR-GATH-05, FR-GATH-21, D-71): open, with a four-digit code the leader can say, or
+ * only through the QR code; *Starten* switches into leader mode. The code is drawn when the fire starts.
  */
 @Composable
 fun StartScreen() {
@@ -56,6 +59,7 @@ fun StartScreen() {
     val proposed = stringResource(R.string.start_default_name, SimpleDateFormat("d MMM", LocalConfiguration.current.locales[0]).format(Date()))
     var name by rememberSaveable { mutableStateOf(proposed) }
     var chosen by rememberSaveable { mutableStateOf<Long?>(null) }
+    var protection by rememberSaveable { mutableIntStateOf(PROTECTION_OPEN) }
     var setlists by remember { mutableStateOf<List<PreparedSetlist>>(emptyList()) }
     var starting by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
@@ -65,7 +69,12 @@ fun StartScreen() {
             Text(stringResource(R.string.start_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(name, { name = it.take(Info.NAME_MAX_CHARS) }, singleLine = true, label = { Text(stringResource(R.string.start_name)) }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.start_protection), style = MaterialTheme.typography.titleMedium)
+            Choice(stringResource(R.string.start_open), null, protection == PROTECTION_OPEN) { protection = PROTECTION_OPEN }
+            Choice(stringResource(R.string.start_code), stringResource(R.string.start_code_detail), protection == PROTECTION_CODE) { protection = PROTECTION_CODE }
+            Choice(stringResource(R.string.start_qr_only), stringResource(R.string.start_qr_only_detail), protection == PROTECTION_QR) { protection = PROTECTION_QR }
+            Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.start_setlist), style = MaterialTheme.typography.titleMedium)
             LazyColumn(Modifier.weight(1f).fillMaxWidth().textPanel(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 item { Choice(stringResource(R.string.start_no_setlist), null, chosen == null) { chosen = null } }
@@ -81,7 +90,14 @@ fun StartScreen() {
                     failed = false
                     scope.launch {
                         // On success the mode changes and the app opens the leader's page.
-                        failed = runCatching { container.gathering.lead(name.trim().ifEmpty { proposed }, chosen) }.isFailure
+                        failed = runCatching { 
+                            val p = when (protection) {
+                                PROTECTION_CODE -> Gathering.Protection.newCode()
+                                PROTECTION_QR -> Gathering.Protection.newQrOnly()
+                                else -> Gathering.Protection.Open
+                            }
+                            container.gathering.lead(name.trim().ifEmpty { proposed }, chosen, p)
+                        }.isFailure
                         starting = false
                     }
                 },
@@ -102,3 +118,7 @@ private fun Choice(title: String, detail: String?, selected: Boolean, onClick: (
         }
     }
 }
+
+private const val PROTECTION_OPEN = 0
+private const val PROTECTION_CODE = 1
+private const val PROTECTION_QR = 2

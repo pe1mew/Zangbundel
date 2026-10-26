@@ -92,8 +92,13 @@
 <script>
 (function () {
   "use strict";
-  var PACKAGE = "nl.pe1mew.zangbundel.app";
-  var PLAY = "https://play.google.com/store/apps/details?id=" + PACKAGE;
+  var RELEASE = "nl.pe1mew.zangbundel.app";
+  var PLAY = "https://play.google.com/store/apps/details?id=" + RELEASE;
+  // A test build marks its links with ?app=debug or ?app=fieldtest (BLE protocol 6.5), so the button
+  // opens that build; anything else opens the release app. Play always shows the release app.
+  var TEST_BUILDS = ["debug", "fieldtest"];
+  var build = (location.search.match(/^\?app=([a-z]{1,16})$/) || [])[1];
+  var PACKAGE = (build && TEST_BUILDS.indexOf(build) >= 0) ? RELEASE + "." + build : RELEASE;
   var SCHEME = "zangbundel";
 
   // --- base64url -> bytes

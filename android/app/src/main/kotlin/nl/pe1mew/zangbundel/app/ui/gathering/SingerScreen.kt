@@ -61,7 +61,9 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * the gathering name and the connection state (D-20), then the songs the leader pushed in this
  * session, in the order pushed, each behind a divider with its title and position; a new push
  * scrolls the page to it. Leaving asks first (D-34); once ended, the page stays readable and the strip
- * turns into an orange bar that leaves on a tap (D-34 as amended in v0.19). The round buttons, the songlist sheet, the toolbar and the fingerprint are not built yet.
+ * turns into an orange bar that leaves on a tap (D-34 as amended in v0.19). The strip carries the fingerprint
+ * (D-36); a join from a QR code shows the joining screen of D-35 until the leader accepts, and a refused join
+ * code asks again (D-26). The round buttons, the songlist sheet and the toolbar are not built yet.
  */
 @Composable
 fun SingerScreen() {
@@ -74,9 +76,15 @@ fun SingerScreen() {
     var confirmLeave by remember { mutableStateOf(false) }
     var islandHeight by remember { mutableIntStateOf(0) }
     val ended = m.connection == Gathering.Connection.ENDED
+    val joining = m.viaQr && m.connection == Gathering.Connection.CONNECTING
     KeepScreenOn()
-    BackHandler { if (ended) scope.launch { gathering.leave() } else confirmLeave = true }
+    BackHandler { if (ended || joining) scope.launch { gathering.leave() } else confirmLeave = true }
     LaunchedEffect(m.current) { m.current?.let { list.animateScrollToItem(it) } }
+    if (m.needsCode) CodeDialog(m.name, wrong = true, onCode = { gathering.enterCode(it) }, onDismiss = { scope.launch { gathering.leave() } })
+    if (joining) {
+        JoiningScreen(m, gathering::now) { scope.launch { gathering.leave() } }
+        return
+    }
 
     Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
         val state = stringResource(
@@ -99,8 +107,10 @@ fun SingerScreen() {
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         } else {
-            Box(Modifier.fillMaxWidth().height(24.dp).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
-                Text(m.name + " · " + state, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // D-36: only the name gives way when the strip is narrow, never the fingerprint or the state.
+            Row(Modifier.fillMaxWidth().height(24.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(m.name, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Text(" · " + m.fingerprint + " · " + state, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
             }
         }
         // D-81: while the island is shown, the page ends with room for it, so it never covers the line being sung.

@@ -43,27 +43,34 @@ class JoinLink(val gid: GatheringId, pk: ByteArray, code: String? = null, name: 
 
     private fun encoded(): String = Base64.getUrlEncoder().withoutPadding().encodeToString(payload())
 
-    /** The URL the QR code shows (6.5, canonical form with the trailing slash). */
-    fun httpsUrl(): String = "$HTTPS_PREFIX#${encoded()}"
+    /**
+     * The URL the QR code shows (6.5, canonical form with the trailing slash). A test build passes its
+     * [build] (`debug`, `fieldtest`), which adds `?app=<build>` so the join page opens that build; a
+     * release build passes nothing.
+     */
+    fun httpsUrl(build: String? = null): String {
+        require(build == null || BUILD.matches(build)) { "build" }
+        return HTTPS_PREFIX + (build?.let { "?app=$it" } ?: "") + "#" + encoded()
+    }
 
     /** The app's own scheme, used by the join page's button and an in-app scanner. */
     fun schemeUrl(): String = "$SCHEME_PREFIX${encoded()}"
 
     companion object {
         const val HTTPS_PREFIX = "https://pe1mew.github.io/Zangbundel/j/"
-        /** GitHub Pages redirects the form without the slash and keeps the fragment (6.5). */
-        private const val HTTPS_PREFIX_NO_SLASH = "https://pe1mew.github.io/Zangbundel/j"
         const val SCHEME_PREFIX = "zangbundel://j/"
         const val CODE_MAX_CHARS = 8
         const val NAME_MAX_CHARS = 40
         private val ENCODED = Regex("^[A-Za-z0-9_-]{20,400}$")
+        private val BUILD = Regex("^[a-z]{1,16}$")
+        /** The https form, with or without the trailing slash and a test build's `?app=`; group 1 is the payload. */
+        private val HTTPS = Regex("""^https://pe1mew\.github\.io/Zangbundel/j/?(?:\?app=[a-z]{1,16})?#(.*)$""")
         private const val MAX_PAYLOAD_BYTES = 300
 
         /** The link as the camera app or the browser hands it over; null unless it is a valid join link. */
         fun parse(link: String, crypto: Crypto): JoinLink? {
             val encoded = when {
-                link.startsWith("$HTTPS_PREFIX#") -> link.substring(HTTPS_PREFIX.length + 1)
-                link.startsWith("$HTTPS_PREFIX_NO_SLASH#") -> link.substring(HTTPS_PREFIX_NO_SLASH.length + 1)
+                HTTPS.matches(link) -> HTTPS.matchEntire(link)!!.groupValues[1]
                 link.startsWith(SCHEME_PREFIX) -> link.substring(SCHEME_PREFIX.length)
                 else -> return null
             }

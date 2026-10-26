@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.29 (draft) |
+| Document version | 0.30 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -42,6 +42,7 @@
 | 0.27 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`); no other change. |
 | 0.28 | 2026-10-26 | Depends on FRD v0.15 (FR-NET-01 and FR-NET-03 widened to setlist addresses); no other change. |
 | 0.29 | 2026-10-26 | 10.11, from the phones (`design/test-results/2026-10-26-D-03-05-07.md`, D-07): the leave notice is sent in the background after the user is home, retried after a failed connection for up to 10 s, instead of one attempt within 2 s. Connect, MTU and write take 1.2–1.6 s on the Huawei when the connect is quick, and the 2 s budget missed 2 of 6 attempts. No wire change. |
+| 0.30 | 2026-10-26 | 6.6 and appendix A: the gathering fingerprint [FR-GATH-18] is fixed as two Dutch words, one from each list of 256 at `gid[0]` and `gid[1]`, the same on every phone whatever its language; a reading aid, not a security mechanism. Nothing new goes over the air. Implemented in `core/protocol` with the join code and the key pinned from the QR code (6.5). 6.5: a test build marks its join link with `?app=debug` or `?app=fieldtest`, so the join page opens that build instead of looking for the release app (found in test D-04 with the camera app). |
 
 ---
 
@@ -256,7 +257,7 @@ The beacon lets a singer find a gathering; the QR code on the leader's screen le
 https://pe1mew.github.io/Zangbundel/j/#<base64url(payload)>
 ```
 
-The trailing slash is part of the canonical form: without it GitHub Pages answers with a redirect, which browsers follow with the fragment intact but which costs a round trip. The site is live since 2026-10-18.
+The trailing slash is part of the canonical form: without it GitHub Pages answers with a redirect, which browsers follow with the fragment intact but which costs a round trip. The site is live since 2026-10-18. A test build (application id `nl.pe1mew.zangbundel.app.debug` or `….fieldtest`) puts `?app=debug` or `?app=fieldtest` before the fragment (`https://pe1mew.github.io/Zangbundel/j/?app=debug#<payload>`), so the join page's button opens that build; the app accepts the link with or without it, and a release build never adds it.
 
 The app also accepts the same payload as a path segment of its own scheme, `zangbundel://j/<base64url(payload)>`; this is what the Pages button, an in-app scanner and the iOS camera use.
 
@@ -274,9 +275,13 @@ Size, as the encoder produces it: 45 bytes of payload without `code` and `name` 
 
 **Verification by the scanner.** `SHA-256(pk)[0..5]` MUST equal `gid`, else the code is rejected as malformed. The app then scans for a beacon with that `gid`; when found, it collects or reads the state record and verifies its signature with the `pk` from the code, **not** with a key from Info. A beacon with the right `gid` whose state does not verify is ignored, and the app keeps looking. After verification the normal registration follows (10.2) with `code` from the QR code when present. If no verified gathering appears within 30 s the app says the gathering is not in range and offers to retry.
 
-**Phones without the app, and the browser step.** Opening the URL in a browser shows the static page `docs/j/index.html` from this repository: it decodes the fragment locally, shows the gathering name, and offers "Open in Zangbundel" and the store link [FR-DIST-01, FR-GATH-22]. The button is an `intent://j/<payload>#Intent;scheme=zangbundel;package=nl.pe1mew.zangbundel.app;S.browser_fallback_url=<Play URL>;end` link on Android (Chrome launches the app or falls back to Play) and a `zangbundel://j/<payload>` link elsewhere. The page loads nothing external and sends nothing. Until the App Link is verified (`docs/RUNBOOK.md` Step 5c) Android 12 and later always take this browser step; with verification the camera app opens Zangbundel directly.
+**Phones without the app, and the browser step.** Opening the URL in a browser shows the static page `docs/j/index.html` from this repository: it decodes the fragment locally, shows the gathering name, and offers "Open in Zangbundel" and the store link [FR-DIST-01, FR-GATH-22]. The button is an `intent://j/<payload>#Intent;scheme=zangbundel;package=nl.pe1mew.zangbundel.app;S.browser_fallback_url=<Play URL>;end` link on Android (Chrome launches the app or falls back to Play; with `?app=debug` or `?app=fieldtest` the package is that test build's, and the fallback stays the release app on Play) and a `zangbundel://j/<payload>` link elsewhere. The page loads nothing external and sends nothing. Until the App Link is verified (`docs/RUNBOOK.md` Step 5c) Android 12 and later always take this browser step; with verification the camera app opens Zangbundel directly.
 
 **What the code does not protect against.** Someone showing a code for their *own* gathering: the trust anchor is the leader's screen, which is what the scouts are told to scan. A photographed code reused later is useless once the gathering has ended, because the key is deleted (10.10). The code contains no secret except an optional join code, which the leader can rotate.
+
+### 6.6 Gathering fingerprint [FR-GATH-18]
+
+Two Dutch words from the gathering ID: the first from list 1 of appendix A at index `gid[0]`, the second from list 2 at index `gid[1]`, joined by a hyphen (`appel-vuur`). The words are the same on every phone whatever its UI language, so the leader can say them aloud and every singer sees the same pair (decided by the owner, 2026-10-26). Both lists have 256 words of 3 to 8 letters a–z, concrete and known to children, none rude or slang in Dutch, no word in both lists and no two words in one list that sound alike. The fingerprint is a reading aid, not a security measure: 65 536 pairs can be matched by a forger with a few thousand key generations, which is why the QR code (6.5) carries the key itself.
 
 ---
 
@@ -989,3 +994,38 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q24 | *Resolved 2026-10-25 (owner):* every burst pass opens with the whole state record, repair frames included (7.4). | 7.4, 7.6 |
 | Q25 | *Resolved 2026-10-25 (owner):* no change to the code; documents over 128 source frames rely on repair, the extended carrier and the library. Revisit with field data: real lyrics compress to about 1–2 kB, within the full code. | 7.3 |
 | Q26 | *Resolved 2026-10-25 (owner):* the 7.6 limit is counted from the group's start and is 5 s on both carriers. | 7.6, NFR-PERF-01 |
+
+## Appendix A. Fingerprint word lists (6.6)
+
+List 1, indexed by `gid[0]` from 0:
+
+aap arend baars bever bij bizon buffel cavia das dolfijn duif eend egel eland ezel fazant flamingo forel fret gans
+gazelle geit gekko giraf gorilla haai haan haas hamster havik hert hommel hond hyena ibis jaguar kalf kameel kanarie kat
+kever kikker kip koala koe konijn kraai krab kreeft krekel kwal lam lama leeuw libel lijster marmot meeuw mees merel
+mier mol mus muis oehoe okapi olifant orka otter panda panter pauw pelikaan pinguin pony poema ree reiger rog rups
+schaap slak specht spin spreeuw steur stier tapir tijger tonijn uil valk varken veulen vink vis vlinder vos walrus
+walvis wezel wolf worm wouw zalm zebra zeehond zwaan zwaluw alpaca adder bunzing gier gnoe kievit koekoek kolibrie lynx
+mammoet narwal ooievaar pad papegaai rendier tor wombat yak zeekoe hagedis inktvis abrikoos amandel ananas appel avocado
+banaan bes boon bosbes braam brood citroen dadel druif erwt framboos gember honing kaas kers kiwi kokos koek krent
+limoen mais mango meloen noot olijf peer perzik pompoen radijs rozijn sla soep taart tomaat vijg wafel aardbei broccoli
+kool prei paprika spinazie suiker thee cacao kaneel stroop drop snoep toffee karamel chocola biscuit beschuit muesli
+pasta rijst pizza friet saus jam melk sap limonade popcorn pinda walnoot kastanje pudding yoghurt bagel taco wortel
+bonbon gebak koekje ijsje lolly muffin oliebol pistache rabarber spruit tuinboon venkel dille munt salie tijm laurier
+knoflook kerrie mosterd azijn bok buizerd condor dodo ekster emoe fuut gaai garnaal hinde karper kluut lepelaar meerkat
+nandoe ocelot oester paling poedel puma raaf sardine snoek tarbot wisent mossel sprot
+
+List 2, indexed by `gid[1]` from 0:
+
+vuur maan ster zon wolk regen sneeuw wind storm mist ijs dauw bliksem donder hagel berg dal rivier beek meer zee golf
+strand duin eiland bos boom blad tak bloem gras mos varen riet eik den spar berk wilg linde esdoorn hazel roos tulp
+lelie madelief klaver distel heide kei steen rots zand klei kristal parel goud zilver koper ijzer tent kamp hut vlot
+boot kano zeil anker roer mast kompas kaart lamp lantaarn kaars fakkel vlam vonk rook hout touw knoop fluit trom gitaar
+viool harp bel hoorn banjo lied toon maat ritme dans kring sjaal laars jas hoed pet want sok deken kussen mand tas emmer
+ketel pan beker kom lepel vork bord fles kruik sleutel slot deur raam poort brug weg spoor trein fiets kar wagen ballon
+vlieger tol knikker pop puzzel boek pen potlood krijt verf kwast papier schelp veer nest web korf molen toren kasteel
+sluis dijk haven planeet komeet raket avond nacht ochtend middag lente zomer herfst winter feest spel lach droom wens
+hart kroon schild pijl boog vlag wimpel kaap baai grot bron poel plas vijver moeras akker weide veld heuvel top klif rif
+ijsberg gletsjer vulkaan woestijn oase prairie jungle savanne akkoord atlas bank beitel bezem borstel bus camera cirkel
+dak dobber draak duikbril fluitje gong hamer hangmat helm hek iglo jacht kabel ketting klok koffer kokkel kraan kruimel
+lasso ladder lint lus magneet mantel matras muziek orgel paleis pijler pluim radar riem robot rugzak schaats schep schip
+schoen schommel slee spiegel stoel tafel tandem tegel telefoon tractor

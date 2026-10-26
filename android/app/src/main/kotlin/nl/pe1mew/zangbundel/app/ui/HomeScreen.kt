@@ -49,6 +49,7 @@ import nl.pe1mew.zangbundel.app.diagnostics.Diagnostics
 import nl.pe1mew.zangbundel.app.diagnostics.DiagnosticsEntry
 import nl.pe1mew.zangbundel.app.gathering.BluetoothAccess
 import nl.pe1mew.zangbundel.app.gathering.Gathering
+import nl.pe1mew.zangbundel.app.ui.gathering.CodeDialog
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 
 /**
@@ -56,7 +57,10 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * Gatherings in range are cards to join with one tap; with none, a quiet search and the start
  * button large. Without Bluetooth or its permission a card explains why it is needed and asks only
  * on a tap (FR-GEN-05). Starting waits for 5 seconds of listening and is refused while a gathering is
- * in range (FR-GATH-16, D-23); a phone that cannot advertise says so (D-24). Below, the icon row.
+ * in range (FR-GATH-16, D-23); a phone that cannot advertise says so (D-24). Each card shows the
+ * fingerprint, and two gatherings with nearly the same name get a warning line (D-36); a card with a
+ * lock asks for the join code first (D-26). A QR link that came in while Bluetooth was not ready is
+ * joined as soon as it is (D-35). Below, the icon row.
  */
 @Composable
 fun HomeScreen(onOpen: (String) -> Unit) {
@@ -65,8 +69,11 @@ fun HomeScreen(onOpen: (String) -> Unit) {
     var ready by remember { mutableStateOf(BluetoothAccess.ready(context)) }
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { ready = BluetoothAccess.ready(context) }
     val switchOn = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { ready = BluetoothAccess.ready(context) }
-    DisposableEffect(ready) {
-        if (ready) gathering.startScanning()
+    val pending by gathering.pendingLink.collectAsState()
+    DisposableEffect(ready, pending) {
+        val link = pending
+        if (ready && link != null) { gathering.pendingLink.value = null; gathering.join(link) }
+        else if (ready) gathering.startScanning()
         onDispose { gathering.stopScanning() }
     }
     val nearby by gathering.nearby.collectAsState()
@@ -74,6 +81,8 @@ fun HomeScreen(onOpen: (String) -> Unit) {
     var now by remember { mutableLongStateOf(gathering.now()) }
     LaunchedEffect(Unit) { while (true) { now = gathering.now(); delay(500) } }
     var refusedBy by remember { mutableStateOf<Gathering.Nearby?>(null) }
+    var askCode by remember { mutableStateOf<Gathering.Nearby?>(null) }
+    val join = { g: Gathering.Nearby -> if (g.codeRequired) askCode = g else gathering.join(g) }
 
     ConfigurationScreen {
         Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -104,7 +113,8 @@ fun HomeScreen(onOpen: (String) -> Unit) {
                     }
                     else -> {
                         Text(stringResource(R.string.home_nearby), style = MaterialTheme.typography.titleMedium)
-                        for (g in nearby) NearbyCard(g) { gathering.join(g) }
+                        if (nearlySameNames(nearby)) Text(stringResource(R.string.home_similar_names), color = Palette.FireOrangeLight)
+                        for (g in nearby) NearbyCard(g) { join(g) }
                     }
                 }
             }
@@ -139,13 +149,35 @@ fun HomeScreen(onOpen: (String) -> Unit) {
             onDismissRequest = { refusedBy = null },
             title = { Text(stringResource(R.string.home_refused_title)) },
             text = { Text(stringResource(R.string.home_refused_text, g.name)) },
-            confirmButton = { TextButton(onClick = { refusedBy = null; gathering.join(g) }) { Text(stringResource(R.string.home_join_named, g.name)) } },
+            confirmButton = { TextButton(onClick = { refusedBy = null; join(g) }) { Text(stringResource(R.string.home_join_named, g.name)) } },
             dismissButton = { TextButton(onClick = { refusedBy = null }) { Text(stringResource(R.string.cancel)) } },
         )
     }
+    askCode?.let { g -> CodeDialog(g.name, wrong = false, onCode = { askCode = null; gathering.join(g, it) }, onDismiss = { askCode = null }) }
 }
 
-/** A gathering in range (D-22): tall, full width, its name and how well it is heard [FR-GATH-04]; tapping joins. */
+/**
+ * D-36: two gatherings whose names are the same or nearly so (case, spaces and punctuation ignored, at
+ * most two letters different), so the singer should ask for the two words.
+ */
+internal fun nearlySameNames(nearby: List<Gathering.Nearby>): Boolean {
+    val names = nearby.map { g -> g.name.lowercase().filter { it.isLetterOrDigit() } }
+    for (i in names.indices) for (j in i + 1 until names.size) if (editDistance(names[i], names[j]) <= 2) return true
+    return false
+}
+
+private fun editDistance(a: String, b: String): Int {
+    var row = IntArray(b.length + 1) { it }
+    for (i in 1..a.length) {
+        val next = IntArray(b.length + 1)
+        next[0] = i
+        for (j in 1..b.length) next[j] = minOf(row[j] + 1, next[j - 1] + 1, row[j - 1] + if (a[i - 1] == b[j - 1]) 0 else 1)
+        row = next
+    }
+    return row[b.length]
+}
+
+/** A gathering in range (D-22): tall, full width, its name, its fingerprint (D-36) and how well it is heard [FR-GATH-04]; tapping joins. */
 @Composable
 private fun NearbyCard(g: Gathering.Nearby, onJoin: () -> Unit) {
     val signal = when {
@@ -159,7 +191,7 @@ private fun NearbyCard(g: Gathering.Nearby, onJoin: () -> Unit) {
     ) {
         Column(Modifier.weight(1f)) {
             Text(g.name, style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(signal), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
+            Text(g.fingerprint + " · " + stringResource(signal), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
         }
         if (g.codeRequired) Text("🔒", modifier = Modifier.padding(start = 8.dp))
     }

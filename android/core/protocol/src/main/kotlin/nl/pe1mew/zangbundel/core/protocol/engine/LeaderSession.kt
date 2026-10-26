@@ -49,6 +49,8 @@ class LeaderSession(
     private val extendedOnly: Boolean = false,
     random: Random = Random.Default,
     maxSingers: Int = LeaderGattService.DEFAULT_MAX_SINGERS,
+    /** FR-GATH-05: when set, a Join must carry it; the beacon sets `CODE` (6.2). Fixed for the gathering (guiDesign D-71). */
+    val joinCode: String? = null,
 ) {
     /**
      * What the singers get (9.4, 9.5): the current song and the setlist as far as it has been sung
@@ -82,7 +84,7 @@ class LeaderSession(
     private var loop: Job? = null
     private var last: Built = Built(null, null, emptyMap())
 
-    val service = LeaderGattService(gid, ek, crypto, scope, clock, maxSingers = maxSingers, onBusyChanged = { b -> scope.launch { busyChanged(b) } })
+    val service = LeaderGattService(gid, ek, crypto, scope, clock, maxSingers = maxSingers, joinCode = joinCode, onBusyChanged = { b -> scope.launch { busyChanged(b) } })
 
     /** Singers registered and not left or timed out (10.9). */
     val singers: Int get() = service.singerCount
@@ -161,7 +163,8 @@ class LeaderSession(
         transport.setBeacon(beaconBytes())
         legacySets = if (extendedOnly) 0 else transport.openLegacyDataSets(Carousel.MAX_LEGACY_DATA_SETS)
         extendedSet = transport.openExtendedDataSet()
-        flags = (if (legacySets > 0 || extendedSet) ProtocolConstants.FLAG_BCAST else 0) or (if (extendedSet) ProtocolConstants.FLAG_EXT else 0)
+        flags = (if (legacySets > 0 || extendedSet) ProtocolConstants.FLAG_BCAST else 0) or (if (extendedSet) ProtocolConstants.FLAG_EXT else 0) or
+            (if (joinCode != null) ProtocolConstants.FLAG_CODE else 0)
         // The carousel needs a legacy lane; with extended only it is built but never sent.
         val c = Carousel(gid16, legacySets.coerceAtLeast(1), extendedSet)
         carousel = c
