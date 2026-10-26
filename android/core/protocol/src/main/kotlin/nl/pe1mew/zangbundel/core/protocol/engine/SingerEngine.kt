@@ -31,6 +31,7 @@ import nl.pe1mew.zangbundel.core.protocol.payload.FieldSizes
 import nl.pe1mew.zangbundel.core.protocol.payload.Info
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinRequest
 import nl.pe1mew.zangbundel.core.protocol.payload.PayloadLimits
+import nl.pe1mew.zangbundel.core.protocol.payload.SetlistDocument
 import nl.pe1mew.zangbundel.core.protocol.payload.SignedState
 import nl.pe1mew.zangbundel.core.protocol.payload.StateBody
 import nl.pe1mew.zangbundel.core.protocol.payload.TransferRequest
@@ -44,6 +45,10 @@ import kotlin.random.Random
  *
  * [chooses] picks the gathering to join from the beacons seen, standing in for the user's tap. The
  * engine keeps the song as bytes; parsing and showing it is the app's.
+ *
+ * Songs ahead (7.5 as of v0.32, FR-BLE-18): completed documents 9 are kept as framed bytes by their
+ * `dh`, hidden and bounded, and never reach the app until a verified manifest names that `dh` as the
+ * current song; then they are delivered as that document 3 at once, without waiting for the burst.
  */
 class SingerEngine(
     private val transport: Transport,
@@ -98,7 +103,8 @@ class SingerEngine(
     private var gid: GatheringId? = null
     private var gid16 = 0
     private var selectedAt = 0L
-    private var extendedHeard = false
+    /** Arrival times of the gathering's extended frames over the last [EXTENDED_WINDOW_MS] (7.1 as of v0.33). */
+    private val extendedHeard = ArrayDeque<Long>()
     private var leader: Transport.DeviceAddress? = null
     private var reassembler: Reassembler? = null
     private var pk: ByteArray? = null
@@ -113,16 +119,36 @@ class SingerEngine(
     private val xk = crypto.generateBoxKeyPair()
     var token: ByteArray? = null
         private set
+    /** 7.5 (v0.32): songs received ahead, framed bytes by `dh` (hex), oldest first; never shown before a manifest names them. */
+    private val ahead = LinkedHashMap<String, ByteArray>()
+    private var aheadBytes = 0L
+    /** The setlist's `dh` per position (9.5 key 2), from the newest verified setlist. */
+    private var aheadOrder: List<ByteArray> = emptyList()
+    /** The reference each pushed song's `dh` went out under, for the reception view's titles (D-81). */
+    private val pushedRefs = HashMap<String, SongRef>()
 
-    /** One row of the reception bar (FR-SING-05, guiDesign D-81): a document and its source blocks. */
-    class Reception(val doc: Int, val blocks: List<Reassembler.Block>)
+    /**
+     * One row of the reception view (FR-SING-05, guiDesign D-81): a document and its source blocks. Rows
+     * of the setlist's songs (v0.28) carry their [position] in the setlist, whether the song is the
+     * [current] one, the [ref] it was pushed under (null until pushed: D-47), and [onAir] false for a
+     * song the leader may not broadcast.
+     */
+    class Reception(
+        val doc: Int,
+        val blocks: List<Reassembler.Block>,
+        val position: Int? = null,
+        val current: Boolean = false,
+        val ref: SongRef? = null,
+        val onAir: Boolean = true,
+    )
 
     /**
      * The reception bar's rows: the current song, then the setlist. Each follows the newest version
      * being collected while it is incomplete (a push shows at once, before its state is applied), and
      * otherwise the version the newest verified manifest names. A document held in full, or a song from
      * the singer's own library, is one received block; a version with no frame yet has no blocks. A
-     * document neither named nor seen has no row.
+     * document neither named nor seen has no row. With songs ahead, one row per setlist position follows
+     * (guiDesign D-81 as of v0.28).
      */
     suspend fun reception(): List<Reception> = mutex.withLock {
         val rs = reassembler ?: return@withLock emptyList()
@@ -137,6 +163,28 @@ class SingerEngine(
                 (doc to dv) in held -> Reception(doc, listOf(Reassembler.Block.RECEIVED))
                 else -> Reception(doc, emptyList())
             }
+        } + aheadRows(rs)
+    }
+
+    /**
+     * One row per setlist position (9.5 key 2): received when the song is kept ahead or held as the
+     * current song, or from the singer's library while it is current; otherwise the blocks of its
+     * document 9 or, while it is current, of its document 3, whichever has more.
+     */
+    private fun aheadRows(rs: Reassembler): List<Reception> {
+        val s = state
+        val cur = s?.body?.docs?.get(DocumentType.SONG)
+        return aheadOrder.mapIndexed { i, dh ->
+            if (dh.isEmpty()) return@mapIndexed Reception(DocumentType.AHEAD, emptyList(), position = i + 1, onAir = false)
+            val key = dh.hex()
+            val dv = dvOf(dh)
+            val current = cur != null && cur.dh.contentEquals(dh)
+            val have = key in ahead || (DocumentType.SONG to dv) in held || (current && s?.body?.cur?.let(hasSong) == true)
+            val blocks = if (have) listOf(Reassembler.Block.RECEIVED) else {
+                listOfNotNull(rs.blocks(DocumentType.AHEAD, dv), if (current) rs.blocks(DocumentType.SONG, dv) else null)
+                    .maxByOrNull { b -> b.count { it == Reassembler.Block.RECEIVED } }.orEmpty()
+            }
+            Reception(DocumentType.AHEAD, blocks, position = i + 1, current = current, ref = pushedRefs[key])
         }
     }
 
@@ -230,23 +278,30 @@ class SingerEngine(
         }
         val rs = reassembler ?: return
         val frame = FrameCodec.decode(data) ?: return
-        if (frame.carrier == Carrier.EXTENDED && frame.gid16 == gid16) extendedHeard = true
+        if (frame.carrier == Carrier.EXTENDED && frame.gid16 == gid16) extendedHeard.addLast(now)
         when (val result = rs.accept(frame)) {
-            is Reassembler.Result.Stored -> rs.progress(frame.doc, frame.dv)?.let { (have, needed) ->
-                apply(machine.handle(SingerMachine.Event.FrameProgress(now, frame.doc, frame.dv, have, needed)))
+            // Songs ahead are never repaired (7.6), and a song taken from them needs no repair either.
+            is Reassembler.Result.Stored -> if (frame.doc != DocumentType.AHEAD && (frame.doc to frame.dv) !in held) {
+                rs.progress(frame.doc, frame.dv)?.let { (have, needed) ->
+                    apply(machine.handle(SingerMachine.Event.FrameProgress(now, frame.doc, frame.dv, have, needed)))
+                }
             }
-            is Reassembler.Result.Complete -> completed(result, viaRepair = false)
+            is Reassembler.Result.Complete -> if (result.doc == DocumentType.AHEAD) keptAhead(result) else completed(result, viaRepair = false)
             else -> {}
         }
     }
 
     /**
-     * 7.1 (v0.23, Q23): on the extended carrier, no extended frame of the gathering within
-     * [CARRIER_FALLBACK_MS] of selecting it means the leader's extended set is not heard; collect the
-     * legacy carrier for the rest of the gathering.
+     * 7.1 (v0.33): on the extended carrier, fewer than [EXTENDED_MIN_FRAMES] extended frames of the
+     * gathering within [CARRIER_FALLBACK_MS] of selecting it, or later within any [EXTENDED_WINDOW_MS],
+     * means the leader's extended set is hardly heard; collect the legacy carrier for the rest of the
+     * gathering. (v0.23 fell back only when none came in the first 3 s, which kept the S23 on a set it
+     * heard 0.05 times a second.)
      */
     private fun fallBack(now: Long) {
-        if (carrier != Carrier.EXTENDED || extendedHeard || gid == null || now - selectedAt < CARRIER_FALLBACK_MS) return
+        if (carrier != Carrier.EXTENDED || gid == null || now - selectedAt < CARRIER_FALLBACK_MS) return
+        while (extendedHeard.isNotEmpty() && extendedHeard.first() < now - EXTENDED_WINDOW_MS) extendedHeard.removeFirst()
+        if (extendedHeard.size >= EXTENDED_MIN_FRAMES) return
         carrier = Carrier.LEGACY
         reassembler = Reassembler(gid16, Carrier.LEGACY)
         apply(machine.handle(SingerMachine.Event.CarrierChanged(now, Carrier.LEGACY)))
@@ -270,10 +325,14 @@ class SingerEngine(
             }
             DocumentType.STATE -> if (pk == null) pendingState = c.dv to c.bytes else state(c.dv, c.bytes, viaRepair)
             else -> {
+                if ((c.doc to c.dv) in held) return          // taken from a song ahead already (7.5)
                 val manifest = state?.body?.docs?.get(c.doc)
                 if (manifest == null) { pendingDocs[c.doc to c.dv] = c.bytes; return }
                 if (!DocEntry.hashOf(c.bytes, crypto).contentEquals(manifest.dh)) { reassembler?.reset(c.doc, c.dv); return }
                 held += c.doc to c.dv
+                if (c.doc == DocumentType.SETLIST) {
+                    aheadOrder = try { SetlistDocument.decode(Deflate.unframe(manifest.enc, c.bytes, PayloadLimits.DOCUMENT_DECODED)).ahead } catch (e: Exception) { aheadOrder }
+                }
                 deliver(c, viaRepair)
             }
         }
@@ -288,15 +347,46 @@ class SingerEngine(
         if (!s.supersedes(state?.body?.ts)) return
         val wasLocal = state?.body?.cur?.let(hasSong) == true && state?.body?.cur == s.body.cur
         state = s
+        s.body.cur?.let { cur -> s.body.docs[DocumentType.SONG]?.let { e -> pushedRefs[e.dh.hex()] = cur } }
+        val fromAhead = takeAhead()
         val local = s.body.cur?.let(hasSong) == true
         if (local && !wasLocal) _events.tryEmit(Event.LocalSong(clock(), s.body.cur!!))
         val missing = s.body.docs.map { (doc, entry) -> doc to entry.dv }.filter { it !in held && it !in pendingDocs.keys }
         apply(machine.handle(SingerMachine.Event.StateApplied(clock(), s.body.seq, s.body.status == StateBody.STATUS_ENDED, songIsLocal = local, missing = missing)))
         deliver(Reassembler.Result.Complete(DocumentType.STATE, s.body.seq, bytes), viaRepair)
+        fromAhead?.let { deliver(it, viaRepair = false) }
         // Documents completed before the manifest that lists them.
         val waiting = pendingDocs.entries.toList()
         pendingDocs.clear()
         waiting.forEach { (k, v) -> completed(Reassembler.Result.Complete(k.first, k.second, v), viaRepair) }
+    }
+
+    /** 7.5 (v0.32): a song ahead, kept by its `dh` if its `dv` is that `dh`'s; used at once if it is the current song. */
+    private fun keptAhead(c: Reassembler.Result.Complete) {
+        val dh = DocEntry.hashOf(c.bytes, crypto)
+        if (dvOf(dh) != c.dv) { reassembler?.reset(c.doc, c.dv); return }
+        val key = dh.hex()
+        if (key in ahead) return
+        ahead[key] = c.bytes
+        aheadBytes += c.bytes.size
+        while (ahead.size > MAX_AHEAD_SONGS || aheadBytes > AHEAD_KEPT_BYTES) {
+            val oldest = ahead.entries.first()
+            aheadBytes -= oldest.value.size
+            ahead.remove(oldest.key)
+        }
+        takeAhead()?.let { deliver(it, viaRepair = false) }
+    }
+
+    /**
+     * 7.5 (v0.32): the current song's document 3 from a song kept ahead, when the newest verified
+     * manifest names its `dh`; the manifest is the verification. Null when not kept ahead or held already.
+     */
+    private fun takeAhead(): Reassembler.Result.Complete? {
+        val e = state?.body?.docs?.get(DocumentType.SONG) ?: return null
+        if ((DocumentType.SONG to e.dv) in held) return null
+        val bytes = ahead[e.dh.hex()] ?: return null
+        held += DocumentType.SONG to e.dv
+        return Reassembler.Result.Complete(DocumentType.SONG, e.dv, bytes)
     }
 
     private fun deliver(c: Reassembler.Result.Complete, viaRepair: Boolean) {
@@ -436,7 +526,16 @@ class SingerEngine(
         /** 10.11 (v0.29): the leave notice is tried, in the background, for at most this long. */
         const val LEAVE_BUDGET_MS = 10_000L
         const val LEAVE_RETRY_MS = 300L
-        /** 7.1 (v0.23): no extended frame within this long of selecting the gathering: fall back to legacy. */
+        /** 7.1 (v0.33): the extended carrier is judged first this long after selecting the gathering. */
         const val CARRIER_FALLBACK_MS = 3_000L
+        /** 7.1 (v0.33): fewer extended frames than this in the first 3 s, or in any 10 s after, and the singer collects legacy. */
+        const val EXTENDED_MIN_FRAMES = 3
+        const val EXTENDED_WINDOW_MS = 10_000L
+        /** 7.5 (v0.32): songs kept ahead, at most this many and this many bytes, oldest dropped first. */
+        const val MAX_AHEAD_SONGS = 64
+        const val AHEAD_KEPT_BYTES = 1L shl 20
+
+        private fun ByteArray.hex(): String = joinToString("") { "%02x".format(it) }
+        private fun dvOf(dh: ByteArray): Int = ((dh[0].toInt() and 0xFF) shl 8) or (dh[1].toInt() and 0xFF)
     }
 }

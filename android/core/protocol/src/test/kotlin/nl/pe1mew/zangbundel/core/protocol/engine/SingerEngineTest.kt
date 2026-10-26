@@ -126,6 +126,14 @@ class SingerEngineTest {
     }
 
     @Test
+    fun `an extended singer that hears the extended set only now and then collects legacy`() = runTest {
+        // The S23 with the A52 leading: the extended set heard 0.2 times a second, the legacy sets a third of the time.
+        val (_, singers) = gathering(listOf(0.33), extendedSingers = true, leaderExtended = true, extendedReception = 0.02)
+        testScheduler.advanceTimeBy(30_000)
+        assertEquals(Carrier.LEGACY, singers.single().engine.carrier)
+    }
+
+    @Test
     fun `an extended singer that hears the extended set stays on it`() = runTest {
         val (_, singers) = gathering(listOf(1.0), extendedSingers = true, leaderExtended = true)
         testScheduler.advanceTimeBy(10_000)

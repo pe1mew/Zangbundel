@@ -187,16 +187,16 @@ class SingerMachineTest {
     }
 
     @Test
-    fun `a new seq without state frames means repair after 3 s, a verified state cancels it`() {
+    fun `a new seq without state frames means repair after 1 s (v0_33), a verified state cancels it`() {
         val m = listening()
         m.handle(Event.BeaconSeen(2_000, gid, 11, false, false))
-        assertTrue(m.handle(Event.Tick(4_999)).isEmpty())
-        assertEquals(listOf(STATE to 11), assertIs<Effect.Repair>(m.handle(Event.Tick(5_000)).single()).groups)
+        assertTrue(m.handle(Event.Tick(2_999)).isEmpty())
+        assertEquals(listOf(STATE to 11), assertIs<Effect.Repair>(m.handle(Event.Tick(3_000)).single()).groups)
 
         val n = listening()
         n.handle(Event.BeaconSeen(2_000, gid, 11, false, false))
         n.handle(Event.StateApplied(2_400, 11, false, false))
-        assertTrue(n.handle(Event.Tick(5_000)).isEmpty())
+        assertTrue(n.handle(Event.Tick(3_000)).isEmpty())
     }
 
     @Test

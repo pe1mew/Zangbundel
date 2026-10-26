@@ -30,6 +30,13 @@ import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
  *   goes to the set with the least queued, so all sets finish a pass together. The extended set
  *   sends its pass with the state record first.
  *
+ * - **Songs ahead** (rule 7, v0.32, FR-BLE-18): every setlist song as document 9. The large-document
+ *   loop becomes current song, setlist, ahead₁, current song, setlist, ahead₂, … (setlist, ahead₁,
+ *   setlist, ahead₂, … without a current song); Set S alone and the extended set append one song
+ *   ahead after each round of their other documents. [publish] takes them in the order to send,
+ *   which the caller starts after the current song; every publish restarts the round. Bursts never
+ *   contain them.
+ *
  * Documents larger than the legacy carrier can hold (4080 bytes) are left out of the legacy sets;
  * they are fetched by repair (9.4 `gatt`) and still go out on the extended set. The download
  * document (6) is reserved in phase 1 and is never sent.
@@ -51,7 +58,7 @@ class Carousel(
     class Document(val doc: Int, val dv: Int, framed: ByteArray) {
         val framed: ByteArray = framed.copyOf()
         init {
-            require(doc in BROADCAST_DOCUMENTS) { "only documents 1 to 7 are broadcast" }
+            require(doc in BROADCAST_DOCUMENTS || doc == DocumentType.AHEAD) { "only documents 1 to 7 and 9 are broadcast" }
             require(dv in 0..0xFFFF) { "dv is u16" }
         }
     }
@@ -79,15 +86,19 @@ class Carousel(
 
     private val state = lanes.associateWith { LaneState() }
     private var published: Map<Int, Document> = emptyMap()
+    private var ahead: List<Document> = emptyList()
 
     /**
      * Replaces the documents and starts the burst for those whose `dv` changed. The state record
-     * (document 1) must be present: it is what singers verify everything else against.
+     * (document 1) must be present: it is what singers verify everything else against. [songsAhead]
+     * are documents 9 in the order to send them (rule 7); they never cause a burst.
      */
-    fun publish(documents: Collection<Document>) {
+    fun publish(documents: Collection<Document>, songsAhead: List<Document> = emptyList()) {
         val docs = documents.associateBy { it.doc }
         require(docs.size == documents.size) { "one version per document" }
         require(DocumentType.STATE in docs) { "the state record is always published" }
+        require(docs.keys.none { it == DocumentType.AHEAD } && songsAhead.all { it.doc == DocumentType.AHEAD }) { "songs ahead go in songsAhead" }
+        ahead = songsAhead
         val changed = docs.values.filter { published[it.doc]?.dv != it.dv }.map { it.doc }.toSet()
         published = docs.filterKeys { it != DocumentType.DOWNLOAD }
         val legacyPass = sharedLegacyPass(changed)
@@ -145,13 +156,17 @@ class Carousel(
     private fun loopFor(lane: Lane): List<Frame> = when (lane) {
         Lane.Small -> if (legacyDataSets == 1) singleSetLoop() else framesOf(SMALL_ORDER, ::legacyFrames)
         is Lane.Large -> largeLoop(lane.index)
-        Lane.Extended -> withStateRecordEvery8(framesOf(EXTENDED_ORDER.filter { it != DocumentType.STATE }, ::extendedFrames))
+        Lane.Extended -> {
+            val docs = framesOf(EXTENDED_ORDER.filter { it != DocumentType.STATE }, ::extendedFrames)
+            withStateRecordEvery8(if (ahead.isEmpty()) docs else ahead.flatMap { docs + extendedFrames(it) })
+        }
     }
 
     /** One legacy data set: the state record, then everything with one state frame after every 8 document frames. */
     private fun singleSetLoop(): List<Frame> {
         val stateFrames = docFrames(DocumentType.STATE, ::legacyFrames)
-        val documentFrames = framesOf(SINGLE_SET_ORDER, ::legacyFrames)
+        val base = framesOf(SINGLE_SET_ORDER, ::legacyFrames)
+        val documentFrames = if (ahead.isEmpty()) base else ahead.flatMap { base + legacyFrames(it) }
         if (documentFrames.isEmpty()) return stateFrames
         val out = ArrayList<Frame>(stateFrames.size + documentFrames.size * 9 / 8 + 1)
         out += stateFrames
@@ -166,11 +181,12 @@ class Carousel(
         return out
     }
 
-    /** Set D[index]: song, setlist, song, … with the frames partitioned over the D sets. */
+    /** Set D[index]: song, setlist, song, … (with songs ahead: song, setlist, ahead₁, …), the frames partitioned over the D sets. */
     private fun largeLoop(index: Int): List<Frame> {
         val song = partition(docFrames(DocumentType.SONG, ::legacyFrames), index)
         val setlist = partition(docFrames(DocumentType.SETLIST, ::legacyFrames), index)
-        return song + setlist   // cycling gives song, setlist, song, setlist, …
+        if (ahead.isEmpty()) return song + setlist   // cycling gives song, setlist, song, setlist, …
+        return ahead.flatMap { song + setlist + partition(legacyFrames(it), index) }
     }
 
     /**

@@ -219,9 +219,9 @@ class SingerMachine(private val random: Random = Random.Default) {
      * distinct frames over the last [RATE_WINDOW_MS], `k` will not be reached within [DEADLINE_MS] of
      * the group's start (v0.24, Q26); the estimate is first made [RATE_WINDOW_MS] after the start.
      */
-    private fun repairDue(c: Collecting, now: Long): Boolean {
+    private fun repairDue(doc: Int, c: Collecting, now: Long): Boolean {
         if (noBroadcast) return true                              // 7.8: nothing will come by broadcast
-        if (now - c.lastNew >= NO_PROGRESS_MS) return true
+        if (now - c.lastNew >= (if (doc == DocumentType.STATE) STATE_NO_PROGRESS_MS else NO_PROGRESS_MS)) return true
         val needed = c.needed ?: return false
         if (now - c.since < RATE_WINDOW_MS) return false
         val (t0, h0) = c.samples.firstOrNull() ?: return false
@@ -292,7 +292,7 @@ class SingerMachine(private val random: Random = Random.Default) {
         }
         when (state) {
             SingerState.LISTENING -> {
-                if (collecting.any { (_, c) -> repairDue(c, now) }) {
+                if (collecting.any { (g, c) -> repairDue(g.first, c, now) }) {
                     // 7.6, 10.4 (v0.25): one connection fetches everything still being collected, the state first.
                     val groups = collecting.keys.sortedBy { if (it.first == DocumentType.STATE) 0 else 1 }
                     collecting.clear()
@@ -362,6 +362,8 @@ class SingerMachine(private val random: Random = Random.Default) {
         const val BUSY_DELAY_MAX_MS = 2_000L
         /** 7.6 (v0.21): nothing new for this long means repair. */
         const val NO_PROGRESS_MS = 3_000L
+        /** 7.6 (v0.33): the state record's frames stop when its pass moves on to the song; a second of silence ends it. */
+        const val STATE_NO_PROGRESS_MS = 1_000L
         /** 7.6 (v0.21): the window over which a singer measures its rate of new distinct frames. */
         const val RATE_WINDOW_MS = 2_000L
         /** 7.6 (v0.24, Q26): repair when `k` is not expected within this long of the group's start, on either carrier (NFR-PERF-01). */

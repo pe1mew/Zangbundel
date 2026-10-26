@@ -227,11 +227,13 @@ class Gathering(
         runCatching { t.stopScan() }
         val installed = songbook.entries()
         val songs = setlistUid?.let { setlists.entries(it) }.orEmpty().map { LeaderSong(it, resolve(it, installed)) }
+        // FR-BLE-18, ble-protocol 7.4 rule 7: every song of the setlist goes out ahead from the start.
+        val prepared = songs.map { song -> song.song?.let { runCatching { prepare(it) }.getOrNull() } }
         val s = CoroutineScope(scope.coroutineContext + Job(scope.coroutineContext[Job]))
         val l = LeaderSession(t, crypto, s, clock, name, joinCode = protection.code)
         GatheringService.start(context)
         try {
-            l.start()
+            l.start(LeaderSession.Publication(ahead = prepared.map { it?.document }))
         } catch (e: Exception) {
             s.cancel()
             GatheringService.stop(context)
@@ -240,6 +242,7 @@ class Gathering(
         session = s
         leader = l
         refs.clear()
+        prepared.forEachIndexed { i, p -> p?.let { refs[i] = it.ref } }
         startedWall = wallClock()
         pushedOrder.clear()
         peakSingers = 0
@@ -267,20 +270,29 @@ class Gathering(
         val m = _mode.value as? Mode.Leading ?: return@withLock
         val l = leader ?: return@withLock
         val e = m.songs.getOrNull(index)?.song ?: return@withLock
-        val file = songbook.read(e.libraryId, e.directory, e.fileName)
-        val song = SongParser.parse(file).song ?: return@withLock
-        val ref = SongRef(LibraryId(e.libraryId), SongId(e.songId), song.hash)
+        val p = prepare(e) ?: return@withLock
+        val ref = p.ref
         refs[index] = ref
         val sung = if (m.current != null && m.current != index) m.sung + m.current else m.sung
         // D-47: the setlist singers get holds what was sung and the current song, nothing upcoming.
         val items = m.songs.indices.filter { it in sung || it == index }.mapNotNull { i ->
             refs[i]?.let { r -> SetlistDocument.Item(r, m.songs[i].title, if (i == index) STATUS_CURRENT else STATUS_SUNG) }
         }
-        val document = if (song.meta.redistribute) SongDocument(ref, file, song.meta.licenceSummary(e.libraryName)) else null
-        l.push(LeaderSession.Publication(ref, song.meta.title, document, SetlistDocument(items)))
+        l.push(LeaderSession.Publication(ref, p.title, p.document, SetlistDocument(items)))
         Log.d("leader push index=$index repush=${index == m.current}")
         if (index !in pushedOrder) pushedOrder += index
         _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress())
+    }
+
+    /** A setlist song as it is pushed and as it is sent ahead; [document] is null for a song that may not be broadcast (FR-LIB-22). */
+    private class Prepared(val ref: SongRef, val title: String, val document: SongDocument?)
+
+    /** ble-protocol 9.5: the same document for the push and for sending ahead, so both frame to the same bytes. */
+    private suspend fun prepare(e: SongbookEntry): Prepared? {
+        val file = songbook.read(e.libraryId, e.directory, e.fileName)
+        val song = SongParser.parse(file).song ?: return null
+        val ref = SongRef(LibraryId(e.libraryId), SongId(e.songId), song.hash)
+        return Prepared(ref, song.meta.title, if (song.meta.redistribute) SongDocument(ref, file, song.meta.licenceSummary(e.libraryName)) else null)
     }
 
     /** *Afsluiten* (10.10): singers see the end at once; the radio lingers 60 s in the background, then stops. */

@@ -9,7 +9,7 @@
     <string name="reception_song">Lied</string>
     <string name="reception_setlist">Lijst</string>
     <string name="reception_setting">Ontvangst tonen</string>
-    <string name="reception_description">Ontvangst van het lied en de lijst, blok voor blok. Tik om te verbergen.</string>
+    <string name="reception_description">Ontvangst van de lijst en elk lied, blok voor blok. Tik om te verbergen.</string>
     <!-- Gedeelde knoppen. -->
     <string name="cancel">Annuleren</string>
     <string name="done">Klaar</string>
@@ -299,7 +299,7 @@
     <string name="settings_name">Naam voor de leider</string>
     <string name="settings_name_hint">Alleen je voornaam of bijnaam</string>
     <string name="settings_name_note">Niet verplicht. Alleen de leider ziet hem. Zonder naam ben je een zanger met een nummer. Een wijziging geldt vanaf de volgende keer dat je meezingt.</string>
-    <string name="settings_reception_note">Laat zien hoe het lied en de lijst binnenkomen, blok voor blok. Staat bij elke start weer uit.</string>
+    <string name="settings_reception_note">Laat zien hoe de lijst en elk lied binnenkomen, blok voor blok, maar alleen als het huidige lied nog niet compleet is. Houd de bovenste regel ingedrukt om het zelf op te roepen.</string>
     <string name="settings_data">Gegevens</string>
     <string name="settings_privacy">Wat gebeurt er met mijn gegevens?</string>
     <string name="settings_remove_all">Alle gegevens verwijderen</string>

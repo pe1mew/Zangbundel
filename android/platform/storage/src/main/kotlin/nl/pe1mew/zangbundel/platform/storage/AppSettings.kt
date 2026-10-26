@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 
 /**
  * The settings kept across starts (architecture section 6: DataStore `settings.preferences_pb`, removed
- * by "remove all data"). *Ontvangst tonen* is not here: it is off at every start (guiDesign D-81).
+ * by "remove all data"). *Ontvangst tonen* is kept since guiDesign v0.28 (D-81, FR-SING-05 as of FRD v0.16).
  */
 class AppSettings private constructor(private val store: DataStore<Preferences>) {
 
@@ -24,7 +24,14 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
     /** Whether the first-use introduction was finished (guiDesign D-07). */
     val firstUseDone: Flow<Boolean> = store.data.map { it[FIRST_USE_DONE] ?: false }
 
+    /** *Ontvangst tonen* (guiDesign D-81 as of v0.28): whether the reception view may show itself; off until switched on. */
+    val receptionView: Flow<Boolean> = store.data.map { it[RECEPTION_VIEW] ?: false }
+
     suspend fun displayName(): String = displayName.first()
+
+    suspend fun setReceptionView(on: Boolean) {
+        store.edit { it[RECEPTION_VIEW] = on }
+    }
 
     suspend fun setDisplayName(name: String) {
         store.edit { it[DISPLAY_NAME] = name.trim().take(DISPLAY_NAME_MAX) }
@@ -44,6 +51,7 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         const val DISPLAY_NAME_MAX = 24
         private val DISPLAY_NAME = stringPreferencesKey("display_name")
         private val FIRST_USE_DONE = booleanPreferencesKey("first_use_done")
+        private val RECEPTION_VIEW = booleanPreferencesKey("reception_view")
         private val Context.settingsStore by preferencesDataStore(name = "settings")
 
         fun open(context: Context) = AppSettings(context.applicationContext.settingsStore)

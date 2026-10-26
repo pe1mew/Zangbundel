@@ -37,8 +37,8 @@ import kotlin.random.Random
  * Info, the signed state, the carousel on the data sets the radio grants, and [LeaderGattService]
  * behind them, kept in step on every [push].
  *
- * Not wired in yet: [LeaderMachine]'s lifecycle (pre-start scan, resume), the join code, messages and
- * requests.
+ * The setlist's songs go out ahead from the start (7.4 rule 7, FR-BLE-18), so a push only switches.
+ * Not wired in yet: [LeaderMachine]'s lifecycle (pre-start scan, resume), messages and requests.
  */
 class LeaderSession(
     private val transport: Transport,
@@ -56,12 +56,17 @@ class LeaderSession(
      * What the singers get (9.4, 9.5): the current song and the setlist as far as it has been sung
      * (guiDesign D-47: nothing upcoming). [song] is null for a song its library marks "do not
      * redistribute" [FR-LIB-22]: the state then carries [cur] and [title] only.
+     *
+     * [ahead] (v0.32, FR-BLE-18): every song of the setlist in setlist order, null where it may not be
+     * broadcast, sent ahead as document 9 for the rest of the gathering; null keeps the list given before.
+     * Each must be the document 3 the song is pushed with, so the two frame to the same bytes (9.5).
      */
     class Publication(
         val cur: SongRef? = null,
         val title: String? = null,
         val song: SongDocument? = null,
         val setlist: SetlistDocument? = null,
+        val ahead: List<SongDocument?>? = null,
     ) {
         init { require(song == null || song.ref == cur) { "the song document is the current song" } }
     }
@@ -83,6 +88,8 @@ class LeaderSession(
     private var carousel: Carousel? = null
     private var loop: Job? = null
     private var last: Built = Built(null, null, emptyMap())
+    /** The setlist's songs as documents 9, per setlist position (7.4 rule 7); null where not broadcast. */
+    private var songsAhead: List<Framed?> = emptyList()
 
     val service = LeaderGattService(gid, ek, crypto, scope, clock, maxSingers = maxSingers, joinCode = joinCode, onBusyChanged = { b -> scope.launch { busyChanged(b) } })
 
@@ -199,10 +206,29 @@ class LeaderSession(
     }
 
     private fun build(p: Publication): Built {
+        p.ahead?.let { list -> songsAhead = list.map { it?.let { d -> framed(d.encode()) } } }
         val docs = LinkedHashMap<Int, Framed>()
         p.song?.let { docs[DocumentType.SONG] = framed(it.encode()) }
-        p.setlist?.let { docs[DocumentType.SETLIST] = framed(it.encode()) }
+        // 9.5 key 2: with songs ahead the setlist always goes out, listing their `dh` by position.
+        val setlist = if (songsAhead.isEmpty()) p.setlist
+        else (p.setlist ?: SetlistDocument(emptyList())).withAhead(songsAhead.map { it?.entry?.dh ?: ByteArray(0) })
+        setlist?.let { docs[DocumentType.SETLIST] = framed(it.encode()) }
         return Built(p.cur, p.title, docs)
+    }
+
+    /**
+     * 7.4 rule 7: the songs ahead in the order to send them, each distinct song once, starting with
+     * the one after the current song in setlist order and wrapping around.
+     */
+    private fun aheadOrder(b: Built): List<Carousel.Document> {
+        if (songsAhead.isEmpty()) return emptyList()
+        val current = b.docs[DocumentType.SONG]?.entry?.dh
+        val at = current?.let { dh -> songsAhead.indexOfFirst { it?.entry?.dh?.contentEquals(dh) == true } } ?: -1
+        val seen = HashSet<String>()
+        return songsAhead.indices.map { songsAhead[(at + 1 + it) % songsAhead.size] }
+            .filterNotNull()
+            .filter { seen.add(it.entry.dh.joinToString("") { b -> "%02x".format(b) }) }
+            .map { Carousel.Document(DocumentType.AHEAD, it.entry.dv, it.bytes) }
     }
 
     private fun raw(song: ByteArray): Built {
@@ -224,6 +250,7 @@ class LeaderSession(
         carousel?.publish(
             listOf(Carousel.Document(DocumentType.STATE, seq, stateBytes), Carousel.Document(DocumentType.INFO, infoDv, info)) +
                 b.docs.map { (doc, f) -> Carousel.Document(doc, f.entry.dv, f.bytes) },
+            aheadOrder(b),
         )
         service.publish(
             info, stateBytes, seq,

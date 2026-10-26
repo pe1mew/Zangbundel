@@ -3,6 +3,7 @@ package nl.pe1mew.zangbundel.core.protocol.frame
 
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import nl.pe1mew.zangbundel.core.protocol.fec.ReedSolomon
+import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import java.util.BitSet
 
 /**
@@ -18,9 +19,11 @@ import java.util.BitSet
  * compared for inequality only (section 5). Repaired byte ranges from a GATT Transfer (9.7) count as
  * the source frames they cover.
  *
- * Bounds (NFR-SEC-04): only broadcast documents 1 to 7, each at most [maxDocumentBytes], and a group
- * stores at most `k` frames, so the reassembler holds at most 7 × 2 × ([maxDocumentBytes] plus one
- * frame). Nothing received can make it throw.
+ * Bounds (NFR-SEC-04): only broadcast documents 1 to 7 and 9, each at most [maxDocumentBytes], and a
+ * group stores at most `k` frames, so documents 1 to 7 hold at most 7 × 2 × ([maxDocumentBytes] plus
+ * one frame). Songs ahead (document 9, 7.5 as of v0.32) keep up to [MAX_AHEAD_VERSIONS] versions and at
+ * most [AHEAD_INCOMPLETE_BYTES] in incomplete ones, the oldest dropped first. Nothing received can make
+ * it throw.
  */
 class Reassembler(
     private val gid16: Int,
@@ -173,7 +176,13 @@ class Reassembler(
             versions.remove(existing) // same version framed differently: start again with this framing
         }
         if (len > maxDocumentBytes) return null
-        if (versions.size >= MAX_VERSIONS) versions.removeAt(0) // versions are kept in the order first seen
+        if (doc == DocumentType.AHEAD) {
+            // 7.5 (v0.32): many songs ahead at once, bounded in number and in bytes held for incomplete ones.
+            while (versions.isNotEmpty() && (versions.size >= MAX_AHEAD_VERSIONS ||
+                    versions.filter { !it.complete }.sumOf { it.k.toLong() * it.frameSize } + k.toLong() * frameSize > AHEAD_INCOMPLETE_BYTES)) versions.removeAt(0)
+        } else if (versions.size >= MAX_VERSIONS) {
+            versions.removeAt(0) // versions are kept in the order first seen
+        }
         return Group(doc, dv, k, frameSize, len).also { versions += it }
     }
 
@@ -183,9 +192,11 @@ class Reassembler(
     }
 
     companion object {
-        /** Broadcast documents (7.3); document 8 is GATT-only and never broadcast. */
-        val BROADCAST_DOCUMENTS = 1..7
+        /** Broadcast documents (7.3); document 8 is GATT-only and never broadcast; 9 is a song ahead (v0.32). */
+        val BROADCAST_DOCUMENTS: Set<Int> = (1..7).toSet() + DocumentType.AHEAD
         const val MAX_VERSIONS = 2
+        const val MAX_AHEAD_VERSIONS = 64
+        const val AHEAD_INCOMPLETE_BYTES = 1L shl 20
         const val MAX_REPAIR_RANGES = 32
         /** Bound for one document: the framed limit of 9.8 (op 8 refuses uploads over 64 kB). */
         const val DEFAULT_MAX_DOCUMENT_BYTES = 64 * 1024

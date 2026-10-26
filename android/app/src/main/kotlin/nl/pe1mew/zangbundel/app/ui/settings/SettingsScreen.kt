@@ -78,7 +78,7 @@ fun SettingsScreen(onPrivacy: () -> Unit, onAllRemoved: () -> Unit) {
                         Text(stringResource(R.string.settings_reception_note), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
                     }
                     Spacer(Modifier.width(8.dp))
-                    Switch(checked = reception, onCheckedChange = { container.singerSettings.receptionBar.value = it })
+                    Switch(checked = reception, onCheckedChange = { container.singerSettings.setReceptionView(it) })
                 }
             }
             Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)

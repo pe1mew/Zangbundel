@@ -3,6 +3,9 @@ package nl.pe1mew.zangbundel.app
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.library.HttpsDownloads
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
@@ -27,8 +30,8 @@ class AppContainer(private val context: Context) {
 
     val crypto: Crypto by lazy { SodiumCrypto() }
 
-    /** Off at every start (D-81): created with the process, never stored. */
-    val singerSettings = SingerSettings()
+    /** *Ontvangst tonen* (D-81 as of v0.28), kept in [storage]'s settings. */
+    val singerSettings: SingerSettings by lazy { SingerSettings({ storage.settings }, CoroutineScope(SupervisorJob() + Dispatchers.IO)) }
 
     /** Null when the device has no Bluetooth adapter at all; such a device can neither lead nor join. */
     val transport: Transport? by lazy {
@@ -64,7 +67,7 @@ class AppContainer(private val context: Context) {
         for (s in storage.setlists.all()) storage.setlists.delete(s.uid)
         storage.memories.deleteAll()
         storage.settings.clear()
-        singerSettings.receptionBar.value = false
+        singerSettings.forget()
         java.io.File(context.cacheDir, "share").deleteRecursively()
     }
 

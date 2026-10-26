@@ -7,6 +7,7 @@ import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.cbor.Cbor
 import nl.pe1mew.zangbundel.core.protocol.cbor.CborArray
 import nl.pe1mew.zangbundel.core.protocol.cbor.CborBool
+import nl.pe1mew.zangbundel.core.protocol.cbor.CborBytes
 
 /** Document types (ble-protocol 7.3). */
 object DocumentType {
@@ -20,6 +21,8 @@ object DocumentType {
     const val REQSTAT = 7
     /** GATT only, sealed to a delegate; never broadcast. */
     const val REQUESTS = 8
+    /** A setlist song before it is pushed (v0.32, FR-BLE-18): framed as document 3 would frame it, in no manifest (9.5). */
+    const val AHEAD = 9
 }
 
 /** Info, document 2 and characteristic `0002` (9.2). Key 11 `libs` is reserved and neither sent nor read. */
@@ -110,7 +113,18 @@ class SongDocument(val ref: SongRef, file: ByteArray, lic: String? = null) {
 }
 
 /** Setlist, document 4 (9.5). Upcoming items may be left out (FRD Q2). */
-class SetlistDocument(val items: List<Item>) {
+class SetlistDocument(val items: List<Item>, ahead: List<ByteArray> = emptyList()) {
+    /**
+     * v0.32 key 2 (FR-BLE-18): per setlist position, the `dh` of that song as document 9, or an empty
+     * array for a song not broadcast [FR-LIB-22]. No title or reference: the singer only lays out its
+     * reception view by position (guiDesign D-81).
+     */
+    val ahead: List<ByteArray> = ahead.map { it.copyOf() }
+
+    init { require(this.ahead.all { it.isEmpty() || it.size == FieldSizes.DOC_HASH }) { "ahead entries are empty or a dh" } }
+
+    fun withAhead(ahead: List<ByteArray>) = SetlistDocument(items, ahead)
+
     class Item(val ref: SongRef, title: String, val status: Int, val votes: Long? = null) {
         val title: String = truncateChars(title, TITLE_MAX_CHARS)
         init {
@@ -120,7 +134,10 @@ class SetlistDocument(val items: List<Item>) {
     }
 
     fun encode(): ByteArray = Cbor.encode(
-        payload(1L to CborArray(items.map { payload(1L to SongRefCodec.toCbor(it.ref), 2L to it.title.cbor(), 3L to it.status.cbor(), 4L to it.votes?.cbor()) })),
+        payload(
+            1L to CborArray(items.map { payload(1L to SongRefCodec.toCbor(it.ref), 2L to it.title.cbor(), 3L to it.status.cbor(), 4L to it.votes?.cbor()) }),
+            2L to if (ahead.isEmpty()) null else CborArray(ahead.map { it.cbor() }),
+        ),
     )
 
     companion object {
@@ -141,6 +158,11 @@ class SetlistDocument(val items: List<Item>) {
                         status = e.requireUint(3, 3).toInt(),
                         votes = e.uint(4),
                     )
+                },
+                m.arrayAt(2).orEmpty().map { v ->
+                    val b = (v as? CborBytes)?.value ?: throw PayloadException("setlist ahead: not a byte string")
+                    if (b.isNotEmpty() && b.size != FieldSizes.DOC_HASH) throw PayloadException("setlist ahead: ${b.size} bytes")
+                    b
                 },
             )
         }

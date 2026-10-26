@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.15 (draft) |
+| Version | 0.16 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -25,6 +25,7 @@
 | 0.13 | 2026-10-25 | FR-SING-05 added at the owner's request: a singer can switch on a bar that shows the reception of the current song and the setlist block by block (green received, white still to come, orange missed); off at every app start, switched on only in the settings, hidden by a tap. |
 | 0.14 | 2026-10-26 | Q3 resolved by the owner: the default library of FR-LIB-02 is `github.com/pe1mew/Zangbundel-bibliotheek`, offered on an empty library screen and added only on a tap. No requirement changed. |
 | 0.15 | 2026-10-26 | FR-NET-01 and FR-NET-03 widened by the owner: besides libraries, the app may fetch a setlist from an address the user enters (`design/guiDesign.md` D-59, assessment SP-25); the servers it may contact are the ones the user enters or chooses for libraries or setlists, the default library included, with their download servers. Privacy policy and store listing updated to match. |
+| 0.16 | 2026-10-26 | Approved by the owner (`design/proposals/2026-10-26-songs-ahead.md`): FR-BLE-18 added, the leader broadcasts the setlist's songs ahead from the start of the gathering and *Nu* only switches; a singer never shows a song before it is pushed. FR-SING-05 amended: the reception view covers every song of the setlist, its switch is kept across starts, and while on it shows itself only while the current song is incomplete or when the singer asks; a tap hides it without switching it off. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -301,6 +302,8 @@ These are functional requirements on the behaviour the user experiences. The pro
 
 **FR-BLE-17** (MUST, P1) — Data that identifies a singer or that a singer writes (the display name, the text of a request, the singer's session credentials) MUST be end-to-end encrypted so that only the intended recipient device, normally the leader's, can read it. Information sent by broadcast MUST contain no personal data. This keeps anyone with a Bluetooth sniffer from learning who is at the fire, and it lets the app state truthfully in app-store privacy declarations that it collects no data (Google Play counts any unencrypted transmission off the device as collection).
 
+**FR-BLE-18** (MUST, P1) — From the start of a gathering, the leader MUST broadcast the songs of the setlist continuously, in the time that the gathering state and the current song leave free, so that singers can hold a song before the leader pushes it and a push only switches the song. A singer MUST NOT show a song, or its title, before the leader pushes it; songs received ahead are discarded with the rest of the gathering's song content (FR-DATA-01). *(Added in v0.16 at the owner's request: the leader walks around before and during the campfire, so continuous broadcasting reaches singers at the edge of range.)*
+
 ---
 
 ## 8. Leader functions
@@ -395,7 +398,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 **FR-SING-04** (MUST, P1) — The singer MUST see the connection state with the leader (connected / reconnecting / gathering ended).
 
-**FR-SING-05** (MUST, P1) — A singer MUST be able to see how the current song and the setlist are being received, as a bar of each document's blocks: **green** for a block received (or rebuilt from the other blocks, or fetched again from the leader), **white** for a block still to come, **orange** for a block that went by without arriving. The bar MUST be off whenever the app starts, MUST be switched on only in the settings, and MUST disappear, switching its setting off, when the singer taps it. *(Added in v0.13 at the owner's request; kept out of sight by default because the phone must not become the attraction, GUI design D-48.)*
+**FR-SING-05** (MUST, P1) — A singer MUST be able to see how the current song and the setlist are being received, as a bar of each document's blocks: **green** for a block received (or rebuilt from the other blocks, or fetched again from the leader), **white** for a block still to come, **orange** for a block that went by without arriving; with FR-BLE-18 this covers every song of the setlist, songs not yet pushed identified only by their position. The view MUST be switched on only in the settings, where the switch keeps its value across starts. While on, it MUST show itself only while the current song is incomplete on this phone or when the singer asks for it, and MUST disappear, without switching the setting off, when the singer taps it. *(Added in v0.13 at the owner's request; kept out of sight by default because the phone must not become the attraction, GUI design D-48. Amended in v0.16: from off-at-every-start to shown-only-when-needed.)*
 
 ### 9.2 Reading lyrics
 

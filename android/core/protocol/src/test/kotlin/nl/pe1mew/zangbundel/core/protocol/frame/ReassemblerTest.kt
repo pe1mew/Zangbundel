@@ -65,8 +65,18 @@ class ReassemblerTest {
         assertEquals(Result.Ignored, r.accept(Framer.legacy(0x1111, 3, 1, doc(10)).first()))
         assertEquals(Result.Ignored, r.accept(Framer.extended(gid16, 3, 1, doc(10)).first()))
         assertEquals(Result.Ignored, r.accept(Framer.legacy(gid16, 8, 1, doc(10)).first()))   // GATT only
-        assertEquals(Result.Ignored, r.accept(Framer.legacy(gid16, 9, 1, doc(10)).first()))   // unknown type
+        assertEquals(Result.Ignored, r.accept(Framer.legacy(gid16, 10, 1, doc(10)).first()))  // unknown type (9 is a song ahead, v0.32)
         assertEquals(Result.Ignored, r.accept(Framer.legacy(gid16, 0, 1, doc(10)).first()))
+    }
+
+    @Test
+    fun `songs ahead keep up to 64 versions, the oldest dropped first`() {
+        val r = legacy()
+        // 70 songs ahead of 40 bytes (3 source frames), each with only its first frame heard.
+        for (i in 0 until 70) assertEquals(Result.Stored, r.accept(Framer.legacy(gid16, 9, 0x1000 + i, doc(40, i)).first()))
+        assertEquals(null, r.progress(9, 0x1000 + 5), "among the six oldest, dropped")
+        assertEquals(1 to 3, r.progress(9, 0x1000 + 6))
+        assertEquals(1 to 3, r.progress(9, 0x1000 + 69))
     }
 
     @Test
