@@ -301,7 +301,6 @@
     <string name="settings_name">Name for the leader</string>
     <string name="settings_name_hint">Only your first name or a nickname</string>
     <string name="settings_name_note">Optional. Only the leader sees it. Without one you are a numbered singer. A change applies the next time you join.</string>
-    <string name="settings_reception_note">Shows how the list and each song come in, block by block, but only while the current song is not complete yet. Press and hold the top line to call it up yourself.</string>
     <string name="settings_data">Data</string>
     <string name="settings_privacy">What happens to my data?</string>
     <string name="settings_remove_all">Remove all data</string>

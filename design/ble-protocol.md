@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.35 (draft) |
+| Document version | 0.36 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.16 |
+| Depends on | `design/functional-requirements.md` v0.17 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -48,6 +48,7 @@
 | 0.33 | 2026-10-26 | Approved by the owner as options A and C of `design/proposals/2026-10-26-state-after-push.md`, after both phones fetched the new state over GATT after every push (`design/test-results/2026-10-26-songs-ahead.md`). 7.1: a singer stays on the extended carrier only while it hears at least 3 extended frames of the gathering in the first 3 s and in every 10 s after; one frame in 3 s kept the S23 on a set it hears 0.05 times a second. 7.6: the state record is repaired after 1 s with nothing new instead of 3 s, because its frames come about 30 a second within a pass and stop when the pass moves on to the song. |
 | 0.34 | 2026-10-26 | Approved by the owner as `design/proposals/2026-10-26-burst-state-first.md`, after per-frame timing on the Huawei showed the rate rule repairing the state at 2.5 s and every push costing each singer a setlist and an Info connection (`design/test-results/2026-10-26-state-after-push.md`). 7.2, 7.3: a frame index may go up to 255 for any document; frames above a document's usual `n` are the state's lead-in. 7.4 rule 4: a burst opens with the new state record's three passes as distinct frames (the lead-in), then the other changed documents three times, the setlist before the song. 7.6: the state record is judged first 1 s after the new `seq` against 3 s; a registered singer never repairs Info. A v0.33 singer drops lead-in frames above its usual `n`, so every phone must run v0.34. |
 | 0.35 | 2026-10-26 | Approved by the owner as `design/proposals/2026-10-26-static-setlist.md`: the setlist document (9.5) carries only the order of the songs (key 2, their `dh` per position) and changes only when the setlist changes, not on a push; key 1 (`items`) is no longer sent. The state body (9.4) gains `cpos` (15), the current song's setlist position, and `sung` (16), a bitmap of the positions pushed so far, from which a singer derives what is current and what was sung; a late joiner shows earlier sung songs it holds ahead (7.5). A push bursts the state and, if it changed, the song (10.5). |
+| 0.36 | 2026-10-26 | Depends on FRD v0.17 (FR-SING-05: the reception view is a hidden feature, opened by a long press only); no other change. |
 
 ---
 

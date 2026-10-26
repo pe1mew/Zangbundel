@@ -335,7 +335,7 @@ fun BleTestScreen() {
                 Button(onClick = { request { probeExtended() } }) { Text(stringResource(R.string.bletest_probe_extended)) }
                 OutlinedButton(onClick = { job?.cancel(); job = null }) { Text(stringResource(R.string.bletest_stop)) }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Switch(checked = showReception, onCheckedChange = { settings.setReceptionView(it) })
+                    Switch(checked = showReception, onCheckedChange = { settings.receptionBar.value = it })
                     Column {
                         Text(stringResource(R.string.reception_setting))
                         Text(stringResource(R.string.bletest_reception_note), style = MaterialTheme.typography.bodySmall)
@@ -345,7 +345,7 @@ fun BleTestScreen() {
                 lines?.value?.forEach { Text(it, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
             }
             if (showReception && rows.isNotEmpty()) {
-                ReceptionIsland(rows, titleOf = { null }, onDismiss = { settings.setReceptionView(false) }, modifier = Modifier.align(Alignment.BottomCenter))
+                ReceptionIsland(rows, titleOf = { null }, onDismiss = { settings.receptionBar.value = false }, modifier = Modifier.align(Alignment.BottomCenter))
             }
         }
     }

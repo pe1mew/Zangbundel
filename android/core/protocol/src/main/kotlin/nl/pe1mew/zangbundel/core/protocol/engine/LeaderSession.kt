@@ -105,6 +105,11 @@ class LeaderSession(
         private set
     var framesSent: Long = 0
         private set
+    /** Diagnostics: ticks of the send loop (one frame per set each), and the milliseconds spent in them. */
+    var ticks: Long = 0
+        private set
+    var tickWorkMs: Long = 0
+        private set
 
     /**
      * How far the current song has gone out (guiDesign D-56): the burst passes the carousel has sent
@@ -181,7 +186,11 @@ class LeaderSession(
         publish(first)
         val lanes = activeLanes()
         loop = scope.launch {
+            // 7.4 rule 6: one frame per set every 100 ms, at a fixed rate. Waiting 100 ms after the work, as
+            // before, gave 7.4 frames a second on the A52, whose four data updates take about 30 ms a tick.
+            var next = clock()
             while (isActive) {
+                val started = clock()
                 mutex.withLock {
                     for (lane in lanes) c.next(lane)?.let { f ->
                         val set = when (lane) {
@@ -192,8 +201,12 @@ class LeaderSession(
                         transport.setFrame(set, FrameCodec.encode(f))
                         framesSent++
                     }
+                    ticks++
+                    tickWorkMs += clock() - started
                 }
-                delay(Carousel.ADVERTISING_INTERVAL_MS)
+                next += Carousel.ADVERTISING_INTERVAL_MS
+                val wait = next - clock()
+                if (wait > 0) delay(wait) else next = clock()   // fallen behind: carry on, no burst of catch-up ticks
             }
         }
     }

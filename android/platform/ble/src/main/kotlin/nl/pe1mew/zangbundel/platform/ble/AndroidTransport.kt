@@ -82,6 +82,9 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
     fun extendedDataResults(): Triple<Int, Int, Int?>? =
         extendedSet?.let { Triple(it.dataSet.get(), it.dataFailed.get(), it.lastDataStatus) }
 
+    /** Diagnostic: data updates the stack confirmed on each legacy data set, Set S first. */
+    fun legacyDataConfirmed(): List<Int> = legacySets.map { it.dataSet.get() }
+
     private var beaconSet: SetHandle? = null
     private val legacySets = ArrayList<SetHandle>()
     private var extendedSet: SetHandle? = null

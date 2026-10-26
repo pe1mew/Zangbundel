@@ -26,7 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,7 +57,7 @@ fun ReceptionIsland(rows: List<SingerEngine.Reception>, titleOf: (SongRef) -> St
     val description = stringResource(R.string.reception_description)
     val grid = rows.any { it.position != null }
     val shown = if (grid) rows.filter { it.doc != DocumentType.SONG } else rows
-    val maxHeight = (LocalConfiguration.current.screenHeightDp / 3).dp
+    val maxHeight = with(LocalDensity.current) { (LocalWindowInfo.current.containerSize.height / 3).toDp() }
     Column(
         modifier = modifier
             .navigationBarsPadding()

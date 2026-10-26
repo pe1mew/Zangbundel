@@ -3,9 +3,6 @@ package nl.pe1mew.zangbundel.app
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.library.HttpsDownloads
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
@@ -30,8 +27,8 @@ class AppContainer(private val context: Context) {
 
     val crypto: Crypto by lazy { SodiumCrypto() }
 
-    /** *Ontvangst tonen* (D-81 as of v0.28), kept in [storage]'s settings. */
-    val singerSettings: SingerSettings by lazy { SingerSettings({ storage.settings }, CoroutineScope(SupervisorJob() + Dispatchers.IO)) }
+    /** The two-phone test's reception switch (D-81: singers have none since v0.30). */
+    val singerSettings = SingerSettings()
 
     /** Null when the device has no Bluetooth adapter at all; such a device can neither lead nor join. */
     val transport: Transport? by lazy {
@@ -51,7 +48,7 @@ class AppContainer(private val context: Context) {
     val setlistTransfer: SetlistTransfer by lazy { SetlistTransfer(storage.songbook, setlists, HttpsDownloads(fetcher)) }
 
     /** The one gathering, leading or singing (architecture A-06); its radio is [transport]. */
-    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings, { singerSettings.receptionBar.value }) }
+    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings) }
 
     /** Whether the welcome screen was shown in this process (guiDesign D-05: never a second time while the app stays in memory). */
     var welcomed = false
@@ -67,7 +64,6 @@ class AppContainer(private val context: Context) {
         for (s in storage.setlists.all()) storage.setlists.delete(s.uid)
         storage.memories.deleteAll()
         storage.settings.clear()
-        singerSettings.forget()
         java.io.File(context.cacheDir, "share").deleteRecursively()
     }
 

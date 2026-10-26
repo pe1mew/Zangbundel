@@ -70,3 +70,18 @@ The setlist document now carries only the order (`dh` per position) and the stat
 | **Late joiner**: the S23 left at 17:04:35 and joined again at 17:04:47 | registered at 17:04:53; songs 1 and 2 reported as sung before it arrived at 17:04:57 and 17:05:19 (from its songs ahead, verified by the setlist's `dh`); its page showed *1 · Hoog laait het vuur*, *2 · Advocaatje*, then the current *3 · Ik heb een tante in Marokko*, with full lyrics |
 
 **Result:** the setlist no longer goes out or is fetched after a push, and a late joiner shows what was sung before it came (guiDesign D-47 as noted in v0.29).
+
+## The leader's send rate (17:24–17:34)
+
+A diagnostic in the leader logs, every 5 s, its send loop's ticks per second, the work per tick, and the data updates the Android stack confirmed per legacy set (`AndroidTransport.legacyDataConfirmed`).
+
+| Build | Ticks per second | Work per tick | Updates confirmed per set |
+|---|---|---|---|
+| Loop waiting 100 ms after its work (all builds before) | **7.2–7.6** | 28–32 ms | 7.2–7.6 |
+| Loop at a fixed rate of one tick per 100 ms | **10.0** | 29–31 ms | 10.0–10.2 |
+
+**Cause:** the loop did its work (one `setAdvertisingData` call per set, four sets, about 30 ms on the A52) and then waited 100 ms, so a tick took about 135 ms. The stack confirmed every update; nothing was refused. This is the "burst pass takes 9–10 s on the A52, about twice the design rate" noted on 2026-10-26. The loop now keeps a fixed rate (7.4 rule 6 as written).
+
+**Effect on the Huawei** (13 %), three pushes at 17:31:48, 17:32:37 and 17:33:27: song on screen after 3.3, 2.9 and 2.4 s, the state still by repair decided at 1.1–1.7 s, each song from ahead; against 2.6–2.9 s before. No clear change at that reception. The S23 had locked itself and did not join this run.
+
+**The S23 with the fixed rate (17:38–17:43).** It joined late (17:38:10, three songs already pushed), showed songs 1 and 2 as sung before it came within 70 s, and held all eight songs ahead within two minutes. Pushes of song 4 (17:41:20) and song 6 (17:42:55): **1.3 s and 1.2 s**, state by air, song from ahead (1.1–1.4 s before the fix). The Huawei: 3.4 s both times. A third push did not happen (`nu.py` did not find the title on the page).

@@ -36,6 +36,7 @@ import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
 import nl.pe1mew.zangbundel.core.songformat.SetlistResolver
 import nl.pe1mew.zangbundel.core.songformat.Song
 import nl.pe1mew.zangbundel.core.songformat.SongParser
+import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
 import nl.pe1mew.zangbundel.platform.storage.AppSettings
 import nl.pe1mew.zangbundel.platform.storage.Memories
 import nl.pe1mew.zangbundel.platform.storage.MemorySong
@@ -59,8 +60,6 @@ class Gathering(
     private val setlists: SetlistBook,
     private val memories: Memories,
     private val settings: AppSettings,
-    /** *Ontvangst tonen* (D-81): whether the singer's page shows the reception island. */
-    private val receptionOn: () -> Boolean,
     private val clock: () -> Long = SystemClock::elapsedRealtime,
     private val wallClock: () -> Long = System::currentTimeMillis,
 ) {
@@ -129,7 +128,7 @@ class Gathering(
             val current: Int?,
             /** D-29 (v0.21): the source blocks of the current song while it is still coming in; null once it is in. */
             val collecting: List<Reassembler.Block>? = null,
-            /** D-81: the reception island's rows while *Ontvangst tonen* is on; empty otherwise. */
+            /** D-81: the reception grid's rows, kept current; the page shows them only after a long press (v0.30). */
             val reception: List<SingerEngine.Reception> = emptyList(),
             /** FR-GATH-18 (D-36). */
             val fingerprint: String = "",
@@ -248,6 +247,19 @@ class Gathering(
         peakSingers = 0
         _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, name).httpsUrl(testBuild()))
+        s.launch {
+            // Diagnostics: the send loop's real rate, and what the stack confirmed per legacy set, every 5 s.
+            var t0 = clock(); var ticks0 = l.ticks; var work0 = l.tickWorkMs
+            var confirmed0 = (t as? AndroidTransport)?.legacyDataConfirmed().orEmpty()
+            while (isActive) {
+                delay(5_000)
+                val t1 = clock(); val ticks = l.ticks - ticks0; val work = l.tickWorkMs - work0
+                val confirmed = (t as? AndroidTransport)?.legacyDataConfirmed().orEmpty()
+                val perSet = confirmed.mapIndexed { i, c -> "%.1f".format((c - (confirmed0.getOrNull(i) ?: 0)) * 1000.0 / (t1 - t0)) }
+                Log.d("leader rate ticks/s=%.1f work/tick=%.1f ms confirmed/s per set=%s".format(ticks * 1000.0 / (t1 - t0), if (ticks > 0) work.toDouble() / ticks else 0.0, perSet))
+                t0 = t1; ticks0 = l.ticks; work0 = l.tickWorkMs; confirmed0 = confirmed
+            }
+        }
         s.launch {
             while (isActive) {
                 delay(1_000)
@@ -394,9 +406,9 @@ class Gathering(
                     delay(COLLECTING_REFRESH_MS)
                     val m = _mode.value as? Mode.Singing ?: continue
                     val waiting = m.current?.let { m.songs.getOrNull(it) }?.let { it.song == null && !it.libraryOnly } == true
-                    val rows = if (waiting || receptionOn()) engine.reception() else emptyList()
+                    val rows = engine.reception()
                     val blocks = if (waiting) rows.firstOrNull { it.doc == DocumentType.SONG }?.blocks else null
-                    val island = if (receptionOn()) rows else emptyList()
+                    val island = rows
                     if (blocks != m.collecting || island.isNotEmpty() || m.reception.isNotEmpty()) {
                         (_mode.value as? Mode.Singing)?.let { _mode.value = it.copy(collecting = blocks, reception = island) }
                     }

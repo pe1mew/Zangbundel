@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
@@ -66,9 +65,8 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * scrolls the page to it. Leaving asks first (D-34); once ended, the page stays readable and the strip
  * turns into an orange bar that leaves on a tap (D-34 as amended in v0.19). The strip carries the fingerprint
  * (D-36); a join from a QR code shows the joining screen of D-35 until the leader accepts, and a refused join
- * code asks again (D-26). With *Ontvangst tonen* on, the reception grid of D-81 (v0.28) shows itself
- * while the current song is incomplete and for 3 s after, or on a long press on the strip; a tap hides
- * it until the next incomplete song. The round buttons, the songlist sheet and the toolbar are not built yet.
+ * code asks again (D-26). The reception grid of D-81 is a hidden feature since v0.30: a long press on
+ * the strip opens it, a tap closes it; it never shows by itself. The round buttons, the songlist sheet and the toolbar are not built yet.
  */
 @Composable
 fun SingerScreen() {
@@ -80,15 +78,9 @@ fun SingerScreen() {
     val list = rememberLazyListState()
     var confirmLeave by remember { mutableStateOf(false) }
     var islandHeight by remember { mutableIntStateOf(0) }
-    val settings = remember { (context.applicationContext as ZangbundelApp).container.singerSettings }
-    val enabled by settings.receptionBar.collectAsState()
-    // D-81 (v0.28): shown while the current song is incomplete and 3 s after, or on request; a tap hides it for this song.
-    val needed = m.current?.let { m.songs.getOrNull(it) }?.let { it.song == null && !it.libraryOnly } == true
-    var lingering by remember { mutableStateOf(false) }
-    LaunchedEffect(needed) { if (needed) lingering = true else { delay(ISLAND_LINGER_MS); lingering = false } }
+    // D-81 (v0.30): a hidden feature, open after a long press on the strip until a tap.
     var requested by remember { mutableStateOf(false) }
-    var dismissedFor by remember { mutableStateOf<Int?>(null) }
-    val showIsland = enabled && m.reception.isNotEmpty() && (requested || ((needed || lingering) && dismissedFor != m.current))
+    val showIsland = requested && m.reception.isNotEmpty()
     val ended = m.connection == Gathering.Connection.ENDED
     val joining = m.viaQr && m.connection == Gathering.Connection.CONNECTING
     KeepScreenOn()
@@ -123,7 +115,7 @@ fun SingerScreen() {
         } else {
             // D-36: only the name gives way when the strip is narrow, never the fingerprint or the state.
             Row(
-                Modifier.fillMaxWidth().height(24.dp).pointerInput(enabled) { detectTapGestures(onLongPress = { if (enabled) requested = true }) }
+                Modifier.fillMaxWidth().height(24.dp).pointerInput(Unit) { detectTapGestures(onLongPress = { requested = true }) }
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -161,13 +153,13 @@ fun SingerScreen() {
             if (m.songs.isNotEmpty()) item(key = "end") { Spacer(Modifier.fillParentMaxHeight(TAIL_FRACTION)) }
         }
     }
-    // D-81: the reception island at the very bottom; a tap hides it until the next incomplete song.
+    // D-81: the reception island at the very bottom; a tap closes it.
     if (showIsland) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
             ReceptionIsland(
                 m.reception,
                 titleOf = { ref -> m.songs.firstOrNull { it.ref == ref }?.title },
-                onDismiss = { requested = false; dismissedFor = m.current },
+                onDismiss = { requested = false },
                 modifier = Modifier.onSizeChanged { islandHeight = it.height },
             )
         }
@@ -180,9 +172,6 @@ fun SingerScreen() {
         dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.singer_stay)) } },
     )
 }
-
-/** D-81 (v0.28): the island stays this long after the current song is complete. */
-private const val ISLAND_LINGER_MS = 3_000L
 
 /** The share of the page height left below the last song: enough to scroll it to the top, with its last line still in view. */
 private const val TAIL_FRACTION = 0.85f
