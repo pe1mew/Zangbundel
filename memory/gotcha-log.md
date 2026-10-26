@@ -169,10 +169,11 @@
 **Root cause**: The tool's command quoting does not survive a long heredoc with nested single quotes, backticks and backslashes.
 **Fix**: Write such scripts to a file in the scratchpad with the Write tool and run the file (`python3 -I <path>`); keep inline heredocs for short text without quotes. Promoted to `memory/MEMORY.md` Recently Promoted on 2026-10-26.
 
-### JVM test names cannot carry ':' or ';' (2026-10-25) [x2]
+### JVM test names cannot carry ':' or ';' (2026-10-25) [x3]
 **Problem**: A Kotlin test named with a colon ("as the A52's: the extended singer ...") failed to compile with "Name contains illegal characters"; an earlier session hit the same with `;`.
 **Root cause**: Backtick names become JVM method names, which forbid `.`, `;`, `[`, `/`, `<`, `>`, `:` and a few others.
 **Fix**: Use commas or "and" in test names; a middle dot `·` passes.
+**Again 2026-10-26**, the day after logging it (`LibraryRepositoryTest`): a list after a colon reads naturally in a test name, so the habit wins; one more recurrence and this goes to the memory index.
 
 ### Tapping a remembered coordinate after the screen changed (2026-10-25)
 **Problem**: After a button was added to the two-phone test, a tap meant for *Stoppen* on the S23 hit the new *Extended set onderzoeken* and started a probe that advertised for a minute.

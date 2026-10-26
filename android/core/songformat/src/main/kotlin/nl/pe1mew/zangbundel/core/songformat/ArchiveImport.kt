@@ -53,6 +53,8 @@ object ArchiveImport {
         val archiveSha256: String,
         val files: Map<String, ByteArray>,
         val report: List<ReportEntry>,
+        /** The manifest as read, for the installed revision's record (architecture section 6); null for a snapshot. */
+        val manifestBytes: ByteArray? = null,
     ) {
         val refused: Boolean get() = library == null || library.refused
     }
@@ -86,7 +88,8 @@ object ArchiveImport {
         }
 
         return try {
-            val manifest = if (release) parseManifest(read(MANIFEST, JSON_CAP)!!) ?: return refused("A007", "manifest", MANIFEST) else null
+            val manifestBytes = if (release) read(MANIFEST, JSON_CAP)!! else null
+            val manifest = if (manifestBytes != null) parseManifest(manifestBytes) ?: return refused("A007", "manifest", MANIFEST) else null
             if (manifest != null) {
                 if (manifest.archiveVersion.substringBefore('.').toIntOrNull() != SUPPORTED_ARCHIVE_MAJOR) return refused("A008", manifest.archiveVersion, MANIFEST)
                 if (!REVISION.matches(manifest.revision) || !isUtcTime(manifest.created)) return refused("A010", "${manifest.revision} ${manifest.created}", MANIFEST)
@@ -130,7 +133,7 @@ object ArchiveImport {
             val checked = LibraryImport.check(files, appVersion, url, installed)
             report += checked.report
             val revision = manifest?.revision ?: "snapshot-" + sha.substring(0, 16)
-            Result(checked, manifest, revision, sha, if (checked.refused) emptyMap() else toInstall(files, checked, library), report)
+            Result(checked, manifest, revision, sha, if (checked.refused) emptyMap() else toInstall(files, checked, library), report, manifestBytes)
         } catch (e: ZipReader.Refused) {
             refused(e.code, e.message)
         }

@@ -3,13 +3,16 @@ package nl.pe1mew.zangbundel.app
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import nl.pe1mew.zangbundel.app.library.HttpsDownloads
+import nl.pe1mew.zangbundel.app.library.LibraryRepository
 import nl.pe1mew.zangbundel.app.settings.SingerSettings
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
 import nl.pe1mew.zangbundel.platform.crypto.SodiumCrypto
 import nl.pe1mew.zangbundel.platform.net.HttpsFetcher
-import nl.pe1mew.zangbundel.platform.storage.ZangbundelDatabase
+import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
+import nl.pe1mew.zangbundel.platform.storage.LibraryStorage
 
 /**
  * Wires the app's objects by hand (architecture A-17). Everything is created lazily, so a screen
@@ -17,7 +20,7 @@ import nl.pe1mew.zangbundel.platform.storage.ZangbundelDatabase
  */
 class AppContainer(private val context: Context) {
 
-    val database: ZangbundelDatabase by lazy { ZangbundelDatabase.open(context) }
+    val storage: LibraryStorage by lazy { LibraryStorage.open(context) }
 
     val crypto: Crypto by lazy { SodiumCrypto() }
 
@@ -30,8 +33,12 @@ class AppContainer(private val context: Context) {
         adapter?.let { AndroidTransport(context, it) }
     }
 
-    val fetcher: HttpsFetcher by lazy {
-        val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0"
-        HttpsFetcher(versionName)
+    private val versionName: String by lazy { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0" }
+
+    val fetcher: HttpsFetcher by lazy { HttpsFetcher(versionName) }
+
+    /** Adding, updating and removing libraries (guiDesign D-50); files under `filesDir/libraries/` (architecture section 6). */
+    val libraries: LibraryRepository by lazy {
+        LibraryRepository(HttpsDownloads(fetcher), LibraryInstaller(storage.files, storage.index), storage.index, versionName)
     }
 }

@@ -4,7 +4,7 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.6 (draft) |
+| Document version | 0.7 (draft) |
 | Date | 2026-10-22 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
@@ -18,6 +18,7 @@
 | 0.4 | 2026-10-22 | `design/test-plan.md` v0.1 exists: sections 1.2 and 10 point at its scenarios instead of "still to write". No decision changed. |
 | 0.5 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
 | 0.6 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
+| 0.7 | 2026-10-26 | Section 6, found while building the install pipeline: an installed revision's directory is `<revision>-<8 random hex>`, new for every install, so reinstalling the revision that is in use never overwrites its files; the file names inside are the app's own (`library.json`, `license.txt`, `manifest.json`, `songs/<song id>.cho`, `setlists/<setlist id>.zbs`). |
 
 ---
 
@@ -188,7 +189,7 @@ The leader persists a resume record in `noBackupFilesDir/gathering/resume.cbor` 
 
 | Data | Where | Lives until | Backup |
 |---|---|---|---|
-| Installed library revisions: canonical `.cho` files, setlists, licence file, archive manifest | `filesDir/libraries/<library id>/<revision>/` | replaced by an update or removed by the user | never (A-13) |
+| Installed library revisions: canonical `.cho` files, setlists, licence file, archive manifest, under names the app chooses | `filesDir/libraries/<library id>/<revision>-<random>/` (a new directory per install, v0.7) | replaced by an update or removed by the user | never (A-13) |
 | Library index, song metadata, line-list text for search (FTS4, unicode61 tokenizer with diacritics removed), validation report | Room `zangbundel.db` | as above; the report until the next import (song-format 11) | never |
 | Import or update in progress | `filesDir/libraries/<library id>/.staging-<random>/` | swapped in one transaction, or deleted at the next start | never |
 | Prepared setlists (own and duplicated) | Room | removed by the user (FR-DATA-06, guiDesign D-55) | never |
