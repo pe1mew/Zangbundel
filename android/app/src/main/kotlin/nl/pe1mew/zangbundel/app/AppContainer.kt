@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import nl.pe1mew.zangbundel.app.library.HttpsDownloads
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
+import nl.pe1mew.zangbundel.app.library.SetlistBook
+import nl.pe1mew.zangbundel.app.library.SetlistTransfer
 import nl.pe1mew.zangbundel.app.settings.SingerSettings
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
@@ -33,9 +35,16 @@ class AppContainer(private val context: Context) {
         adapter?.let { AndroidTransport(context, it) }
     }
 
-    private val versionName: String by lazy { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0" }
+    /** This app's `major.minor.patch`, as the library checks compare it (song-format 4.3). */
+    val versionName: String by lazy { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0" }
 
     val fetcher: HttpsFetcher by lazy { HttpsFetcher(versionName) }
+
+    /** Prepared setlists and the one being edited (guiDesign D-53, D-54), shared by the screens that fill it. */
+    val setlists: SetlistBook by lazy { SetlistBook(storage.setlists) }
+
+    /** `.zbs` import, export and copies of library setlists (guiDesign D-59); the HTTPS path is the libraries' one (A-14). */
+    val setlistTransfer: SetlistTransfer by lazy { SetlistTransfer(storage.songbook, setlists, HttpsDownloads(fetcher)) }
 
     /** Adding, updating and removing libraries (guiDesign D-50); files under `filesDir/libraries/` (architecture section 6). */
     val libraries: LibraryRepository by lazy {

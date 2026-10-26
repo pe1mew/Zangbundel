@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.14 (draft) |
+| Version | 0.15 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -24,6 +24,7 @@
 | 0.12 | 2026-10-25 | Open question Q14 on NFR-PERF-01 and FR-BLE-03, from the first two-phone measurements (`design/test-results/2026-10-25-D-05.md`) and the erasure-coding proposal (`design/proposals/2026-10-25-erasure-coding.md`). No requirement changed. |
 | 0.13 | 2026-10-25 | FR-SING-05 added at the owner's request: a singer can switch on a bar that shows the reception of the current song and the setlist block by block (green received, white still to come, orange missed); off at every app start, switched on only in the settings, hidden by a tap. |
 | 0.14 | 2026-10-26 | Q3 resolved by the owner: the default library of FR-LIB-02 is `github.com/pe1mew/Zangbundel-bibliotheek`, offered on an empty library screen and added only on a tap. No requirement changed. |
+| 0.15 | 2026-10-26 | FR-NET-01 and FR-NET-03 widened by the owner: besides libraries, the app may fetch a setlist from an address the user enters (`design/guiDesign.md` D-59, assessment SP-25); the servers it may contact are the ones the user enters or chooses for libraries or setlists, the default library included, with their download servers. Privacy policy and store listing updated to match. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -458,11 +459,11 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 ## 12. Connectivity and offline behaviour
 
-**FR-NET-01** (MUST, P1) — The app MUST never block a gathering function on network availability. Network is used only for library import/update (section 5.2) and nothing else.
+**FR-NET-01** (MUST, P1) — The app MUST never block a gathering function on network availability. Network is used only for library import/update (section 5.2) and for importing a setlist from an address the user enters (FR-LEAD-02, `design/guiDesign.md` D-59), and nothing else. *(Amended in v0.15.)*
 
 **FR-NET-02** (MUST, P1) — The app MUST indicate clearly when a library action requires internet and internet is not available, and MUST NOT retry in the background without the user's consent.
 
-**FR-NET-03** (MUST, P1) — The app MUST NOT contact any server other than the configured library repositories. No analytics, telemetry or crash reporting is sent without explicit opt-in.
+**FR-NET-03** (MUST, P1) — The app MUST NOT contact any server other than the ones the user enters or chooses for libraries or setlists (the default library of FR-LIB-02 included), and the download servers those hosts use. No analytics, telemetry or crash reporting is sent without explicit opt-in. *(Amended in v0.15: setlist addresses, assessment SP-25.)*
 
 **FR-NET-04** (SHOULD, P1) — Library downloads SHOULD be possible over mobile data only after a confirmation that shows the expected download size.
 

@@ -33,7 +33,7 @@ Zangbundel verzamelt niets en stuurt niets naar de maker van de app. Geen accoun
 Machtigingen
 • Bluetooth: om kampvuren te vinden, eraan deel te nemen en als leider uit te zenden.
 • Op Android 11 en ouder vraagt Android de locatiemachtiging om naar Bluetooth-apparaten te kunnen zoeken. Zangbundel leest je locatie nooit.
-• Internet: alleen om liedbundels te downloaden, en alleen als je dat bevestigt.
+• Internet: alleen om liedbundels en setlists te downloaden, en alleen als je dat bevestigt.
 
 Talen: Nederlands en Engels; liedbundels kunnen in elke taal zijn.
 

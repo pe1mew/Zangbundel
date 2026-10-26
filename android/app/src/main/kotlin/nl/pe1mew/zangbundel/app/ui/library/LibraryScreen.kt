@@ -52,6 +52,7 @@ import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.library.DefaultLibrary
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
+import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.core.songformat.ReportEntry
@@ -151,14 +152,6 @@ private fun LibraryItem(library: LibraryRow, onUpdate: (LibraryRow) -> Unit, onE
             TextButton(onClick = { onUpdate(library) }) { Text(stringResource(R.string.library_update)) }
             TextButton(onClick = { onRemove(library) }) { Text(stringResource(R.string.library_remove)) }
         }
-    }
-}
-
-/** D-51: the colour is `colour % 8`; from the ninth library on, the square carries a dot. */
-@Composable
-private fun ColourSquare(colour: Int) {
-    Box(Modifier.size(12.dp).background(Palette.Libraries[colour % Palette.Libraries.size], RoundedCornerShape(2.dp)), contentAlignment = Alignment.Center) {
-        if (colour >= Palette.Libraries.size) Box(Modifier.size(4.dp).background(Palette.NightBlueDark, CircleShape))
     }
 }
 

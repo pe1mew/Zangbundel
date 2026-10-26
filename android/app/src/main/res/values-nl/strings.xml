@@ -16,7 +16,22 @@
     <!-- Startscherm (guiDesign D-21). -->
     <string name="home_join">Meezingen</string>
     <string name="home_start">Kampvuur starten</string>
-    <string name="home_library">Bibliotheek</string>
+    <!-- Liedboek en een lied lezen (guiDesign D-52, D-53). -->
+    <string name="home_songbook">Liedboek</string>
+    <string name="songbook_title">Liedboek</string>
+    <string name="songbook_libraries">Bibliotheken</string>
+    <string name="songbook_search">Zoeken</string>
+    <string name="songbook_in_text">Ook in de tekst</string>
+    <string name="songbook_sort_az">A–Z</string>
+    <string name="songbook_sort_za">Z–A</string>
+    <string name="songbook_clear">Wis filters</string>
+    <string name="songbook_empty">Nog geen liederen. Voeg een bibliotheek toe om het liedboek te vullen.</string>
+    <string name="songbook_none">Geen liederen gevonden.</string>
+    <string name="song_verse">Couplet</string>
+    <string name="song_verse_n">Couplet %d</string>
+    <string name="song_chorus">Refrein</string>
+    <string name="song_bridge">Brug</string>
+    <string name="song_unreadable">Dit lied kon niet worden gelezen.</string>
     <string name="home_memories">Herinneringen</string>
     <string name="home_settings">Instellingen</string>
     <string name="home_about">Over</string>
@@ -136,4 +151,41 @@
     <string name="report_sl102">Het setlistbestand is opgeschoond.</string>
     <string name="report_sl103">De setlist is erg lang.</string>
     <string name="report_sl104">De titel van de setlist is erg lang.</string>
+    <!-- Setlists (guiDesign D-53, D-54). -->
+    <string name="songbook_setlists">Setlists</string>
+    <string name="setlists_title">Setlists</string>
+    <string name="setlists_empty">Nog geen setlists. Maak er een en vul hem vanuit het liedboek.</string>
+    <string name="setlists_new">Nieuwe setlist</string>
+    <string name="setlists_rename">Naam wijzigen</string>
+    <string name="setlists_duplicate">Dupliceren</string>
+    <string name="setlists_delete">Verwijderen</string>
+    <string name="setlists_delete_title">%s verwijderen?</string>
+    <string name="setlists_delete_text">De setlist verdwijnt van deze telefoon. De liederen blijven in het liedboek.</string>
+    <string name="setlists_name">Naam</string>
+    <string name="setlists_save">Opslaan</string>
+    <string name="setlists_copy_of">%s (kopie)</string>
+    <string name="setlists_never_used">nog niet gebruikt</string>
+    <string name="setlists_import">Importeren</string>
+    <string name="setlists_export">Exporteren</string>
+    <string name="setlists_from_libraries">Uit bibliotheken</string>
+    <string name="setlists_import_title">Setlist importeren</string>
+    <string name="setlists_import_hint">Een .zbs-bestand op deze telefoon, of het webadres ervan.</string>
+    <string name="setlists_imported">%s geïmporteerd.</string>
+    <string name="setlists_import_refused">Dit bestand is geen setlist die de app kan lezen:</string>
+    <string name="setlists_import_https">Alleen https-webadressen kunnen worden gebruikt.</string>
+    <string name="setlists_open">Openen</string>
+    <string name="setlists_read_only">Uit %s, alleen lezen</string>
+    <plurals name="setlists_missing">
+        <item quantity="one">%d lied niet gevonden; het vult zich aan zodra de bibliotheek is toegevoegd.</item>
+        <item quantity="other">%d liederen niet gevonden; ze vullen zich aan zodra de bibliotheken zijn toegevoegd.</item>
+    </plurals>
+    <string name="setlist_empty">Nog geen liederen. Voeg ze toe vanuit het liedboek.</string>
+    <string name="setlist_add_songs">Liederen toevoegen</string>
+    <string name="setlist_not_found">niet gevonden</string>
+    <string name="setlist_move">Slepen om te verplaatsen</string>
+    <string name="song_add_to">Toevoegen aan \"%s\"</string>
+    <string name="song_add_to_choose">Toevoegen aan setlist…</string>
+    <string name="song_in_setlist">Staat in de setlist</string>
+    <string name="song_in_named">Staat in \"%s\"</string>
+    <string name="song_choose_setlist">Welke setlist?</string>
 </resources>

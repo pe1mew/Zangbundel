@@ -17,7 +17,22 @@
     <!-- Home screen (guiDesign D-21). -->
     <string name="home_join">Join a campfire</string>
     <string name="home_start">Start a campfire</string>
-    <string name="home_library">Library</string>
+    <!-- Songbook and reading a song (guiDesign D-52, D-53). -->
+    <string name="home_songbook">Songbook</string>
+    <string name="songbook_title">Songbook</string>
+    <string name="songbook_libraries">Libraries</string>
+    <string name="songbook_search">Search</string>
+    <string name="songbook_in_text">Also in the lyrics</string>
+    <string name="songbook_sort_az">A–Z</string>
+    <string name="songbook_sort_za">Z–A</string>
+    <string name="songbook_clear">Clear filters</string>
+    <string name="songbook_empty">No songs yet. Add a library to fill the songbook.</string>
+    <string name="songbook_none">No songs found.</string>
+    <string name="song_verse">Verse</string>
+    <string name="song_verse_n">Verse %d</string>
+    <string name="song_chorus">Chorus</string>
+    <string name="song_bridge">Bridge</string>
+    <string name="song_unreadable">This song could not be read.</string>
     <string name="home_memories">Memories</string>
     <string name="home_settings">Settings</string>
     <string name="home_about">About</string>
@@ -137,4 +152,41 @@
     <string name="report_sl102">The setlist file was tidied up.</string>
     <string name="report_sl103">The setlist is very long.</string>
     <string name="report_sl104">The setlist\'s title is very long.</string>
+    <!-- Setlists (guiDesign D-53, D-54). -->
+    <string name="songbook_setlists">Setlists</string>
+    <string name="setlists_title">Setlists</string>
+    <string name="setlists_empty">No setlists yet. Make one, then fill it from the songbook.</string>
+    <string name="setlists_new">New setlist</string>
+    <string name="setlists_rename">Rename</string>
+    <string name="setlists_duplicate">Duplicate</string>
+    <string name="setlists_delete">Delete</string>
+    <string name="setlists_delete_title">Delete %s?</string>
+    <string name="setlists_delete_text">The setlist is removed from this phone. Its songs stay in the songbook.</string>
+    <string name="setlists_name">Name</string>
+    <string name="setlists_save">Save</string>
+    <string name="setlists_copy_of">%s (copy)</string>
+    <string name="setlists_never_used">not used yet</string>
+    <string name="setlists_import">Import</string>
+    <string name="setlists_export">Export</string>
+    <string name="setlists_from_libraries">From libraries</string>
+    <string name="setlists_import_title">Import a setlist</string>
+    <string name="setlists_import_hint">A .zbs file on this phone, or the web address of one.</string>
+    <string name="setlists_imported">%s imported.</string>
+    <string name="setlists_import_refused">This file is not a setlist the app can read:</string>
+    <string name="setlists_import_https">Only https web addresses can be used.</string>
+    <string name="setlists_open">Open</string>
+    <string name="setlists_read_only">From %s, read only</string>
+    <plurals name="setlists_missing">
+        <item quantity="one">%d song not found; it fills in once its library is added.</item>
+        <item quantity="other">%d songs not found; they fill in once their libraries are added.</item>
+    </plurals>
+    <string name="setlist_empty">No songs yet. Add them from the songbook.</string>
+    <string name="setlist_add_songs">Add songs</string>
+    <string name="setlist_not_found">not found</string>
+    <string name="setlist_move">Drag to move</string>
+    <string name="song_add_to">Add to \"%s\"</string>
+    <string name="song_add_to_choose">Add to setlist…</string>
+    <string name="song_in_setlist">In the setlist</string>
+    <string name="song_in_named">In \"%s\"</string>
+    <string name="song_choose_setlist">Which setlist?</string>
 </resources>

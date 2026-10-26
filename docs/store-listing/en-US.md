@@ -33,7 +33,7 @@ Zangbundel collects nothing and sends nothing to the developer. No account, no a
 Permissions
 • Bluetooth: to find and join gatherings, and to broadcast as leader.
 • On Android 11 and older, Android requires the location permission to scan for Bluetooth devices. Zangbundel never reads your location.
-• Internet: only to download song libraries, and only when you confirm.
+• Internet: only to download song libraries and setlists, and only when you confirm.
 
 Languages: Dutch and English; song libraries can be in any language.
 

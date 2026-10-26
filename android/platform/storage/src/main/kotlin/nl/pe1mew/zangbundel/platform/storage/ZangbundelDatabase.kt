@@ -82,6 +82,34 @@ data class ReportEntity(
     val detail: String?,
 )
 
+/** A row of [LibraryDao.songbook]. */
+data class SongbookRow(
+    val libraryId: String,
+    val songId: String,
+    val title: String,
+    val sortTitle: String?,
+    val language: String,
+    val tags: String,
+    val fileName: String,
+    val libraryName: String,
+    val colour: Int,
+    val directory: String,
+)
+
+data class SongKey(val libraryId: String, val songId: String)
+
+/** A setlist shipped in an installed library (guiDesign D-59): read-only, opened from its file with [Songbook.read]. */
+data class LibrarySetlist(
+    val libraryId: String,
+    val setlistId: String,
+    val fileName: String,
+    val title: String,
+    val entries: Int,
+    val libraryName: String,
+    val colour: Int,
+    val directory: String,
+)
+
 @Dao
 abstract class LibraryDao {
     @Query("SELECT * FROM library ORDER BY name")
@@ -103,6 +131,26 @@ abstract class LibraryDao {
 
     @Query("SELECT * FROM setlist WHERE libraryId = :libraryId ORDER BY title")
     abstract suspend fun setlists(libraryId: String): List<SetlistEntity>
+
+    /** The combined songbook [FR-LIB-30]: every song of an enabled library, with what its row shows (D-52). */
+    @Query(
+        "SELECT song.libraryId, song.songId, song.title, song.sortTitle, song.language, song.tags, song.fileName, " +
+            "library.name AS libraryName, library.colour AS colour, library.directory AS directory " +
+            "FROM song JOIN library ON library.id = song.libraryId WHERE library.enabled = 1",
+    )
+    abstract suspend fun songbook(): List<SongbookRow>
+
+    /** Setlists shipped in enabled libraries (guiDesign D-59), with what their row shows. */
+    @Query(
+        "SELECT setlist.libraryId, setlist.setlistId, setlist.fileName, setlist.title, setlist.entries, " +
+            "library.name AS libraryName, library.colour AS colour, library.directory AS directory " +
+            "FROM setlist JOIN library ON library.id = setlist.libraryId WHERE library.enabled = 1 ORDER BY library.name, setlist.title",
+    )
+    abstract suspend fun librarySetlists(): List<LibrarySetlist>
+
+    /** Lyric and title search [FR-LIB-31]; [match] comes from [FtsQuery]. */
+    @Query("SELECT song_fts.libraryId, song_fts.songId FROM song_fts JOIN library ON library.id = song_fts.libraryId WHERE library.enabled = 1 AND song_fts MATCH :match")
+    abstract suspend fun searchKeys(match: String): List<SongKey>
 
     @Query("UPDATE library SET enabled = :enabled WHERE id = :id")
     abstract suspend fun setEnabled(id: String, enabled: Boolean)
@@ -144,14 +192,18 @@ abstract class LibraryDao {
 }
 
 @Database(
-    entities = [LibraryEntity::class, SongEntity::class, SongFtsEntity::class, SetlistEntity::class, ReportEntity::class],
-    version = 2,
+    entities = [
+        LibraryEntity::class, SongEntity::class, SongFtsEntity::class, SetlistEntity::class, ReportEntity::class,
+        PreparedSetlistEntity::class, PreparedEntryEntity::class,
+    ],
+    version = 3,
     exportSchema = true,
-    // 2: library.enabled and library.releaseIndex. Every later version adds its migration here.
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    // 2: library.enabled and library.releaseIndex. 3: prepared setlists (guiDesign D-54). Every later version adds its migration here.
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 abstract class ZangbundelDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
+    abstract fun preparedSetlistDao(): PreparedSetlistDao
 
     companion object {
         const val NAME = "zangbundel.db"

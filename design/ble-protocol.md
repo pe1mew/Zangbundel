@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.27 (draft) |
+| Document version | 0.28 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.14 |
+| Depends on | `design/functional-requirements.md` v0.15 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -40,6 +40,7 @@
 | 0.25 | 2026-10-25 | Decided by the owner after D-05 run 18, where the Huawei fetched the song and the new state on two connections: 7.6 and 10.4, when a repair comes due the connection fetches every document the singer is still collecting, the state record first, not only those whose repair is due. |
 | 0.26 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 | 0.27 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`); no other change. |
+| 0.28 | 2026-10-26 | Depends on FRD v0.15 (FR-NET-01 and FR-NET-03 widened to setlist addresses); no other change. |
 
 ---
 

@@ -164,8 +164,8 @@
 **Root cause**: The simulated air's timing defaults were guesses, never compared with a measurement, so GATT looked about ten times cheaper than it is.
 **Fix**: Calibrate a simulation's constants against a phone measurement before reporting from it (600 ms per connection from D-05 run 17), name the calibration in the result file, and rerun. Treat a scenario that beats the phones as a calibration question first.
 
-### Shell heredocs with mixed quotes fail before anything runs (2026-10-25) [x3] [PROMOTED]
-**Problem**: Inline Python and Kotlin edits passed through `bash -c` with `<<'EOF'` heredocs stopped with "unexpected EOF while looking for matching `''"; three times in one session. Nothing ran, so no file was half-written, but the edits had to be redone.
+### Shell heredocs with mixed quotes fail before anything runs (2026-10-25) [x5] [PROMOTED]
+**Problem**: Inline Python and Kotlin edits passed through `bash -c` with `<<'EOF'` heredocs stopped with "unexpected EOF while looking for matching `''"; three times in one session. Nothing ran, so no file was half-written, but the edits had to be redone. 2026-10-26: once more as a parse error, and once silently: backticks inside a double-quoted `python -c "…"` ran as command substitution, so a word vanished from a Kotlin comment while the edit reported success.
 **Root cause**: The tool's command quoting does not survive a long heredoc with nested single quotes, backticks and backslashes.
 **Fix**: Write such scripts to a file in the scratchpad with the Write tool and run the file (`python3 -I <path>`); keep inline heredocs for short text without quotes. Promoted to `memory/MEMORY.md` Recently Promoted on 2026-10-26.
 
@@ -206,7 +206,7 @@
 |------|--------|-------------|-------------|
 | 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
 | 2026-10-25 | A size limit stated with its reason is false when computed | **5** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19); 2026-10-25 after promotion: GATT DATA chunk over 512 bytes and HEADER over MTU 23 (v0.22, v0.23) | `memory/MEMORY.md` Recently Promoted |
-| 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **3** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions) | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **5** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions); 2026-10-26 report strings (parse error) and a `python -c` whose backticks were substituted silently | `memory/MEMORY.md` Recently Promoted |
 
 ## Mechanized
 

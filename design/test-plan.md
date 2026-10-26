@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.5 (draft) |
+| Document version | 0.6 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.14, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.15, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -17,6 +17,7 @@
 | 0.3 | 2026-10-25 | Fuzz target for the erasure-code decoder (section 3.4), from the approved proposal (`design/proposals/2026-10-25-erasure-coding.md`, ble-protocol v0.21); the frame-reassembly target covers coded frames. |
 | 0.4 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 | 0.5 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`); no other change. |
+| 0.6 | 2026-10-26 | Depends on FRD v0.15 (FR-NET-01 and FR-NET-03 widened to setlist addresses); no other change. |
 
 ---
 

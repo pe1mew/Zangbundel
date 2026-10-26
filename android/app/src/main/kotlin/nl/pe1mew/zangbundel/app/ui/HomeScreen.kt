@@ -31,8 +31,9 @@ import nl.pe1mew.zangbundel.app.diagnostics.DiagnosticsEntry
 
 /**
  * The home screen (guiDesign D-21): two primary actions, join and start, and a small row at the bottom
- * for the library, memories, settings and About. Join and start wait for the gathering screens and are
- * disabled until then; of the row, only the library is built.
+ * for the songbook, memories, settings and About (the songbook leads on to the libraries, D-21 as amended
+ * in v0.16). Join and start wait for the gathering screens and are disabled until then; of the row, only
+ * the songbook is built.
  */
 @Composable
 fun HomeScreen(onOpen: (String) -> Unit) {
@@ -49,7 +50,7 @@ fun HomeScreen(onOpen: (String) -> Unit) {
             OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.home_start)) }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                IconEntry(R.drawable.ic_library, R.string.home_library) { onOpen(Routes.LIBRARY) }
+                IconEntry(R.drawable.ic_library, R.string.home_songbook) { onOpen(Routes.SONGBOOK) }
                 IconEntry(R.drawable.ic_memories, R.string.home_memories, null)
                 IconEntry(R.drawable.ic_settings, R.string.home_settings, null)
                 IconEntry(R.drawable.ic_about, R.string.home_about, null)

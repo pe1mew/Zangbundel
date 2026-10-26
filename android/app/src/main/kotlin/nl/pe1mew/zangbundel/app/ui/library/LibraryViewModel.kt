@@ -3,26 +3,22 @@ package nl.pe1mew.zangbundel.app.ui.library
 
 import android.content.ContentResolver
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.library.DefaultLibrary
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
+import nl.pe1mew.zangbundel.app.library.readPicked
 import nl.pe1mew.zangbundel.core.songformat.Limits
 import nl.pe1mew.zangbundel.platform.storage.LibraryIndex
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
 import nl.pe1mew.zangbundel.platform.storage.LibraryRow
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
 
 /**
  * The *Bibliotheek* screen's state (guiDesign D-50): the installed libraries and the steps of adding
@@ -100,24 +96,10 @@ class LibraryViewModel(private val repository: LibraryRepository, private val in
     /** A `.zbl` or `.zip` from the system file picker (FR-LIB-16); read with the archive's size cap. */
     fun file(resolver: ContentResolver, uri: Uri) = viewModelScope.launch {
         _state.value = _state.value.copy(step = Step.Busy)
-        val (name, bytes) = withContext(Dispatchers.IO) {
-            val name = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) c.getString(0) else null } ?: "bestand"
-            name to (resolver.openInputStream(uri)?.use { it.readAtMost(Limits.ARCHIVE_MAX_BYTES.toInt() + 1) } ?: ByteArray(0))
-        }
+        val (name, bytes) = readPicked(resolver, uri, Limits.ARCHIVE_MAX_BYTES.toInt())
         afterCheck(repository.checkFile(bytes, name))
     }
 
-    /** One byte past the cap is enough for the archive check to refuse it (A002); a larger file is never held. */
-    private fun InputStream.readAtMost(max: Int): ByteArray {
-        val out = ByteArrayOutputStream()
-        val buffer = ByteArray(64 * 1024)
-        while (out.size() < max) {
-            val n = read(buffer, 0, minOf(buffer.size, max - out.size()))
-            if (n < 0) break
-            out.write(buffer, 0, n)
-        }
-        return out.toByteArray()
-    }
 
     private fun afterCheck(checked: LibraryRepository.Checked) {
         _state.value = _state.value.copy(step = if (checked.refused) Step.Report(checked, null) else Step.Licence(checked))
