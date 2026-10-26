@@ -6,6 +6,7 @@ import nl.pe1mew.zangbundel.core.model.SingerState
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerMachine.Effect
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerMachine.Event
 import nl.pe1mew.zangbundel.core.protocol.frame.Carrier
+import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType.INFO
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType.SETLIST
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType.SONG
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType.STATE
@@ -197,6 +198,31 @@ class SingerMachineTest {
         n.handle(Event.BeaconSeen(2_000, gid, 11, false, false))
         n.handle(Event.StateApplied(2_400, 11, false, false))
         assertTrue(n.handle(Event.Tick(3_000)).isEmpty())
+    }
+
+    @Test
+    fun `a state that cannot be caught by air within 3 s is repaired 1 s after the new seq (v0_34)`() {
+        // The Huawei on the phones: about 3.7 new state frames a second, 18 needed.
+        val m = listening()
+        m.handle(Event.BeaconSeen(2_000, gid, 11, false, false))
+        val fx = m.arrive(STATE, 11, needed = 18, perSecond = 3.7, from = 2_100, to = 3_300)
+        val repair = fx.filterIsInstance<Effect.Repair>().single()
+        assertEquals(listOf(STATE to 11), repair.groups)
+    }
+
+    @Test
+    fun `a state that will arrive by air within 3 s is left to the broadcast`() {
+        val m = listening()
+        m.handle(Event.BeaconSeen(2_000, gid, 11, false, false))
+        val fx = m.arrive(STATE, 11, needed = 18, perSecond = 12.0, from = 2_050, to = 3_400)
+        assertTrue(fx.none { it is Effect.Repair }, "$fx")
+    }
+
+    @Test
+    fun `a registered singer never repairs Info (v0_34)`() {
+        val m = listening()
+        m.handle(Event.FrameProgress(2_000, INFO, 0x2222, 1, 10))
+        assertTrue(m.handle(Event.Tick(9_000)).none { it is Effect.Repair })
     }
 
     @Test

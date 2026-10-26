@@ -91,4 +91,18 @@ class CarouselAheadTest {
         assertTrue(SetlistDocument.decode(SetlistDocument(emptyList()).encode()).ahead.isEmpty(), "key 2 is optional")
         assertFailsWith<IllegalArgumentException> { SetlistDocument(emptyList(), listOf(ByteArray(5))) }
     }
+
+    @Test
+    fun `the state carries the current position and the positions sung (v0_35)`() {
+        val bitmap = nl.pe1mew.zangbundel.core.protocol.payload.StateBody.sungBitmap(setOf(1, 3, 9))!!
+        assertEquals(2, bitmap.size)
+        val body = nl.pe1mew.zangbundel.core.protocol.payload.StateBody(
+            gid = nl.pe1mew.zangbundel.core.model.GatheringId(ByteArray(5)), seq = 1, ts = 1, status = 0, flags = 0, rseq = 0,
+            ek = ByteArray(32), cpos = 3, sung = bitmap,
+        )
+        val back = nl.pe1mew.zangbundel.core.protocol.payload.StateBody.decode(body.encode())
+        assertEquals(3, back.cpos)
+        assertEquals(listOf(1, 3, 9), (1..16).filter { back.wasSung(it) })
+        assertTrue(SetlistDocument(emptyList(), listOf(bytes(8, 1))).encode().size < 20, "no items key when there are none")
+    }
 }

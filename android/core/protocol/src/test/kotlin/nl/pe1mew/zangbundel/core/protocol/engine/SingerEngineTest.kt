@@ -165,15 +165,16 @@ class SingerEngineTest {
     }
 
     @Test
-    fun `the reception bar shows the song arriving with gaps, then complete`() = runTest {
+    fun `the reception bar shows the song still to come, then complete`() = runTest {
+        // Gaps within a version are covered by ReassemblerTest; since v0.34 a song not held ahead mostly comes by repair,
+        // because its frames follow the state's lead-in.
         val (leader, singers) = gathering(listOf(0.5))
         testScheduler.advanceTimeBy(30_000)
         val engine = singers.single().engine
         leader.push(song(2))
-        testScheduler.advanceTimeBy(2_500)                       // the song's first pass is under way
+        testScheduler.advanceTimeBy(1_000)
         val during = engine.reception().single { it.doc == DocumentType.SONG }.blocks
-        println("song blocks 2.5 s after the push: ${during.groupingBy { it }.eachCount()}")
-        assertTrue(Reassembler.Block.RECEIVED in during && Reassembler.Block.MISSED in during, "$during")
+        assertTrue(Reassembler.Block.RECEIVED !in during, "nothing of the song yet: $during")
         testScheduler.advanceTimeBy(20_000)
         val after = engine.reception().single { it.doc == DocumentType.SONG }.blocks
         assertTrue(after.isNotEmpty() && after.all { it == Reassembler.Block.RECEIVED }, "$after")

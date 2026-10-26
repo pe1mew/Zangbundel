@@ -45,19 +45,34 @@ class CarouselTest {
     }
 
     @Test
-    fun `a burst sends the changed documents three times, the whole state first, shared over the legacy sets`() {
+    fun `a burst opens with the state's lead-in of distinct frames, then the rest three times`() {
         val c = Carousel(gid16, 3, extended = false)
         c.publish(documents(seq = 1))
         repeat(1000) { for (lane in c.lanes) c.next(lane) }
         val next = documents(seq = 2).map { if (it.doc == MESSAGE) Document(MESSAGE, 0x5556, bytes(80, 9)) else it }
-        c.publish(next)                                   // state (45 frames) and message (15) changed: 60 per pass
-        assertEquals(listOf(60, 60, 60), listOf(Lane.Small, Lane.Large(1), Lane.Large(2)).map { c.burstRemaining(it) })
+        c.publish(next)                                   // state (k = 15, n = 45) and message (15) changed
+        // v0.34: the lead-in is 3 × 45 = 135 distinct state frames, 45 per set; then the message's 15 frames, three times.
+        assertEquals(listOf(45 + 15, 45 + 15, 45 + 15), listOf(Lane.Small, Lane.Large(1), Lane.Large(2)).map { c.burstRemaining(it) })
         assertTrue(c.take(Lane.Small, 15).all { it.doc == STATE && it.dv == 2 && it.isSource })
-        // v0.24: the state's 30 repair frames come next, on the other two sets, before the message.
-        val stateRepairs = c.take(Lane.Large(1), 15) + c.take(Lane.Large(2), 15)
-        assertTrue(stateRepairs.all { it.doc == STATE && !it.isSource })
+        val leadIn = c.take(Lane.Small, 30) + c.take(Lane.Large(1), 45) + c.take(Lane.Large(2), 45)
+        assertTrue(leadIn.all { it.doc == STATE && it.dv == 2 && !it.isSource })
+        assertEquals(120, leadIn.map { it.idx }.toSet().size, "every lead-in frame is a different one")
+        assertTrue(leadIn.any { it.idx >= 45 }, "past the usual n")
         val rest = c.take(Lane.Small, 5) + c.take(Lane.Large(1), 5) + c.take(Lane.Large(2), 5)
         assertTrue(rest.all { it.doc == MESSAGE })
+    }
+
+    @Test
+    fun `in a burst the setlist goes before the song`() {
+        val c = Carousel(gid16, 3, extended = false)
+        c.publish(documents(seq = 1))
+        repeat(1000) { for (lane in c.lanes) c.next(lane) }
+        val next = documents(seq = 2, songSeed = 2).map { if (it.doc == SETLIST) Document(SETLIST, 0x3334, bytes(600, 8)) else it }
+        c.publish(next)
+        val burst = c.lanes.flatMap { lane -> c.take(lane, c.burstRemaining(lane)) }
+        val firstSetlist = burst.indexOfFirst { it.doc == SETLIST }
+        val firstSong = burst.indexOfFirst { it.doc == SONG }
+        assertTrue(firstSetlist in 0 until firstSong, "setlist at $firstSetlist, song at $firstSong")
     }
 
     @Test
@@ -156,10 +171,10 @@ class CarouselTest {
 
     @Test
     fun `delivery of a pushed 2 kB song, no loss`() {
-        assertEquals(1_500L, deliveryMs(1, extended = true))   // the whole state (6 frames, v0.24), then 9 song source frames
-        assertEquals(5_700L, deliveryMs(3, extended = false))  // the whole state (45 frames, v0.24) and 125 song frames over 3 sets
-        assertEquals(8_500L, deliveryMs(2, extended = false))
-        assertEquals(17_000L, deliveryMs(1, extended = false))
+        val measured = listOf(deliveryMs(1, extended = true), deliveryMs(3, extended = false), deliveryMs(2, extended = false), deliveryMs(1, extended = false))
+        println("no-loss delivery of state and song: $measured")
+        // v0.34: on the legacy carrier the state's lead-in (135 frames) comes first; the song follows (v0.33: 5.7, 8.5 and 17 s).
+        assertEquals(listOf(1_500L, 8_700L, 13_000L, 26_000L), measured)
     }
 
     @Test
@@ -169,7 +184,7 @@ class CarouselTest {
         val legacy = median(3, ext = false)
         val ext = median(1, ext = true)
         println("median delivery at 40 %: legacy 3 sets $legacy ms, extended $ext ms")
-        assertTrue(legacy in 9_000..16_000, "legacy $legacy ms")      // proposal section 2: about 12 s
+        assertTrue(legacy in 9_000..17_000, "legacy $legacy ms")      // proposal section 2: about 12 s; about 16 s behind the lead-in (v0.34)
         assertTrue(ext in 1_500..4_000, "extended $ext ms")            // about 2.2 s
     }
 }

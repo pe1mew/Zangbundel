@@ -69,7 +69,20 @@ class StateBody(
     dlg: List<ByteArray> = emptyList(),
     val pt: Long? = null,
     ek: ByteArray,
+    /** v0.35: the current song's setlist position, 1-based (9.4 key 15). */
+    val cpos: Int? = null,
+    sung: ByteArray? = null,
 ) {
+    /** v0.35: the setlist positions pushed so far as a bitmap, bit i for position i + 1 (9.4 key 16). */
+    val sung: ByteArray? = sung?.copyOf()
+
+    /** Whether setlist position [position] (1-based) has been pushed in this gathering (v0.35). */
+    fun wasSung(position: Int): Boolean {
+        val b = sung ?: return false
+        val i = position - 1
+        return i >= 0 && i / 8 < b.size && (b[i / 8].toInt() shr (i % 8)) and 1 == 1
+    }
+
     val title: String? = title?.let { truncateChars(it, TITLE_MAX_CHARS) }
     val dlg: List<ByteArray> = dlg.map { it.copyOf() }
     val ek: ByteArray = ek.copyOf()
@@ -86,6 +99,8 @@ class StateBody(
         require(this.dlg.size <= MAX_DELEGATES && this.dlg.all { it.size == FieldSizes.SID }) { "dlg holds at most 8 singer IDs of 8 bytes" }
         require(pt == null || pt >= 0) { "pt is unsigned" }
         require(this.ek.size == FieldSizes.KEY) { "ek must be 32 bytes" }
+        require(cpos == null || cpos in 1..255) { "cpos is a setlist position, 1 to 255" }
+        require(this.sung == null || this.sung.size <= SUNG_MAX_BYTES) { "sung is at most $SUNG_MAX_BYTES bytes" }
     }
 
     /**
@@ -106,7 +121,7 @@ class StateBody(
 
     private fun with(title: String? = this.title, cur: SongRef? = this.cur, pt: Long? = this.pt) = StateBody(
         gid = gid, seq = seq, ts = ts, status = status, flags = flags, cur = cur, title = title, pos = pos,
-        singers = singers, docs = docs, rseq = rseq, dlg = dlg, pt = pt, ek = ek,
+        singers = singers, docs = docs, rseq = rseq, dlg = dlg, pt = pt, ek = ek, cpos = cpos, sung = sung,
     )
 
     fun encode(): ByteArray = Cbor.encode(
@@ -125,6 +140,8 @@ class StateBody(
             12L to dlg.takeIf { it.isNotEmpty() }?.let { list -> CborArray(list.map { CborBytes(it) }) },
             13L to pt?.cbor(),
             14L to ek.cbor(),
+            15L to cpos?.cbor(),
+            16L to sung?.takeIf { it.isNotEmpty() }?.cbor(),
         ),
     )
 
@@ -133,6 +150,17 @@ class StateBody(
         const val STATUS_ENDED = 1
         const val TITLE_MAX_CHARS = 60
         const val MAX_DELEGATES = 8
+        /** v0.35: 32 bytes are 256 setlist positions. */
+        const val SUNG_MAX_BYTES = 32
+
+        /** The bitmap of key 16 for the 1-based setlist [positions]. */
+        fun sungBitmap(positions: Collection<Int>): ByteArray? {
+            val valid = positions.filter { it in 1..SUNG_MAX_BYTES * 8 }
+            if (valid.isEmpty()) return null
+            val out = ByteArray((valid.max() + 7) / 8)
+            for (p in valid) out[(p - 1) / 8] = (out[(p - 1) / 8].toInt() or (1 shl ((p - 1) % 8))).toByte()
+            return out
+        }
         val MANIFEST_DOCUMENTS = 3..7
 
         fun decode(bytes: ByteArray): StateBody = decoding("state body") {
@@ -159,6 +187,8 @@ class StateBody(
                 dlg = m.arrayAt(12)?.map { (it as? CborBytes)?.value ?: throw CborException("dlg entry is not a byte string") } ?: emptyList(),
                 pt = m.uint(13),
                 ek = m.requireBytesOf(14, FieldSizes.KEY),
+                cpos = m.uint(15, 255)?.toInt()?.takeIf { it >= 1 },
+                sung = m.bytesOf(16, maxSize = SUNG_MAX_BYTES),
             )
         }
     }

@@ -51,7 +51,8 @@ class Frame(
                 require(frameSize in 1..ProtocolConstants.EXTENDED_FRAME_MAX_DATA_BYTES) { "fs out of range" }
             }
         }
-        require(idx in 0 until n) { "idx $idx outside 0 until $n" }
+        // 7.2 (v0.34): repair frames may go past `n`, up to index 255, in the state's lead-in (7.4 rule 4).
+        require(idx in 0 until maxOf(n, ReedSolomon.MAX_FRAMES)) { "idx $idx outside 0 until ${maxOf(n, ReedSolomon.MAX_FRAMES)}" }
         require(len in 0..0xFFFF && (if (k == 1) len <= frameSize else len > (k - 1) * frameSize && len <= k * frameSize)) {
             "len $len does not fit $k frames of $frameSize bytes"
         }
@@ -138,12 +139,15 @@ object FrameCodec {
 /** Cuts a document into source frames and adds the repair frames of the erasure code (7.2, 7.3). */
 object Framer {
 
-    /** At most 255 source frames of 16 bytes; a larger document is GATT-only (9.4) and is refused here. */
-    fun legacy(gid16: Int, doc: Int, dv: Int, document: ByteArray): List<Frame> {
+    /**
+     * At most 255 source frames of 16 bytes; a larger document is GATT-only (9.4) and is refused here.
+     * [repair] gives the number of repair frames for `k` instead of 7.3's (the state's lead-in, 7.4 rule 4).
+     */
+    fun legacy(gid16: Int, doc: Int, dv: Int, document: ByteArray, repair: ((Int) -> Int)? = null): List<Frame> {
         require(document.size <= ProtocolConstants.LEGACY_DOCUMENT_MAX_BYTES) {
             "document of ${document.size} bytes exceeds the legacy carrier's ${ProtocolConstants.LEGACY_DOCUMENT_MAX_BYTES}"
         }
-        return coded(Carrier.LEGACY, gid16, doc, dv, document, ProtocolConstants.LEGACY_FRAME_DATA_BYTES)
+        return coded(Carrier.LEGACY, gid16, doc, dv, document, ProtocolConstants.LEGACY_FRAME_DATA_BYTES, repair)
     }
 
     /** [fs] is the frame data size for this document version; lower than 233 when the stack refuses full frames (7.1). */
@@ -154,10 +158,11 @@ object Framer {
     }
 
     /** Source frames first, then the repair frames; one pass of the document is all of them (7.4). */
-    private fun coded(carrier: Carrier, gid16: Int, doc: Int, dv: Int, document: ByteArray, size: Int): List<Frame> {
+    private fun coded(carrier: Carrier, gid16: Int, doc: Int, dv: Int, document: ByteArray, size: Int, repairFor: ((Int) -> Int)? = null): List<Frame> {
         val k = maxOf(1, (document.size + size - 1) / size)
         val source = List(k) { i -> document.copyOfRange(i * size, minOf((i + 1) * size, document.size)).copyOf(size) }
-        val repair = ReedSolomon.encode(source, ReedSolomon.repairCount(k))
+        val r = repairFor?.invoke(k)?.coerceIn(0, maxOf(0, ReedSolomon.MAX_FRAMES - k)) ?: ReedSolomon.repairCount(k)
+        val repair = ReedSolomon.encode(source, r)
         return (source + repair).mapIndexed { idx, data -> Frame(carrier, gid16, doc, dv, k, idx, size, document.size, data) }
     }
 }

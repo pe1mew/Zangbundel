@@ -103,6 +103,47 @@ class SongsAheadTest {
         assertTrue(ms < 4_000, "v0.32 took 4.2 to 4.5 s, waiting 3 s of silence; took $ms ms")
     }
 
+    /** v0.35: a push names the position and every one pushed so far; the setlist is not part of it. */
+    private suspend fun LeaderSession.pushAt(i: Int, sungBefore: Set<Int>) {
+        val s = songs[i]
+        push(LeaderSession.Publication(s.ref, s.title, s.document, cpos = i + 1, sung = sungBefore + (i + 1)))
+    }
+
+    @Test
+    fun `the setlist does not change when a song is pushed (v0_35)`() = runTest {
+        val (leader, singer) = campfire(reception = 1.0)
+        testScheduler.advanceTimeBy(60_000)
+        leader.pushAt(0, emptySet())
+        testScheduler.advanceTimeBy(20_000)
+        leader.pushAt(1, setOf(1))
+        testScheduler.advanceTimeBy(20_000)
+        val setlists = singer.events.filterIsInstance<SingerEngine.Event.Delivered>().filter { it.doc == DocumentType.SETLIST }.map { it.dv }.toSet()
+        assertEquals(1, setlists.size, "one setlist version for the whole campfire: $setlists")
+        val body = singer.engine.state!!.body
+        assertEquals(2, body.cpos)
+        assertTrue(body.wasSung(1) && body.wasSung(2) && !body.wasSung(3))
+    }
+
+    @Test
+    fun `a singer that joins late shows the songs sung before it arrived (v0_35)`() = runTest {
+        val air = SimulatedAir(backgroundScope)
+        val clock = { testScheduler.currentTime }
+        val leader = LeaderSession(SimulatedTransport(air), crypto, backgroundScope, clock, "Kampvuur", random = Random(3))
+        leader.start(LeaderSession.Publication(ahead = songs.map { it.document }))
+        leader.pushAt(0, emptySet())
+        testScheduler.advanceTimeBy(30_000)
+        leader.pushAt(1, setOf(1))
+        testScheduler.advanceTimeBy(30_000)
+        val engine = SingerEngine(SimulatedTransport(air, reception = 0.4), crypto, backgroundScope, clock, { it.name == "Kampvuur" }, random = Random(8))
+        val events = ArrayList<SingerEngine.Event>()
+        backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { engine.events.collect { events += it } }
+        engine.start()
+        testScheduler.advanceTimeBy(8 * 60_000)
+        val earlier = events.filterIsInstance<SingerEngine.Event.EarlierSong>()
+        assertEquals(listOf(1), earlier.map { it.position }, "song 1 was sung before; song 2 is current; song 3 not yet")
+        assertEquals(songs[0].ref, earlier.single().song.ref)
+    }
+
     @Test
     fun `without songs ahead the push still arrives, more slowly`() = runTest {
         val (leader, singer) = campfire(reception = 0.4, ahead = false)

@@ -67,6 +67,9 @@ class LeaderSession(
         val song: SongDocument? = null,
         val setlist: SetlistDocument? = null,
         val ahead: List<SongDocument?>? = null,
+        /** v0.35 (9.4 keys 15, 16): the current song's setlist position, and every position pushed so far. */
+        val cpos: Int? = null,
+        val sung: Set<Int> = emptySet(),
     ) {
         init { require(song == null || song.ref == cur) { "the song document is the current song" } }
     }
@@ -87,7 +90,7 @@ class LeaderSession(
     private val startedAt = clock()
     private var carousel: Carousel? = null
     private var loop: Job? = null
-    private var last: Built = Built(null, null, emptyMap())
+    private var last: Built = Built(null, null, emptyMap(), null, emptySet())
     /** The setlist's songs as documents 9, per setlist position (7.4 rule 7); null where not broadcast. */
     private var songsAhead: List<Framed?> = emptyList()
 
@@ -198,7 +201,7 @@ class LeaderSession(
     /** A document framed for the air (7.3: DEFLATE when it saves at least 10 %) with its manifest entry. */
     private class Framed(val enc: Int, val bytes: ByteArray, val entry: DocEntry)
 
-    private class Built(val cur: SongRef?, val title: String?, val docs: Map<Int, Framed>)
+    private class Built(val cur: SongRef?, val title: String?, val docs: Map<Int, Framed>, val cpos: Int?, val sung: Set<Int>)
 
     private fun framed(document: ByteArray, raw: Boolean = false): Framed {
         val (enc, bytes) = if (raw) Deflate.ENC_RAW to document else Deflate.frame(document)
@@ -209,11 +212,10 @@ class LeaderSession(
         p.ahead?.let { list -> songsAhead = list.map { it?.let { d -> framed(d.encode()) } } }
         val docs = LinkedHashMap<Int, Framed>()
         p.song?.let { docs[DocumentType.SONG] = framed(it.encode()) }
-        // 9.5 key 2: with songs ahead the setlist always goes out, listing their `dh` by position.
-        val setlist = if (songsAhead.isEmpty()) p.setlist
-        else (p.setlist ?: SetlistDocument(emptyList())).withAhead(songsAhead.map { it?.entry?.dh ?: ByteArray(0) })
+        // 9.5 as of v0.35: with songs ahead the setlist is their `dh` by position alone, the same on every push.
+        val setlist = if (songsAhead.isEmpty()) p.setlist else SetlistDocument(emptyList(), songsAhead.map { it?.entry?.dh ?: ByteArray(0) })
         setlist?.let { docs[DocumentType.SETLIST] = framed(it.encode()) }
-        return Built(p.cur, p.title, docs)
+        return Built(p.cur, p.title, docs, p.cpos, p.sung)
     }
 
     /**
@@ -233,7 +235,7 @@ class LeaderSession(
 
     private fun raw(song: ByteArray): Built {
         val ref = SongRef(LibraryId(TEST_LIBRARY), SongId(TEST_SONG), ContentHash(crypto.sha256(song).copyOf(ContentHash.SIZE)))
-        return Built(ref, null, mapOf(DocumentType.SONG to framed(song, raw = true)))
+        return Built(ref, null, mapOf(DocumentType.SONG to framed(song, raw = true)), null, emptySet())
     }
 
     private suspend fun publish(b: Built) {
@@ -268,6 +270,7 @@ class LeaderSession(
         gid = gid, seq = seq, ts = ts, status = if (ended) StateBody.STATUS_ENDED else StateBody.STATUS_RUNNING, flags = flags,
         cur = b.cur, title = b.title, singers = service.singerCount.toLong(),
         docs = b.docs.mapValues { it.value.entry }, rseq = 0, ek = ek.publicKey, pt = carousel?.songPassTimeMs(),
+        cpos = b.cpos, sung = StateBody.sungBitmap(b.sung),
     )
 
     private suspend fun busyChanged(b: Boolean) = mutex.withLock {

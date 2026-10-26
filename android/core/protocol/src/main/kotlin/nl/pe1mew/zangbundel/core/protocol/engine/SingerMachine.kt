@@ -207,6 +207,7 @@ class SingerMachine(private val random: Random = Random.Default) {
     private fun progress(e: Event.FrameProgress) {
         heard(e.now)
         if (e.doc == DocumentType.SONG && songIsLocal) return     // 7.6: a singer with the song never repairs it
+        if (e.doc == DocumentType.INFO && registered) return       // 7.6 (v0.34): a registered singer never repairs Info
         val c = collecting.getOrPut(e.doc to e.dv) { Collecting(e.now) }
         c.needed = e.needed
         if (e.have > c.have) { c.have = e.have; c.lastNew = e.now }
@@ -223,13 +224,14 @@ class SingerMachine(private val random: Random = Random.Default) {
         if (noBroadcast) return true                              // 7.8: nothing will come by broadcast
         if (now - c.lastNew >= (if (doc == DocumentType.STATE) STATE_NO_PROGRESS_MS else NO_PROGRESS_MS)) return true
         val needed = c.needed ?: return false
-        if (now - c.since < RATE_WINDOW_MS) return false
+        val state = doc == DocumentType.STATE
+        if (now - c.since < (if (state) STATE_RATE_WINDOW_MS else RATE_WINDOW_MS)) return false
         val (t0, h0) = c.samples.firstOrNull() ?: return false
         val span = (now - t0).coerceAtLeast(1)
         val rate = (c.have - h0).toDouble() / span                // frames per millisecond
         if (rate <= 0.0) return false                              // covered by NO_PROGRESS_MS
         val etaMs = (needed - c.have) / rate
-        return (now - c.since) + etaMs > DEADLINE_MS
+        return (now - c.since) + etaMs > (if (state) STATE_DEADLINE_MS else DEADLINE_MS)
     }
 
     private fun joinAnswered(e: Event.JoinAnswered, fx: MutableList<Effect>) {
@@ -368,5 +370,8 @@ class SingerMachine(private val random: Random = Random.Default) {
         const val RATE_WINDOW_MS = 2_000L
         /** 7.6 (v0.24, Q26): repair when `k` is not expected within this long of the group's start, on either carrier (NFR-PERF-01). */
         const val DEADLINE_MS = 5_000L
+        /** 7.6 (v0.34): the state record is judged 1 s after the new `seq` against 3 s, so a singer that cannot catch it by air connects at once. */
+        const val STATE_RATE_WINDOW_MS = 1_000L
+        const val STATE_DEADLINE_MS = 3_000L
     }
 }

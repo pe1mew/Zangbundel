@@ -32,6 +32,7 @@ import nl.pe1mew.zangbundel.core.protocol.payload.Info
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinRequest
 import nl.pe1mew.zangbundel.core.protocol.payload.PayloadLimits
 import nl.pe1mew.zangbundel.core.protocol.payload.SetlistDocument
+import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
 import nl.pe1mew.zangbundel.core.protocol.payload.SignedState
 import nl.pe1mew.zangbundel.core.protocol.payload.StateBody
 import nl.pe1mew.zangbundel.core.protocol.payload.TransferRequest
@@ -88,6 +89,15 @@ class SingerEngine(
         data class Ended(override val at: Long) : Event
         /** The current song is in the singer's own library (FR-BLE-04 with a local copy, 10.3 step 3); nothing to collect. */
         data class LocalSong(override val at: Long, val ref: SongRef) : Event
+        /**
+         * 7.5 (v0.35): a song the state names as sung before ([position] in the setlist), taken from the
+         * songs kept ahead and verified by the signed setlist's `dh`; for a singer that joined late.
+         */
+        class EarlierSong(override val at: Long, val position: Int, val song: SongDocument) : Event
+        /** Diagnostics: a frame of a state record heard, and whether it was new to its group (7.5, 7.6). */
+        data class StateFrame(override val at: Long, val seq: Int, val idx: Int, val fresh: Boolean) : Event
+        /** Diagnostics: the repair rule of 7.6 fired; the connection follows after [delayMs]. */
+        data class RepairDecided(override val at: Long, val groups: List<Pair<Int, Int>>, val delayMs: Long) : Event
         /** One repair connection: what it asked for, whether it got through, how long it took, and why not ([failure]). */
         data class Repaired(override val at: Long, val groups: List<Pair<Int, Int>>, val ok: Boolean, val ms: Long, val failure: String? = null) : Event
     }
@@ -126,6 +136,8 @@ class SingerEngine(
     private var aheadOrder: List<ByteArray> = emptyList()
     /** The reference each pushed song's `dh` went out under, for the reception view's titles (D-81). */
     private val pushedRefs = HashMap<String, SongRef>()
+    /** Setlist positions seen as current or reported as [Event.EarlierSong] (v0.35). */
+    private val earlierDone = HashSet<Int>()
 
     /**
      * One row of the reception view (FR-SING-05, guiDesign D-81): a document and its source blocks. Rows
@@ -178,7 +190,7 @@ class SingerEngine(
             if (dh.isEmpty()) return@mapIndexed Reception(DocumentType.AHEAD, emptyList(), position = i + 1, onAir = false)
             val key = dh.hex()
             val dv = dvOf(dh)
-            val current = cur != null && cur.dh.contentEquals(dh)
+            val current = (cur != null && cur.dh.contentEquals(dh)) || s?.body?.cpos == i + 1
             val have = key in ahead || (DocumentType.SONG to dv) in held || (current && s?.body?.cur?.let(hasSong) == true)
             val blocks = if (have) listOf(Reassembler.Block.RECEIVED) else {
                 listOfNotNull(rs.blocks(DocumentType.AHEAD, dv), if (current) rs.blocks(DocumentType.SONG, dv) else null)
@@ -279,7 +291,11 @@ class SingerEngine(
         val rs = reassembler ?: return
         val frame = FrameCodec.decode(data) ?: return
         if (frame.carrier == Carrier.EXTENDED && frame.gid16 == gid16) extendedHeard.addLast(now)
-        when (val result = rs.accept(frame)) {
+        val result = rs.accept(frame)
+        if (frame.doc == DocumentType.STATE && frame.gid16 == gid16 && frame.carrier == carrier) {
+            _events.tryEmit(Event.StateFrame(now, frame.dv, frame.idx, result is Reassembler.Result.Stored || result is Reassembler.Result.Complete))
+        }
+        when (result) {
             // Songs ahead are never repaired (7.6), and a song taken from them needs no repair either.
             is Reassembler.Result.Stored -> if (frame.doc != DocumentType.AHEAD && (frame.doc to frame.dv) !in held) {
                 rs.progress(frame.doc, frame.dv)?.let { (have, needed) ->
@@ -334,6 +350,7 @@ class SingerEngine(
                     aheadOrder = try { SetlistDocument.decode(Deflate.unframe(manifest.enc, c.bytes, PayloadLimits.DOCUMENT_DECODED)).ahead } catch (e: Exception) { aheadOrder }
                 }
                 deliver(c, viaRepair)
+                if (c.doc == DocumentType.SETLIST) earlierSongs()
             }
         }
     }
@@ -355,6 +372,8 @@ class SingerEngine(
         apply(machine.handle(SingerMachine.Event.StateApplied(clock(), s.body.seq, s.body.status == StateBody.STATUS_ENDED, songIsLocal = local, missing = missing)))
         deliver(Reassembler.Result.Complete(DocumentType.STATE, s.body.seq, bytes), viaRepair)
         fromAhead?.let { deliver(it, viaRepair = false) }
+        s.body.cpos?.let { earlierDone += it }
+        earlierSongs()
         // Documents completed before the manifest that lists them.
         val waiting = pendingDocs.entries.toList()
         pendingDocs.clear()
@@ -375,6 +394,34 @@ class SingerEngine(
             ahead.remove(oldest.key)
         }
         takeAhead()?.let { deliver(it, viaRepair = false) }
+        earlierSongs()
+    }
+
+    /**
+     * 7.5 (v0.35): every position the verified state's `sung` names, other than the current one and not
+     * reported yet, whose `dh` in the verified setlist is a song kept ahead: decoded (DEFLATE, else raw),
+     * checked against its `ref.hash`, and reported once as [Event.EarlierSong].
+     */
+    private fun earlierSongs() {
+        val body = state?.body ?: return
+        if (body.sung == null) return
+        aheadOrder.forEachIndexed { i, dh ->
+            val position = i + 1
+            if (dh.isEmpty() || position == body.cpos || position in earlierDone || !body.wasSung(position)) return@forEachIndexed
+            val bytes = ahead[dh.hex()] ?: return@forEachIndexed
+            val song = songOf(bytes) ?: return@forEachIndexed
+            earlierDone += position
+            pushedRefs[dh.hex()] = song.ref
+            _events.tryEmit(Event.EarlierSong(clock(), position, song))
+        }
+    }
+
+    private fun songOf(framed: ByteArray): SongDocument? {
+        for (enc in listOf(Deflate.ENC_DEFLATE, Deflate.ENC_RAW)) {
+            val song = try { SongDocument.decode(Deflate.unframe(enc, framed, PayloadLimits.DOCUMENT_DECODED)) } catch (e: Exception) { continue }
+            if (crypto.sha256(song.file).copyOf(song.ref.hash.bytes.size).contentEquals(song.ref.hash.bytes)) return song
+        }
+        return null
     }
 
     /**
@@ -403,7 +450,10 @@ class SingerEngine(
             SingerMachine.Effect.StartScan -> scope.launch { transport.startScan(Transport.ScanMode.GATHERING) }
             SingerMachine.Effect.StopScan -> scope.launch { transport.stopScan() }
             is SingerMachine.Effect.Register -> scope.launch { delay(e.delayMs); register() }
-            is SingerMachine.Effect.Repair -> scope.launch { delay(e.delayMs); repair(e.groups) }
+            is SingerMachine.Effect.Repair -> {
+                _events.tryEmit(Event.RepairDecided(clock(), e.groups, e.delayMs))
+                scope.launch { delay(e.delayMs); repair(e.groups) }
+            }
             SingerMachine.Effect.ShowEnded -> _events.tryEmit(Event.Ended(clock()))
             else -> {}        // what the user sees is the app's
         }

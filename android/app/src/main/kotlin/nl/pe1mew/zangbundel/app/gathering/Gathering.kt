@@ -32,7 +32,6 @@ import nl.pe1mew.zangbundel.core.protocol.engine.LeaderSession
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
-import nl.pe1mew.zangbundel.core.protocol.payload.SetlistDocument
 import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
 import nl.pe1mew.zangbundel.core.songformat.SetlistResolver
 import nl.pe1mew.zangbundel.core.songformat.Song
@@ -99,7 +98,8 @@ class Gathering(
     }
 
     /** A song a singer received (D-29, D-47): [song] null while it is still coming in, or when it is only shown with its library [FR-LIB-22]. */
-    data class ReceivedSong(val ref: SongRef, val title: String, val song: Song?, val libraryOnly: Boolean = false)
+    /** A song on the singer's page; [earlier] is its setlist position when it was sung before this singer joined (v0.35). */
+    data class ReceivedSong(val ref: SongRef, val title: String, val song: Song?, val libraryOnly: Boolean = false, val earlier: Int? = null)
 
     enum class Connection { CONNECTING, CONNECTED, RECONNECTING, ENDED }
 
@@ -274,11 +274,8 @@ class Gathering(
         val ref = p.ref
         refs[index] = ref
         val sung = if (m.current != null && m.current != index) m.sung + m.current else m.sung
-        // D-47: the setlist singers get holds what was sung and the current song, nothing upcoming.
-        val items = m.songs.indices.filter { it in sung || it == index }.mapNotNull { i ->
-            refs[i]?.let { r -> SetlistDocument.Item(r, m.songs[i].title, if (i == index) STATUS_CURRENT else STATUS_SUNG) }
-        }
-        l.push(LeaderSession.Publication(ref, p.title, p.document, SetlistDocument(items)))
+        // BLE protocol v0.35: the setlist stays as it was; the state names the current position and every one pushed.
+        l.push(LeaderSession.Publication(ref, p.title, p.document, cpos = index + 1, sung = (pushedOrder + index).map { it + 1 }.toSet()))
         Log.d("leader push index=$index repush=${index == m.current}")
         if (index !in pushedOrder) pushedOrder += index
         _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress())
@@ -367,6 +364,9 @@ class Gathering(
                     when (e) {
                         is SingerEngine.Event.Delivered -> Log.d("singer delivered doc=${e.doc} repair=${e.viaRepair}")
                         is SingerEngine.Event.Repaired -> Log.d("singer repair ok=${e.ok} ms=${e.ms} failure=${e.failure}")
+                        is SingerEngine.Event.StateFrame -> Unit        // per frame: too many for the log
+                        is SingerEngine.Event.RepairDecided -> Log.d("singer repair decided groups=${e.groups} delay=${e.delayMs}")
+                        is SingerEngine.Event.NewSeq -> Log.d("singer newseq ${e.seq}")
                         else -> Log.d("singer ${e::class.simpleName}")
                     }
                     when (e) {
@@ -382,6 +382,7 @@ class Gathering(
                             DocumentType.SONG -> received(e)
                         }
                         is SingerEngine.Event.LocalSong -> local[e.ref.hash.toHex()]?.let { entry -> localSong(e.ref, entry) }
+                        is SingerEngine.Event.EarlierSong -> earlier(e)
                         is SingerEngine.Event.Ended -> connection(Connection.ENDED)
                         else -> Unit
                     }
@@ -494,6 +495,20 @@ class Gathering(
         SongParser.parse(file).song?.let { place(ref, it) }
     }
 
+    /**
+     * D-47 (v0.29): a song sung before this singer joined, held ahead: placed before the songs it saw
+     * pushed, in setlist order among the earlier ones; nothing when it is on the page already.
+     */
+    private fun earlier(e: SingerEngine.Event.EarlierSong) {
+        val m = _mode.value as? Mode.Singing ?: return
+        if (m.songs.any { it.ref == e.song.ref }) return
+        val song = SongParser.parse(e.song.file).song ?: return
+        val at = m.songs.indexOfFirst { it.earlier == null || it.earlier > e.position }.takeIf { it >= 0 } ?: m.songs.size
+        val songs = m.songs.toMutableList().also { it.add(at, ReceivedSong(e.song.ref, song.meta.title, song, earlier = e.position)) }
+        val current = songs.indexOfFirst { it.ref == currentRef }.takeIf { it >= 0 }
+        _mode.value = m.copy(songs = songs, current = current)
+    }
+
     private fun place(ref: SongRef, song: Song) {
         val m = _mode.value as? Mode.Singing ?: return
         val at = m.songs.indexOfFirst { it.ref == ref }
@@ -514,8 +529,6 @@ class Gathering(
         /** FR-GATH-16: listen this long before a gathering may start (D-23). */
         const val LISTEN_BEFORE_START_MS = 5_000L
         private const val COLLECTING_REFRESH_MS = 500L
-        private const val STATUS_CURRENT = 1
-        private const val STATUS_SUNG = 2
         /** The release application id (RUNBOOK Decisions); test builds add a suffix to it. */
         private const val RELEASE_ID = "nl.pe1mew.zangbundel.app"
     }

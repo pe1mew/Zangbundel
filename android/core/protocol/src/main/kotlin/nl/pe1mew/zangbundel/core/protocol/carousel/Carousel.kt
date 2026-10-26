@@ -2,6 +2,7 @@
 package nl.pe1mew.zangbundel.core.protocol.carousel
 
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
+import nl.pe1mew.zangbundel.core.protocol.fec.ReedSolomon
 import nl.pe1mew.zangbundel.core.protocol.frame.Frame
 import nl.pe1mew.zangbundel.core.protocol.frame.Framer
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
@@ -26,9 +27,10 @@ import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
  *   documents before their repair frames.
  * - **Burst** (rule 4): on [publish], every set restarts with the documents that changed, three
  *   complete passes, then returns to its normal loop. On the legacy carrier the sets share the
- *   burst (decided 2026-10-25): Set S sends the state record first, and every other changed frame
- *   goes to the set with the least queued, so all sets finish a pass together. The extended set
- *   sends its pass with the state record first.
+ *   burst (decided 2026-10-25), and since v0.34 it opens with the new state record's lead-in: its
+ *   three passes as distinct frames, source frames on Set S, the repair frames to whichever set has
+ *   the least queued; then the other changed documents three times, the setlist before the song. The
+ *   extended set sends its pass with the state record first.
  *
  * - **Songs ahead** (rule 7, v0.32, FR-BLE-18): every setlist song as document 9. The large-document
  *   loop becomes current song, setlist, ahead₁, current song, setlist, ahead₂, … (setlist, ahead₁,
@@ -101,12 +103,15 @@ class Carousel(
         ahead = songsAhead
         val changed = docs.values.filter { published[it.doc]?.dv != it.dv }.map { it.doc }.toSet()
         published = docs.filterKeys { it != DocumentType.DOWNLOAD }
-        val legacyPass = sharedLegacyPass(changed)
+        // v0.34: the state record's three passes first, as distinct frames; then the rest three times.
+        val leadIn = if (DocumentType.STATE in changed) stateLeadIn() else emptyMap()
+        val legacyPass = sharedLegacyPass(if (leadIn.isNotEmpty()) changed - DocumentType.STATE else changed)
         for (lane in lanes) {
             val s = state.getValue(lane)
             s.loop = loopFor(lane)
             s.position = 0
             s.burst.clear()
+            leadIn[lane]?.let { s.burst.addAll(it) }
             val pass = if (lane == Lane.Extended) extendedPass(changed) else legacyPass.getValue(lane)
             repeat(BURST_PASSES) { s.burst.addAll(pass) }
             s.burstTotal = s.burst.size
@@ -228,6 +233,22 @@ class Carousel(
         return assigned
     }
 
+    /**
+     * The state record's lead-in on the legacy sets (rule 4 as of v0.34): [BURST_PASSES] passes' worth of
+     * distinct frames, `3n − k` repair frames and at most 256 in all; source frames on Set S, the repair
+     * frames to the set with the fewest queued, so all sets finish together.
+     */
+    private fun stateLeadIn(): Map<Lane, List<Frame>> {
+        val d = published[DocumentType.STATE] ?: return emptyMap()
+        if (!fitsLegacy(d)) return emptyMap()
+        val frames = Framer.legacy(gid16, d.doc, d.dv, d.framed) { k -> BURST_PASSES * (k + ReedSolomon.repairCount(k)) - k }
+        val legacyLanes = lanes.filter { it != Lane.Extended }
+        val assigned = legacyLanes.associateWith { ArrayList<Frame>() }
+        assigned.getValue(Lane.Small) += frames.filter { it.isSource }
+        for (f in frames.filter { !it.isSource }) assigned.getValue(legacyLanes.minBy { assigned.getValue(it).size }) += f
+        return assigned
+    }
+
     private fun extendedPass(changed: Set<Int>): List<Frame> {
         val state = if (DocumentType.STATE in changed) docFrames(DocumentType.STATE, ::extendedFrames) else emptyList()
         val others = framesOf(EXTENDED_ORDER.filter { it in changed && it != DocumentType.STATE }, ::extendedFrames)
@@ -265,8 +286,8 @@ class Carousel(
         private val SMALL_ORDER = listOf(DocumentType.STATE, DocumentType.INFO, DocumentType.REQSTAT, DocumentType.MESSAGE, DocumentType.DOWNLOAD)
         /** Set S alone (rule 2): everything except the state, which is inserted. */
         private val SINGLE_SET_ORDER = listOf(DocumentType.INFO, DocumentType.SONG, DocumentType.SETLIST, DocumentType.REQSTAT, DocumentType.MESSAGE, DocumentType.DOWNLOAD)
-        /** The order of a shared legacy burst after the state record: small documents, then song and setlist. */
-        private val BURST_ORDER = listOf(DocumentType.INFO, DocumentType.REQSTAT, DocumentType.MESSAGE, DocumentType.DOWNLOAD, DocumentType.SONG, DocumentType.SETLIST)
+        /** The order of a shared legacy burst after the state record: small documents, the setlist, then the song (v0.34). */
+        private val BURST_ORDER = listOf(DocumentType.INFO, DocumentType.REQSTAT, DocumentType.MESSAGE, DocumentType.DOWNLOAD, DocumentType.SETLIST, DocumentType.SONG)
         /** The extended set (rule 3): documents 1 to 7 in order. */
         private val EXTENDED_ORDER = (1..7).toList()
     }

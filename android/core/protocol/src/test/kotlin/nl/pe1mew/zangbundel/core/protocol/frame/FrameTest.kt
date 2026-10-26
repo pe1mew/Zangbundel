@@ -68,7 +68,8 @@ class FrameTest {
         assertNull(FrameCodec.decode(hex(good).copyOf(25)))                                         // short data
         assertNull(FrameCodec.decode(hex(good) + byteArrayOf(0)))                                   // long data
         assertNull(FrameCodec.decode(hex("d1a1b2030102" + "00" + "00" + "0000" + "00".repeat(16))))  // k = 0
-        assertNull(FrameCodec.decode(hex("d1a1b2030102" + "02" + "06" + "0012" + "00".repeat(16))))  // idx 6 ≥ n = 6
+        // v0.34: an index at or past `n` (here 6 for k = 2) is a frame of the state's lead-in (7.4 rule 4), no longer refused.
+        assertNotNull(FrameCodec.decode(hex("d1a1b2030102" + "02" + "06" + "0012" + "00".repeat(16))))
         assertNull(FrameCodec.decode(hex("d1a1b2030102" + "02" + "00" + "0010" + "00".repeat(16))))  // len 16 needs 1 frame, not 2
         assertNull(FrameCodec.decode(hex("d1a1b2030102" + "02" + "00" + "0021" + "00".repeat(16))))  // len 33 needs 3 frames
         assertNull(FrameCodec.decode(hex("d2a1b2030102" + "0001" + "0000" + "0000" + "0000")))       // fs 0

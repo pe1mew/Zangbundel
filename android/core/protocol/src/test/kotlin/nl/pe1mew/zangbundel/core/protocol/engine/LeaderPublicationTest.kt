@@ -55,7 +55,8 @@ class LeaderPublicationTest {
         testScheduler.advanceTimeBy(20_000)
         val progress = leader.progress()!!
         assertEquals(3, progress.passesDone)
-        val fetched = events.filterIsInstance<SingerEngine.Event.Delivered>().count { it.doc == DocumentType.SONG && it.viaRepair }
+        // Both singers: since v0.34 the song's frames follow the state's lead-in, so even the one at full reception may fetch it.
+        val fetched = (events + staysEvents).filterIsInstance<SingerEngine.Event.Delivered>().count { it.doc == DocumentType.SONG && it.viaRepair }
         assertEquals(fetched, progress.repairs, "every song fetched over GATT is one repair on the leader")
         // D-56 (v0.21): the share of singers helped over GATT in a window, and nothing once it has passed.
         val helped = listOf(events, staysEvents).count { ev -> ev.any { it is SingerEngine.Event.Repaired && it.ok && it.at >= testScheduler.currentTime - 25_000 } }

@@ -135,7 +135,8 @@ class SetlistDocument(val items: List<Item>, ahead: List<ByteArray> = emptyList(
 
     fun encode(): ByteArray = Cbor.encode(
         payload(
-            1L to CborArray(items.map { payload(1L to SongRefCodec.toCbor(it.ref), 2L to it.title.cbor(), 3L to it.status.cbor(), 4L to it.votes?.cbor()) }),
+            // v0.35: key 1 is not sent when empty; the leader sends the order alone (key 2).
+            1L to if (items.isEmpty()) null else CborArray(items.map { payload(1L to SongRefCodec.toCbor(it.ref), 2L to it.title.cbor(), 3L to it.status.cbor(), 4L to it.votes?.cbor()) }),
             2L to if (ahead.isEmpty()) null else CborArray(ahead.map { it.cbor() }),
         ),
     )
@@ -150,7 +151,7 @@ class SetlistDocument(val items: List<Item>, ahead: List<ByteArray> = emptyList(
         fun decode(bytes: ByteArray): SetlistDocument = decoding("setlist document") {
             val m = decodeMap(bytes, PayloadLimits.DOCUMENT_DECODED)
             SetlistDocument(
-                (m.arrayAt(1) ?: throw PayloadException("setlist document: required key 1 missing")).map { v ->
+                m.arrayAt(1).orEmpty().map { v ->
                     val e = v.asMap("setlist item")
                     Item(
                         ref = SongRefCodec.fromCbor(e[1] ?: throw PayloadException("setlist item: ref missing")),
