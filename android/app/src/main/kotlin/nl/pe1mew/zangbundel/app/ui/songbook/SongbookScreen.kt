@@ -47,7 +47,7 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import java.util.Locale
 
 /**
- * The *Liedboek* screen (guiDesign D-52, D-21 as amended in v0.16): every song of the enabled libraries
+ * The *Zangbundel* screen (guiDesign D-52, D-21 as amended in v0.16): every song of the enabled libraries
  * with its library's colour square [FR-LIB-30]; a search on the title or, with *Ook in de tekst*, the
  * lyrics [FR-LIB-31]; A–Z / Z–A; chips for library, language and tag; *Wis filters* whenever anything
  * differs from the default. The orders and filters by use wait for the gathering memories.
@@ -77,8 +77,9 @@ fun SongbookScreen(
                     TextButton(onClick = onDone) { Text(stringResource(R.string.done), color = Palette.NightBlueDark) }
                 }
             } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.songbook_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+                // The title on its own line: *Zangbundel* (guiDesign v0.27) no longer fits beside the two buttons.
+                Text(stringResource(R.string.songbook_title), style = MaterialTheme.typography.headlineMedium, maxLines = 1)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onSetlists) { Text(stringResource(R.string.songbook_setlists)) }
                     TextButton(onClick = onLibraries) { Text(stringResource(R.string.songbook_libraries)) }
                 }

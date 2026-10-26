@@ -7,7 +7,7 @@ import java.text.Normalizer
 import java.util.Locale
 
 /**
- * What the leader has set on the *Liedboek* screen (guiDesign D-52). The default is everything, A–Z;
+ * What the leader has set on the *Zangbundel* screen (guiDesign D-52). The default is everything, A–Z;
  * [isDefault] decides whether *Wis filters* is shown.
  */
 data class SongbookFilter(

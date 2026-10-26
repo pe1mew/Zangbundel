@@ -103,7 +103,8 @@ fun IntroScreen(onPrivacy: () -> Unit, onDone: () -> Unit) {
 
 /**
  * The privacy screen (FR-GEN-08, assessment SP-07): in plain words, readable by a 12-year-old, what
- * the app sends, what it never sends, what it keeps and how to delete it. It says what
+ * the app sends and never sends, when it uses the internet, what it keeps and how to delete it, and why
+ * it may ask for location; the wording is the owner's (2026-10-26). It says what
  * `docs/privacy-policy.md` says; change both together.
  */
 @Composable
@@ -115,7 +116,6 @@ fun PrivacyScreen() {
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 for ((head, body) in listOf(
                     R.string.privacy_sends_title to R.string.privacy_sends,
-                    R.string.privacy_never_title to R.string.privacy_never,
                     R.string.privacy_internet_title to R.string.privacy_internet,
                     R.string.privacy_keeps_title to R.string.privacy_keeps,
                     R.string.privacy_delete_title to R.string.privacy_delete,

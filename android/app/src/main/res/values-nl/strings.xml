@@ -15,16 +15,16 @@
     <string name="done">Klaar</string>
     <!-- Startscherm (guiDesign D-21). -->
     <string name="home_start">Kampvuur starten</string>
-    <!-- Liedboek en een lied lezen (guiDesign D-52, D-53). -->
-    <string name="home_songbook">Liedboek</string>
-    <string name="songbook_title">Liedboek</string>
+    <!-- Zangbundel en een lied lezen (guiDesign D-52, D-53). -->
+    <string name="home_songbook">Zangbundel</string>
+    <string name="songbook_title">Zangbundel</string>
     <string name="songbook_libraries">Bibliotheken</string>
     <string name="songbook_search">Zoeken</string>
     <string name="songbook_in_text">Ook in de tekst</string>
     <string name="songbook_sort_az">A–Z</string>
     <string name="songbook_sort_za">Z–A</string>
     <string name="songbook_clear">Wis filters</string>
-    <string name="songbook_empty">Nog geen liederen. Voeg een bibliotheek toe om het liedboek te vullen.</string>
+    <string name="songbook_empty">Nog geen liederen. Voeg een bibliotheek toe om de zangbundel te vullen.</string>
     <string name="songbook_none">Geen liederen gevonden.</string>
     <string name="song_verse">Couplet</string>
     <string name="song_verse_n">Couplet %d</string>
@@ -58,9 +58,9 @@
     <string name="library_changes_removed">Verwijderd</string>
     <string name="library_remove">Verwijderen</string>
     <string name="library_remove_title">%s verwijderen?</string>
-    <string name="library_remove_text">De liederen verdwijnen uit het liedboek. Je kunt de bibliotheek later opnieuw toevoegen.</string>
+    <string name="library_remove_text">De liederen verdwijnen uit de zangbundel. Je kunt de bibliotheek later opnieuw toevoegen.</string>
     <string name="library_default">Standaardbibliotheek</string>
-    <string name="library_default_hint">Het eigen liedboek van de app, %s: kampvuur- en kinderliederen, gedownload van GitHub.</string>
+    <string name="library_default_hint">De eigen zangbundel van de app, %s: kampvuur- en kinderliederen, gedownload van GitHub.</string>
     <string name="library_add_named">%s toevoegen</string>
     <string name="library_online">Online</string>
     <string name="library_online_hint">Het webadres van een bibliotheek, een release-index of een .zbl-bestand.</string>
@@ -153,13 +153,13 @@
     <!-- Setlists (guiDesign D-53, D-54). -->
     <string name="songbook_setlists">Setlists</string>
     <string name="setlists_title">Setlists</string>
-    <string name="setlists_empty">Nog geen setlists. Maak er een en vul hem vanuit het liedboek.</string>
+    <string name="setlists_empty">Nog geen setlists. Maak er een en vul hem vanuit de zangbundel.</string>
     <string name="setlists_new">Nieuwe setlist</string>
     <string name="setlists_rename">Naam wijzigen</string>
     <string name="setlists_duplicate">Dupliceren</string>
     <string name="setlists_delete">Verwijderen</string>
     <string name="setlists_delete_title">%s verwijderen?</string>
-    <string name="setlists_delete_text">De setlist verdwijnt van deze telefoon. De liederen blijven in het liedboek.</string>
+    <string name="setlists_delete_text">De setlist verdwijnt van deze telefoon. De liederen blijven in de zangbundel.</string>
     <string name="setlists_name">Naam</string>
     <string name="setlists_save">Opslaan</string>
     <string name="setlists_copy_of">%s (kopie)</string>
@@ -178,7 +178,7 @@
         <item quantity="one">%d lied niet gevonden; het vult zich aan zodra de bibliotheek is toegevoegd.</item>
         <item quantity="other">%d liederen niet gevonden; ze vullen zich aan zodra de bibliotheken zijn toegevoegd.</item>
     </plurals>
-    <string name="setlist_empty">Nog geen liederen. Voeg ze toe vanuit het liedboek.</string>
+    <string name="setlist_empty">Nog geen liederen. Voeg ze toe vanuit de zangbundel.</string>
     <string name="setlist_add_songs">Liederen toevoegen</string>
     <string name="setlist_not_found">niet gevonden</string>
     <string name="setlist_move">Slepen om te verplaatsen</string>
@@ -280,22 +280,20 @@
     <string name="intro_title">Zo werkt het</string>
     <string name="intro_leader">Eén telefoon is de kampvuurleider. De leider kiest de liederen en stuurt de tekst via Bluetooth naar alle telefoons in de buurt. Internet is daarvoor niet nodig.</string>
     <string name="intro_singer">De anderen zingen mee: open de app en tik op het kampvuur in de lijst, of scan de QR-code van de leider met je camera. De tekst verschijnt vanzelf.</string>
-    <string name="intro_songs">Liederen komen uit bibliotheken die je toevoegt in het Liedboek. Om mee te zingen heb je er geen nodig: de leider stuurt elk lied.</string>
+    <string name="intro_songs">Liederen komen uit bibliotheken die je toevoegt in de Zangbundel. Om mee te zingen heb je er geen nodig: de leider stuurt elk lied.</string>
     <string name="intro_privacy">Wat gebeurt er met mijn gegevens?</string>
     <string name="intro_start">Beginnen</string>
     <string name="privacy_title">Je gegevens</string>
     <string name="privacy_sends_title">Wat de app verstuurt</string>
-    <string name="privacy_sends">Alleen tijdens een kampvuur, en alleen via Bluetooth naar telefoons in de buurt: het kampvuur zelf en de liedteksten. Als je een naam voor de leider invult of om een lied vraagt, kan alleen de telefoon van de leider dat lezen: het is op slot voor de leider.</string>
-    <string name="privacy_never_title">Wat de app nooit verstuurt</string>
-    <string name="privacy_never">Niets over jou naar de makers van de app, of naar iemand anders. Geen account, geen reclame, geen volgen.</string>
-    <string name="privacy_internet_title">Internet</string>
-    <string name="privacy_internet">Alleen om een bibliotheek of setlist te downloaden van een adres dat je invoert of kiest, en alleen als je erop tikt. De website waarvan je downloadt, ziet het internetadres van je telefoon, zoals bij elke download.</string>
+    <string name="privacy_sends">Alleen tijdens een kampvuur, via Bluetooth: het kampvuur en de liedteksten. Een naam of een verzoek kan alleen de kampvuurleider lezen. Er wordt niets naar de makers of iemand anders verstuurd: geen accountgegevens en geen reclame. Ook word je niet gevolgd.</string>
+    <string name="privacy_internet_title">Verbinding met het internet</string>
+    <string name="privacy_internet">Alleen om een bibliotheek of setlist te downloaden van de url die jij opgeeft of kiest. Die website ziet jouw download en het internetadres van de wifi of de provider waarmee je online bent.</string>
     <string name="privacy_keeps_title">Wat op je telefoon blijft</string>
-    <string name="privacy_keeps">De bibliotheken en setlists die je toevoegt, je instellingen, en van elk kampvuur een herinnering met de naam, de datum en de titels die zijn gezongen. De liedteksten van de leider worden gewist als het kampvuur eindigt.</string>
-    <string name="privacy_delete_title">Hoe je het wist</string>
-    <string name="privacy_delete">In Instellingen wist Alle gegevens verwijderen alles. Je kunt ook bibliotheken, setlists en herinneringen een voor een verwijderen, of de app verwijderen.</string>
+    <string name="privacy_keeps">Bibliotheken, setlists, instellingen en de herinneringen. De liedteksten van de leider worden gewist na het kampvuur.</string>
+    <string name="privacy_delete_title">Hoe je wist wat op je telefoon blijft</string>
+    <string name="privacy_delete">Met Alle gegevens verwijderen in Instellingen wis je alles. Je kunt ook per onderdeel wissen, of de app verwijderen.</string>
     <string name="privacy_location_title">Locatie</string>
-    <string name="privacy_location">De app leest nooit waar je bent. Op Android 11 en ouder laat Android een app alleen Bluetooth-apparaten vinden met de locatiemachtiging, dus vraagt de app die daar, alleen om die reden.</string>
+    <string name="privacy_location">Die wordt nooit uitgelezen. Op Android 11 en ouder vraagt de app die toestemming alleen omdat zoeken naar Bluetooth-apparaten daar die toestemming nodig heeft.</string>
     <string name="settings_title">Instellingen</string>
     <string name="settings_singing">Zingen</string>
     <string name="settings_name">Naam voor de leider</string>

@@ -203,9 +203,9 @@ private fun IconEntry(icon: Int, label: Int, onClick: (() -> Unit)?) {
     val alpha = if (onClick == null) 0.38f else 1f
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(enabled = onClick != null) { onClick?.invoke() }.padding(8.dp).alpha(alpha),
+        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(enabled = onClick != null) { onClick?.invoke() }.padding(horizontal = 4.dp, vertical = 8.dp).alpha(alpha),
     ) {
         Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(28.dp))
-        Text(stringResource(label), style = MaterialTheme.typography.labelSmall)
+        Text(stringResource(label), style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
     }
 }

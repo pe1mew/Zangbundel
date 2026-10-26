@@ -20,7 +20,7 @@ import nl.pe1mew.zangbundel.platform.storage.Songbook
 import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
 import java.util.Locale
 
-/** The *Liedboek* screen (guiDesign D-52): the combined songbook of the enabled libraries, searched, filtered and sorted. */
+/** The *Zangbundel* screen (guiDesign D-52): the combined songbook of the enabled libraries, searched, filtered and sorted. */
 class SongbookViewModel(private val songbook: Songbook, private val book: SetlistBook, private val appVersion: String) : ViewModel() {
 
     /** A library as its filter chip shows it: name and D-51 colour. */
