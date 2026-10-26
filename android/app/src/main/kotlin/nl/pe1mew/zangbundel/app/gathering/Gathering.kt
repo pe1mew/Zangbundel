@@ -34,6 +34,7 @@ import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
 import nl.pe1mew.zangbundel.core.songformat.SetlistResolver
 import nl.pe1mew.zangbundel.core.songformat.Song
 import nl.pe1mew.zangbundel.core.songformat.SongParser
+import nl.pe1mew.zangbundel.platform.storage.AppSettings
 import nl.pe1mew.zangbundel.platform.storage.Memories
 import nl.pe1mew.zangbundel.platform.storage.MemorySong
 import nl.pe1mew.zangbundel.platform.storage.PreparedEntry
@@ -56,6 +57,9 @@ class Gathering(
     private val songbook: Songbook,
     private val setlists: SetlistBook,
     private val memories: Memories,
+    private val settings: AppSettings,
+    /** *Ontvangst tonen* (D-81): whether the singer's page shows the reception island. */
+    private val receptionOn: () -> Boolean,
     private val clock: () -> Long = SystemClock::elapsedRealtime,
     private val wallClock: () -> Long = System::currentTimeMillis,
 ) {
@@ -96,6 +100,8 @@ class Gathering(
             val current: Int?,
             /** D-29 (v0.21): the source blocks of the current song while it is still coming in; null once it is in. */
             val collecting: List<Reassembler.Block>? = null,
+            /** D-81: the reception island's rows while *Ontvangst tonen* is on; empty otherwise. */
+            val reception: List<SingerEngine.Reception> = emptyList(),
         ) : Mode
     }
 
@@ -273,7 +279,9 @@ class Gathering(
             // The discovery scan stops before the engine starts its own; a stop that came later would silence the singer.
             runCatching { t.stopScan() }
             val local = songbook.entries().filter { it.hash.isNotEmpty() }.associateBy { it.hash }
-            val engine = SingerEngine(t, crypto, s, clock, chooses = { it.gid == nearby.gid }, hasSong = { it.hash.toHex() in local })
+            // FR-SING-01, D-44: the name the singer chose in settings, sealed to the leader; none when empty.
+            val name = settings.displayName().ifEmpty { null }
+            val engine = SingerEngine(t, crypto, s, clock, chooses = { it.gid == nearby.gid }, name = name, hasSong = { it.hash.toHex() in local })
             singer = engine
             GatheringService.start(context)
             launch {
@@ -303,8 +311,12 @@ class Gathering(
                     delay(COLLECTING_REFRESH_MS)
                     val m = _mode.value as? Mode.Singing ?: continue
                     val waiting = m.current?.let { m.songs.getOrNull(it) }?.let { it.song == null && !it.libraryOnly } == true
-                    val blocks = if (waiting) engine.reception().firstOrNull { it.doc == DocumentType.SONG }?.blocks else null
-                    if (blocks != m.collecting) (_mode.value as? Mode.Singing)?.let { _mode.value = it.copy(collecting = blocks) }
+                    val rows = if (waiting || receptionOn()) engine.reception() else emptyList()
+                    val blocks = if (waiting) rows.firstOrNull { it.doc == DocumentType.SONG }?.blocks else null
+                    val island = if (receptionOn()) rows else emptyList()
+                    if (blocks != m.collecting || island.isNotEmpty() || m.reception.isNotEmpty()) {
+                        (_mode.value as? Mode.Singing)?.let { _mode.value = it.copy(collecting = blocks, reception = island) }
+                    }
                 }
             }
             launch {

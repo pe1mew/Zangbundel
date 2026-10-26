@@ -242,6 +242,8 @@ object ArchiveImport {
     const val FORMAT = "zangbundel-archive"
     const val NOTATION = "notation/"
     const val SUPPORTED_ARCHIVE_MAJOR = 1
+    /** The archive version this app implements in full, for the About screen (1.1: setlists in the manifest, 12.4). */
+    const val IMPLEMENTED_ARCHIVE_VERSION = "1.1"
     const val VERSION_MAX_CHARS = 32
     /** The manifest of 10 000 songs is about 1.5 MB; JSON and licence entries above this are refused. */
     const val JSON_CAP = 4L * 1024 * 1024

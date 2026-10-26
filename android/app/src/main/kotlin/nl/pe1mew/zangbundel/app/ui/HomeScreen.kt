@@ -126,8 +126,8 @@ fun HomeScreen(onOpen: (String) -> Unit) {
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                 IconEntry(R.drawable.ic_library, R.string.home_songbook) { onOpen(Routes.SONGBOOK) }
                 IconEntry(R.drawable.ic_memories, R.string.home_memories) { onOpen(Routes.MEMORIES) }
-                IconEntry(R.drawable.ic_settings, R.string.home_settings, null)
-                IconEntry(R.drawable.ic_about, R.string.home_about, null)
+                IconEntry(R.drawable.ic_settings, R.string.home_settings) { onOpen(Routes.SETTINGS) }
+                IconEntry(R.drawable.ic_about, R.string.home_about) { onOpen(Routes.ABOUT) }
             }
             // Debug and field-test builds only; the release stand-in draws nothing.
             if (Diagnostics.AVAILABLE) DiagnosticsEntry(onOpen)

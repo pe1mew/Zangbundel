@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,6 +29,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,7 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +53,7 @@ import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
 import nl.pe1mew.zangbundel.app.ui.singer.Blocks
+import nl.pe1mew.zangbundel.app.ui.singer.ReceptionIsland
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 
 /**
@@ -67,6 +72,7 @@ fun SingerScreen() {
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     var confirmLeave by remember { mutableStateOf(false) }
+    var islandHeight by remember { mutableIntStateOf(0) }
     val ended = m.connection == Gathering.Connection.ENDED
     KeepScreenOn()
     BackHandler { if (ended) scope.launch { gathering.leave() } else confirmLeave = true }
@@ -97,7 +103,9 @@ fun SingerScreen() {
                 Text(m.name + " · " + state, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list) {
+        // D-81: while the island is shown, the page ends with room for it, so it never covers the line being sung.
+        val room = if (m.reception.isNotEmpty()) with(LocalDensity.current) { islandHeight.toDp() } else 0.dp
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list, contentPadding = PaddingValues(bottom = room)) {
             if (m.songs.isEmpty()) item { Text(stringResource(R.string.singer_waiting), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp)) }
             itemsIndexed(m.songs, key = { _, s -> s.ref.library.value + "/" + s.ref.song.value }) { i, s ->
                 Column {
@@ -120,6 +128,16 @@ fun SingerScreen() {
                     }
                 }
             }
+            // D-29 (v0.24, the owner's request): the page runs on below the last song, so a song set Nu scrolls to the top of
+            // the screen and can be scrolled up until only its last line is left, instead of resting against the bottom.
+            if (m.songs.isNotEmpty()) item(key = "end") { Spacer(Modifier.fillParentMaxHeight(TAIL_FRACTION)) }
+        }
+    }
+    // D-81: the reception island at the very bottom, while Ontvangst tonen is on; a tap switches it off.
+    if (m.reception.isNotEmpty()) {
+        val settings = remember { (context.applicationContext as ZangbundelApp).container.singerSettings }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            ReceptionIsland(m.reception, onDismiss = { settings.receptionBar.value = false }, modifier = Modifier.onSizeChanged { islandHeight = it.height })
         }
     }
     if (confirmLeave) AlertDialog(
@@ -130,6 +148,9 @@ fun SingerScreen() {
         dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.singer_stay)) } },
     )
 }
+
+/** The share of the page height left below the last song: enough to scroll it to the top, with its last line still in view. */
+private const val TAIL_FRACTION = 0.85f
 
 /** About one centimetre: 160 dp are an inch. */
 internal val SONG_BAR_WIDTH = 63.dp

@@ -48,7 +48,25 @@ class AppContainer(private val context: Context) {
     val setlistTransfer: SetlistTransfer by lazy { SetlistTransfer(storage.songbook, setlists, HttpsDownloads(fetcher)) }
 
     /** The one gathering, leading or singing (architecture A-06); its radio is [transport]. */
-    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories) }
+    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings, { singerSettings.receptionBar.value }) }
+
+    /** Whether the welcome screen was shown in this process (guiDesign D-05: never a second time while the app stays in memory). */
+    var welcomed = false
+
+    /**
+     * "Remove all data" (FR-DATA-07, architecture section 6): libraries with their files, setlists,
+     * gathering memories, settings and the share cache, so the app is back at its first use. Only
+     * outside a gathering.
+     */
+    suspend fun removeAllData() {
+        check(gathering.mode.value == Gathering.Mode.Idle) { "not during a gathering" }
+        for (l in storage.index.all()) libraries.remove(l.id)
+        for (s in storage.setlists.all()) storage.setlists.delete(s.uid)
+        storage.memories.deleteAll()
+        storage.settings.clear()
+        singerSettings.receptionBar.value = false
+        java.io.File(context.cacheDir, "share").deleteRecursively()
+    }
 
     /** Adding, updating and removing libraries (guiDesign D-50); files under `filesDir/libraries/` (architecture section 6). */
     val libraries: LibraryRepository by lazy {

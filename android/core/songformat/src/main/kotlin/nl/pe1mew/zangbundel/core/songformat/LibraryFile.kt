@@ -133,6 +133,8 @@ object LibraryFileParser {
     const val FORMAT = "zangbundel-library"
     /** The format major this app implements (10.4). */
     const val SUPPORTED_MAJOR = 1
+    /** The format version this app implements in full, for the About screen (1.1: setlists, section 13). */
+    const val IMPLEMENTED_VERSION = "1.1"
     const val NAME_MAX_CHARS = 80
     /** Objects and arrays nest at most three deep in a valid file (tags); far more is refused. */
     const val MAX_DEPTH = 16

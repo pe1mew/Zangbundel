@@ -16,7 +16,12 @@ import nl.pe1mew.zangbundel.app.diagnostics.BleTestScreen
 import nl.pe1mew.zangbundel.app.diagnostics.Diagnostics
 import nl.pe1mew.zangbundel.app.diagnostics.RadioCheckScreen
 import nl.pe1mew.zangbundel.app.gathering.Gathering
+import nl.pe1mew.zangbundel.app.ui.about.AboutScreen
+import nl.pe1mew.zangbundel.app.ui.firstuse.IntroScreen
+import nl.pe1mew.zangbundel.app.ui.firstuse.PrivacyScreen
+import nl.pe1mew.zangbundel.app.ui.firstuse.WelcomeScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.LeaderScreen
+import nl.pe1mew.zangbundel.app.ui.settings.SettingsScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.SingerScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.StartScreen
 import nl.pe1mew.zangbundel.app.ui.library.LibraryScreen
@@ -52,7 +57,20 @@ fun ZangbundelApp() {
                 else navController.navigate(target) { popUpTo(Routes.HOME) }
             }
         }
-        NavHost(navController = navController, startDestination = Routes.HOME) {
+        // D-05: the welcome screen once per process; D-07: the introduction until it was finished once.
+        val start = remember { if (gathering.mode.value == Gathering.Mode.Idle && !(context.applicationContext as nl.pe1mew.zangbundel.app.ZangbundelApp).container.welcomed) Routes.WELCOME else Routes.HOME }
+        NavHost(navController = navController, startDestination = start) {
+            composable(Routes.WELCOME) {
+                WelcomeScreen { firstUse -> navController.navigate(if (firstUse) Routes.INTRO else Routes.HOME) { popUpTo(Routes.WELCOME) { inclusive = true } } }
+            }
+            composable(Routes.INTRO) {
+                IntroScreen(onPrivacy = { navController.navigate(Routes.PRIVACY) }, onDone = { navController.navigate(Routes.HOME) { popUpTo(Routes.INTRO) { inclusive = true } } })
+            }
+            composable(Routes.PRIVACY) { PrivacyScreen() }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(onPrivacy = { navController.navigate(Routes.PRIVACY) }, onAllRemoved = { navController.navigate(Routes.INTRO) { popUpTo(0) { inclusive = true } } })
+            }
+            composable(Routes.ABOUT) { AboutScreen(onPrivacy = { navController.navigate(Routes.PRIVACY) }) }
             composable(Routes.HOME) { HomeScreen { route -> navController.navigate(route) } }
             composable(Routes.SONGBOOK) {
                 SongbookScreen(
@@ -96,6 +114,11 @@ fun ZangbundelApp() {
 }
 
 object Routes {
+    const val WELCOME = "welcome"
+    const val INTRO = "intro"
+    const val PRIVACY = "privacy"
+    const val SETTINGS = "settings"
+    const val ABOUT = "about"
     const val HOME = "home"
     const val SONGBOOK = "songbook"
     /** Library and song ids have id syntax (song-format 3.2), so they are safe as path segments. */
