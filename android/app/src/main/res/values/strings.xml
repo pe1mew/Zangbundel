@@ -271,6 +271,10 @@
     <string name="singer_receiving">Coming in…</string>
     <string name="singer_library_only">Only shown with the library %s installed.</string>
     <string name="singer_ended_banner">%s has ended · tap to leave</string>
+    <string name="round_prev">Previous song</string>
+    <string name="round_list">Song list</string>
+    <string name="round_next">Next song</string>
+    <string name="sheet_leave">Leave the campfire</string>
     <string name="singer_leave_title">Leave the campfire?</string>
     <string name="singer_leave_text">You will no longer see the lyrics.</string>
     <string name="singer_leave">Leave</string>

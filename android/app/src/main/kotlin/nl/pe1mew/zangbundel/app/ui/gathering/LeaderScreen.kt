@@ -38,6 +38,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +77,9 @@ import nl.pe1mew.zangbundel.core.songformat.SongParser
  * sung songs with a check, a tap scrolling to the song; then every song of the setlist behind its
  * separator with *Nu*. The bar carries the fingerprint of D-36 and opens, on a tap or a drag down, the
  * drawer of D-61 with the statistics of D-62 and *Kampvuur beëindigen*; the round join button of D-57
- * (v0.26) sits at the bottom left, clear of the *Nu* buttons. The ▲ ≡ ▼ buttons of D-57 are not built yet.
+ * (v0.26) sits at the bottom left, clear of the *Nu* buttons. The ▲ ≡ ▼ buttons of D-57 sit at the bottom
+ * right and move between separators; ≡ opens the setlist as a sheet to jump to a song (the editing of D-58
+ * comes later).
  */
 @Composable
 fun LeaderScreen() {
@@ -90,6 +93,11 @@ fun LeaderScreen() {
     var confirmEnd by remember { mutableStateOf(false) }
     var showJoin by remember { mutableStateOf(false) }
     var drawer by remember { mutableStateOf(false) }
+    // D-57: the ▲ ≡ ▼ column, dimmed after 3 s without a touch, and the setlist sheet.
+    var touched by remember { mutableLongStateOf(0L) }
+    var dimmed by remember { mutableStateOf(false) }
+    var sheet by remember { mutableStateOf(false) }
+    val at by remember { derivedStateOf { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset } }
     var songs by remember { mutableStateOf<Map<Int, Song>>(emptyMap()) }
     LaunchedEffect(m.songs) {
         songs = m.songs.withIndex().mapNotNull { (i, s) ->
@@ -103,7 +111,7 @@ fun LeaderScreen() {
     BackHandler(enabled = drawer) { drawer = false }
     BackHandler(enabled = showJoin) { showJoin = false }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().onAnyTouch { touched++; dimmed = false }) {
         Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
             LeaderBar(m, now, onOpen = { drawer = true })
             Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -130,8 +138,27 @@ fun LeaderScreen() {
         }
         // D-57 (v0.26, the owner's request): the join button at the bottom left, where no *Nu* button is.
         JoinButton(m, onClick = { showJoin = true }, modifier = Modifier.align(Alignment.BottomStart).windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp))
+        // Items: 0 is the setlist block, 1 + i the separator of song i.
+        if (m.songs.isNotEmpty()) {
+            val (index, offset) = at
+            val last = m.songs.size
+            RoundButtons(
+                touched = touched, dimmed = dimmed, onDim = { dimmed = true },
+                prevEnabled = index > 0 || offset > 0,
+                nextEnabled = index < last,
+                onPrev = { scope.launch { list.animateScrollToItem(if (offset > 0) index else (index - 1).coerceAtLeast(0)) } },
+                onList = { sheet = true },
+                onNext = { scope.launch { list.animateScrollToItem((index + 1).coerceAtMost(last)) } },
+                modifier = Modifier.align(Alignment.BottomEnd).windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp),
+            )
+        }
         if (showJoin) JoinPanel(m) { showJoin = false }
     }
+    if (sheet) SongSheet(
+        rows = m.songs.mapIndexed { i, s -> SheetRow(s.title, current = i == m.current, sung = i in m.sung) },
+        onPick = { i -> sheet = false; scope.launch { list.animateScrollToItem(1 + i) } },
+        onDismiss = { sheet = false },
+    )
     if (confirmEnd) AlertDialog(
         onDismissRequest = { confirmEnd = false },
         title = { Text(stringResource(R.string.leader_end_title)) },

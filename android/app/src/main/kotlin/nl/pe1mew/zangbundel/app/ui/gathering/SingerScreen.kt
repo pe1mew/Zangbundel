@@ -29,8 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -66,7 +68,9 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * turns into an orange bar that leaves on a tap (D-34 as amended in v0.19). The strip carries the fingerprint
  * (D-36); a join from a QR code shows the joining screen of D-35 until the leader accepts, and a refused join
  * code asks again (D-26). The reception grid of D-81 is a hidden feature since v0.30: a long press on
- * the strip opens it, a tap closes it; it never shows by itself. The round buttons, the songlist sheet and the toolbar are not built yet.
+ * the strip opens it, a tap closes it; it never shows by itself. The round buttons of D-30 (previous
+ * song, songlist, next song) sit at the bottom right and open the songlist sheet of D-31, which ends with
+ * *Kampvuur verlaten*. The toolbar is not built yet.
  */
 @Composable
 fun SingerScreen() {
@@ -81,6 +85,11 @@ fun SingerScreen() {
     // D-81 (v0.30): a hidden feature, open after a long press on the strip until a tap.
     var requested by remember { mutableStateOf(false) }
     val showIsland = requested && m.reception.isNotEmpty()
+    // D-30, D-31: the round buttons, dimmed after 3 s without a touch, and the songlist sheet.
+    var touched by remember { mutableLongStateOf(0L) }
+    var dimmed by remember { mutableStateOf(false) }
+    var sheet by remember { mutableStateOf(false) }
+    val at by remember { derivedStateOf { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset } }
     val ended = m.connection == Gathering.Connection.ENDED
     val joining = m.viaQr && m.connection == Gathering.Connection.CONNECTING
     KeepScreenOn()
@@ -92,7 +101,7 @@ fun SingerScreen() {
         return
     }
 
-    Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
+    Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing).onAnyTouch { touched++; dimmed = false }) {
         val state = stringResource(
             when (m.connection) {
                 Gathering.Connection.CONNECTING -> R.string.singer_connecting
@@ -164,6 +173,31 @@ fun SingerScreen() {
             )
         }
     }
+    if (m.songs.isNotEmpty()) {
+        val (index, offset) = at
+        val last = m.songs.lastIndex
+        val shown = index.coerceAtMost(last)
+        val islandDp = if (showIsland) with(LocalDensity.current) { islandHeight.toDp() } else 0.dp
+        Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing), contentAlignment = Alignment.BottomEnd) {
+            RoundButtons(
+                touched = touched, dimmed = dimmed, onDim = { dimmed = true },
+                prevEnabled = index > 0 || offset > 0,
+                // D-30: next is disabled on the most recently pushed song.
+                nextEnabled = index < last,
+                onPrev = { scope.launch { list.animateScrollToItem(if (offset > 0 && index <= last) shown else (shown - 1).coerceAtLeast(0)) } },
+                onList = { sheet = true },
+                onNext = { scope.launch { list.animateScrollToItem((shown + 1).coerceAtMost(last)) } },
+                modifier = Modifier.padding(end = 16.dp, bottom = 16.dp + islandDp),
+            )
+        }
+    }
+    if (sheet) SongSheet(
+        rows = m.songs.mapIndexed { i, s -> SheetRow(s.title, current = i == m.current, sung = i != m.current) },
+        onPick = { i -> sheet = false; scope.launch { list.animateScrollToItem(i) } },
+        onDismiss = { sheet = false },
+        footer = stringResource(R.string.sheet_leave),
+        onFooter = { sheet = false; if (ended) scope.launch { gathering.leave() } else confirmLeave = true },
+    )
     if (confirmLeave) AlertDialog(
         onDismissRequest = { confirmLeave = false },
         title = { Text(stringResource(R.string.singer_leave_title)) },

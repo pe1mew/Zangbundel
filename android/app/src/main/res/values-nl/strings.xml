@@ -269,6 +269,10 @@
     <string name="singer_receiving">Wordt ontvangen…</string>
     <string name="singer_library_only">Alleen te zien met de bibliotheek %s.</string>
     <string name="singer_ended_banner">%s is beëindigd · tik om te verlaten</string>
+    <string name="round_prev">Vorig lied</string>
+    <string name="round_list">Liedjeslijst</string>
+    <string name="round_next">Volgend lied</string>
+    <string name="sheet_leave">Kampvuur verlaten</string>
     <string name="singer_leave_title">Kampvuur verlaten?</string>
     <string name="singer_leave_text">Je ziet de liedteksten dan niet meer.</string>
     <string name="singer_leave">Verlaten</string>
