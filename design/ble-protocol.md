@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.36 (draft) |
+| Document version | 0.38 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.17 |
+| Depends on | `design/functional-requirements.md` v0.18 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -49,6 +49,8 @@
 | 0.34 | 2026-10-26 | Approved by the owner as `design/proposals/2026-10-26-burst-state-first.md`, after per-frame timing on the Huawei showed the rate rule repairing the state at 2.5 s and every push costing each singer a setlist and an Info connection (`design/test-results/2026-10-26-state-after-push.md`). 7.2, 7.3: a frame index may go up to 255 for any document; frames above a document's usual `n` are the state's lead-in. 7.4 rule 4: a burst opens with the new state record's three passes as distinct frames (the lead-in), then the other changed documents three times, the setlist before the song. 7.6: the state record is judged first 1 s after the new `seq` against 3 s; a registered singer never repairs Info. A v0.33 singer drops lead-in frames above its usual `n`, so every phone must run v0.34. |
 | 0.35 | 2026-10-26 | Approved by the owner as `design/proposals/2026-10-26-static-setlist.md`: the setlist document (9.5) carries only the order of the songs (key 2, their `dh` per position) and changes only when the setlist changes, not on a push; key 1 (`items`) is no longer sent. The state body (9.4) gains `cpos` (15), the current song's setlist position, and `sung` (16), a bitmap of the positions pushed so far, from which a singer derives what is current and what was sung; a late joiner shows earlier sung songs it holds ahead (7.5). A push bursts the state and, if it changed, the song (10.5). |
 | 0.36 | 2026-10-26 | Depends on FRD v0.17 (FR-SING-05: the reception view is a hidden feature, opened by a long press only); no other change. |
+| 0.37 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change, the Request write, `reqstat`, document 8 and the delegate Control commands stay specified for phase 2. |
+| 0.38 | 2026-10-26 | 10.9, the owner's choice of option B in `design/proposals/2026-10-26-singer-presence.md`: the leader no longer drops silent singers after 10 minutes (that expiry never ran, and with songs ahead a singer that hears well may never connect); the count is the registered singers minus those that left, an upper bound. A singer whose app is swiped away sends the leave notice first. |
 
 ---
 
@@ -777,7 +779,7 @@ Connections now occur for registration, requests, delegate commands and repair. 
 ### 10.9 Loss of contact and reconnection
 
 - **Singer side.** Nothing received for 10 s → "reconnecting", keep the current lyrics [FR-GATH-10]. Beacon or frames return with the same `gid` → compare `seq`, continue; the carousel delivers whatever was missed, so normally no connection is needed. 5 min without anything → ended (10.11) [FR-GATH-11].
-- **Leader side.** A singer that leaves on purpose sends Control op 10 (9.8) and is removed from the count at once [FR-GATH-07, FR-GATH-12]. Singers that fall silent without it (walked away, phone off) are removed after 10 min without GATT activity; because registered singers rarely connect, "seen" includes any GATT activity, so the count can run high by the silent departures of the last ten minutes. (v0.11: the explicit leave replaces the earlier note that the count is only an upper bound.)
+- **Leader side.** A singer that leaves on purpose sends Control op 10 (9.8) and is removed from the count at once [FR-GATH-07, FR-GATH-12]. Since v0.38 a singer that falls silent without it (a crash, a flat battery, walked out of range) stays counted until the end: singers send nothing on a schedule, and one that hears the broadcast well may never connect, so silence says nothing about presence. The count is therefore the registered singers minus those that left, an upper bound, and the leader's drawer labels it *aangemeld*. A singer whose app is swiped away sends the leave notice before the app goes (v0.38). (v0.11 to v0.37 removed silent singers after 10 minutes without GATT activity; that was never built, and option A of `design/proposals/2026-10-26-singer-presence.md`, a presence notice every 4 minutes, is the way back to it.)
 - **Leader app restart.** On start, a persisted running gathering younger than the resume window (default 10 min) is offered for resumption [FR-GATH-13]. Resuming reuses both key pairs, `gid`, name, join code, the singer table with its tokens, the delegate list `dlg`, and `seq` (+1, so a burst follows), all from the record persisted in 10.1 step 2.
 
 ### 10.10 End a gathering (leader)

@@ -12,14 +12,19 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import nl.pe1mew.zangbundel.app.MainActivity
 import nl.pe1mew.zangbundel.app.R
+import nl.pe1mew.zangbundel.app.ZangbundelApp
 
 /**
  * Foreground service of type `connectedDevice` that owns the one gathering engine for leader and
  * singer alike (architecture A-06). The notification is silent, low importance, opens the app, has
  * no actions, and its text is fixed and neutral, also on the lock screen (assessment SP-17).
- * Skeleton: lifecycle and notification only; the engine is attached with the protocol implementation.
+ * A singer who swipes the app away leaves the gathering: the service stays until the leave notice of
+ * ble-protocol 10.11 is out, so the leader's count drops at once instead of never. A leader's gathering
+ * keeps running; the notification brings the leader back.
  */
 class GatheringService : LifecycleService() {
 
@@ -33,6 +38,18 @@ class GatheringService : LifecycleService() {
             else -> startInForeground()
         }
         return START_NOT_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        val gathering = (application as ZangbundelApp).container.gathering
+        if (gathering.mode.value !is Gathering.Mode.Singing) return
+        lifecycleScope.launch {
+            gathering.leave(keepService = true)
+            gathering.awaitLeave()
+            ServiceCompat.stopForeground(this@GatheringService, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
     }
 
     private fun startInForeground() {

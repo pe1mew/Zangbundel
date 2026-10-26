@@ -98,7 +98,8 @@ class Gathering(
 
     /** A song a singer received (D-29, D-47): [song] null while it is still coming in, or when it is only shown with its library [FR-LIB-22]. */
     /** A song on the singer's page; [earlier] is its setlist position when it was sung before this singer joined (v0.35). */
-    data class ReceivedSong(val ref: SongRef, val title: String, val song: Song?, val libraryOnly: Boolean = false, val earlier: Int? = null)
+    /** [library]: the name of this phone's library the song was shown from, null when it came over the air (D-45). */
+    data class ReceivedSong(val ref: SongRef, val title: String, val song: Song?, val libraryOnly: Boolean = false, val earlier: Int? = null, val library: String? = null)
 
     enum class Connection { CONNECTING, CONNECTED, RECONNECTING, ENDED }
 
@@ -322,13 +323,27 @@ class Gathering(
         return Prepared(ref, song.meta.title, if (song.meta.redistribute) SongDocument(ref, file, song.meta.licenceSummary(e.libraryName)) else null)
     }
 
-    /** *Afsluiten* (10.10): singers see the end at once; the radio lingers 60 s in the background, then stops. */
+    /** D-69: what the leader sees after ending a gathering; null once dismissed. */
+    data class Summary(val name: String, val startedWall: Long, val durationMs: Long, val songs: Int, val singers: Int)
+
+    private val _summary = MutableStateFlow<Summary?>(null)
+    val summary: StateFlow<Summary?> = _summary
+
+    fun dismissSummary() {
+        _summary.value = null
+    }
+
+    /**
+     * *Afsluiten* (10.10): singers see the end at once; the radio lingers 60 s in the background, then
+     * stops. The leader gets the summary of D-69, set before the mode changes so the app can show it.
+     */
     fun end() {
         val l = leader ?: return
         val s = session
         val m = _mode.value as? Mode.Leading
         leader = null
         session = null
+        if (m != null) _summary.value = Summary(m.name, startedWall, clock() - m.startedAt, pushedOrder.size, maxOf(peakSingers, m.singers))
         _mode.value = Mode.Idle
         if (m != null) {
             val sung = pushedOrder.mapNotNull { i -> m.songs[i].song?.let { MemorySong(it.libraryId, it.songId, it.title) } }
@@ -456,7 +471,7 @@ class Gathering(
      * (FR-DATA-01: it was only ever in memory) and the user is home at once; the leader is told in the
      * background, retried for up to 10 s. Also how a singer leaves an ended gathering, with nothing to tell.
      */
-    suspend fun leave() {
+    suspend fun leave(keepService: Boolean = false) {
         val engine = singer
         val m = _mode.value as? Mode.Singing
         val notify = engine != null && m?.connection != Connection.ENDED
@@ -468,12 +483,18 @@ class Gathering(
         session?.cancel()
         session = null
         _mode.value = Mode.Idle
-        GatheringService.stop(context)
+        // [keepService]: the caller (the app swiped away) keeps the process alive until the notice is out.
+        if (!keepService) GatheringService.stop(context)
         if (notify) leaveJob = scope.launch {
             val t0 = clock()
             val sent = runCatching { engine!!.leave() }.getOrDefault(false)
             Log.d("singer leave sent=$sent ms=${clock() - t0}")
         }
+    }
+
+    /** Waits for the leave notice started by [leave], at most its 10-second budget (ble-protocol 10.11). */
+    suspend fun awaitLeave() {
+        leaveJob?.join()
     }
 
     /** FR-DATA-03: titles and identifiers only; a gathering in which nothing was sung leaves no memory. */
@@ -522,7 +543,7 @@ class Gathering(
     /** The current song is in this phone's library (10.3 step 3): shown from there, nothing to collect. */
     private suspend fun localSong(ref: SongRef, entry: SongbookEntry) {
         val file = runCatching { songbook.read(entry.libraryId, entry.directory, entry.fileName) }.getOrNull() ?: return
-        SongParser.parse(file).song?.let { place(ref, it) }
+        SongParser.parse(file).song?.let { place(ref, it, entry.libraryName) }
     }
 
     /**
@@ -539,10 +560,10 @@ class Gathering(
         _mode.value = m.copy(songs = songs, current = current)
     }
 
-    private fun place(ref: SongRef, song: Song) {
+    private fun place(ref: SongRef, song: Song, library: String? = null) {
         val m = _mode.value as? Mode.Singing ?: return
         val at = m.songs.indexOfFirst { it.ref == ref }
-        val item = ReceivedSong(ref, song.meta.title, song)
+        val item = ReceivedSong(ref, song.meta.title, song, library = library)
         val songs = if (at >= 0) m.songs.toMutableList().also { it[at] = item } else m.songs + item
         // The song the latest verified state names is the current one, whichever arrived first.
         val current = songs.indexOfFirst { it.ref == currentRef }.takeIf { it >= 0 } ?: m.current ?: songs.lastIndex

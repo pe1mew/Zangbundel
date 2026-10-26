@@ -76,8 +76,8 @@ import nl.pe1mew.zangbundel.core.songformat.SongParser
  * with name, singers and time; the setlist block, the song being sung marked with the orange bar and
  * sung songs with a check, a tap scrolling to the song; then every song of the setlist behind its
  * separator with *Nu*. The bar carries the fingerprint of D-36 and opens, on a tap or a drag down, the
- * drawer of D-61 with the statistics of D-62 and *Kampvuur beëindigen*; the round join button of D-57
- * (v0.26) sits at the bottom left, clear of the *Nu* buttons. The ▲ ≡ ▼ buttons of D-57 sit at the bottom
+ * drawer of D-61 with the statistics of D-62, the rows that show how to join (D-57 as of v0.34) and
+ * *Kampvuur beëindigen*. The ▲ ≡ ▼ buttons of D-57 sit at the bottom
  * right and move between separators; ≡ opens the setlist as a sheet to jump to a song (the editing of D-58
  * comes later).
  */
@@ -91,7 +91,7 @@ fun LeaderScreen() {
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     var confirmEnd by remember { mutableStateOf(false) }
-    var showJoin by remember { mutableStateOf(false) }
+    var showJoin by remember { mutableStateOf<Boolean?>(null) }   // null: closed; true: on the QR code
     var drawer by remember { mutableStateOf(false) }
     // D-57: the ▲ ≡ ▼ column, dimmed after 3 s without a touch, and the setlist sheet.
     var touched by remember { mutableLongStateOf(0L) }
@@ -109,7 +109,7 @@ fun LeaderScreen() {
     KeepScreenOn()
     BackHandler { confirmEnd = true }
     BackHandler(enabled = drawer) { drawer = false }
-    BackHandler(enabled = showJoin) { showJoin = false }
+    BackHandler(enabled = showJoin != null) { showJoin = null }
 
     Box(Modifier.fillMaxSize().onAnyTouch { touched++; dimmed = false }) {
         Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
@@ -119,6 +119,8 @@ fun LeaderScreen() {
                 LazyColumn(
                     Modifier.fillMaxSize().then(if (drawer) Modifier.pointerInput(Unit) { detectTapGestures(onTap = { drawer = false }) } else Modifier),
                     state = list,
+                    // D-69 with D-57: room under the closing bar so it scrolls clear of the ▲ ≡ ▼ column.
+                    contentPadding = PaddingValues(bottom = if (m.songs.isEmpty()) 0.dp else BUTTON_COLUMN_ROOM),
                 ) {
                     item(key = "block") {
                         SetlistBlock(m) { i -> scope.launch { list.animateScrollToItem(1 + i) } }
@@ -132,12 +134,12 @@ fun LeaderScreen() {
                         }
                     }
                     if (m.songs.isEmpty()) item { Text(stringResource(R.string.leader_no_setlist), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp)) }
+                    // D-69: the closing bar ends the setlist and the page.
+                    else item(key = "closing") { ClosingBar { confirmEnd = true } }
                 }
-                DrawerSlot(drawer, m, now, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
+                DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
             }
         }
-        // D-57 (v0.26, the owner's request): the join button at the bottom left, where no *Nu* button is.
-        JoinButton(m, onClick = { showJoin = true }, modifier = Modifier.align(Alignment.BottomStart).windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp))
         // Items: 0 is the setlist block, 1 + i the separator of song i.
         if (m.songs.isNotEmpty()) {
             val (index, offset) = at
@@ -152,7 +154,7 @@ fun LeaderScreen() {
                 modifier = Modifier.align(Alignment.BottomEnd).windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp),
             )
         }
-        if (showJoin) JoinPanel(m) { showJoin = false }
+        showJoin?.let { qr -> JoinPanel(m, startWithQr = qr) { showJoin = null } }
     }
     if (sheet) SongSheet(
         rows = m.songs.mapIndexed { i, s -> SheetRow(s.title, current = i == m.current, sung = i in m.sung) },
@@ -170,9 +172,9 @@ fun LeaderScreen() {
 
 /** D-61: the drawer slides open from under the leader bar over the top of the page. */
 @Composable
-private fun DrawerSlot(open: Boolean, m: Gathering.Mode.Leading, now: Long, onEnd: () -> Unit, onClose: () -> Unit) {
+private fun DrawerSlot(open: Boolean, m: Gathering.Mode.Leading, now: Long, onJoin: (Boolean) -> Unit, onEnd: () -> Unit, onClose: () -> Unit) {
     AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
-        LeaderDrawer(m, now, onEnd = onEnd, onClose = onClose)
+        LeaderDrawer(m, now, onJoin = onJoin, onEnd = onEnd, onClose = onClose)
     }
 }
 
@@ -196,6 +198,23 @@ private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, onOpen: () -> Unit) 
                 color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
         }
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).size(width = 32.dp, height = 3.dp).background(LyricColors.Night.secondary.copy(alpha = 0.6f), CircleShape))
+    }
+}
+
+/** The ▲ ≡ ▼ column's height with its margin: three 56 dp buttons, two 12 dp gaps, 16 dp below. */
+private val BUTTON_COLUMN_ROOM = 208.dp
+
+/** D-69: the closing bar after the last song, like a separator, with *Afsluiten*. */
+@Composable
+private fun ClosingBar(onEnd: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).background(Palette.NightBlue).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(R.string.leader_closing), color = Color.White, fontSize = 20.sp, modifier = Modifier.weight(1f))
+        Button(
+            onClick = onEnd,
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Palette.FireOrange),
+            border = BorderStroke(2.dp, Palette.FireOrange),
+        ) { Text(stringResource(R.string.leader_end), fontWeight = FontWeight.Bold) }
     }
 }
 

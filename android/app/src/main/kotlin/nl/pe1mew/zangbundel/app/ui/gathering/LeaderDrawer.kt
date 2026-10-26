@@ -33,13 +33,13 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
 /**
  * The leader bar's drawer (guiDesign D-61) as far as its functions exist: on top the live statistics of
  * D-62 (time since the start, songs sung, singers now with the evening's maximum, link quality as one
- * word with the last song's duration under it), the *Deelnamecode* row when the gathering has a spoken
- * code (D-71), and, set apart, *Kampvuur beëindigen* (D-69). Requests (D-63), assistants (D-73), sharing
+ * word with the last song's duration under it), the rows that open the join panels of D-57 (the two
+ * words or the *Deelnamecode*, and *QR-code tonen*; v0.34), and, set apart, *Kampvuur beëindigen* (D-69). Requests (D-63), assistants (D-73), sharing
  * statistics (D-60) and another campfire nearby (D-68) get their rows when they are built. A swipe up, the
  * handle at the bottom, a tap on the lyrics or *Nu* close it.
  */
 @Composable
-internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onEnd: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onJoin: (qr: Boolean) -> Unit, onEnd: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxWidth()
@@ -64,14 +64,14 @@ internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onEnd: () -> Uni
                 m.lastSongMs?.let { stringResource(R.string.drawer_last_song, elapsed(it, seconds = true)) },
             )
         }
-        val code = (m.protection as? Gathering.Protection.Code)?.code
-        if (code != null) {
-            HorizontalDivider(color = LyricColors.Night.divider)
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.panel_code_title), color = Palette.OffWhite, modifier = Modifier.weight(1f))
-                Text(code, color = Palette.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
-            }
+        // D-57 as amended in v0.34: how singers join, in this gathering's mode; each row opens its full-screen panel.
+        HorizontalDivider(color = LyricColors.Night.divider)
+        when (val p = m.protection) {
+            Gathering.Protection.Open -> JoinRow(stringResource(R.string.panel_words_title), m.fingerprint, big = false) { onJoin(false) }
+            is Gathering.Protection.Code -> JoinRow(stringResource(R.string.panel_code_title), p.code, big = true) { onJoin(false) }
+            is Gathering.Protection.QrOnly -> Unit
         }
+        JoinRow(stringResource(R.string.panel_show_qr), null, big = false) { onJoin(true) }
         HorizontalDivider(color = LyricColors.Night.divider)
         Text(
             stringResource(R.string.drawer_end),
@@ -83,6 +83,16 @@ internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onEnd: () -> Uni
         Box(Modifier.fillMaxWidth().clickable(onClick = onClose).padding(top = 4.dp), contentAlignment = Alignment.Center) {
             Box(Modifier.size(width = 40.dp, height = 4.dp).background(Palette.OffWhite.copy(alpha = 0.5f), RoundedCornerShape(2.dp)))
         }
+    }
+}
+
+/** A row of the drawer that opens a join panel: its name, and the code or the words when there are some. */
+@Composable
+private fun JoinRow(label: String, value: String?, big: Boolean, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = Palette.OffWhite, modifier = Modifier.weight(1f))
+        if (value != null) Text(value, color = Palette.White, fontSize = if (big) 22.sp else 16.sp, fontWeight = FontWeight.Bold, letterSpacing = if (big) 4.sp else 0.sp)
+        Text("  ›", color = Palette.FireOrange, fontSize = 18.sp)
     }
 }
 

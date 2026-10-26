@@ -217,10 +217,6 @@
     <string name="start_code_detail">Four digits you say aloud, shown with the QR code</string>
     <string name="start_qr_only">Only with the QR code</string>
     <string name="start_qr_only_detail">Singers scan the QR code; there is no code to type</string>
-    <string name="leader_qr">Join QR code</string>
-    <string name="leader_words">Show the two words</string>
-    <string name="leader_words_glyph" translatable="false">abc</string>
-    <string name="leader_pin">Show the join code</string>
     <string name="panel_words_title">The two words of this campfire</string>
     <string name="panel_words_hint">Say them aloud: singers see them next to the campfire\'s name. Tap to close.</string>
     <string name="panel_code_title">Join code</string>
@@ -252,7 +248,7 @@
     <string name="drawer_open">Open the leader bar</string>
     <string name="drawer_time">Time</string>
     <string name="drawer_songs">Songs</string>
-    <string name="drawer_singers">Singers</string>
+    <string name="drawer_singers">Signed in</string>
     <string name="drawer_max">max %1$d</string>
     <string name="drawer_link">Reach</string>
     <string name="drawer_link_good">good</string>
@@ -260,7 +256,13 @@
     <string name="drawer_link_poor">weak</string>
     <string name="drawer_last_song">last song %1$s</string>
     <string name="drawer_end">End the campfire</string>
-    <string name="leader_end_title">Close the campfire?</string>
+    <string name="leader_closing">End of the setlist</string>
+    <string name="summary_title">The campfire has ended</string>
+    <string name="summary_time">Time sung</string>
+    <string name="summary_songs">Songs sung</string>
+    <string name="summary_singers">Most singers at once</string>
+    <string name="summary_home">Back to start</string>
+    <string name="leader_end_title">End the campfire for everyone?</string>
     <string name="leader_end_text">Singers see that the campfire has ended, and the lyrics leave their phones.</string>
     <string name="leader_no_setlist">No setlist was chosen. Start again with a setlist to push songs.</string>
     <string name="singer_connecting">connecting…</string>
@@ -334,4 +336,23 @@
     <string name="about_library_revision">revision %s</string>
     <string name="about_signature">Signature</string>
     <string name="about_signature_note">A copy shared from phone to phone is genuine when this matches the fingerprint on the project page.</string>
+    <!-- The singer's toolbar and the song-info sheet (guiDesign D-17, D-45). -->
+    <string name="toolbar_day">Day</string>
+    <string name="toolbar_night">Night</string>
+    <string name="toolbar_smaller">Smaller</string>
+    <string name="toolbar_larger">Larger</string>
+    <string name="toolbar_info">Song info</string>
+    <string name="toolbar_keep_on">Keep the screen on</string>
+    <string name="toolbar_follow">Follow the leader</string>
+    <string name="info_lyricist">Lyrics</string>
+    <string name="info_composer">Music</string>
+    <string name="info_melody">To the tune of</string>
+    <string name="info_year">Year</string>
+    <string name="info_copyright">Copyright</string>
+    <string name="info_licence">Licence</string>
+    <string name="info_licence_library">Licence of the library %s</string>
+    <string name="info_source">Source</string>
+    <string name="info_tags">Tags</string>
+    <string name="info_library">Library</string>
+    <string name="info_from_leader">Received from the leader</string>
 </resources>

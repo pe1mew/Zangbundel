@@ -216,9 +216,6 @@
     <string name="start_code_detail">Vier cijfers die je hardop zegt, te zien bij de QR-code</string>
     <string name="start_qr_only">Alleen via de QR-code</string>
     <string name="start_qr_only_detail">Zangers scannen de QR-code; er is geen code om te typen</string>
-    <string name="leader_qr">QR-code om mee te doen</string>
-    <string name="leader_words">De twee woorden tonen</string>
-    <string name="leader_pin">Deelnamecode tonen</string>
     <string name="panel_words_title">De twee woorden van dit kampvuur</string>
     <string name="panel_words_hint">Zeg ze hardop: zangers zien ze naast de naam van het kampvuur. Tik om te sluiten.</string>
     <string name="panel_code_title">Deelnamecode</string>
@@ -250,7 +247,7 @@
     <string name="drawer_open">Leiderbalk openen</string>
     <string name="drawer_time">Tijd</string>
     <string name="drawer_songs">Liederen</string>
-    <string name="drawer_singers">Zangers</string>
+    <string name="drawer_singers">Aangemeld</string>
     <string name="drawer_max">max %1$d</string>
     <string name="drawer_link">Bereik</string>
     <string name="drawer_link_good">goed</string>
@@ -258,7 +255,13 @@
     <string name="drawer_link_poor">zwak</string>
     <string name="drawer_last_song">laatste lied %1$s</string>
     <string name="drawer_end">Kampvuur beëindigen</string>
-    <string name="leader_end_title">Kampvuur afsluiten?</string>
+    <string name="leader_closing">Einde van de setlist</string>
+    <string name="summary_title">Het kampvuur is afgelopen</string>
+    <string name="summary_time">Tijd gezongen</string>
+    <string name="summary_songs">Liederen gezongen</string>
+    <string name="summary_singers">Meeste zangers tegelijk</string>
+    <string name="summary_home">Terug naar start</string>
+    <string name="leader_end_title">Het kampvuur voor iedereen beëindigen?</string>
     <string name="leader_end_text">Zangers zien dat het kampvuur is afgelopen, en de liedteksten verdwijnen van hun telefoons.</string>
     <string name="leader_no_setlist">Er is geen setlist gekozen. Start opnieuw met een setlist om liederen te sturen.</string>
     <string name="singer_connecting">verbinden…</string>
@@ -332,4 +335,23 @@
     <string name="about_library_revision">revisie %s</string>
     <string name="about_signature">Ondertekening</string>
     <string name="about_signature_note">Een kopie die van telefoon tot telefoon is gedeeld, is echt als dit overeenkomt met de vingerafdruk op de projectpagina.</string>
+    <!-- De werkbalk van de zanger en het liedinfoblad (guiDesign D-17, D-45). -->
+    <string name="toolbar_day">Dag</string>
+    <string name="toolbar_night">Nacht</string>
+    <string name="toolbar_smaller">Kleiner</string>
+    <string name="toolbar_larger">Groter</string>
+    <string name="toolbar_info">Liedinfo</string>
+    <string name="toolbar_keep_on">Scherm blijft aan</string>
+    <string name="toolbar_follow">Leider volgen</string>
+    <string name="info_lyricist">Tekst</string>
+    <string name="info_composer">Muziek</string>
+    <string name="info_melody">Op de wijs van</string>
+    <string name="info_year">Jaar</string>
+    <string name="info_copyright">Auteursrecht</string>
+    <string name="info_licence">Licentie</string>
+    <string name="info_licence_library">Licentie van bibliotheek %s</string>
+    <string name="info_source">Bron</string>
+    <string name="info_tags">Labels</string>
+    <string name="info_library">Bibliotheek</string>
+    <string name="info_from_leader">Ontvangen van de leider</string>
 </resources>

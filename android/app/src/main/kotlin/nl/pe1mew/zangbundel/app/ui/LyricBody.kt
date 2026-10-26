@@ -32,12 +32,12 @@ data class LyricColors(val background: Color, val lyric: Color, val secondary: C
 
 /**
  * A song's body as the lyric view shows it: section labels as written or generated in the app's
- * language (song-format 7.1, D-75), lines at the default lyric size of D-18 wrapping with a hanging
- * indent of 1 em (D-28), remarks in the secondary colour.
+ * language (song-format 7.1, D-75), lines at [size], one of D-18's five steps (28 sp by default),
+ * wrapping with a hanging indent of 1 em (D-28), remarks in the secondary colour.
  */
 @Composable
-fun LyricBody(song: Song, colors: LyricColors, modifier: Modifier = Modifier) {
-    val line = TextStyle(fontSize = 28.sp, lineHeight = 36.sp, color = colors.lyric)
+fun LyricBody(song: Song, colors: LyricColors, modifier: Modifier = Modifier, size: Int = LYRIC_SIZES_SP[2]) {
+    val line = TextStyle(fontSize = size.sp, lineHeight = lyricLineHeight(size).sp, color = colors.lyric)
     val wrap = ParagraphStyle(textIndent = TextIndent(firstLine = 0.sp, restLine = 1.em))
     Column(modifier) {
         for ((i, part) in song.body.withIndex()) {
@@ -56,6 +56,12 @@ fun LyricBody(song: Song, colors: LyricColors, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/** guiDesign D-18: the five lyric sizes in sp. */
+val LYRIC_SIZES_SP = listOf(18, 22, 28, 36, 48)
+
+/** The line height for a lyric size, in the proportion of the default's 28/36 sp. */
+fun lyricLineHeight(size: Int): Int = (size * 36 + 27) / 28
 
 @Composable
 private fun sectionLabel(section: Part.Section): String = section.label ?: when (section.kind) {

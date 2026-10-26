@@ -119,12 +119,6 @@ class LeaderGattService(
     /** 10.10 step 3: from now on every write is refused with `0x88`. */
     fun end() = synchronized(lock) { ended = true }
 
-    /** 10.9: singers without GATT activity for 10 minutes are removed from the count. */
-    fun tick() = synchronized(lock) {
-        val now = clock()
-        singers.values.removeAll { now - it.lastSeen >= SILENT_SINGER_MS }
-    }
-
     // ---- Transport.ServerHandler ----
 
     override fun onConnected(client: Transport.ClientHandle) {
@@ -275,7 +269,6 @@ class LeaderGattService(
         /** The singer table's default limit (9.3: result 2 refers to it, not to connection slots). */
         const val DEFAULT_MAX_SINGERS = 100
         const val VERSIONS_KEPT = 2
-        const val SILENT_SINGER_MS = 10 * 60_000L
         /** ATT "write not permitted", for a characteristic that takes no writes. */
         const val ATT_WRITE_NOT_PERMITTED = 0x03
     }

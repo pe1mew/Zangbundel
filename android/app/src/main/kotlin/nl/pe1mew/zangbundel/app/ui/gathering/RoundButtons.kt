@@ -48,6 +48,7 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * The three round buttons of guiDesign D-30, bottom right: previous song, songlist, next song, 56 dp with
  * 12 dp between them, dark translucent so they do not dazzle at the fire [FR-DISP-03]. They dim to 40 %
  * after [DIM_AFTER_MS] without a touch; [touched] changes on every touch on the page and brings them back.
+ * In the [day] theme they are light grey with black icons.
  */
 @Composable
 internal fun RoundButtons(
@@ -60,24 +61,26 @@ internal fun RoundButtons(
     onList: () -> Unit,
     onNext: () -> Unit,
     modifier: Modifier = Modifier,
+    day: Boolean = false,
 ) {
     LaunchedEffect(touched) { delay(DIM_AFTER_MS); onDim() }
     Column(modifier.alpha(if (dimmed) DIMMED else 1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Round(R.drawable.ic_chevron_up, stringResource(R.string.round_prev), prevEnabled, onPrev)
-        Round(R.drawable.ic_list, stringResource(R.string.round_list), true, onList)
-        Round(R.drawable.ic_chevron_down, stringResource(R.string.round_next), nextEnabled, onNext)
+        Round(R.drawable.ic_chevron_up, stringResource(R.string.round_prev), prevEnabled, day, onPrev)
+        Round(R.drawable.ic_list, stringResource(R.string.round_list), true, day, onList)
+        Round(R.drawable.ic_chevron_down, stringResource(R.string.round_next), nextEnabled, day, onNext)
     }
 }
 
 @Composable
-private fun Round(icon: Int, label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun Round(icon: Int, label: String, enabled: Boolean, day: Boolean, onClick: () -> Unit) {
+    val ink = if (day) Color.Black else Color.White
     Box(
-        Modifier.size(56.dp).background(ButtonNight, CircleShape)
+        Modifier.size(56.dp).background(if (day) ButtonDay else ButtonNight, CircleShape)
             .clickable(enabled = enabled, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(icon), contentDescription = null, tint = Color.White.copy(alpha = if (enabled) 1f else 0.3f), modifier = Modifier.size(28.dp))
+        Icon(painterResource(icon), contentDescription = null, tint = ink.copy(alpha = if (enabled) 1f else 0.3f), modifier = Modifier.size(28.dp))
     }
 }
 
@@ -125,8 +128,9 @@ private fun SheetLine(i: Int, r: SheetRow, onPick: (Int) -> Unit) {
     }
 }
 
-/** D-30: night colours, #1A1A1A at 80 %. */
+/** D-30: night colours, #1A1A1A at 80 %; day colours, #E6E6E6 at 80 %. */
 private val ButtonNight = Color(0xCC1A1A1A)
-private val SheetNight = Color(0xFF121212)
+private val ButtonDay = Color(0xCCE6E6E6)
+internal val SheetNight = Color(0xFF121212)
 private const val DIMMED = 0.4f
 private const val DIM_AFTER_MS = 3_000L

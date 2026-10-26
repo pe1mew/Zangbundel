@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.17 (draft) |
+| Version | 0.18 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -27,6 +27,7 @@
 | 0.15 | 2026-10-26 | FR-NET-01 and FR-NET-03 widened by the owner: besides libraries, the app may fetch a setlist from an address the user enters (`design/guiDesign.md` D-59, assessment SP-25); the servers it may contact are the ones the user enters or chooses for libraries or setlists, the default library included, with their download servers. Privacy policy and store listing updated to match. |
 | 0.16 | 2026-10-26 | Approved by the owner (`design/proposals/2026-10-26-songs-ahead.md`): FR-BLE-18 added, the leader broadcasts the setlist's songs ahead from the start of the gathering and *Nu* only switches; a singer never shows a song before it is pushed. FR-SING-05 amended: the reception view covers every song of the setlist, its switch is kept across starts, and while on it shows itself only while the current song is incomplete or when the singer asks; a tap hides it without switching it off. |
 | 0.17 | 2026-10-26 | FR-SING-05 amended at the owner's request: the reception view becomes a hidden feature with no setting; it opens only on a long press on the singer's header strip and never shows by itself. |
+| 0.18 | 2026-10-26 | At the owner's decision, requests (with the likes of `design/guiDesign.md` D-32, which are requests), the leader's request list and the delegate role move from phase 1 to phase 2, out of phase 1's mandatory list: FR-REQ-01 to FR-REQ-07, FR-LEAD-10 to FR-LEAD-13 and FR-LEAD-40 to FR-LEAD-46 are re-tagged P2; their key words are unchanged. Section 2.5 updated. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -106,8 +107,8 @@ A device is not permanently a leader or a singer. Any installation can start a g
 
 | Phase | Theme | Summary |
 |---|---|---|
-| **P1** | Songbook over BLE | Library import/update, gatherings, lyric distribution, display, requests, gathering memory, NL/EN UI. |
-| **P2** | Karaoke | Timed lyrics, current-line highlighting synchronised with the leader, singing aids. |
+| **P1** | Songbook over BLE | Library import/update, gatherings, lyric distribution, display, gathering memory, NL/EN UI. |
+| **P2** | Karaoke, requests and delegates | Timed lyrics, current-line highlighting synchronised with the leader, singing aids; song requests and likes from singers, the leader's request list, and the delegate role (moved from P1 in v0.18). |
 | **P3** | Instruments | Chords and musical notation for instrument players, transposition, musician view. |
 
 ### 2.6 Design principles: secure by design, privacy by design
@@ -329,13 +330,13 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 ### 8.2 Handling requests
 
-**FR-LEAD-10** (MUST, P1) — The leader MUST see incoming requests in a list with the song title, the requester's display name and the time, with the newest or most-requested on top.
+**FR-LEAD-10** (MUST, P2) — The leader MUST see incoming requests in a list with the song title, the requester's display name and the time, with the newest or most-requested on top.
 
-**FR-LEAD-11** (MUST, P1) — The leader MUST be able to accept a request (which adds it to the setlist), push it immediately, or decline it. The requester is informed of the outcome (FR-REQ-05).
+**FR-LEAD-11** (MUST, P2) — The leader MUST be able to accept a request (which adds it to the setlist), push it immediately, or decline it. The requester is informed of the outcome (FR-REQ-05).
 
-**FR-LEAD-12** (SHOULD, P1) — Identical requests from several singers SHOULD be grouped and show the count.
+**FR-LEAD-12** (SHOULD, P2) — Identical requests from several singers SHOULD be grouped and show the count.
 
-**FR-LEAD-13** (SHOULD, P1) — The leader SHOULD be able to temporarily disable requests ("no more requests tonight").
+**FR-LEAD-13** (SHOULD, P2) — The leader SHOULD be able to temporarily disable requests ("no more requests tonight").
 
 ### 8.3 Directing library downloads
 
@@ -347,19 +348,19 @@ Where sections 8.1 and 8.2 say "the leader", a delegate (section 8.4) can perfor
 
 ### 8.4 Delegates
 
-**FR-LEAD-40** (MUST, P1, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role and MUST be able to revoke it at any time. The leader does not pick from a list of singers: the leader's app shows a short **helper code** (*assistentcode*) that the intended helper enters on their own phone, so that only a person standing next to the leader can become a delegate and the leader never has to identify singers. The role ends automatically when the gathering ends or when the delegate leaves. (Amended in v0.9, `design/guiDesign.md` D-73: no singer list in the leader app.)
+**FR-LEAD-40** (MUST, P2, *leader only*) — The leader MUST be able to give one or more joined singers the delegate role and MUST be able to revoke it at any time. The leader does not pick from a list of singers: the leader's app shows a short **helper code** (*assistentcode*) that the intended helper enters on their own phone, so that only a person standing next to the leader can become a delegate and the leader never has to identify singers. The role ends automatically when the gathering ends or when the delegate leaves. (Amended in v0.9, `design/guiDesign.md` D-73: no singer list in the leader app.)
 
-**FR-LEAD-41** (MUST, P1) — A delegate MUST see the same request list as the leader (FR-LEAD-10) and MUST be able to accept, decline and immediately push requests (FR-LEAD-11). The requester is informed of the outcome in the same way.
+**FR-LEAD-41** (MUST, P2) — A delegate MUST see the same request list as the leader (FR-LEAD-10) and MUST be able to accept, decline and immediately push requests (FR-LEAD-11). The requester is informed of the outcome in the same way.
 
-**FR-LEAD-42** (MUST, P1) — A delegate MUST be able to push a song from the local library as the current song, add songs to the setlist and push the next song in the setlist (FR-LEAD-01, FR-LEAD-03), provided the leader's device also has that song. Pushing a song the leader's device does not have SHOULD be possible by transferring the song from the delegate to the leader over BLE first.
+**FR-LEAD-42** (MUST, P2) — A delegate MUST be able to push a song from the local library as the current song, add songs to the setlist and push the next song in the setlist (FR-LEAD-01, FR-LEAD-03), provided the leader's device also has that song. Pushing a song the leader's device does not have SHOULD be possible by transferring the song from the delegate to the leader over BLE first.
 
-**FR-LEAD-43** (MUST, P1) — Delegate actions take effect through the leader's device, which remains the single source of the gathering state. If the leader's device cannot be reached, the delegate's action MUST be refused with a clear message and MUST NOT be applied later without the delegate repeating it.
+**FR-LEAD-43** (MUST, P2) — Delegate actions take effect through the leader's device, which remains the single source of the gathering state. If the leader's device cannot be reached, the delegate's action MUST be refused with a clear message and MUST NOT be applied later without the delegate repeating it.
 
-**FR-LEAD-44** (MUST, P1, *leader only*) — Ending the gathering, changing the join code, appointing or revoking delegates and handing over the leader role remain leader-only. The delegate UI MUST NOT offer these actions. (Amended in v0.9: library download instructions removed from the list with FR-LEAD-30.)
+**FR-LEAD-44** (MUST, P2, *leader only*) — Ending the gathering, changing the join code, appointing or revoking delegates and handing over the leader role remain leader-only. The delegate UI MUST NOT offer these actions. (Amended in v0.9: library download instructions removed from the list with FR-LEAD-30.)
 
-**FR-LEAD-45** (MUST, P1) — A singer MUST be told when the leader makes them a delegate and when the role is revoked, and the leader MUST see at all times who the delegates are. Songs pushed and requests handled by a delegate appear on the leader's device as they happen.
+**FR-LEAD-45** (MUST, P2) — A singer MUST be told when the leader makes them a delegate and when the role is revoked, and the leader MUST see at all times who the delegates are. Songs pushed and requests handled by a delegate appear on the leader's device as they happen.
 
-**FR-LEAD-46** (SHOULD, P1) — The delegate role SHOULD survive a temporary loss of contact between the delegate and the leader within the gathering (FR-GATH-10).
+**FR-LEAD-46** (SHOULD, P2) — The delegate role SHOULD survive a temporary loss of contact between the delegate and the leader within the gathering (FR-GATH-10).
 
 ### 8.5 Getting the app to participants
 
@@ -445,19 +446,19 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 ## 11. Song requests
 
-**FR-REQ-01** (MUST, P1) — A singer MUST be able to request a song from the local library by selecting it. One action sends the request to the leader.
+**FR-REQ-01** (MUST, P2) — A singer MUST be able to request a song from the local library by selecting it. One action sends the request to the leader.
 
-**FR-REQ-02** (MUST, P1) — A singer MUST be able to request a song that is not in their local library by typing a title (free text, max. 100 characters).
+**FR-REQ-02** (MUST, P2) — A singer MUST be able to request a song that is not in their local library by typing a title (free text, max. 100 characters).
 
-**FR-REQ-03** (MUST, P1) — A request MUST reach the leader within 5 seconds under normal conditions. If the singer is not connected, the request is queued and sent on reconnection, or discarded with a message when the gathering ends.
+**FR-REQ-03** (MUST, P2) — A request MUST reach the leader within 5 seconds under normal conditions. If the singer is not connected, the request is queued and sent on reconnection, or discarded with a message when the gathering ends.
 
-**FR-REQ-04** (SHOULD, P1) — A singer SHOULD be able to withdraw a pending request.
+**FR-REQ-04** (SHOULD, P2) — A singer SHOULD be able to withdraw a pending request.
 
-**FR-REQ-05** (MUST, P1) — The singer MUST see the status of each request: pending, accepted (and position in the setlist if known), declined, or sung.
+**FR-REQ-05** (MUST, P2) — The singer MUST see the status of each request: pending, accepted (and position in the setlist if known), declined, or sung.
 
-**FR-REQ-06** (SHOULD, P1) — The app SHOULD limit the number of pending requests per singer (default: 3) to prevent flooding the leader.
+**FR-REQ-06** (SHOULD, P2) — The app SHOULD limit the number of pending requests per singer (default: 3) to prevent flooding the leader.
 
-**FR-REQ-07** (MAY, P1) — Singers MAY be able to see and "+1" other singers' pending requests when the leader has enabled this.
+**FR-REQ-07** (MAY, P2) — Singers MAY be able to see and "+1" other singers' pending requests when the leader has enabled this.
 
 ---
 

@@ -24,6 +24,7 @@ import nl.pe1mew.zangbundel.app.ui.gathering.LeaderScreen
 import nl.pe1mew.zangbundel.app.ui.settings.SettingsScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.SingerScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.StartScreen
+import nl.pe1mew.zangbundel.app.ui.gathering.SummaryScreen
 import nl.pe1mew.zangbundel.app.ui.library.LibraryScreen
 import nl.pe1mew.zangbundel.app.ui.memories.MemoriesScreen
 import nl.pe1mew.zangbundel.app.ui.memories.MemoryScreen
@@ -53,7 +54,9 @@ fun ZangbundelApp() {
                 Gathering.Mode.Idle -> Routes.HOME
             }
             if (navController.currentDestination?.route != target) {
-                if (target == Routes.HOME) navController.popBackStack(Routes.HOME, inclusive = false)
+                // D-69: a leader who just ended sees the summary first, on top of home.
+                if (target == Routes.HOME && gathering.summary.value != null) navController.navigate(Routes.SUMMARY) { popUpTo(Routes.HOME) }
+                else if (target == Routes.HOME) navController.popBackStack(Routes.HOME, inclusive = false)
                 else navController.navigate(target) { popUpTo(Routes.HOME) }
             }
         }
@@ -91,6 +94,7 @@ fun ZangbundelApp() {
                 MemoryScreen(entry.arguments!!.getLong("uid"), onSong = { l, s -> navController.navigate("song/$l/$s") }, onDeleted = { navController.popBackStack() })
             }
             composable(Routes.LEADER) { LeaderScreen() }
+            composable(Routes.SUMMARY) { SummaryScreen(onDone = { navController.popBackStack(Routes.HOME, inclusive = false) }) }
             composable(Routes.SINGER) { SingerScreen() }
             composable(Routes.SETLISTS) {
                 SetlistsScreen(onOpen = { navController.navigate("setlist/$it") }, onOpenShipped = { navController.navigate("libsetlist/${it.libraryId}/${it.setlistId}") })
@@ -128,6 +132,7 @@ object Routes {
     const val MEMORIES = "memories"
     const val MEMORY = "memory/{uid}"
     const val LEADER = "leader"
+    const val SUMMARY = "summary"
     const val SINGER = "singer"
     const val SETLISTS = "setlists"
     const val SETLIST = "setlist/{${SetlistViewModel.UID}}"

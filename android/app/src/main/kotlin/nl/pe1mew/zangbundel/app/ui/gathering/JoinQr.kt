@@ -3,14 +3,12 @@ package nl.pe1mew.zangbundel.app.ui.gathering
 
 import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,10 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,10 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,40 +40,10 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.gathering.Gathering
-import nl.pe1mew.zangbundel.app.ui.theme.Palette
 
 /**
- * The leader's join button (guiDesign D-57 as amended in v0.26, at the owner's request): one round button
- * at the bottom left, away from the *Nu* buttons, showing what singers need in this gathering's mode: the
- * two words when it is open, the join code's digits with a join code, the QR icon in QR-only mode.
- */
-@Composable
-fun JoinButton(m: Gathering.Mode.Leading, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val label = stringResource(
-        when (m.protection) {
-            Gathering.Protection.Open -> R.string.leader_words
-            is Gathering.Protection.Code -> R.string.leader_pin
-            is Gathering.Protection.QrOnly -> R.string.leader_qr
-        },
-    )
-    Button(
-        onClick = onClick,
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Palette.FireOrange),
-        border = BorderStroke(2.dp, Palette.FireOrange),
-        contentPadding = PaddingValues(0.dp),
-        modifier = modifier.size(56.dp).semantics { contentDescription = label },
-    ) {
-        when (val p = m.protection) {
-            Gathering.Protection.Open -> Text(stringResource(R.string.leader_words_glyph), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            is Gathering.Protection.Code -> Text(p.code, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-            is Gathering.Protection.QrOnly -> Icon(painterResource(R.drawable.ic_qr), contentDescription = null, modifier = Modifier.size(28.dp))
-        }
-    }
-}
-
-/**
- * The join panel (guiDesign D-57 as amended in v0.26, FR-GATH-18, FR-GATH-19, FR-DIST-02): black on a
+ * The join panel (guiDesign D-57 as amended in v0.26 and v0.34, FR-GATH-18, FR-GATH-19, FR-DIST-02), opened
+ * from the rows of the leader's drawer (D-61) on the QR code or on the words or join code: black on a
  * white panel, as large as the screen allows, brightness raised; a tap anywhere closes it and restores the
  * brightness. An open gathering shows the two words, a join code its digits with the words under them,
  * QR-only the QR code. The first two end in *QR-code tonen*, so late arrivals can still scan and pin the
@@ -90,7 +51,7 @@ fun JoinButton(m: Gathering.Mode.Leading, onClick: () -> Unit, modifier: Modifie
  * FR-GATH-21). ZXing encodes only (architecture A-15); level M as ble-protocol 6.5 sizes it.
  */
 @Composable
-fun JoinPanel(m: Gathering.Mode.Leading, onClose: () -> Unit) {
+fun JoinPanel(m: Gathering.Mode.Leading, startWithQr: Boolean, onClose: () -> Unit) {
     val activity = LocalActivity.current
     DisposableEffect(activity) {
         val window = activity?.window
@@ -98,7 +59,7 @@ fun JoinPanel(m: Gathering.Mode.Leading, onClose: () -> Unit) {
         window?.attributes = window?.attributes?.apply { screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL }
         onDispose { if (window != null && before != null) window.attributes = window.attributes.apply { screenBrightness = before } }
     }
-    var qr by remember { mutableStateOf(m.protection is Gathering.Protection.QrOnly) }
+    var qr by remember { mutableStateOf(startWithQr || m.protection is Gathering.Protection.QrOnly) }
     val code = (m.protection as? Gathering.Protection.Code)?.code
     Box(Modifier.fillMaxSize().background(Color.Black).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
         Column(
