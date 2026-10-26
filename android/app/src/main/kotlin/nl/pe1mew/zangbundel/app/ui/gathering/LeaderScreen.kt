@@ -174,9 +174,15 @@ private fun Separator(i: Int, m: Gathering.Mode.Leading, s: Gathering.LeaderSong
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text("${i + 1}/${m.songs.size} · ${s.title}", color = Color.White, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            state?.let { Text(it, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 2, modifier = Modifier.padding(bottom = 6.dp)) }
-            if (i == m.current) HelpBar(m.help, Modifier.padding(bottom = 8.dp))
+            // D-56 (v0.23): the state on the left, the help bar on the same line at the right, against Nu.
+            state?.let {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(it, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    if (i == m.current) HelpBar(m.help, Modifier.padding(start = 8.dp))
+                }
+            }
         }
+        Spacer(Modifier.width(8.dp))
         // D-56 (v0.19, the owner's request): the song the singers have now is the filled orange Nu; every other
         // Nu is black with an orange ring, a button not yet chosen.
         val now = i == m.current
