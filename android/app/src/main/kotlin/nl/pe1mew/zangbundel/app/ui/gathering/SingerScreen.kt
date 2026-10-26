@@ -48,6 +48,7 @@ import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
+import nl.pe1mew.zangbundel.app.ui.singer.Blocks
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 
 /**
@@ -104,7 +105,12 @@ fun SingerScreen() {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (i == m.current) Box(Modifier.width(4.dp).height(24.dp).background(Palette.FireOrange))
                         Spacer(Modifier.width(12.dp))
-                        Text("${i + 1} · ${s.title}", color = LyricColors.Night.lyric, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                        Text("${i + 1} · ${s.title}", color = LyricColors.Night.lyric, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        // D-29 (v0.21): 1 cm showing how much of this song is in, while it is still coming in.
+                        if (i == m.current && s.song == null && !s.libraryOnly) {
+                            Spacer(Modifier.width(12.dp))
+                            Blocks(m.collecting.orEmpty(), Modifier.width(SONG_BAR_WIDTH).height(8.dp), emptyAsPending = true)
+                        }
                     }
                     val song = s.song
                     when {
@@ -124,6 +130,9 @@ fun SingerScreen() {
         dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.singer_stay)) } },
     )
 }
+
+/** About one centimetre: 160 dp are an inch. */
+internal val SONG_BAR_WIDTH = 63.dp
 
 /** Gathering screens keep the screen on while shown (FR-DISP-07); the toolbar switch of D-17 comes later. */
 @Composable

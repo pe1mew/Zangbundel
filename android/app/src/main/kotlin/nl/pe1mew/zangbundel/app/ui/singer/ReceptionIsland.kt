@@ -67,11 +67,16 @@ fun ReceptionIsland(rows: List<SingerEngine.Reception>, onDismiss: () -> Unit, m
     }
 }
 
+/**
+ * A document's source blocks as a row: green received, white still to come, orange missed (D-81).
+ * Shared with the song bar on the divider of a song still coming in (D-29, v0.21), where a version
+ * with no frame yet reads as all white ([emptyAsPending]).
+ */
 @Composable
-private fun Blocks(blocks: List<Block>, modifier: Modifier) {
+internal fun Blocks(blocks: List<Block>, modifier: Modifier, emptyAsPending: Boolean = false) {
     Canvas(modifier) {
         if (blocks.isEmpty()) {
-            drawRect(Palette.White.copy(alpha = 0.25f))       // a version with no frame yet: nothing to show
+            drawRect(if (emptyAsPending) Palette.White else Palette.White.copy(alpha = 0.25f))
             return@Canvas
         }
         val w = size.width / blocks.size

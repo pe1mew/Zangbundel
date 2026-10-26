@@ -213,6 +213,7 @@
     <string name="leader_now">Nu</string>
     <string name="leader_state_current">wordt gezongen</string>
     <string name="leader_state_sung">gezongen</string>
+    <string name="leader_help_description">Zangers in de laatste 5 seconden via Bluetooth geholpen: %1$d%%</string>
     <string name="leader_end">Afsluiten</string>
     <string name="leader_end_title">Kampvuur afsluiten?</string>
     <string name="leader_end_text">Zangers zien dat het kampvuur is afgelopen, en de liedteksten verdwijnen van hun telefoons.</string>

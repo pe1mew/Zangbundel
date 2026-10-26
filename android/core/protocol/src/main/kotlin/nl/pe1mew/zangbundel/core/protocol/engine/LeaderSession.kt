@@ -94,6 +94,33 @@ class LeaderSession(
     var framesSent: Long = 0
         private set
 
+    /**
+     * How far the current song has gone out (guiDesign D-56): the burst passes the carousel has sent
+     * since the push, on the slowest set in use, and how often singers fetched missing pieces of it
+     * over GATT. Broadcast is unacknowledged, so who received it by air alone is not known. Null when
+     * the song is not broadcast (none pushed, or display-only, FR-LIB-22).
+     */
+    data class PushProgress(val passesDone: Int, val passes: Int, val repairs: Int)
+
+    suspend fun progress(): PushProgress? = mutex.withLock {
+        val dv = last.docs[DocumentType.SONG]?.entry?.dv ?: return@withLock null
+        val c = carousel ?: return@withLock null
+        val passes = activeLanes().minOfOrNull { c.burstPassesDone(it) } ?: Carousel.BURST_PASSES
+        PushProgress(passes, Carousel.BURST_PASSES, service.transfersOf(DocumentType.SONG, dv))
+    }
+
+    /**
+     * guiDesign D-56 (v0.21): the share of registered singers the leader helped over GATT in the last
+     * [windowMs], 0 to 1. Not a delivery count: singers who hear the air well never connect.
+     */
+    fun helpShare(windowMs: Long = HELP_WINDOW_MS): Float {
+        val n = service.singerCount
+        return if (n == 0) 0f else (service.helpedWithin(windowMs).toFloat() / n).coerceAtMost(1f)
+    }
+
+    private fun activeLanes(): List<Carousel.Lane> =
+        carousel?.lanes.orEmpty().filter { (it == Carousel.Lane.Extended && extendedSet) || (it != Carousel.Lane.Extended && legacySets > 0) }
+
     /** 10.1 step 4: GATT server, beacon, data sets; then the carousel. Throws if the beacon is refused. */
     suspend fun start(publication: Publication = Publication()) = start(build(publication))
 
@@ -139,7 +166,7 @@ class LeaderSession(
         val c = Carousel(gid16, legacySets.coerceAtLeast(1), extendedSet)
         carousel = c
         publish(first)
-        val lanes = c.lanes.filter { (it == Carousel.Lane.Extended && extendedSet) || (it != Carousel.Lane.Extended && legacySets > 0) }
+        val lanes = activeLanes()
         loop = scope.launch {
             while (isActive) {
                 mutex.withLock {
@@ -227,5 +254,7 @@ class LeaderSession(
         const val TEST_SONG = "test-document"
         /** 10.10 step 2. */
         const val END_LINGER_MS = 60_000L
+        /** guiDesign D-56: the leader's help bar looks back this far. */
+        const val HELP_WINDOW_MS = 5_000L
     }
 }

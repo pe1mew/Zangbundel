@@ -73,6 +73,8 @@ class Carousel(
         var loop: List<Frame> = emptyList()
         var position = 0
         val burst = ArrayDeque<Frame>()
+        /** Frames the last burst started with, for [burstPassesDone]. */
+        var burstTotal = 0
     }
 
     private val state = lanes.associateWith { LaneState() }
@@ -96,6 +98,7 @@ class Carousel(
             s.burst.clear()
             val pass = if (lane == Lane.Extended) extendedPass(changed) else legacyPass.getValue(lane)
             repeat(BURST_PASSES) { s.burst.addAll(pass) }
+            s.burstTotal = s.burst.size
         }
     }
 
@@ -111,6 +114,13 @@ class Carousel(
 
     /** Frames left in [lane]'s burst; zero once it has returned to its normal loop. */
     fun burstRemaining(lane: Lane): Int = state.getValue(lane).burst.size
+
+    /** Complete passes [lane] has sent of the last burst, 0 to [BURST_PASSES]. */
+    fun burstPassesDone(lane: Lane): Int {
+        val s = state.getValue(lane)
+        if (s.burstTotal == 0) return BURST_PASSES
+        return ((s.burstTotal - s.burst.size) * BURST_PASSES / s.burstTotal).coerceIn(0, BURST_PASSES)
+    }
 
     /**
      * Pass time `pt` (9.4, 7.6): how long one full pass of the current song takes on the legacy

@@ -36,7 +36,7 @@ class LeaderPublicationTest {
         val clock = { testScheduler.currentTime }
         val leader = LeaderSession(SimulatedTransport(air), crypto, backgroundScope, clock, "Kampvuur", random = Random(3))
         leader.start() // D-25: the lyric view is empty until the first song is pushed
-        val singer = SingerEngine(SimulatedTransport(air, reception = 1.0), crypto, backgroundScope, clock, { it.name == "Kampvuur" }, random = Random(4))
+        val singer = SingerEngine(SimulatedTransport(air, reception = 0.2), crypto, backgroundScope, clock, { it.name == "Kampvuur" }, random = Random(4))
         val events = ArrayList<SingerEngine.Event>()
         backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { singer.events.collect { events += it } }
         singer.start()
@@ -48,8 +48,21 @@ class LeaderPublicationTest {
         assertNull(singer.state!!.body.cur, "no current song before the first push")
 
         val setlist = SetlistDocument(listOf(SetlistDocument.Item(ref, "Vuur in de nacht", status = 1)))
+        assertNull(leader.progress(), "no song pushed yet")
         leader.push(LeaderSession.Publication(ref, "Vuur in de nacht", SongDocument(ref, file, "© 2026 Zangbundel-project"), setlist))
+        testScheduler.advanceTimeBy(200)
+        assertEquals(0, leader.progress()!!.passesDone, "D-56: the burst has only begun")
         testScheduler.advanceTimeBy(20_000)
+        val progress = leader.progress()!!
+        assertEquals(3, progress.passesDone)
+        val fetched = events.filterIsInstance<SingerEngine.Event.Delivered>().count { it.doc == DocumentType.SONG && it.viaRepair }
+        assertEquals(fetched, progress.repairs, "every song fetched over GATT is one repair on the leader")
+        // D-56 (v0.21): the share of singers helped over GATT in a window, and nothing once it has passed.
+        val helped = listOf(events, staysEvents).count { ev -> ev.any { it is SingerEngine.Event.Repaired && it.ok && it.at >= testScheduler.currentTime - 25_000 } }
+        assertTrue(helped > 0, "the singer at 20 % reception fetches over GATT")
+        assertEquals(helped / 2f, leader.helpShare(25_000))
+        testScheduler.advanceTimeBy(10_000)
+        assertEquals(0f, leader.helpShare())
         val song = events.filterIsInstance<SingerEngine.Event.Delivered>().last { it.doc == DocumentType.SONG }
         assertEquals(Deflate.ENC_DEFLATE, song.enc, "a song file compresses by more than 10 % (7.3)")
         val received = SongDocument.decode(song.document())

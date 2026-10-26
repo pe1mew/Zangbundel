@@ -81,6 +81,21 @@ class LeaderGattService(
     /** Bytes of document data sent in DATA chunks, for diagnostics (test plan S-06: only missing ranges). */
     @Volatile var bytesServed: Long = 0
         private set
+
+    private val completed = HashMap<Pair<Int, Int>, Int>()
+
+    /** Transfers of one document version served to the end: how often singers fetched it over GATT (7.6, 10.4). */
+    fun transfersOf(doc: Int, dv: Int): Int = synchronized(lock) { completed[doc to dv] ?: 0 }
+
+    /** When each connection last completed a transfer, for [helpedWithin]. */
+    private val helped = ArrayDeque<Pair<Long, Transport.ClientHandle>>()
+
+    /** Connections that completed at least one transfer in the last [windowMs]: singers the leader helped (guiDesign D-56). */
+    fun helpedWithin(windowMs: Long): Int = synchronized(lock) {
+        val since = clock() - windowMs
+        while (helped.isNotEmpty() && helped.first().first < since) helped.removeFirst()
+        helped.map { it.second }.distinct().size
+    }
     /** The most connections open at once, and connections dropped for want of a slot (10.8). */
     @Volatile var peakConnections: Int = 0
         private set
@@ -211,10 +226,15 @@ class LeaderGattService(
             bytesServed += ranges.sumOf { it.len }
             TransferStream.notifications(header, served.bytes, client.mtu)
         }
+        val key = request.doc to (request.dv ?: synchronized(lock) { documents[request.doc]?.lastOrNull()?.dv } ?: -1)
         val job = scope.launch {
             try {
                 for (n in notifications) client.notify(ProtocolConstants.CHAR_DATA, n)
                 transfersServed++
+                synchronized(lock) {
+                    completed[key] = (completed[key] ?: 0) + 1
+                    helped.addLast(clock() to client)
+                }
             } catch (e: Transport.GattException) {
                 synchronized(lock) { c.failed = true }
             }

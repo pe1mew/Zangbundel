@@ -3,6 +3,7 @@ package nl.pe1mew.zangbundel.app.ui.gathering
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -39,10 +41,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -143,6 +148,19 @@ private fun SetlistBlock(m: Gathering.Mode.Leading, onTap: (Int) -> Unit) {
     }
 }
 
+/**
+ * D-56 (v0.21): about 1 cm whose fill is the share of singers the leader helped over GATT in the last
+ * 5 s; green below half, orange from half, as a sign that the air is not reaching enough of them.
+ */
+@Composable
+private fun HelpBar(share: Float, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.leader_help_description, (share * 100).toInt())
+    Canvas(modifier.width(SONG_BAR_WIDTH).height(6.dp).semantics { contentDescription = description }) {
+        drawRect(Palette.NightBlueDark)
+        if (share > 0f) drawRect(if (share < 0.5f) Palette.ReceptionGreen else Palette.FireOrange, size = Size(size.width * share, size.height))
+    }
+}
+
 /** D-56: 64 dp in night blue, colour square, position and title, state, and the round orange *Nu*. */
 @Composable
 private fun Separator(i: Int, m: Gathering.Mode.Leading, s: Gathering.LeaderSong, onNow: () -> Unit) {
@@ -151,12 +169,13 @@ private fun Separator(i: Int, m: Gathering.Mode.Leading, s: Gathering.LeaderSong
         i in m.sung -> stringResource(R.string.leader_state_sung)
         else -> null
     }
-    Row(Modifier.fillMaxWidth().height(64.dp).background(Palette.NightBlue).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).background(Palette.NightBlue).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         s.song?.let { ColourSquare(it.colour) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text("${i + 1}/${m.songs.size} · ${s.title}", color = Color.White, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            state?.let { Text(it, color = LyricColors.Night.secondary, fontSize = 13.sp) }
+            state?.let { Text(it, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 2, modifier = Modifier.padding(bottom = 6.dp)) }
+            if (i == m.current) HelpBar(m.help, Modifier.padding(bottom = 8.dp))
         }
         // D-56 (v0.19, the owner's request): the song the singers have now is the filled orange Nu; every other
         // Nu is black with an orange ring, a button not yet chosen.

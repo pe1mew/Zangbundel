@@ -27,6 +27,7 @@ import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.beacon.BeaconCodec
 import nl.pe1mew.zangbundel.core.protocol.engine.LeaderSession
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
+import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.SetlistDocument
 import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
@@ -83,8 +84,19 @@ class Gathering(
             val songs: List<LeaderSong>,
             val current: Int?,
             val sung: Set<Int>,
+            /** How far the current song has gone out (D-56); null before the first push or for a display-only song. */
+            val progress: LeaderSession.PushProgress? = null,
+            /** D-56 (v0.21): the share of singers helped over GATT in the last 5 s, 0 to 1. */
+            val help: Float = 0f,
         ) : Mode
-        data class Singing(val name: String, val connection: Connection, val songs: List<ReceivedSong>, val current: Int?) : Mode
+        data class Singing(
+            val name: String,
+            val connection: Connection,
+            val songs: List<ReceivedSong>,
+            val current: Int?,
+            /** D-29 (v0.21): the source blocks of the current song while it is still coming in; null once it is in. */
+            val collecting: List<Reassembler.Block>? = null,
+        ) : Mode
     }
 
     private val _mode = MutableStateFlow<Mode>(Mode.Idle)
@@ -190,7 +202,12 @@ class Gathering(
             while (isActive) {
                 delay(1_000)
                 peakSingers = maxOf(peakSingers, l.singers)
-                (_mode.value as? Mode.Leading)?.let { m -> if (m.singers != l.singers) _mode.value = m.copy(singers = l.singers) }
+                val progress = l.progress()
+                val help = l.helpShare()
+                if (progress != (_mode.value as? Mode.Leading)?.progress) Log.d("leader progress passes=${progress?.passesDone} repairs=${progress?.repairs}")
+                (_mode.value as? Mode.Leading)?.let { m ->
+                    if (m.singers != l.singers || m.progress != progress || m.help != help) _mode.value = m.copy(singers = l.singers, progress = progress, help = help)
+                }
             }
         }
     }
@@ -216,7 +233,7 @@ class Gathering(
         l.push(LeaderSession.Publication(ref, song.meta.title, document, SetlistDocument(items)))
         Log.d("leader push index=$index repush=${index == m.current}")
         if (index !in pushedOrder) pushedOrder += index
-        _mode.value = m.copy(current = index, sung = sung - index)
+        _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress())
     }
 
     /** *Afsluiten* (10.10): singers see the end at once; the radio lingers 60 s in the background, then stops. */
@@ -278,6 +295,16 @@ class Gathering(
                         is SingerEngine.Event.Ended -> connection(Connection.ENDED)
                         else -> Unit
                     }
+                }
+            }
+            launch {
+                // D-29 (v0.21): the song bar on the divider of the song still coming in.
+                while (isActive) {
+                    delay(COLLECTING_REFRESH_MS)
+                    val m = _mode.value as? Mode.Singing ?: continue
+                    val waiting = m.current?.let { m.songs.getOrNull(it) }?.let { it.song == null && !it.libraryOnly } == true
+                    val blocks = if (waiting) engine.reception().firstOrNull { it.doc == DocumentType.SONG }?.blocks else null
+                    if (blocks != m.collecting) (_mode.value as? Mode.Singing)?.let { _mode.value = it.copy(collecting = blocks) }
                 }
             }
             launch {
@@ -381,6 +408,7 @@ class Gathering(
         const val NEARBY_TIMEOUT_MS = 10_000L
         /** FR-GATH-16: listen this long before a gathering may start (D-23). */
         const val LISTEN_BEFORE_START_MS = 5_000L
+        private const val COLLECTING_REFRESH_MS = 500L
         private const val STATUS_CURRENT = 1
         private const val STATUS_SUNG = 2
     }

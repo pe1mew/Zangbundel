@@ -214,6 +214,7 @@
     <string name="leader_now">Now</string>
     <string name="leader_state_current">being sung</string>
     <string name="leader_state_sung">sung</string>
+    <string name="leader_help_description">Singers helped over Bluetooth in the last 5 seconds: %1$d%%</string>
     <string name="leader_end">Close</string>
     <string name="leader_end_title">Close the campfire?</string>
     <string name="leader_end_text">Singers see that the campfire has ended, and the lyrics leave their phones.</string>
