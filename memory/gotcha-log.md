@@ -126,13 +126,15 @@
 **Root cause**: `open(..., 'w')` truncates before `write` runs, so an exception during encoding loses the old content.
 **Fix**: Restored from the last commit with `git show HEAD:<path> > <path>` (read-only). If an edit carries non-ASCII or escape sequences, then use the Edit tool, or encode the text to bytes first and open the file only after that succeeded.
 
-### A size limit stated with its reason is false when computed (2026-10-25) [x5] [PROMOTED]
+### A size limit stated with its reason is false when computed (2026-10-25) [x6] [PROMOTED]
 **Problem**: Three numbers in `design/ble-protocol.md` failed the first time code computed them: the extended frame of up to 1000 bytes in one manufacturer-data field cannot be sent (one AD structure holds 255 bytes; measured 251 on a Samsung A52); legal values make a 558-byte state body against the 440-byte MUST of 9.4; Control op 8's 432 bytes of data "so the sealed write stays within 512" make a 527-byte write.
 **Root cause**: Each limit was written with its justification but the worst case was never summed: field encodings, CBOR headers, the seal overhead, the AD header. Reading the sentence makes it look checked.
 **Fix**: Protocol v0.14 (247-byte frames), v0.16 (417-byte chunks), v0.17 (fit rule, largest body 405 bytes); each figure is now pinned by a unit test that builds the worst case. Promoted to `memory/MEMORY.md` Recently Promoted.
 **Again after promotion, 2026-10-25**: ble-protocol 6.5 gave the join link as 60–130 characters of URL and QR version 5 or 6; the encoder makes 99 to 170 (223 with accented names), versions 6 to 9 (11). The 60–130 was the base64 part alone. Caught by the rule itself: the encoder's test asserts the computed sizes. Protocol v0.19.
 
 **Again, 2026-10-25 (GATT)**: 9.7's DATA chunks of MTU − 6 make 514-byte notifications at MTU 517, but an attribute value is at most 512 bytes and Android cut every full chunk by 2; and the HEADER, about 40 bytes, cannot fit the 20 bytes of MTU 23 that 8.2 requires. The first showed only on the phones (6 bytes missing from a 2 kB song), the second only when a test asserted the size. Fixed: chunks capped at 509 (v0.22); the HEADER is ble-protocol Q22.
+
+**Again, 2026-10-26 (timing, not size)**: a proposal gave the cost of a song not held ahead as about 1.3 s later by air; summing the state lead-in of 3 passes and the burst order made it about 3 s, and the proposal was corrected before approval. Same mechanism: a figure written with its reason, never summed.
 
 ### ADB on the test phones: sleeping screens and Samsung's hidden switch (2026-10-25) [RESOLVED]
 **Problem**: `adb shell am start -W` hung for minutes on the Huawei; the Samsung A52 showed no ADB interface in Windows although USB debugging was on.
@@ -164,21 +166,34 @@
 **Root cause**: The simulated air's timing defaults were guesses, never compared with a measurement, so GATT looked about ten times cheaper than it is.
 **Fix**: Calibrate a simulation's constants against a phone measurement before reporting from it (600 ms per connection from D-05 run 17), name the calibration in the result file, and rerun. Treat a scenario that beats the phones as a calibration question first.
 
-### Shell heredocs with mixed quotes fail before anything runs (2026-10-25) [x5] [PROMOTED]
+### Shell heredocs with mixed quotes fail before anything runs (2026-10-25) [x7] [PROMOTED]
 **Problem**: Inline Python and Kotlin edits passed through `bash -c` with `<<'EOF'` heredocs stopped with "unexpected EOF while looking for matching `''"; three times in one session. Nothing ran, so no file was half-written, but the edits had to be redone. 2026-10-26: once more as a parse error, and once silently: backticks inside a double-quoted `python -c "…"` ran as command substitution, so a word vanished from a Kotlin comment while the edit reported success.
 **Root cause**: The tool's command quoting does not survive a long heredoc with nested single quotes, backticks and backslashes.
 **Fix**: Write such scripts to a file in the scratchpad with the Write tool and run the file (`python3 -I <path>`); keep inline heredocs for short text without quotes. Promoted to `memory/MEMORY.md` Recently Promoted on 2026-10-26.
+**Again after promotion, 2026-10-26 (twice)**: a long `python - <<'EOF'` edit of `SingerScreen.kt` stopped with the same parse error; and `sed` swallowed the backslash of `\uFE0E`, writing `"☀FE0E"` into Kotlin, valid code that would have shown the letters; a `grep` after the edit caught it. The promotion did not take because `memory/MEMORY.md` is read only on the "picking up" row; on 2026-10-26 the rule was also put in Claude Code's auto-loaded user memory.
 
-### JVM test names cannot carry ':' or ';' (2026-10-25) [x3]
+### JVM test names cannot carry ':', ';' or '.' (2026-10-25) [x4]
 **Problem**: A Kotlin test named with a colon ("as the A52's: the extended singer ...") failed to compile with "Name contains illegal characters"; an earlier session hit the same with `;`.
 **Root cause**: Backtick names become JVM method names, which forbid `.`, `;`, `[`, `/`, `<`, `>`, `:` and a few others.
 **Fix**: Use commas or "and" in test names; a middle dot `·` passes.
 **Again 2026-10-26**, the day after logging it (`LibraryRepositoryTest`): a list after a colon reads naturally in a test name, so the habit wins; one more recurrence and this goes to the memory index.
+**Again 2026-10-26** with a `.` in a protocol test name. Fourth time: promoted with the heredoc rule to the auto-loaded user memory.
 
-### Tapping a remembered coordinate after the screen changed (2026-10-25)
+### Tapping a remembered coordinate after the screen changed (2026-10-25) [x3]
 **Problem**: After a button was added to the two-phone test, a tap meant for *Stoppen* on the S23 hit the new *Extended set onderzoeken* and started a probe that advertised for a minute.
 **Root cause**: The tap reused coordinates read before the layout changed.
 **Fix**: Find every control by its text in a fresh `uiautomator dump` immediately before tapping (the `tap <label>` helper of the later runs); check the log afterwards for what actually started.
+**Again 2026-10-26, twice**: a tap meant for the orange ended bar missed after the layout changed (bounds from `uiautomator` fixed it); and on the Huawei a coordinate copied from the S23 landed in the status bar, because the two phones' bars differ in height. The text-lookup helper has its own trap for transient UI: `uiautomator dump` takes 2–4 s on the Huawei, longer than a toolbar that hides after 3 s, so tap such UI by coordinates read from a screenshot of that phone, taken right after opening it.
+
+### A local value named like a receiver property shadows it in Compose lambdas (2026-10-26)
+**Problem**: Inside `pointerInput { detectTapGestures { … size.height … } }` the compiler reported "Function invocation 'height(...)' expected": `size` resolved to the screen's own `val size = LYRIC_SIZES_SP[…]` (an `Int`), not to `PointerInputScope.size`.
+**Root cause**: In Kotlin a local variable wins over an implicit receiver's member of the same name.
+**Fix**: Do not name locals `size`, `density`, `constraints` or other receiver members in a composable that opens scoped lambdas; renamed to `textSize`.
+
+### AnimatedVisibility inside a Column picks the ColumnScope overload (2026-10-26)
+**Problem**: An `AnimatedVisibility` for the leader's drawer, written inside a `Column`, would not compile with the enter and exit transitions given.
+**Root cause**: Within `ColumnScope` the call resolves to `ColumnScope.AnimatedVisibility`, an extension with its own expectations, not the general one.
+**Fix**: Move the animated part into its own composable (`DrawerSlot`), outside the scope. Related: an import clean-up that removed `getValue` / `setValue` broke every `by remember` delegate; prune imports with the compiler, not by eye.
 
 ## Promoted
 
@@ -205,8 +220,9 @@
 | Date | Gotcha | Occurrences | Promoted to |
 |------|--------|-------------|-------------|
 | 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
-| 2026-10-25 | A size limit stated with its reason is false when computed | **5** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19); 2026-10-25 after promotion: GATT DATA chunk over 512 bytes and HEADER over MTU 23 (v0.22, v0.23) | `memory/MEMORY.md` Recently Promoted |
-| 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **5** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions); 2026-10-26 report strings (parse error) and a `python -c` whose backticks were substituted silently | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-25 | A size limit stated with its reason is false when computed | **6** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19); 2026-10-25 after promotion: GATT DATA chunk over 512 bytes and HEADER over MTU 23 (v0.22, v0.23); 2026-10-26 after promotion: a proposal's 1.3 s that summed to 3 s | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **7** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions); 2026-10-26 report strings (parse error) and a `python -c` whose backticks were substituted silently; 2026-10-26 after promotion: a heredoc edit of `SingerScreen.kt` and a `sed` that dropped a backslash | `memory/MEMORY.md` Recently Promoted; 2026-10-26 also Claude Code's auto-loaded user memory, since the index is not read every session |
+| 2026-10-26 | JVM test names cannot carry ':', ';' or '.' | **4** - 2026-10-25 ';' and ':'; 2026-10-26 ':' (`LibraryRepositoryTest`); 2026-10-26 '.' | Claude Code's auto-loaded user memory |
 
 ## Mechanized
 

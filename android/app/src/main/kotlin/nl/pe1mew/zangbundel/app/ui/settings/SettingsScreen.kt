@@ -35,9 +35,10 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.platform.storage.AppSettings
 
 /**
- * Settings (guiDesign D-44, D-81; FR-SING-01, FR-DATA-07): the group *Zingen* with *Naam voor de
- * leider* and *Ontvangst tonen*, and the group *Gegevens* with *Alle gegevens verwijderen*. Vibration,
- * volume keys, the not-found time, the theme and the statistics follow with their features.
+ * Settings (guiDesign D-44; FR-SING-01, FR-DATA-07): the group *Zingen* with *Naam voor de leider*,
+ * and the group *Gegevens* with *Alle gegevens verwijderen*. The lyric view's theme, text size and
+ * keep-screen-on are set from the singer's toolbar (D-17); vibration, volume keys, the not-found time
+ * and the statistics follow with their features.
  */
 @Composable
 fun SettingsScreen(onPrivacy: () -> Unit, onAllRemoved: () -> Unit) {
