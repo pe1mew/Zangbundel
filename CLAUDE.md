@@ -95,6 +95,7 @@ Zangbundel/
 ├── .claude/                      ← review-profile.md, launch.json (preview servers)
 ├── raw/                          ← owner's scratch folder, ignored by git
 ├── README.md, changelog.md, contributing.md, code_of_conduct.md, license.md, LICENSE, NOTICE
+├── .gitattributes                ← LF for scripts; conformance vectors byte-exact (-text)
 ├── .github/workflows/android.yml ← CI: design check, unit tests, lint, unsigned release APK
 └── android/                      ← the Gradle project: core/{model,songformat,protocol,testing}, platform/{ble,crypto,storage,net}, app
 ```

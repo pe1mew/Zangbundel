@@ -159,6 +159,26 @@
 **Root cause**: `ZipInfo` replaces `os.sep` with `/` and `_open_to_write` rewrites the flags; reading the file back through the same library hides both.
 **Fix**: Check attack vectors on their raw bytes (central and local headers), not through the library that wrote them; patch flags in both headers after writing. Each vector's `.expected.json` carries its SHA-256 so a regenerated or converted file is caught.
 
+### A simulation reports what its constants say (2026-10-25)
+**Problem**: The first simulation scenarios gave degraded mode a median of 0.9 s over GATT; `SimulatedAir` charged 20 ms per connection, while a repair connection on the phones took 0.5–1.7 s.
+**Root cause**: The simulated air's timing defaults were guesses, never compared with a measurement, so GATT looked about ten times cheaper than it is.
+**Fix**: Calibrate a simulation's constants against a phone measurement before reporting from it (600 ms per connection from D-05 run 17), name the calibration in the result file, and rerun. Treat a scenario that beats the phones as a calibration question first.
+
+### Shell heredocs with mixed quotes fail before anything runs (2026-10-25) [x3] [PROMOTED]
+**Problem**: Inline Python and Kotlin edits passed through `bash -c` with `<<'EOF'` heredocs stopped with "unexpected EOF while looking for matching `''"; three times in one session. Nothing ran, so no file was half-written, but the edits had to be redone.
+**Root cause**: The tool's command quoting does not survive a long heredoc with nested single quotes, backticks and backslashes.
+**Fix**: Write such scripts to a file in the scratchpad with the Write tool and run the file (`python3 -I <path>`); keep inline heredocs for short text without quotes. Promoted to `memory/MEMORY.md` Recently Promoted on 2026-10-26.
+
+### JVM test names cannot carry ':' or ';' (2026-10-25) [x2]
+**Problem**: A Kotlin test named with a colon ("as the A52's: the extended singer ...") failed to compile with "Name contains illegal characters"; an earlier session hit the same with `;`.
+**Root cause**: Backtick names become JVM method names, which forbid `.`, `;`, `[`, `/`, `<`, `>`, `:` and a few others.
+**Fix**: Use commas or "and" in test names; a middle dot `·` passes.
+
+### Tapping a remembered coordinate after the screen changed (2026-10-25)
+**Problem**: After a button was added to the two-phone test, a tap meant for *Stoppen* on the S23 hit the new *Extended set onderzoeken* and started a probe that advertised for a minute.
+**Root cause**: The tap reused coordinates read before the layout changed.
+**Fix**: Find every control by its text in a fresh `uiautomator dump` immediately before tapping (the `tap <label>` helper of the later runs); check the log afterwards for what actually started.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
@@ -184,7 +204,8 @@
 | Date | Gotcha | Occurrences | Promoted to |
 |------|--------|-------------|-------------|
 | 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
-| 2026-10-25 | A size limit stated with its reason is false when computed | **4** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19) | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-25 | A size limit stated with its reason is false when computed | **5** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19); 2026-10-25 after promotion: GATT DATA chunk over 512 bytes and HEADER over MTU 23 (v0.22, v0.23) | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **3** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions) | `memory/MEMORY.md` Recently Promoted |
 
 ## Mechanized
 
