@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,12 +61,19 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * in range (FR-GATH-16, D-23); a phone that cannot advertise says so (D-24). Each card shows the
  * fingerprint, and two gatherings with nearly the same name get a warning line (D-36); a card with a
  * lock asks for the join code first (D-26). A QR link that came in while Bluetooth was not ready is
- * joined as soon as it is (D-35). Below, the icon row.
+ * joined as soon as it is (D-35). While the songbook is empty, the start button is greyed out and a tap
+ * explains that songs come first, with a way to the songbook (D-82); joining needs no songs. Below, the
+ * icon row.
  */
 @Composable
 fun HomeScreen(onOpen: (String) -> Unit) {
     val context = LocalContext.current
-    val gathering = remember { (context.applicationContext as ZangbundelApp).container.gathering }
+    val container = remember { (context.applicationContext as ZangbundelApp).container }
+    val gathering = container.gathering
+    // D-82: starting needs songs; checked each time the home screen is shown, so a library just added counts.
+    var hasSongs by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(Unit) { hasSongs = runCatching { container.storage.songbook.entries().isNotEmpty() }.getOrDefault(true) }
+    var needSongs by remember { mutableStateOf(false) }
     var ready by remember { mutableStateOf(BluetoothAccess.ready(context)) }
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { ready = BluetoothAccess.ready(context) }
     val switchOn = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { ready = BluetoothAccess.ready(context) }
@@ -127,8 +135,19 @@ fun HomeScreen(onOpen: (String) -> Unit) {
                 else -> {
                     val waited = since?.let { now - it } ?: 0L
                     val left = ((Gathering.LISTEN_BEFORE_START_MS - waited + 999) / 1000).coerceAtLeast(0)
-                    Button(onClick = { onOpen(Routes.START) }, enabled = ready && since != null && left == 0L, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                        Text(if (ready && left > 0) stringResource(R.string.home_listening, left) else stringResource(R.string.home_start))
+                    val canStart = ready && since != null && left == 0L
+                    // D-82: without songs the button looks disabled but answers a tap with why.
+                    val noSongs = hasSongs == false
+                    Button(
+                        onClick = { if (noSongs) needSongs = true else onOpen(Routes.START) },
+                        enabled = canStart || (noSongs && ready),
+                        colors = if (noSongs) ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                            contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        ) else ButtonDefaults.buttonColors(),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                    ) {
+                        Text(if (ready && left > 0 && !noSongs) stringResource(R.string.home_listening, left) else stringResource(R.string.home_start))
                     }
                 }
             }
@@ -144,6 +163,13 @@ fun HomeScreen(onOpen: (String) -> Unit) {
         }
     }
     // D-23: refused with the gathering's name and a join button.
+    // D-82: one line, and the way to the songbook where libraries are added.
+    if (needSongs) AlertDialog(
+        onDismissRequest = { needSongs = false },
+        text = { Text(stringResource(R.string.home_need_songs)) },
+        confirmButton = { TextButton(onClick = { needSongs = false; onOpen(Routes.SONGBOOK) }) { Text(stringResource(R.string.home_to_songbook)) } },
+        dismissButton = { TextButton(onClick = { needSongs = false }) { Text(stringResource(R.string.cancel)) } },
+    )
     refusedBy?.let { g ->
         AlertDialog(
             onDismissRequest = { refusedBy = null },

@@ -204,6 +204,8 @@
     <string name="home_signal_strong">Close by</string>
     <string name="home_signal_fair">Within reach</string>
     <string name="home_signal_weak">Far away</string>
+    <string name="home_need_songs">Load songs first: only then can you start a campfire.</string>
+    <string name="home_to_songbook">To the Songbook</string>
     <string name="start_title">Start a campfire</string>
     <string name="start_name">Name of the campfire</string>
     <string name="start_default_name">Campfire %s</string>

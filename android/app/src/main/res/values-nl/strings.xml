@@ -203,6 +203,8 @@
     <string name="home_signal_strong">Dichtbij</string>
     <string name="home_signal_fair">Binnen bereik</string>
     <string name="home_signal_weak">Ver weg</string>
+    <string name="home_need_songs">Laad eerst liederen: pas dan kun je een kampvuur starten.</string>
+    <string name="home_to_songbook">Naar de Zangbundel</string>
     <string name="start_title">Kampvuur starten</string>
     <string name="start_name">Naam van het kampvuur</string>
     <string name="start_default_name">Kampvuur %s</string>

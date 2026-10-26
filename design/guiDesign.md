@@ -4,7 +4,7 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.30 (draft) |
+| Document version | 0.31 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -42,6 +42,7 @@
 | 0.28 | 2026-10-26 | Depends on FRD v0.16 (FR-BLE-18 songs ahead, FR-SING-05 amended), from the owner's approved proposal `design/proposals/2026-10-26-songs-ahead.md`: D-47 notes that songs received ahead stay invisible until pushed; D-81 amended: the reception island becomes the completeness grid, a row per setlist song numbered until pushed, its switch is kept across starts, and while on it shows itself only while the current song is incomplete or on a long press on the header strip; a tap hides it without switching it off. |
 | 0.29 | 2026-10-26 | BLE protocol v0.35, the static setlist (`design/proposals/2026-10-26-static-setlist.md`, approved by the owner): D-47 notes that a singer who joins late shows the songs already sung that it received ahead, before the songs it saw pushed, in setlist order; D-81's *Lijst* row no longer starts again on every push. No FRD change. |
 | 0.30 | 2026-10-26 | Depends on FRD v0.17. D-81 amended at the owner's request: the switch *Ontvangst tonen* is removed from the settings; the reception grid is a hidden feature that opens only on a long press on the header strip and never shows by itself; a tap closes it. The song bar on the divider (D-29) is unchanged. |
+| 0.31 | 2026-10-26 | D-82 built: *Kampvuur starten* greyed out while the songbook is empty; a tap opens one line with *Naar de Zangbundel* (the songbook's name since v0.27) and *Annuleren*. No FRD change. |
 
 ---
 
@@ -135,7 +136,7 @@ QR-only gatherings [FR-GATH-21] are not in the list by design; they are joined t
 
 **D-24 — A device that cannot lead says so, once.** When the platform reports no BLE peripheral (advertising) support (FRD constraint 1), the start area shows *Dit toestel kan meezingen, maar geen kampvuur starten* instead of the button. The join area is unchanged.
 
-**D-82 — Starting needs songs.** *(Added in v0.19 at the owner's request; not built yet.)* While no library with songs is installed (the songbook of D-52 is empty), *Kampvuur starten* is shown greyed out. A tap on it does not start anything; it answers with one line, *Laad eerst liederen: pas dan kun je een kampvuur starten*, and a button to the songbook (D-52), where the libraries are added (D-50). Joining is unaffected: a singer needs no songs. *Why:* the owner's instruction; a campfire without songs has nothing to push, and the leader learns at the start, not at the fire, what is missing.
+**D-82 — Starting needs songs.** *(Added in v0.19 at the owner's request; built in v0.31.)* While no library with songs is installed (the songbook of D-52 is empty), *Kampvuur starten* is shown greyed out. A tap on it does not start anything; it answers with one line, *Laad eerst liederen: pas dan kun je een kampvuur starten*, and a button to the songbook (D-52), where the libraries are added (D-50). Joining is unaffected: a singer needs no songs. *Why:* the owner's instruction; a campfire without songs has nothing to push, and the leader learns at the start, not at the fire, what is missing. *(As built in v0.31:)* the button keeps its place and size in the disabled colours of the theme; the line comes as a small dialog with *Naar de Zangbundel* and *Annuleren*. The songbook counts the enabled libraries (D-52), so a phone whose libraries are all switched off is treated as having none. The check runs each time the home screen is shown, so a library just added counts at once.
 
 **D-25 — Start leads into leader mode through one screen.** Tapping start opens the gathering settings screen (a configuration screen): the proposed neutral name [FR-GATH-01], the optional join code and the QR-only switch [FR-GATH-05, FR-GATH-21], and the setlist to begin with [FR-LEAD-02]. Its primary button *Starten* switches the app into leader mode and the gathering family: the lyric view (empty until the first song is pushed) with the leader controls and the join QR code one tap away [FR-DIST-02]. *(As built in v0.25:)* the join code and the QR-only switch are one choice, *Wie mag meedoen*: *Iedereen in de buurt*, *Met een deelnamecode* (four digits the leader says aloud, shown on the QR screen of D-57) or *Alleen via de QR-code* (eight random characters that exist only in the QR code). The code is drawn when *Starten* is tapped, so every gathering gets a fresh one (D-71).
 
