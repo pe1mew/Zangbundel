@@ -28,8 +28,10 @@ class LibraryInstaller(private val files: LibraryFiles, private val index: Libra
 
     suspend fun install(result: ArchiveImport.Result, source: String?, now: Long): Outcome {
         if (result.refused) return Outcome.Refused(result)
-        val plan = InstallPlan.from(result, source, now)
-        val previous = index.installed(plan.libraryId)
+        val id = result.library!!.library!!.id
+        val previous = index.installed(id)
+        val colour = previous?.colour ?: ((index.all().maxOfOrNull { it.colour } ?: -1) + 1)
+        val plan = InstallPlan.from(result, source, now, colour)
         val staging = files.stage(plan)
         val dir = try {
             files.commit(plan.libraryId, staging, plan.library.directory)

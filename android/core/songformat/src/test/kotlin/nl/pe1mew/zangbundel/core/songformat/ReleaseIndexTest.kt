@@ -51,7 +51,9 @@ class ReleaseIndexTest {
         assertEquals(LibraryUrl.Index("https://raw.githubusercontent.com/pe1mew/Zangbundel-bibliotheek/HEAD/releases.json"), LibraryUrl.of("https://github.com/pe1mew/Zangbundel-bibliotheek"))
         assertEquals(LibraryUrl.Index("https://raw.githubusercontent.com/pe1mew/Zangbundel-bibliotheek/HEAD/releases.json"), LibraryUrl.of("https://github.com/pe1mew/Zangbundel-bibliotheek.git/"))
         assertEquals(LibraryUrl.Index("https://gitlab.com/groep/bundel/-/raw/HEAD/releases.json"), LibraryUrl.of("https://gitlab.com/groep/bundel"))
+        assertEquals(LibraryUrl.Index("https://raw.githubusercontent.com/pe1mew/Zangbundel-bibliotheek/HEAD/releases.json"), LibraryUrl.of("github.com/pe1mew/Zangbundel-bibliotheek"))
         assertIs<LibraryUrl.Unsupported>(LibraryUrl.of("http://example.org/a.zbl"))
+        assertIs<LibraryUrl.Unsupported>(LibraryUrl.of("ftp://example.org/a.zbl"))
         assertIs<LibraryUrl.Unsupported>(LibraryUrl.of("https://codeberg.org/groep/bundel"))
         assertIs<LibraryUrl.Unsupported>(LibraryUrl.of("https://github.com/pe1mew"))
     }

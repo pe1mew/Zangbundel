@@ -31,7 +31,7 @@ class InstallPlan private constructor(
          * [source] is the URL or file name the archive came from; [now] the install time in epoch
          * milliseconds. Notation attachments (P3) are not installed yet.
          */
-        fun from(result: ArchiveImport.Result, source: String?, now: Long, random: SecureRandom = SecureRandom()): InstallPlan {
+        fun from(result: ArchiveImport.Result, source: String?, now: Long, colour: Int = 0, random: SecureRandom = SecureRandom()): InstallPlan {
             require(!result.refused) { "a refused archive is never installed" }
             val checked = result.library!!
             val library = checked.library!!
@@ -64,7 +64,8 @@ class InstallPlan private constructor(
                 version = result.manifest?.version, created = result.manifest?.created, source = source,
                 repository = result.manifest?.sourceRepository, ref = result.manifest?.sourceRef,
                 archiveSha256 = result.archiveSha256, formatVersion = library.formatVersion,
-                licenseId = library.license.id, licenseSummary = library.license.summary, installedAt = now,
+                licenseId = library.license.id, licenseSummary = library.license.summary, installedAt = now, colour = colour,
+                songCount = songs.size,
             )
             val report = result.report.map { ReportRow(it.level.name, it.code, it.path, it.line, it.detail) }
             return InstallPlan(row, files, songs, setlists, report)
@@ -94,6 +95,13 @@ data class LibraryRow(
     val licenseId: String,
     val licenseSummary: String,
     val installedAt: Long,
+    /**
+     * Position in guiDesign D-51's list of eight colours, counted on: `colour % 8` is the colour, and from
+     * 8 on the square carries a distinguishing dot. Assigned at the first install, kept on updates.
+     */
+    val colour: Int = 0,
+    /** Songs installed, for the library list (guiDesign D-50). */
+    val songCount: Int = 0,
 )
 
 /** A song of an installed library: enough to list, search and match it by hash (ble-protocol 10.3, FR-BLE-12). */

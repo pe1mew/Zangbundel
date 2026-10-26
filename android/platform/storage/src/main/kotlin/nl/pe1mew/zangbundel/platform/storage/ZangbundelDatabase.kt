@@ -32,6 +32,8 @@ data class LibraryEntity(
     val licenseId: String,
     val licenseSummary: String,
     val installedAt: Long,
+    val colour: Int,
+    val songCount: Int,
 )
 
 /** A song of an installed library ([SongRow]); `hash` is how the engine finds a local copy (FR-BLE-12). */
@@ -155,7 +157,7 @@ class RoomLibraryIndex(private val dao: LibraryDao) : LibraryIndex {
     override suspend fun replace(plan: InstallPlan) {
         val l = plan.library
         dao.replace(
-            LibraryEntity(l.id, l.name, l.description, l.revision, l.directory, l.version, l.created, l.source, l.repository, l.ref, l.archiveSha256, l.formatVersion, l.licenseId, l.licenseSummary, l.installedAt),
+            LibraryEntity(l.id, l.name, l.description, l.revision, l.directory, l.version, l.created, l.source, l.repository, l.ref, l.archiveSha256, l.formatVersion, l.licenseId, l.licenseSummary, l.installedAt, l.colour, l.songCount),
             plan.songs.map { SongEntity(it.libraryId, it.songId, it.fileName, it.sourcePath, it.title, it.sortTitle, it.language, it.hash, it.tags.joinToString("\n"), it.variantGroup, it.redistribute, it.licenseSummary) },
             plan.songs.map { SongFtsEntity(it.libraryId, it.songId, it.title, it.searchText) },
             plan.setlists.map { SetlistEntity(it.libraryId, it.setlistId, it.fileName, it.title, it.description, it.entries) },
@@ -168,7 +170,7 @@ class RoomLibraryIndex(private val dao: LibraryDao) : LibraryIndex {
     override suspend fun all(): List<LibraryRow> = dao.all().map(::row)
 
     private fun row(it: LibraryEntity) =
-        LibraryRow(it.id, it.name, it.description, it.revision, it.directory, it.version, it.created, it.source, it.repository, it.ref, it.archiveSha256, it.formatVersion, it.licenseId, it.licenseSummary, it.installedAt)
+        LibraryRow(it.id, it.name, it.description, it.revision, it.directory, it.version, it.created, it.source, it.repository, it.ref, it.archiveSha256, it.formatVersion, it.licenseId, it.licenseSummary, it.installedAt, it.colour, it.songCount)
 
     override suspend fun remove(libraryId: String) = dao.remove(libraryId)
 }

@@ -5,5 +5,7 @@ The code of this project is licensed under the Apache License, Version 2.0;
 see the file LICENSE. The app icon, launcher icon layers, store graphics and
 the background photograph are licensed under CC BY-SA 4.0 (credit: Remko
 Welling, PE1MEW).
+The home screen's library, memories, settings and About icons use path data
+from Google's Material Icons, licensed under the Apache License, Version 2.0.
 Documentation and designs are licensed under CC BY-NC 4.0. See license.md.
 Song lyrics are not part of this project.

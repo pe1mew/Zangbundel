@@ -19,6 +19,12 @@ object Palette {
     val Black = Color(0xFF000000)
     /** Received blocks in the reception bar (D-81); nowhere else. */
     val ReceptionGreen = Color(0xFF4CC36A)
+
+    /** The eight library colours of D-51, in the order they are assigned; leader screens only (D-48). */
+    val Libraries = listOf(
+        Color(0xFFFF8A3D), Color(0xFF4FC3F7), Color(0xFF6CC24A), Color(0xFFFFD166),
+        Color(0xFFB388FF), Color(0xFFFF7EB6), Color(0xFF2EC4B6), Color(0xFFBDBDBD),
+    )
 }
 
 /** Configuration screens: night blue with orange primary. The lyric view has its own day/night themes (FR-DISP-01). */

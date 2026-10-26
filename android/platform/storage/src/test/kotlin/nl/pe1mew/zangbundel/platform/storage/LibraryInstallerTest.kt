@@ -126,4 +126,16 @@ class LibraryInstallerTest {
         assertFailsWith<IllegalArgumentException> { files.read("zangbundel-voorbeeld", "${"a".repeat(40)}-00000000", "../library.json") }
         assertNotNull(files)
     }
+
+    @Test
+    fun `colours count on per library and survive an update`() = runTest {
+        val index = FakeIndex()
+        val installer = LibraryInstaller(LibraryFiles(tempRoot()), index)
+        val a = assertIs<LibraryInstaller.Outcome.Installed>(installer.install(opened("release"), "a", 1))
+        assertEquals(0, a.library.colour)
+        index.rows["andere"] = index.rows.getValue("zangbundel-voorbeeld").let { InstallPlan.from(opened("release"), "b", 2, colour = 5) }
+        val again = assertIs<LibraryInstaller.Outcome.Installed>(installer.install(opened("release"), "a", 3))
+        assertEquals(0, again.library.colour, "an update keeps its colour")
+        assertEquals(6, (index.all().maxOf { it.colour } + 1))
+    }
 }

@@ -69,7 +69,8 @@ sealed interface LibraryUrl {
 
     companion object {
         fun of(input: String): LibraryUrl {
-            val url = input.trim()
+            // An address typed without a scheme ("github.com/groep/bundel") is taken as HTTPS; http:// stays refused.
+            val url = input.trim().let { if ("://" in it) it else "https://$it" }
             if (!url.startsWith("https://")) return Unsupported(url, "not https")
             val path = url.substringBefore('?').substringBefore('#').trimEnd('/')
             val lower = path.lowercase()
