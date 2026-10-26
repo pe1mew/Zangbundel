@@ -31,7 +31,7 @@ class InstallPlan private constructor(
          * [source] is the URL or file name the archive came from; [now] the install time in epoch
          * milliseconds. Notation attachments (P3) are not installed yet.
          */
-        fun from(result: ArchiveImport.Result, source: String?, now: Long, colour: Int = 0, random: SecureRandom = SecureRandom()): InstallPlan {
+        fun from(result: ArchiveImport.Result, source: String?, now: Long, colour: Int = 0, enabled: Boolean = true, random: SecureRandom = SecureRandom()): InstallPlan {
             require(!result.refused) { "a refused archive is never installed" }
             val checked = result.library!!
             val library = checked.library!!
@@ -65,7 +65,7 @@ class InstallPlan private constructor(
                 repository = result.manifest?.sourceRepository, ref = result.manifest?.sourceRef,
                 archiveSha256 = result.archiveSha256, formatVersion = library.formatVersion,
                 licenseId = library.license.id, licenseSummary = library.license.summary, installedAt = now, colour = colour,
-                songCount = songs.size,
+                songCount = songs.size, enabled = enabled, releaseIndex = library.releaseIndex,
             )
             val report = result.report.map { ReportRow(it.level.name, it.code, it.path, it.line, it.detail) }
             return InstallPlan(row, files, songs, setlists, report)
@@ -102,7 +102,31 @@ data class LibraryRow(
     val colour: Int = 0,
     /** Songs installed, for the library list (guiDesign D-50). */
     val songCount: Int = 0,
+    /** *Uit* / *Aan* (D-50, FR-LIB-02): a disabled library stays installed but is left out of the songbook. Kept on updates. */
+    val enabled: Boolean = true,
+    /** `release_index` from the library file (song-format 4.2): where *Bijwerken* looks first. */
+    val releaseIndex: String? = null,
 )
+
+/** A song as the "what changed" list compares it: by id, and by content hash for a change. */
+data class InstalledSong(val songId: String, val title: String, val hash: String)
+
+/** What an update changed [FR-LIB-11]: song titles, each list sorted. */
+data class Changes(val added: List<String>, val changed: List<String>, val removed: List<String>) {
+    val none: Boolean get() = added.isEmpty() && changed.isEmpty() && removed.isEmpty()
+
+    companion object {
+        fun between(before: List<InstalledSong>, after: List<InstalledSong>): Changes {
+            val old = before.associateBy { it.songId }
+            val new = after.associateBy { it.songId }
+            return Changes(
+                added = after.filter { it.songId !in old }.map { it.title }.sorted(),
+                changed = after.filter { s -> old[s.songId]?.let { it.hash != s.hash } == true }.map { it.title }.sorted(),
+                removed = before.filter { it.songId !in new }.map { it.title }.sorted(),
+            )
+        }
+    }
+}
 
 /** A song of an installed library: enough to list, search and match it by hash (ble-protocol 10.3, FR-BLE-12). */
 data class SongRow(

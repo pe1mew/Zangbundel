@@ -3,6 +3,7 @@ package nl.pe1mew.zangbundel.app.library
 
 import kotlinx.coroutines.test.runTest
 import nl.pe1mew.zangbundel.platform.storage.InstallPlan
+import nl.pe1mew.zangbundel.platform.storage.InstalledSong
 import nl.pe1mew.zangbundel.platform.storage.LibraryFiles
 import nl.pe1mew.zangbundel.platform.storage.LibraryIndex
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
@@ -33,10 +34,16 @@ class LibraryRepositoryTest {
 
     private class FakeIndex : LibraryIndex {
         val rows = HashMap<String, LibraryRow>()
-        override suspend fun replace(plan: InstallPlan) { rows[plan.libraryId] = plan.library }
+        val songs = HashMap<String, List<InstalledSong>>()
+        override suspend fun replace(plan: InstallPlan) {
+            rows[plan.libraryId] = plan.library
+            songs[plan.libraryId] = plan.songs.map { InstalledSong(it.songId, it.title, it.hash) }
+        }
         override suspend fun installed(libraryId: String) = rows[libraryId]
         override suspend fun all() = rows.values.toList()
         override suspend fun remove(libraryId: String) { rows.remove(libraryId) }
+        override suspend fun songs(libraryId: String) = songs[libraryId].orEmpty()
+        override suspend fun setEnabled(libraryId: String, enabled: Boolean) { rows[libraryId] = rows.getValue(libraryId).copy(enabled = enabled) }
     }
 
     private fun repository(served: Map<String, ByteArray>, index: FakeIndex = FakeIndex()): Pair<LibraryRepository, FakeDownloads> {
@@ -100,5 +107,19 @@ class LibraryRepositoryTest {
         assertEquals("L006", clash.report.last().code)
         // A snapshot has no repository, so it cannot clash.
         assertFalse(repo.checkFile(archive("snapshot-root"), "snapshot.zip").refused)
+    }
+
+    @Test
+    fun `an update looks at the release index, then the repository, then an https source`() = runTest {
+        val index = FakeIndex()
+        val (repo, _) = repository(emptyMap(), index)
+        repo.install(repo.checkFile(archive("release"), "a.zbl"))
+        val row = index.rows.getValue("zangbundel-voorbeeld")
+        assertEquals("https://example.org/zangbundel-voorbeeld", repo.updateSource(row), "the manifest's repository")
+        assertEquals("https://example.org/r.json", repo.updateSource(row.copy(releaseIndex = "https://example.org/r.json")))
+        assertEquals("https://example.org/a.zbl", repo.updateSource(row.copy(repository = null, source = "https://example.org/a.zbl")))
+        assertEquals(null, repo.updateSource(row.copy(repository = null, source = "a.zbl")), "from a file: the leader picks the new file")
+        repo.setEnabled(row.id, false)
+        assertFalse(index.rows.getValue(row.id).enabled)
     }
 }

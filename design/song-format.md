@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.7 (draft) |
-| Date | 2026-10-22 |
+| Document version | 0.8 (draft) |
+| Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.13, `design/ble-protocol.md` v0.13 |
+| Depends on | `design/functional-requirements.md` v0.14, `design/ble-protocol.md` v0.13 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -20,6 +20,7 @@
 | 0.5 | 2026-10-22 | Depends on FRD v0.11 and BLE protocol v0.13. Q11 resolved: the command-line validator and the release tool live in the library repository; the app has its own implementation, kept in step by a shared conformance corpus (`design/architecture.md` A-21, A-22). Q13 resolved: the app imports release archives and snapshots only and has no git client (A-11). No format change. |
 | 0.6 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
 | 0.7 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
+| 0.8 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`). Q10 resolved with it. No format change. |
 
 ---
 
@@ -1088,5 +1089,5 @@ Notes on this file:
 | Q7 | Should the hash cover only the parsed content (metadata values plus canonical lines) instead of the whole file, so comment-only edits do not invalidate singers' cached copies? Whole-file hashing is simpler and matches the BLE document; the cost is one extra transfer after such an edit. | BLE section 5; section 8.2 here |
 | Q8 | *Resolved 2026-10-20:* no. `name` and `description` stay plain strings in the maintainer's language and are shown as written; only tag labels are localisable (`design/guiDesign.md` D-77). | Resolved |
 | Q9 | Chord-only lines are not canonical lines (9.1). Should a P3 musician view be able to follow the leader to an instrumental line, which would require numbering them? | Line list stability between P1 and P3 |
-| Q10 | The default library for FR-LIB-02: should this repository host it (under `library/` or as a separate repository), and who maintains licence checks on contributions? | FRD Q3, release planning |
+| Q10 | *Resolved 2026-10-26 (FRD Q3):* a separate repository, `github.com/pe1mew/Zangbundel-bibliotheek`; its maintainer checks licences on contributions with its validator and contribution rules. | FRD Q3, release planning |
 | Q11 | *Resolved 2026-10-22:* a separate tool. `validate.py` and `release.py` live in the library repository `github.com/pe1mew/Zangbundel-bibliotheek`; the app has its own implementation of the same rules, and both run a shared conformance corpus (`design/architecture.md` A-21, A-22). | Resolved |

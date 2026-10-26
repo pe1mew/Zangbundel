@@ -32,6 +32,9 @@ class LibraryInstallerTest {
         override suspend fun installed(libraryId: String) = rows[libraryId]?.library
         override suspend fun all() = rows.values.map { it.library }
         override suspend fun remove(libraryId: String) { rows.remove(libraryId) }
+        override suspend fun songs(libraryId: String) = rows[libraryId]?.songs.orEmpty().map { InstalledSong(it.songId, it.title, it.hash) }
+        val disabled = HashSet<String>()
+        override suspend fun setEnabled(libraryId: String, enabled: Boolean) { if (enabled) disabled -= libraryId else disabled += libraryId }
     }
 
     private fun tempRoot(): File = Files.createTempDirectory("libraries").toFile().also { it.deleteOnExit() }
@@ -137,5 +140,25 @@ class LibraryInstallerTest {
         val again = assertIs<LibraryInstaller.Outcome.Installed>(installer.install(opened("release"), "a", 3))
         assertEquals(0, again.library.colour, "an update keeps its colour")
         assertEquals(6, (index.all().maxOf { it.colour } + 1))
+    }
+
+    @Test
+    fun `what changed lists added, changed and removed songs by title`() {
+        val before = listOf(InstalledSong("a", "Advocaatje", "01"), InstalledSong("b", "Boer", "02"), InstalledSong("c", "Canon", "03"))
+        val after = listOf(InstalledSong("c", "Canon", "03"), InstalledSong("b", "Boer", "22"), InstalledSong("z", "Zon", "04"), InstalledSong("d", "Dag", "05"))
+        assertEquals(Changes(added = listOf("Dag", "Zon"), changed = listOf("Boer"), removed = listOf("Advocaatje")), Changes.between(before, after))
+        assertTrue(Changes.between(before, before).none)
+    }
+
+    @Test
+    fun `an update reports what changed and keeps the library switched off`() = runTest {
+        val index = FakeIndex()
+        val installer = LibraryInstaller(LibraryFiles(tempRoot()), index)
+        val first = assertIs<LibraryInstaller.Outcome.Installed>(installer.install(opened("release"), "a", 1))
+        assertNull(first.changes, "a first install has nothing to compare with")
+        index.rows["zangbundel-voorbeeld"] = InstallPlan.from(opened("release"), "a", 1, enabled = false)
+        val again = assertIs<LibraryInstaller.Outcome.Installed>(installer.install(opened("snapshot-root"), "b", 2))
+        assertTrue(again.changes!!.none, "the snapshot holds the same two songs")
+        assertFalse(again.library.enabled)
     }
 }

@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.7 (draft) |
-| Date | 2026-10-22 |
+| Document version | 0.8 (draft) |
+| Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.13, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.14, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -19,6 +19,7 @@
 | 0.5 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
 | 0.6 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 | 0.7 | 2026-10-26 | Section 6, found while building the install pipeline: an installed revision's directory is `<revision>-<8 random hex>`, new for every install, so reinstalling the revision that is in use never overwrites its files; the file names inside are the app's own (`library.json`, `license.txt`, `manifest.json`, `songs/<song id>.cho`, `setlists/<setlist id>.zbs`). |
+| 0.8 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`). The app holds the default library's URL as a constant (`app/library/DefaultLibrary`); no decision changed. |
 
 ---
 

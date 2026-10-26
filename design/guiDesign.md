@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.14 (draft) |
-| Date | 2026-10-22 |
+| Document version | 0.15 (draft) |
+| Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.13, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.14, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -26,6 +26,7 @@
 | 0.12 | 2026-10-22 | Section 7, version display: the About screen also shows the short app signing fingerprint (assessment SP-20). |
 | 0.13 | 2026-10-25 | Depends on FRD v0.12 (open question Q14 on NFR-PERF-01); nothing in this document changes. |
 | 0.14 | 2026-10-25 | Depends on FRD v0.13. D-81, the reception bar [FR-SING-05], decided by the owner: switched on in settings, off at every start, a floating island at the bottom of the singer's screen, hidden by a tap; D-44 lists its switch; colour reference and traceability follow. |
+| 0.15 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`). D-50 amended: the default library is offered by name, on the empty library screen and at the top of *Bibliotheek toevoegen*, while it is not installed, and added only on a tap. Glossary D-79 gains *standaardbibliotheek*. |
 
 ---
 
@@ -256,7 +257,7 @@ The leader prepares at home, with light and time, and leads at the fire, in the 
 
 #### Preparation: libraries
 
-**D-50 — Libraries are loaded from a repository or from a file, and the leader always knows which revision is installed.** The *Bibliotheek* screen (reached from the home screen's icon row, D-21) lists the installed libraries, the default one first [FR-LIB-02], each with its name, the number of songs, the installed version or revision [FR-LIB-17], the date of the release archive, and a colour square (D-51). *Bibliotheek toevoegen* offers two routes: **online**, by pasting or scanning the URL of a repository, a release index or a `.zbl` archive (the app fetches the newest release; song-format section 12) [FR-LIB-10, FR-LIB-14]; and **from a file**, by opening a `.zbl` or zip file from the phone's storage, a shared file or an SD card, for phones that never have internet [FR-LIB-16]. Both routes show the library's licence summary and full text before the import completes [FR-LIB-21] and end with the import report: songs imported, skipped (by file name and reason) and warnings [FR-LIB-07]. A library row has *Bijwerken* (update, with the "what changed" list afterwards: added, changed, removed [FR-LIB-11]), *Uit* / *Aan* (disable without removing) and *Verwijderen* [FR-LIB-02]. The previous revision stays in use until an update is complete [FR-LIB-15]. Nothing downloads without a tap, except when *Automatisch controleren op wifi* is on, which only checks and asks [FR-LIB-12, FR-LIB-13]. *Why:* the leader must be able to say which version the fire is singing from, and a library must be addable at a campsite with no internet from a file a friend hands over.
+**D-50 — Libraries are loaded from a repository or from a file, and the leader always knows which revision is installed.** The *Bibliotheek* screen (reached from the home screen's icon row, D-21) lists the installed libraries, the default one first [FR-LIB-02], each with its name, the number of songs, the installed version or revision [FR-LIB-17], the date of the release archive, and a colour square (D-51). While the default library is not installed, the screen offers it by name under *Standaardbibliotheek*: on the empty screen as the main button, and at the top of *Bibliotheek toevoegen*; it is added only on that tap, through the same release, size and licence steps as any other [FR-LIB-02, FR-LIB-12] *(amended in v0.15)*. *Bibliotheek toevoegen* offers two routes: **online**, by pasting or scanning the URL of a repository, a release index or a `.zbl` archive (the app fetches the newest release; song-format section 12) [FR-LIB-10, FR-LIB-14]; and **from a file**, by opening a `.zbl` or zip file from the phone's storage, a shared file or an SD card, for phones that never have internet [FR-LIB-16]. Both routes show the library's licence summary and full text before the import completes [FR-LIB-21] and end with the import report: songs imported, skipped (by file name and reason) and warnings [FR-LIB-07]. A library row has *Bijwerken* (update, with the "what changed" list afterwards: added, changed, removed [FR-LIB-11]), *Uit* / *Aan* (disable without removing) and *Verwijderen* [FR-LIB-02]. The previous revision stays in use until an update is complete [FR-LIB-15]. Nothing downloads without a tap, except when *Automatisch controleren op wifi* is on, which only checks and asks [FR-LIB-12, FR-LIB-13]. *Why:* the leader must be able to say which version the fire is singing from, and a library must be addable at a campsite with no internet from a file a friend hands over.
 
 **D-51 — Each library has a colour; the combined songbook shows it as a small square.** When a library is installed it is assigned the next colour from a fixed list of eight distinct, colour-blind-safe colours (orange `#FF8A3D`, sky blue `#4FC3F7`, green `#6CC24A`, yellow `#FFD166`, purple `#B388FF`, pink `#FF7EB6`, teal `#2EC4B6`, grey `#BDBDBD`); the ninth library starts over with a distinguishing dot. The colour is shown in the library list as a legend and as a **12 dp square before the title** of every song in the combined songbook [FR-LIB-30], in the setlist editor and on the leader's page; it is never shown to singers (D-48). The leader can change a library's colour from the library row. *Why:* a scouting group typically has its own library next to a shared one, and the leader wants to see at a glance where a song comes from without a second line of text.
 
@@ -397,6 +398,7 @@ The app speaks Dutch and English. This section fixes how its own texts are trans
 | *setlist* | setlist | setlist |
 | *liedboek* | songbook | combined songbook |
 | *bibliotheek* | library | library |
+| *standaardbibliotheek* | default library | default library (FR-LIB-02) |
 | *couplet*, *refrein*, *brug* | verse, chorus, bridge | verse, chorus, bridge environments |
 | *herinnering* | memory | gathering memory |
 | *Nu*, *Wis*, *Afsluiten* | Now, Clear, Close | push, clear current song, end gathering |

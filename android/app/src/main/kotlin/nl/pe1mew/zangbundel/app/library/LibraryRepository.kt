@@ -12,6 +12,7 @@ import nl.pe1mew.zangbundel.core.songformat.ReportEntry
 import nl.pe1mew.zangbundel.core.songformat.ReportLevel
 import nl.pe1mew.zangbundel.platform.storage.LibraryIndex
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
+import nl.pe1mew.zangbundel.platform.storage.LibraryRow
 
 /** The network as the library side needs it: one HTTPS GET with a size cap (architecture A-14). */
 interface Downloads {
@@ -96,6 +97,16 @@ class LibraryRepository(
     suspend fun install(checked: Checked): LibraryInstaller.Outcome = installer.install(checked.result, checked.source, clock())
 
     suspend fun remove(libraryId: String) = installer.remove(libraryId)
+
+    suspend fun setEnabled(libraryId: String, enabled: Boolean) = installer.setEnabled(libraryId, enabled)
+
+    /**
+     * *Bijwerken* (FR-LIB-11): where to look for a newer release of an installed library, in order its
+     * `release_index`, the repository its manifest names, or the URL it came from. Null for a library
+     * added from a file without either: the leader picks the new file.
+     */
+    fun updateSource(library: LibraryRow): String? =
+        library.releaseIndex ?: library.repository ?: library.source?.takeIf { it.startsWith("https://") }
 
     /**
      * 4.3, L006: a library id already installed from another repository is refused, and the message

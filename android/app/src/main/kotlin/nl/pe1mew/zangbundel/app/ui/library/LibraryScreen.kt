@@ -30,6 +30,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -47,12 +49,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import nl.pe1mew.zangbundel.app.R
+import nl.pe1mew.zangbundel.app.library.DefaultLibrary
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.core.songformat.ReportEntry
 import nl.pe1mew.zangbundel.core.songformat.ReportLevel
+import nl.pe1mew.zangbundel.platform.storage.Changes
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
 import nl.pe1mew.zangbundel.platform.storage.LibraryRow
 import java.text.DateFormat
@@ -61,7 +65,7 @@ import java.util.Date
 /**
  * The *Bibliotheek* screen (guiDesign D-50): the installed libraries with their colour (D-51), and
  * *Bibliotheek toevoegen*, online or from a file, through the found release, the licence and the
- * import report. *Bijwerken* and *Uit* / *Aan* are not built yet.
+ * import report; per library *Bijwerken* with what changed, *Aan* / *Uit* and *Verwijderen*.
  */
 @Composable
 fun LibraryScreen(model: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)) {
@@ -72,8 +76,9 @@ fun LibraryScreen(model: LibraryViewModel = viewModel(factory = LibraryViewModel
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             Text(stringResource(R.string.library_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
-            if (step == null) Libraries(state.libraries, onAdd = model::add, onRemove = model::askRemove)
-            else Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) { AddStep(step, model) }
+            if (step == null) Libraries(state.libraries, onAdd = model::add, onAddDefault = model::addDefault, onUpdate = model::update,
+                onEnabled = model::setEnabled, onRemove = model::askRemove)
+            else Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) { AddStep(step, model, state.offerDefault) }
         }
     }
     state.confirmRemove?.let { library ->
@@ -88,30 +93,64 @@ fun LibraryScreen(model: LibraryViewModel = viewModel(factory = LibraryViewModel
 }
 
 @Composable
-private fun ColumnScope.Libraries(libraries: List<LibraryRow>, onAdd: () -> Unit, onRemove: (LibraryRow) -> Unit) {
+private fun ColumnScope.Libraries(
+    libraries: List<LibraryRow>,
+    onAdd: () -> Unit,
+    onAddDefault: () -> Unit,
+    onUpdate: (LibraryRow) -> Unit,
+    onEnabled: (LibraryRow, Boolean) -> Unit,
+    onRemove: (LibraryRow) -> Unit,
+) {
     if (libraries.isEmpty()) {
-        Text(stringResource(R.string.library_empty), modifier = Modifier.fillMaxWidth().textPanel().padding(16.dp))
+        // FR-LIB-02: the default library is pre-configured and offered here; it is added only on this tap (FR-LIB-12).
+        Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) {
+            Text(stringResource(R.string.library_empty))
+            Spacer(Modifier.height(16.dp))
+            DefaultOffer(onAddDefault)
+        }
         Spacer(Modifier.weight(1f))
     } else {
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(libraries, key = { it.id }) { LibraryItem(it, onRemove) }
+            items(libraries, key = { it.id }) { LibraryItem(it, onUpdate, onEnabled, onRemove) }
         }
     }
     Spacer(Modifier.height(16.dp))
-    Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.library_add)) }
+    if (libraries.isEmpty()) OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.library_add)) }
+    else Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.library_add)) }
+}
+
+/** The default library (FR-LIB-02), with where it comes from; the release, size and licence follow as for any library. */
+@Composable
+private fun DefaultOffer(onAddDefault: () -> Unit) {
+    Text(stringResource(R.string.library_default), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.library_default_hint, DefaultLibrary.NAME), style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(8.dp))
+    Button(onClick = onAddDefault, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.library_add_named, DefaultLibrary.NAME)) }
 }
 
 @Composable
-private fun LibraryItem(library: LibraryRow, onRemove: (LibraryRow) -> Unit) {
-    Row(Modifier.fillMaxWidth().textPanel().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        ColourSquare(library.colour)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(library.name, fontWeight = FontWeight.Bold)
-            Text(pluralStringResource(R.plurals.library_songs, library.songCount, library.songCount), style = MaterialTheme.typography.bodySmall)
-            Text(revisionLine(library), style = MaterialTheme.typography.bodySmall)
+private fun LibraryItem(library: LibraryRow, onUpdate: (LibraryRow) -> Unit, onEnabled: (LibraryRow, Boolean) -> Unit, onRemove: (LibraryRow) -> Unit) {
+    Column(Modifier.fillMaxWidth().textPanel().padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // A library that is off stays installed but leaves the songbook (D-50); its row is dimmed.
+            Row(Modifier.weight(1f).alpha(if (library.enabled) 1f else 0.5f), verticalAlignment = Alignment.CenterVertically) {
+                ColourSquare(library.colour)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(library.name, fontWeight = FontWeight.Bold)
+                    Text(pluralStringResource(R.plurals.library_songs, library.songCount, library.songCount), style = MaterialTheme.typography.bodySmall)
+                    Text(revisionLine(library), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Switch(checked = library.enabled, onCheckedChange = { onEnabled(library, it) })
+                Text(stringResource(if (library.enabled) R.string.library_on else R.string.library_off), style = MaterialTheme.typography.labelSmall)
+            }
         }
-        TextButton(onClick = { onRemove(library) }) { Text(stringResource(R.string.library_remove)) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = { onUpdate(library) }) { Text(stringResource(R.string.library_update)) }
+            TextButton(onClick = { onRemove(library) }) { Text(stringResource(R.string.library_remove)) }
+        }
     }
 }
 
@@ -136,9 +175,9 @@ private fun revisionLine(library: LibraryRow): String {
 }
 
 @Composable
-private fun ColumnScope.AddStep(step: LibraryViewModel.Step, model: LibraryViewModel) {
+private fun ColumnScope.AddStep(step: LibraryViewModel.Step, model: LibraryViewModel, offerDefault: Boolean) {
     when (step) {
-        LibraryViewModel.Step.Choose -> Choose(model)
+        LibraryViewModel.Step.Choose -> Choose(model, offerDefault)
         LibraryViewModel.Step.Busy -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(Modifier.size(24.dp))
             Spacer(Modifier.width(12.dp))
@@ -148,6 +187,7 @@ private fun ColumnScope.AddStep(step: LibraryViewModel.Step, model: LibraryViewM
             val release = step.release
             Text(stringResource(R.string.library_found), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
+            step.installed?.let { Text(stringResource(R.string.library_installed_now, it.version ?: it.revision.take(12))) }
             release.version?.let { Text(stringResource(R.string.library_found_version, it)) }
             Text(release.size?.let { stringResource(R.string.library_found_size, Formatter.formatShortFileSize(LocalContext.current, it)) }
                 ?: stringResource(R.string.library_found_size_unknown))
@@ -161,17 +201,27 @@ private fun ColumnScope.AddStep(step: LibraryViewModel.Step, model: LibraryViewM
             step.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             Buttons(stringResource(R.string.library_try_again), model::add, model::cancel)
         }
+        is LibraryViewModel.Step.UpToDate -> {
+            Text(stringResource(R.string.library_up_to_date, step.library.name), style = MaterialTheme.typography.titleMedium)
+            step.library.version?.let { Text(stringResource(R.string.library_found_version, it)) }
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = model::cancel, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.done)) }
+        }
         is LibraryViewModel.Step.Licence -> Licence(step.checked, model)
         is LibraryViewModel.Step.Report -> Report(step.checked, step.outcome, model::cancel)
     }
 }
 
 @Composable
-private fun Choose(model: LibraryViewModel) {
+private fun Choose(model: LibraryViewModel, offerDefault: Boolean) {
     var url by rememberSaveable { mutableStateOf("") }
     val resolver = LocalContext.current.contentResolver
     // A .zbl has no registered type, so the picker shows every file; the archive check decides (FR-LIB-16).
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) model.file(resolver, uri) }
+    if (offerDefault) {
+        DefaultOffer(model::addDefault)
+        Spacer(Modifier.height(24.dp))
+    }
     Text(stringResource(R.string.library_online), style = MaterialTheme.typography.titleMedium)
     Text(stringResource(R.string.library_online_hint), style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(8.dp))
@@ -212,19 +262,31 @@ private fun ColumnScope.Report(checked: LibraryRepository.Checked, outcome: Libr
     val warnings = report.filter { it.level == ReportLevel.WARNING }
     val refusals = report.filter { it.level == ReportLevel.LIBRARY_ERROR }
     if (installed != null) {
-        Text(stringResource(R.string.library_installed, installed.library.name), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(if (installed.previous == null) R.string.library_installed else R.string.library_updated, installed.library.name),
+            style = MaterialTheme.typography.titleMedium)
         Text(stringResource(R.string.library_report_counts, installed.songs, skipped.map { it.path }.distinct().size, warnings.size))
     } else {
         Text(stringResource(R.string.library_refused), style = MaterialTheme.typography.titleMedium)
     }
     Spacer(Modifier.height(8.dp))
     LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        installed?.changes?.let { changes(it) }
         reportSection(R.string.library_report_refused, refusals)
         reportSection(R.string.library_report_skipped, skipped)
         reportSection(R.string.library_report_warnings, warnings)
     }
     Spacer(Modifier.height(16.dp))
     Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.done)) }
+}
+
+/** FR-LIB-11: what an update added, changed and removed, by title. */
+private fun androidx.compose.foundation.lazy.LazyListScope.changes(changes: Changes) {
+    item { Text(stringResource(R.string.library_changes), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
+    if (changes.none) item { Text(stringResource(R.string.library_changes_none)) }
+    for ((label, titles) in listOf(R.string.library_changes_added to changes.added, R.string.library_changes_changed to changes.changed,
+        R.string.library_changes_removed to changes.removed)) {
+        if (titles.isNotEmpty()) item { Text(stringResource(label) + ": " + titles.joinToString(", ")) }
+    }
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.reportSection(title: Int, entries: List<ReportEntry>) {

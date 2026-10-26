@@ -2,6 +2,8 @@
 package nl.pe1mew.zangbundel.platform.storage
 
 import android.content.Context
+import androidx.room.AutoMigration
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -34,6 +36,9 @@ data class LibraryEntity(
     val installedAt: Long,
     val colour: Int,
     val songCount: Int,
+    /** Added in version 2; libraries installed before are on. */
+    @ColumnInfo(defaultValue = "1") val enabled: Boolean,
+    val releaseIndex: String?,
 )
 
 /** A song of an installed library ([SongRow]); `hash` is how the engine finds a local copy (FR-BLE-12). */
@@ -92,12 +97,15 @@ abstract class LibraryDao {
     @Query("SELECT * FROM song WHERE hash = :hash LIMIT 1")
     abstract suspend fun songByHash(hash: String): SongEntity?
 
-    /** [match] is an FTS4 MATCH expression, built by the caller from what the user typed. */
-    @Query("SELECT song.* FROM song JOIN song_fts ON song.libraryId = song_fts.libraryId AND song.songId = song_fts.songId WHERE song_fts MATCH :match")
+    /** [match] is an FTS4 MATCH expression, built by the caller from what the user typed; disabled libraries are left out (D-50). */
+    @Query("SELECT song.* FROM song JOIN song_fts ON song.libraryId = song_fts.libraryId AND song.songId = song_fts.songId JOIN library ON library.id = song.libraryId WHERE library.enabled = 1 AND song_fts MATCH :match")
     abstract suspend fun search(match: String): List<SongEntity>
 
     @Query("SELECT * FROM setlist WHERE libraryId = :libraryId ORDER BY title")
     abstract suspend fun setlists(libraryId: String): List<SetlistEntity>
+
+    @Query("UPDATE library SET enabled = :enabled WHERE id = :id")
+    abstract suspend fun setEnabled(id: String, enabled: Boolean)
 
     @Query("SELECT * FROM report WHERE libraryId = :libraryId ORDER BY id")
     abstract suspend fun report(libraryId: String): List<ReportEntity>
@@ -137,8 +145,10 @@ abstract class LibraryDao {
 
 @Database(
     entities = [LibraryEntity::class, SongEntity::class, SongFtsEntity::class, SetlistEntity::class, ReportEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    // 2: library.enabled and library.releaseIndex. Every later version adds its migration here.
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 abstract class ZangbundelDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
@@ -157,7 +167,7 @@ class RoomLibraryIndex(private val dao: LibraryDao) : LibraryIndex {
     override suspend fun replace(plan: InstallPlan) {
         val l = plan.library
         dao.replace(
-            LibraryEntity(l.id, l.name, l.description, l.revision, l.directory, l.version, l.created, l.source, l.repository, l.ref, l.archiveSha256, l.formatVersion, l.licenseId, l.licenseSummary, l.installedAt, l.colour, l.songCount),
+            LibraryEntity(l.id, l.name, l.description, l.revision, l.directory, l.version, l.created, l.source, l.repository, l.ref, l.archiveSha256, l.formatVersion, l.licenseId, l.licenseSummary, l.installedAt, l.colour, l.songCount, l.enabled, l.releaseIndex),
             plan.songs.map { SongEntity(it.libraryId, it.songId, it.fileName, it.sourcePath, it.title, it.sortTitle, it.language, it.hash, it.tags.joinToString("\n"), it.variantGroup, it.redistribute, it.licenseSummary) },
             plan.songs.map { SongFtsEntity(it.libraryId, it.songId, it.title, it.searchText) },
             plan.setlists.map { SetlistEntity(it.libraryId, it.setlistId, it.fileName, it.title, it.description, it.entries) },
@@ -170,7 +180,11 @@ class RoomLibraryIndex(private val dao: LibraryDao) : LibraryIndex {
     override suspend fun all(): List<LibraryRow> = dao.all().map(::row)
 
     private fun row(it: LibraryEntity) =
-        LibraryRow(it.id, it.name, it.description, it.revision, it.directory, it.version, it.created, it.source, it.repository, it.ref, it.archiveSha256, it.formatVersion, it.licenseId, it.licenseSummary, it.installedAt, it.colour, it.songCount)
+        LibraryRow(it.id, it.name, it.description, it.revision, it.directory, it.version, it.created, it.source, it.repository, it.ref, it.archiveSha256, it.formatVersion, it.licenseId, it.licenseSummary, it.installedAt, it.colour, it.songCount, it.enabled, it.releaseIndex)
 
     override suspend fun remove(libraryId: String) = dao.remove(libraryId)
+
+    override suspend fun songs(libraryId: String): List<InstalledSong> = dao.songs(libraryId).map { InstalledSong(it.songId, it.title, it.hash) }
+
+    override suspend fun setEnabled(libraryId: String, enabled: Boolean) = dao.setEnabled(libraryId, enabled)
 }

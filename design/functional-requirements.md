@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.13 (draft) |
-| Date | 2026-10-25 |
+| Version | 0.14 (draft) |
+| Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -23,6 +23,7 @@
 | 0.11 | 2026-10-22 | `design/architecture.md` decided by the owner (v0.2): Q7 resolved (minimum SDK 26, tablets use the phone layouts in P1, A-01, A-02); Q11 resolved for the package (every install is one APK with bundle splits disabled, A-18), its store-update part stays open as architecture Q1. Section 19 marks the architecture document and the assessment's current version as existing. No requirement changed. |
 | 0.12 | 2026-10-25 | Open question Q14 on NFR-PERF-01 and FR-BLE-03, from the first two-phone measurements (`design/test-results/2026-10-25-D-05.md`) and the erasure-coding proposal (`design/proposals/2026-10-25-erasure-coding.md`). No requirement changed. |
 | 0.13 | 2026-10-25 | FR-SING-05 added at the owner's request: a singer can switch on a bar that shows the reception of the current song and the setlist block by block (green received, white still to come, orange missed); off at every app start, switched on only in the settings, hidden by a tap. |
+| 0.14 | 2026-10-26 | Q3 resolved by the owner: the default library of FR-LIB-02 is `github.com/pe1mew/Zangbundel-bibliotheek`, offered on an empty library screen and added only on a tap. No requirement changed. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -587,7 +588,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 |---|---|---|
 | Q1 | What is the realistic maximum number of singers per gathering (FR-BLE-10)? 25, 50, 100? This drives the BLE distribution design. | BLE protocol design |
 | Q2 | Must singers be able to see upcoming songs in the setlist, or only what has been sung? (FR-SING-03 assumes the leader can choose.) | Leader UI |
-| Q3 | Should the default library be a repository under the project's own control, and who maintains it? | Library governance, FR-LIB-02 |
+| Q3 | *Resolved 2026-10-26 (v0.14), by the owner:* the default library is the project's own separate repository `github.com/pe1mew/Zangbundel-bibliotheek`, maintained by the maintainer its `zangbundel.json` names (the owner), with its own validator and contribution rules. The app ships its URL, offers it on an empty library screen and in *Bibliotheek toevoegen* while it is not installed, adds it only on a tap (FR-LIB-12) and lists it first (`design/guiDesign.md` D-50). | Resolved |
 | Q4 | Do we adopt ChordPro as the song format, or define our own Markdown/YAML-based format? | Song format spec, P3 |
 | Q5 | *Closed 2026-10-19 (v0.9):* not in P1. A leader who has to stop ends the gathering and another adult starts a new one from the same setlist (exported file or library setlist); singers rejoin. FR-GATH-14 stays a MAY for a later phase (`design/guiDesign.md` D-72). | Resolved |
 | Q6 | *Closed 2026-10-18 (assessment SP-02):* the gathering memory holds no names on either side; titles, date and count only (FR-DATA-03 v0.6). | Resolved |
