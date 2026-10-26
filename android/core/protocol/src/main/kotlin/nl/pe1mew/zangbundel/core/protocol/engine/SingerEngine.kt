@@ -10,6 +10,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import nl.pe1mew.zangbundel.core.model.GatheringId
 import nl.pe1mew.zangbundel.core.model.SongRef
 import nl.pe1mew.zangbundel.core.protocol.Crypto
@@ -22,11 +23,14 @@ import nl.pe1mew.zangbundel.core.protocol.frame.FrameCodec
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.gatt.GattClient
 import nl.pe1mew.zangbundel.core.protocol.payload.ByteRange
+import nl.pe1mew.zangbundel.core.protocol.payload.ControlCommand
+import nl.pe1mew.zangbundel.core.protocol.payload.Deflate
 import nl.pe1mew.zangbundel.core.protocol.payload.DocEntry
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.FieldSizes
 import nl.pe1mew.zangbundel.core.protocol.payload.Info
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinRequest
+import nl.pe1mew.zangbundel.core.protocol.payload.PayloadLimits
 import nl.pe1mew.zangbundel.core.protocol.payload.SignedState
 import nl.pe1mew.zangbundel.core.protocol.payload.StateBody
 import nl.pe1mew.zangbundel.core.protocol.payload.TransferRequest
@@ -50,7 +54,7 @@ class SingerEngine(
     private val name: String? = null,
     /** Whether the singer's library holds this song (10.3 step 3); the app answers from its index. */
     private val hasSong: (SongRef) -> Boolean = { false },
-    random: Random = Random.Default,
+    private val random: Random = Random.Default,
 ) {
     sealed interface Event {
         val at: Long
@@ -59,7 +63,12 @@ class SingerEngine(
         data class FellBackToLegacy(override val at: Long) : Event
         data class Joined(override val at: Long, val result: Int) : Event
         /** A verified document, by broadcast or by repair. */
-        class Delivered(override val at: Long, val doc: Int, val dv: Int, val bytes: ByteArray, val viaRepair: Boolean) : Event
+        class Delivered(override val at: Long, val doc: Int, val dv: Int, val bytes: ByteArray, val viaRepair: Boolean, val enc: Int = Deflate.ENC_RAW) : Event {
+            /** The document itself (7.3): [bytes] as framed, inflated when the manifest says DEFLATE, never past [maxOutput]. */
+            fun document(maxOutput: Int = PayloadLimits.DOCUMENT_DECODED): ByteArray = Deflate.unframe(enc, bytes, maxOutput)
+        }
+        /** 10.11: the gathering ended, by the beacon's `ENDED`, a final state, a refused Join, or 5 minutes of silence. */
+        data class Ended(override val at: Long) : Event
         /** The current song is in the singer's own library (FR-BLE-04 with a local copy, 10.3 step 3); nothing to collect. */
         data class LocalSong(override val at: Long, val ref: SongRef) : Event
         /** One repair connection: what it asked for, whether it got through, how long it took, and why not ([failure]). */
@@ -116,6 +125,46 @@ class SingerEngine(
                 (doc to dv) in held -> Reception(doc, listOf(Reassembler.Block.RECEIVED))
                 else -> Reception(doc, emptyList())
             }
+        }
+    }
+
+    /**
+     * Leaving on purpose (FR-GATH-07, 10.11 as of v0.29): a registered singer tells the leader with
+     * Control op 10 so the count drops at once, retrying after a failed connection until it is through
+     * or [budgetMs] have passed; the engine stops listening first. The caller need not wait: the user is
+     * home already and has discarded what the gathering left (FR-DATA-01). Returns whether the leader
+     * accepted the notice.
+     */
+    suspend fun leave(budgetMs: Long = LEAVE_BUDGET_MS): Boolean {
+        val fx = mutex.withLock { machine.handle(SingerMachine.Event.LeaveRequested(clock())) }
+        mutex.withLock { apply(fx.filter { it != SingerMachine.Effect.SendLeave }) }
+        if (SingerMachine.Effect.SendLeave !in fx) return false
+        val deadline = clock() + budgetMs
+        while (true) {
+            val left = deadline - clock()
+            if (left <= 0) return false
+            when (withTimeoutOrNull(left) { sendLeave() }) {
+                Sent.YES -> return true
+                Sent.REFUSED, null -> return false              // refused (0x80, 0x88), or out of time
+                Sent.UNREACHABLE -> delay(LEAVE_RETRY_MS)
+            }
+        }
+    }
+
+    private enum class Sent { YES, REFUSED, UNREACHABLE }
+
+    private suspend fun sendLeave(): Sent {
+        val (address, g, tok, ek) = mutex.withLock { listOf(leader, gid, token, state?.body?.ek) }
+        if (address !is Transport.DeviceAddress || g !is GatheringId || tok !is ByteArray || ek !is ByteArray) return Sent.REFUSED
+        val client = try { GattClient(transport.connect(address), crypto) } catch (e: Transport.GattException) { return Sent.UNREACHABLE }
+        return try {
+            client.control(ControlCommand(tok, random.nextBytes(FieldSizes.COMMAND_ID), ControlCommand.LEAVE, gid = g), ek)
+            Sent.YES
+        } catch (e: Transport.GattException) {
+            // 10.11: refused (0x80, 0x88) or the link broke; the singer has left anyway and the leader's 10-minute rule catches up.
+            if (e.status == Transport.CONNECTION_FAILED) Sent.UNREACHABLE else Sent.REFUSED
+        } finally {
+            runCatching { client.close() }
         }
     }
 
@@ -227,7 +276,8 @@ class SingerEngine(
 
     private fun deliver(c: Reassembler.Result.Complete, viaRepair: Boolean) {
         val now = clock()
-        _events.tryEmit(Event.Delivered(now, c.doc, c.dv, c.bytes, viaRepair))
+        val enc = state?.body?.docs?.get(c.doc)?.enc ?: Deflate.ENC_RAW // states and Info are never framed
+        _events.tryEmit(Event.Delivered(now, c.doc, c.dv, c.bytes, viaRepair, enc))
         apply(machine.handle(SingerMachine.Event.DocumentComplete(now, c.doc, c.dv)))
     }
 
@@ -239,6 +289,7 @@ class SingerEngine(
             SingerMachine.Effect.StopScan -> scope.launch { transport.stopScan() }
             is SingerMachine.Effect.Register -> scope.launch { delay(e.delayMs); register() }
             is SingerMachine.Effect.Repair -> scope.launch { delay(e.delayMs); repair(e.groups) }
+            SingerMachine.Effect.ShowEnded -> _events.tryEmit(Event.Ended(clock()))
             else -> {}        // what the user sees is the app's
         }
     }
@@ -355,6 +406,9 @@ class SingerEngine(
 
     companion object {
         const val TICK_MS = 250L
+        /** 10.11 (v0.29): the leave notice is tried, in the background, for at most this long. */
+        const val LEAVE_BUDGET_MS = 10_000L
+        const val LEAVE_RETRY_MS = 300L
         /** 7.1 (v0.23): no extended frame within this long of selecting the gathering: fall back to legacy. */
         const val CARRIER_FALLBACK_MS = 3_000L
     }

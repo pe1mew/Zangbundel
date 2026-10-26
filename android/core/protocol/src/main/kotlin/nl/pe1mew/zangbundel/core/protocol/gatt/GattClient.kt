@@ -7,6 +7,7 @@ import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.payload.ByteRange
+import nl.pe1mew.zangbundel.core.protocol.payload.ControlCommand
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinRequest
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.protocol.payload.PayloadLimits
@@ -63,6 +64,9 @@ class GattClient(private val connection: Transport.Connection, private val crypt
         val result = receiver.result() ?: return Transfer.Failed(receiver.errorCode, receiver.failure ?: "no result")
         return Transfer.Done(receiver.header!!, result)
     }
+
+    /** 9.8: a Control command sealed to [ek]; the leader's answer is the write's status (8.3), thrown as [Transport.GattException]. */
+    suspend fun control(command: ControlCommand, ek: ByteArray) = connection.write(ProtocolConstants.CHAR_CONTROL, Sealed.control(command, ek, crypto))
 
     suspend fun close() = connection.close()
 

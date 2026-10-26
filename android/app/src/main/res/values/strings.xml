@@ -15,7 +15,6 @@
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
     <!-- Home screen (guiDesign D-21). -->
-    <string name="home_join">Join a campfire</string>
     <string name="home_start">Start a campfire</string>
     <!-- Songbook and reading a song (guiDesign D-52, D-53). -->
     <string name="home_songbook">Songbook</string>
@@ -189,4 +188,61 @@
     <string name="song_in_setlist">In the setlist</string>
     <string name="song_in_named">In \"%s\"</string>
     <string name="song_choose_setlist">Which setlist?</string>
+    <!-- Gatherings: home, start, leader, singer (guiDesign D-22 to D-27, D-29, D-34, D-55, D-56, D-61). -->
+    <string name="home_bluetooth_why">To join a campfire or start one, this phone needs Bluetooth and the permission to find nearby devices. The app reads no location and sends nothing to the internet for this.</string>
+    <string name="home_bluetooth_allow">Allow Bluetooth</string>
+    <string name="home_bluetooth_on">Switch Bluetooth on</string>
+    <string name="home_searching">Looking for campfires…</string>
+    <string name="home_qr_help">Or scan the leader\'s QR code with your camera app.</string>
+    <string name="home_nearby">Campfires nearby</string>
+    <string name="home_start_self">Start a campfire yourself</string>
+    <string name="home_listening">Listening… %d s</string>
+    <string name="home_cannot_lead">This phone can join a campfire, but cannot start one.</string>
+    <string name="home_refused_title">A campfire is already running</string>
+    <string name="home_refused_text">%s is nearby. Join it, or move out of range to start your own.</string>
+    <string name="home_join_named">Join %s</string>
+    <string name="home_signal_strong">Close by</string>
+    <string name="home_signal_fair">Within reach</string>
+    <string name="home_signal_weak">Far away</string>
+    <string name="start_title">Start a campfire</string>
+    <string name="start_name">Name of the campfire</string>
+    <string name="start_default_name">Campfire %s</string>
+    <string name="start_setlist">Setlist</string>
+    <string name="start_no_setlist">No setlist</string>
+    <string name="start_start">Start</string>
+    <string name="start_failed">The campfire could not start: Bluetooth refused to advertise. Try again, or restart Bluetooth.</string>
+    <string name="leader_now">Now</string>
+    <string name="leader_state_current">being sung</string>
+    <string name="leader_state_sung">sung</string>
+    <string name="leader_end">Close</string>
+    <string name="leader_end_title">Close the campfire?</string>
+    <string name="leader_end_text">Singers see that the campfire has ended, and the lyrics leave their phones.</string>
+    <string name="leader_no_setlist">No setlist was chosen. Start again with a setlist to push songs.</string>
+    <string name="singer_connecting">connecting…</string>
+    <string name="singer_connected">connected</string>
+    <string name="singer_reconnecting">reconnecting…</string>
+    <string name="singer_ended">ended</string>
+    <string name="singer_waiting">Waiting for the first song…</string>
+    <string name="singer_receiving">Coming in…</string>
+    <string name="singer_library_only">Only shown with the library %s installed.</string>
+    <string name="singer_ended_banner">%s has ended · tap to leave</string>
+    <string name="singer_leave_title">Leave the campfire?</string>
+    <string name="singer_leave_text">You will no longer see the lyrics.</string>
+    <string name="singer_leave">Leave</string>
+    <string name="singer_stay">Stay</string>
+    <plurals name="leader_singers">
+        <item quantity="one">%d singer</item>
+        <item quantity="other">%d singers</item>
+    </plurals>
+    <!-- Memories (guiDesign D-49). -->
+    <string name="memories_title">Memories</string>
+    <string name="memories_empty">No memories yet. After each campfire the list of songs sung is kept here.</string>
+    <string name="memories_delete_all">Delete all</string>
+    <string name="memories_delete_all_title">Delete all memories?</string>
+    <string name="memories_delete">Delete</string>
+    <string name="memories_delete_title">Delete this memory?</string>
+    <string name="memories_delete_text">Only the list of songs goes; your libraries stay.</string>
+    <string name="memories_share">Share the list</string>
+    <string name="memories_from_leader">The words came from the leader that evening</string>
+    <string name="memories_led">led, %s</string>
 </resources>

@@ -91,6 +91,7 @@ data class SongbookRow(
     val language: String,
     val tags: String,
     val fileName: String,
+    val hash: String,
     val libraryName: String,
     val colour: Int,
     val directory: String,
@@ -134,7 +135,7 @@ abstract class LibraryDao {
 
     /** The combined songbook [FR-LIB-30]: every song of an enabled library, with what its row shows (D-52). */
     @Query(
-        "SELECT song.libraryId, song.songId, song.title, song.sortTitle, song.language, song.tags, song.fileName, " +
+        "SELECT song.libraryId, song.songId, song.title, song.sortTitle, song.language, song.tags, song.fileName, song.hash, " +
             "library.name AS libraryName, library.colour AS colour, library.directory AS directory " +
             "FROM song JOIN library ON library.id = song.libraryId WHERE library.enabled = 1",
     )
@@ -194,16 +195,17 @@ abstract class LibraryDao {
 @Database(
     entities = [
         LibraryEntity::class, SongEntity::class, SongFtsEntity::class, SetlistEntity::class, ReportEntity::class,
-        PreparedSetlistEntity::class, PreparedEntryEntity::class,
+        PreparedSetlistEntity::class, PreparedEntryEntity::class, MemoryEntity::class, MemorySongEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    // 2: library.enabled and library.releaseIndex. 3: prepared setlists (guiDesign D-54). Every later version adds its migration here.
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    // 2: library.enabled and library.releaseIndex. 3: prepared setlists (guiDesign D-54). 4: gathering memories (D-49). Every later version adds its migration here.
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 abstract class ZangbundelDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
     abstract fun preparedSetlistDao(): PreparedSetlistDao
+    abstract fun memoryDao(): MemoryDao
 
     companion object {
         const val NAME = "zangbundel.db"

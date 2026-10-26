@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.28 (draft) |
+| Document version | 0.29 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -41,6 +41,7 @@
 | 0.26 | 2026-10-25 | Depends on FRD v0.13 (FR-SING-05, the singer's reception bar); no other change. |
 | 0.27 | 2026-10-26 | Depends on FRD v0.14 (Q3 resolved: the default library is `github.com/pe1mew/Zangbundel-bibliotheek`); no other change. |
 | 0.28 | 2026-10-26 | Depends on FRD v0.15 (FR-NET-01 and FR-NET-03 widened to setlist addresses); no other change. |
+| 0.29 | 2026-10-26 | 10.11, from the phones (`design/test-results/2026-10-26-D-03-05-07.md`, D-07): the leave notice is sent in the background after the user is home, retried after a failed connection for up to 10 s, instead of one attempt within 2 s. Connect, MTU and write take 1.2–1.6 s on the Huawei when the connect is quick, and the 2 s budget missed 2 of 6 attempts. No wire change. |
 
 ---
 
@@ -770,7 +771,7 @@ Connections now occur for registration, requests, delegate commands and repair. 
 
 On `ENDED` in the beacon, `status` 1 in a verified state, or the 5-minute timeout: show "gathering ended", delete all documents received during the gathering [FR-DATA-01, FR-DATA-06], write the gathering memory from the last verified setlist [FR-DATA-03].
 
-**Leaving voluntarily** [FR-GATH-07] has the same local effect, preceded by a best-effort notice to the leader: after the user confirms, the singer connects, writes Control op 10 (9.8) and disconnects, then cleans up. The write is attempted once with the normal backoff for at most 2 s; if the leader cannot be reached, or answers `0x80` or `0x88`, the singer leaves anyway and the leader's 10-minute rule (10.9) catches up. The singer discards its token, `sid`, `xk` and the pinned `pk` afterwards; rejoining later is a fresh registration.
+**Leaving voluntarily** [FR-GATH-07] has the same local effect, preceded by a best-effort notice to the leader: after the user confirms, the singer stops listening, cleans up and returns the user to the start at once; in the background it connects, writes Control op 10 (9.8) and disconnects. A connection that fails is retried after 300 ms, for at most 10 s in all *(v0.29; was one attempt within 2 s)*; if the leader answers `0x80` or `0x88`, or 10 s pass, the singer gives up and the leader's 10-minute rule (10.9) catches up. The singer discards its token, `sid`, `xk` and the pinned `pk` afterwards; rejoining later is a fresh registration.
 
 ### 10.12 Delegates
 

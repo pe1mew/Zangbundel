@@ -30,14 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.ParagraphStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -53,11 +48,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
+import nl.pe1mew.zangbundel.app.ui.LyricBody
+import nl.pe1mew.zangbundel.app.ui.LyricColors
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.app.ui.setlists.NameDialog
-import nl.pe1mew.zangbundel.core.songformat.Item
-import nl.pe1mew.zangbundel.core.songformat.Kind
-import nl.pe1mew.zangbundel.core.songformat.Part
 import nl.pe1mew.zangbundel.core.songformat.Song
 import nl.pe1mew.zangbundel.core.songformat.SongParser
 import nl.pe1mew.zangbundel.platform.storage.PreparedSetlist
@@ -215,30 +209,8 @@ private fun AddButton(target: SongViewModel.Target, model: SongViewModel) {
 
 @Composable
 private fun Lyrics(entry: SongbookEntry, song: Song) {
-    val line = TextStyle(fontSize = 28.sp, lineHeight = 36.sp, color = Lyric)
-    val wrap = ParagraphStyle(textIndent = TextIndent(firstLine = 0.sp, restLine = 1.em))
-    Text(song.meta.title, style = line.copy(fontWeight = FontWeight.Bold))
+    Text(song.meta.title, fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold, color = Lyric)
     Text(listOf(entry.libraryName, entry.language).joinToString(" · "), fontSize = 14.sp, color = Secondary)
-    for (part in song.body) {
-        Spacer(Modifier.height(20.dp))
-        when (part) {
-            is Part.Remark -> Text(part.text, fontSize = 16.sp, fontStyle = FontStyle.Italic, color = Secondary)
-            is Part.Section -> {
-                Text(sectionLabel(part), fontSize = 14.sp, color = Secondary)
-                for (item in part.items) when (item) {
-                    is Item.Line -> Text(item.text, style = line.merge(wrap))
-                    is Item.Remark -> Text(item.text, fontSize = 16.sp, fontStyle = FontStyle.Italic, color = Secondary)
-                    Item.Gap -> Spacer(Modifier.height(12.dp))
-                }
-            }
-        }
-    }
-}
-
-/** The label as written, or one generated in the app's language (song-format 7.1, guiDesign D-75). */
-@Composable
-private fun sectionLabel(section: Part.Section): String = section.label ?: when (section.kind) {
-    Kind.VERSE -> section.verseNumber?.let { stringResource(R.string.song_verse_n, it) } ?: stringResource(R.string.song_verse)
-    Kind.CHORUS -> stringResource(R.string.song_chorus)
-    Kind.BRIDGE -> stringResource(R.string.song_bridge)
+    Spacer(Modifier.height(20.dp))
+    LyricBody(song, LyricColors.Day)
 }

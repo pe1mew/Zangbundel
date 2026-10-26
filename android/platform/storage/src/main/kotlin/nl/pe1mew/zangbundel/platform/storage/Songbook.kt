@@ -19,6 +19,8 @@ data class SongbookEntry(
     /** The installed revision's directory and the song's file in it, for [Songbook.read]. */
     val directory: String,
     val fileName: String,
+    /** The content hash in hex (song-format 8.2): how a pushed song is matched to a local copy (ble-protocol 10.3, FR-BLE-12). */
+    val hash: String = "",
 )
 
 /**
@@ -62,7 +64,7 @@ object FtsQuery {
 class RoomSongbook(private val dao: LibraryDao, private val files: LibraryFiles) : Songbook {
     override suspend fun entries(): List<SongbookEntry> = dao.songbook().map {
         SongbookEntry(it.libraryId, it.songId, it.title, it.sortTitle, it.language, it.tags.split('\n').filter(String::isNotEmpty),
-            it.libraryName, it.colour, it.directory, it.fileName)
+            it.libraryName, it.colour, it.directory, it.fileName, it.hash)
     }
 
     override suspend fun searchText(input: String): Set<String> {

@@ -1,0 +1,104 @@
+// SPDX-License-Identifier: Apache-2.0
+package nl.pe1mew.zangbundel.app.ui.gathering
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import nl.pe1mew.zangbundel.app.R
+import nl.pe1mew.zangbundel.app.ZangbundelApp
+import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
+import nl.pe1mew.zangbundel.app.ui.textPanel
+import nl.pe1mew.zangbundel.app.ui.theme.Palette
+import nl.pe1mew.zangbundel.core.protocol.payload.Info
+import nl.pe1mew.zangbundel.platform.storage.PreparedSetlist
+import java.text.SimpleDateFormat
+import java.util.Date
+
+/**
+ * Starting a gathering (guiDesign D-25): the proposed neutral name, never the device's name
+ * [FR-GATH-01, assessment SP-01], and the prepared setlist to begin with, or none [FR-LEAD-02];
+ * *Starten* switches into leader mode. The join code and the QR-only switch come with the QR code.
+ */
+@Composable
+fun StartScreen() {
+    val context = LocalContext.current
+    val container = remember { (context.applicationContext as ZangbundelApp).container }
+    val scope = rememberCoroutineScope()
+    val proposed = stringResource(R.string.start_default_name, SimpleDateFormat("d MMM", LocalConfiguration.current.locales[0]).format(Date()))
+    var name by rememberSaveable { mutableStateOf(proposed) }
+    var chosen by rememberSaveable { mutableStateOf<Long?>(null) }
+    var setlists by remember { mutableStateOf<List<PreparedSetlist>>(emptyList()) }
+    var starting by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { setlists = container.setlists.all() }
+    ConfigurationScreen {
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            Text(stringResource(R.string.start_title), style = MaterialTheme.typography.headlineMedium)
+            Spacer(Modifier.height(16.dp))
+            OutlinedTextField(name, { name = it.take(Info.NAME_MAX_CHARS) }, singleLine = true, label = { Text(stringResource(R.string.start_name)) }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.start_setlist), style = MaterialTheme.typography.titleMedium)
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().textPanel(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                item { Choice(stringResource(R.string.start_no_setlist), null, chosen == null) { chosen = null } }
+                items(setlists, key = { it.uid }) { s ->
+                    Choice(s.title, pluralStringResource(R.plurals.library_songs, s.songs, s.songs), chosen == s.uid) { chosen = s.uid }
+                }
+            }
+            if (failed) Text(stringResource(R.string.start_failed), color = Palette.FireOrangeLight, modifier = Modifier.padding(top = 8.dp))
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    starting = true
+                    failed = false
+                    scope.launch {
+                        // On success the mode changes and the app opens the leader's page.
+                        failed = runCatching { container.gathering.lead(name.trim().ifEmpty { proposed }, chosen) }.isFailure
+                        starting = false
+                    }
+                },
+                enabled = !starting,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) { Text(stringResource(R.string.start_start)) }
+        }
+    }
+}
+
+@Composable
+private fun Choice(title: String, detail: String?, selected: Boolean, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(selected = selected, onClick = onClick)
+        Column {
+            Text(title)
+            detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite) }
+        }
+    }
+}

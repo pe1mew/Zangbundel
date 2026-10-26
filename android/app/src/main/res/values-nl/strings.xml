@@ -14,7 +14,6 @@
     <string name="cancel">Annuleren</string>
     <string name="done">Klaar</string>
     <!-- Startscherm (guiDesign D-21). -->
-    <string name="home_join">Meezingen</string>
     <string name="home_start">Kampvuur starten</string>
     <!-- Liedboek en een lied lezen (guiDesign D-52, D-53). -->
     <string name="home_songbook">Liedboek</string>
@@ -188,4 +187,61 @@
     <string name="song_in_setlist">Staat in de setlist</string>
     <string name="song_in_named">Staat in \"%s\"</string>
     <string name="song_choose_setlist">Welke setlist?</string>
+    <!-- Kampvuren: start, leider, zanger (guiDesign D-22 tot D-27, D-29, D-34, D-55, D-56, D-61). -->
+    <string name="home_bluetooth_why">Om mee te zingen of een kampvuur te starten heeft deze telefoon Bluetooth nodig en toestemming om apparaten in de buurt te vinden. De app leest daarvoor geen locatie en stuurt niets naar internet.</string>
+    <string name="home_bluetooth_allow">Bluetooth toestaan</string>
+    <string name="home_bluetooth_on">Bluetooth aanzetten</string>
+    <string name="home_searching">Zoeken naar kampvuren…</string>
+    <string name="home_qr_help">Of scan de QR-code van de leider met je camera-app.</string>
+    <string name="home_nearby">Kampvuren in de buurt</string>
+    <string name="home_start_self">Zelf een kampvuur starten</string>
+    <string name="home_listening">Even luisteren… %d s</string>
+    <string name="home_cannot_lead">Dit toestel kan meezingen, maar geen kampvuur starten</string>
+    <string name="home_refused_title">Er brandt al een kampvuur</string>
+    <string name="home_refused_text">%s is in de buurt. Zing daar mee, of ga buiten bereik om je eigen kampvuur te starten.</string>
+    <string name="home_join_named">Meezingen met %s</string>
+    <string name="home_signal_strong">Dichtbij</string>
+    <string name="home_signal_fair">Binnen bereik</string>
+    <string name="home_signal_weak">Ver weg</string>
+    <string name="start_title">Kampvuur starten</string>
+    <string name="start_name">Naam van het kampvuur</string>
+    <string name="start_default_name">Kampvuur %s</string>
+    <string name="start_setlist">Setlist</string>
+    <string name="start_no_setlist">Geen setlist</string>
+    <string name="start_start">Starten</string>
+    <string name="start_failed">Het kampvuur kon niet starten: Bluetooth weigerde uit te zenden. Probeer het opnieuw, of zet Bluetooth uit en aan.</string>
+    <string name="leader_now">Nu</string>
+    <string name="leader_state_current">wordt gezongen</string>
+    <string name="leader_state_sung">gezongen</string>
+    <string name="leader_end">Afsluiten</string>
+    <string name="leader_end_title">Kampvuur afsluiten?</string>
+    <string name="leader_end_text">Zangers zien dat het kampvuur is afgelopen, en de liedteksten verdwijnen van hun telefoons.</string>
+    <string name="leader_no_setlist">Er is geen setlist gekozen. Start opnieuw met een setlist om liederen te sturen.</string>
+    <string name="singer_connecting">verbinden…</string>
+    <string name="singer_connected">verbonden</string>
+    <string name="singer_reconnecting">opnieuw verbinden…</string>
+    <string name="singer_ended">beëindigd</string>
+    <string name="singer_waiting">Wachten op het eerste lied…</string>
+    <string name="singer_receiving">Wordt ontvangen…</string>
+    <string name="singer_library_only">Alleen te zien met de bibliotheek %s.</string>
+    <string name="singer_ended_banner">%s is beëindigd · tik om te verlaten</string>
+    <string name="singer_leave_title">Kampvuur verlaten?</string>
+    <string name="singer_leave_text">Je ziet de liedteksten dan niet meer.</string>
+    <string name="singer_leave">Verlaten</string>
+    <string name="singer_stay">Blijven</string>
+    <plurals name="leader_singers">
+        <item quantity="one">%d zanger</item>
+        <item quantity="other">%d zangers</item>
+    </plurals>
+    <!-- Herinneringen (guiDesign D-49). -->
+    <string name="memories_title">Herinneringen</string>
+    <string name="memories_empty">Nog geen herinneringen. Na elk kampvuur wordt hier de lijst met gezongen liederen bewaard.</string>
+    <string name="memories_delete_all">Alles verwijderen</string>
+    <string name="memories_delete_all_title">Alle herinneringen verwijderen?</string>
+    <string name="memories_delete">Verwijderen</string>
+    <string name="memories_delete_title">Deze herinnering verwijderen?</string>
+    <string name="memories_delete_text">Alleen de lijst met liederen verdwijnt; je bibliotheken blijven.</string>
+    <string name="memories_share">Deel de lijst</string>
+    <string name="memories_from_leader">De tekst kwam die avond van de leider</string>
+    <string name="memories_led">geleid, %s</string>
 </resources>

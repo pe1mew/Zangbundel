@@ -2,6 +2,11 @@
 package nl.pe1mew.zangbundel.app.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,7 +15,13 @@ import androidx.navigation.navArgument
 import nl.pe1mew.zangbundel.app.diagnostics.BleTestScreen
 import nl.pe1mew.zangbundel.app.diagnostics.Diagnostics
 import nl.pe1mew.zangbundel.app.diagnostics.RadioCheckScreen
+import nl.pe1mew.zangbundel.app.gathering.Gathering
+import nl.pe1mew.zangbundel.app.ui.gathering.LeaderScreen
+import nl.pe1mew.zangbundel.app.ui.gathering.SingerScreen
+import nl.pe1mew.zangbundel.app.ui.gathering.StartScreen
 import nl.pe1mew.zangbundel.app.ui.library.LibraryScreen
+import nl.pe1mew.zangbundel.app.ui.memories.MemoriesScreen
+import nl.pe1mew.zangbundel.app.ui.memories.MemoryScreen
 import nl.pe1mew.zangbundel.app.ui.setlists.LibrarySetlistScreen
 import nl.pe1mew.zangbundel.app.ui.setlists.LibrarySetlistViewModel
 import nl.pe1mew.zangbundel.app.ui.setlists.SetlistScreen
@@ -21,11 +32,26 @@ import nl.pe1mew.zangbundel.app.ui.songbook.SongViewModel
 import nl.pe1mew.zangbundel.app.ui.songbook.SongbookScreen
 import nl.pe1mew.zangbundel.app.ui.theme.ZangbundelTheme
 
-/** Compose root: theme and navigation graph. Screens follow design/guiDesign.md; home, songbook, song, setlists and library exist yet. */
+/** Compose root: theme and navigation graph. Screens follow design/guiDesign.md; home, gatherings (start, leader, singer), songbook, song, setlists and library exist yet. */
 @Composable
 fun ZangbundelApp() {
     ZangbundelTheme {
         val navController = rememberNavController()
+        val context = LocalContext.current
+        val gathering = remember { (context.applicationContext as nl.pe1mew.zangbundel.app.ZangbundelApp).container.gathering }
+        val mode by gathering.mode.collectAsState()
+        // The gathering decides the screen: leading or singing opens its page, the end returns home (D-25, D-26, D-34, D-37).
+        LaunchedEffect(mode::class) {
+            val target = when (mode) {
+                is Gathering.Mode.Leading -> Routes.LEADER
+                is Gathering.Mode.Singing -> Routes.SINGER
+                Gathering.Mode.Idle -> Routes.HOME
+            }
+            if (navController.currentDestination?.route != target) {
+                if (target == Routes.HOME) navController.popBackStack(Routes.HOME, inclusive = false)
+                else navController.navigate(target) { popUpTo(Routes.HOME) }
+            }
+        }
         NavHost(navController = navController, startDestination = Routes.HOME) {
             composable(Routes.HOME) { HomeScreen { route -> navController.navigate(route) } }
             composable(Routes.SONGBOOK) {
@@ -41,6 +67,13 @@ fun ZangbundelApp() {
                 arguments = listOf(navArgument(SongViewModel.LIBRARY) { type = NavType.StringType }, navArgument(SongViewModel.SONG) { type = NavType.StringType }),
             ) { SongScreen() }
             composable(Routes.LIBRARY) { LibraryScreen() }
+            composable(Routes.START) { StartScreen() }
+            composable(Routes.MEMORIES) { MemoriesScreen(onOpen = { navController.navigate("memory/$it") }) }
+            composable(Routes.MEMORY, arguments = listOf(navArgument("uid") { type = NavType.LongType })) { entry ->
+                MemoryScreen(entry.arguments!!.getLong("uid"), onSong = { l, s -> navController.navigate("song/$l/$s") }, onDeleted = { navController.popBackStack() })
+            }
+            composable(Routes.LEADER) { LeaderScreen() }
+            composable(Routes.SINGER) { SingerScreen() }
             composable(Routes.SETLISTS) {
                 SetlistsScreen(onOpen = { navController.navigate("setlist/$it") }, onOpenShipped = { navController.navigate("libsetlist/${it.libraryId}/${it.setlistId}") })
             }
@@ -68,6 +101,11 @@ object Routes {
     /** Library and song ids have id syntax (song-format 3.2), so they are safe as path segments. */
     const val SONG = "song/{${SongViewModel.LIBRARY}}/{${SongViewModel.SONG}}"
     const val LIBRARY = "library"
+    const val START = "start"
+    const val MEMORIES = "memories"
+    const val MEMORY = "memory/{uid}"
+    const val LEADER = "leader"
+    const val SINGER = "singer"
     const val SETLISTS = "setlists"
     const val SETLIST = "setlist/{${SetlistViewModel.UID}}"
     /** Library and setlist ids have id syntax (song-format 3.2, 13.2). */

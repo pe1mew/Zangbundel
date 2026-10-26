@@ -3,6 +3,7 @@ package nl.pe1mew.zangbundel.app
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.library.HttpsDownloads
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
 import nl.pe1mew.zangbundel.app.library.SetlistBook
@@ -45,6 +46,9 @@ class AppContainer(private val context: Context) {
 
     /** `.zbs` import, export and copies of library setlists (guiDesign D-59); the HTTPS path is the libraries' one (A-14). */
     val setlistTransfer: SetlistTransfer by lazy { SetlistTransfer(storage.songbook, setlists, HttpsDownloads(fetcher)) }
+
+    /** The one gathering, leading or singing (architecture A-06); its radio is [transport]. */
+    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories) }
 
     /** Adding, updating and removing libraries (guiDesign D-50); files under `filesDir/libraries/` (architecture section 6). */
     val libraries: LibraryRepository by lazy {

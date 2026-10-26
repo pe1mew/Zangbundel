@@ -15,6 +15,7 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.os.Build
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -359,14 +360,21 @@ internal class AndroidGattConnection private constructor(private val gatt: Bluet
             val gatt = device.connectGatt(context, false, link, BluetoothDevice.TRANSPORT_LE, BluetoothDevice.PHY_LE_1M_MASK or BluetoothDevice.PHY_LE_2M_MASK)
                 ?: throw Transport.GattException(Transport.CONNECTION_FAILED, "connectGatt refused")
             fun fail(why: String): Nothing { gatt.disconnect(); gatt.close(); throw Transport.GattException(Transport.CONNECTION_FAILED, why) }
-            val status = withTimeoutOrNull(CONNECT_TIMEOUT_MS) { link.connected.await() } ?: fail("connect timeout")
-            if (status != BluetoothGatt.GATT_SUCCESS) fail("connect status $status")
-            gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH)
-            val mtu = if (gatt.requestMtu(REQUESTED_MTU)) withTimeoutOrNull(OP_TIMEOUT_MS) { link.mtu.await() } ?: MIN_MTU else MIN_MTU
-            if (!gatt.discoverServices()) fail("discovery refused")
-            val found = withTimeoutOrNull(OP_TIMEOUT_MS) { link.services.await() } ?: fail("discovery timeout")
-            if (found != BluetoothGatt.GATT_SUCCESS || gatt.getService(AndroidTransport.SERVICE_UUID) == null) fail("no Zangbundel service")
-            return AndroidGattConnection(gatt, link).also { it.mtu = mtu }
+            try {
+                val status = withTimeoutOrNull(CONNECT_TIMEOUT_MS) { link.connected.await() } ?: fail("connect timeout")
+                if (status != BluetoothGatt.GATT_SUCCESS) fail("connect status $status")
+                gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH)
+                val mtu = if (gatt.requestMtu(REQUESTED_MTU)) withTimeoutOrNull(OP_TIMEOUT_MS) { link.mtu.await() } ?: MIN_MTU else MIN_MTU
+                if (!gatt.discoverServices()) fail("discovery refused")
+                val found = withTimeoutOrNull(OP_TIMEOUT_MS) { link.services.await() } ?: fail("discovery timeout")
+                if (found != BluetoothGatt.GATT_SUCCESS || gatt.getService(AndroidTransport.SERVICE_UUID) == null) fail("no Zangbundel service")
+                return AndroidGattConnection(gatt, link).also { it.mtu = mtu }
+            } catch (e: CancellationException) {
+                // A caller's timeout (the 2 s of a leave, 10.11) must not leave a pending connection and its client slot behind.
+                gatt.disconnect()
+                gatt.close()
+                throw e
+            }
         }
     }
 }
