@@ -247,6 +247,17 @@
     <string name="leader_state_sung">gezongen</string>
     <string name="leader_help_description">Zangers in de laatste 5 seconden via Bluetooth geholpen: %1$d%%</string>
     <string name="leader_end">Afsluiten</string>
+    <string name="drawer_open">Leiderbalk openen</string>
+    <string name="drawer_time">Tijd</string>
+    <string name="drawer_songs">Liederen</string>
+    <string name="drawer_singers">Zangers</string>
+    <string name="drawer_max">max %1$d</string>
+    <string name="drawer_link">Bereik</string>
+    <string name="drawer_link_good">goed</string>
+    <string name="drawer_link_fair">matig</string>
+    <string name="drawer_link_poor">zwak</string>
+    <string name="drawer_last_song">laatste lied %1$s</string>
+    <string name="drawer_end">Kampvuur beëindigen</string>
     <string name="leader_end_title">Kampvuur afsluiten?</string>
     <string name="leader_end_text">Zangers zien dat het kampvuur is afgelopen, en de liedteksten verdwijnen van hun telefoons.</string>
     <string name="leader_no_setlist">Er is geen setlist gekozen. Start opnieuw met een setlist om liederen te sturen.</string>

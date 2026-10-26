@@ -249,6 +249,17 @@
     <string name="leader_state_sung">sung</string>
     <string name="leader_help_description">Singers helped over Bluetooth in the last 5 seconds: %1$d%%</string>
     <string name="leader_end">Close</string>
+    <string name="drawer_open">Open the leader bar</string>
+    <string name="drawer_time">Time</string>
+    <string name="drawer_songs">Songs</string>
+    <string name="drawer_singers">Singers</string>
+    <string name="drawer_max">max %1$d</string>
+    <string name="drawer_link">Reach</string>
+    <string name="drawer_link_good">good</string>
+    <string name="drawer_link_fair">fair</string>
+    <string name="drawer_link_poor">weak</string>
+    <string name="drawer_last_song">last song %1$s</string>
+    <string name="drawer_end">End the campfire</string>
     <string name="leader_end_title">Close the campfire?</string>
     <string name="leader_end_text">Singers see that the campfire has ended, and the lyrics leave their phones.</string>
     <string name="leader_no_setlist">No setlist was chosen. Start again with a setlist to push songs.</string>

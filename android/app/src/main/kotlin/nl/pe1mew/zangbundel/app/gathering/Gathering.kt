@@ -120,6 +120,14 @@ class Gathering(
             val protection: Protection = Protection.Open,
             /** FR-GATH-19, ble-protocol 6.5: the join link the QR code shows (D-57). */
             val joinLink: String = "",
+            /** D-62: the evening's maximum number of singers. */
+            val peak: Int = 0,
+            /** D-62: songs pushed so far, each once. */
+            val songsSung: Int = 0,
+            /** D-62: how long the song before the current one was sung, from push to push. */
+            val lastSongMs: Long? = null,
+            /** D-62: the share of singers helped over GATT in the last minute, 0 to 1, for the link quality word. */
+            val quality: Float = 0f,
         ) : Mode
         data class Singing(
             val name: String,
@@ -167,6 +175,8 @@ class Gathering(
     private var startedWall = 0L
     private val pushedOrder = ArrayList<Int>()
     private var peakSingers = 0
+    /** D-62: when the current song was pushed, for the last song's duration. */
+    private var lastPushAt: Long? = null
 
     fun now(): Long = clock()
 
@@ -245,6 +255,7 @@ class Gathering(
         startedWall = wallClock()
         pushedOrder.clear()
         peakSingers = 0
+        lastPushAt = null
         _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, name).httpsUrl(testBuild()))
         s.launch {
@@ -266,9 +277,12 @@ class Gathering(
                 peakSingers = maxOf(peakSingers, l.singers)
                 val progress = l.progress()
                 val help = l.helpShare()
+                val quality = l.helpShare(QUALITY_WINDOW_MS)
                 if (progress != (_mode.value as? Mode.Leading)?.progress) Log.d("leader progress passes=${progress?.passesDone} repairs=${progress?.repairs}")
                 (_mode.value as? Mode.Leading)?.let { m ->
-                    if (m.singers != l.singers || m.progress != progress || m.help != help) _mode.value = m.copy(singers = l.singers, progress = progress, help = help)
+                    if (m.singers != l.singers || m.progress != progress || m.help != help || m.quality != quality || m.peak != peakSingers) {
+                        _mode.value = m.copy(singers = l.singers, progress = progress, help = help, quality = quality, peak = peakSingers)
+                    }
                 }
             }
         }
@@ -290,7 +304,11 @@ class Gathering(
         l.push(LeaderSession.Publication(ref, p.title, p.document, cpos = index + 1, sung = (pushedOrder + index).map { it + 1 }.toSet()))
         Log.d("leader push index=$index repush=${index == m.current}")
         if (index !in pushedOrder) pushedOrder += index
-        _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress())
+        // D-62: the song before this one lasted from its push until now (a re-push of the same song does not end it).
+        val now = clock()
+        val lastSongMs = if (index != m.current && lastPushAt != null) now - lastPushAt!! else m.lastSongMs
+        if (index != m.current) lastPushAt = now
+        _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress(), songsSung = pushedOrder.size, lastSongMs = lastSongMs)
     }
 
     /** A setlist song as it is pushed and as it is sent ahead; [document] is null for a song that may not be broadcast (FR-LIB-22). */
@@ -538,6 +556,8 @@ class Gathering(
     companion object {
         /** A gathering not heard for this long leaves the list (D-22). */
         const val NEARBY_TIMEOUT_MS = 10_000L
+        /** D-62: the link quality looks back this far. */
+        private const val QUALITY_WINDOW_MS = 60_000L
         /** FR-GATH-16: listen this long before a gathering may start (D-23). */
         const val LISTEN_BEFORE_START_MS = 5_000L
         private const val COLLECTING_REFRESH_MS = 500L

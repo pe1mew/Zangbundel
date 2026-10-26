@@ -2,10 +2,15 @@
 package nl.pe1mew.zangbundel.app.ui.gathering
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -68,9 +74,9 @@ import nl.pe1mew.zangbundel.core.songformat.SongParser
  * The leader's page (guiDesign D-55, D-56) in the night theme (D-15): the closed leader bar of D-61
  * with name, singers and time; the setlist block, the song being sung marked with the orange bar and
  * sung songs with a check, a tap scrolling to the song; then every song of the setlist behind its
- * separator with *Nu*. The bar carries the fingerprint of D-36; the round join button of D-57 (v0.26) sits
- * at the bottom left, clear of the *Nu* buttons, and opens the words, the join code or the QR code. The
- * drawer of D-61 and the ▲ ≡ ▼ buttons of D-57 are not built yet; *Afsluiten* sits in the bar for now.
+ * separator with *Nu*. The bar carries the fingerprint of D-36 and opens, on a tap or a drag down, the
+ * drawer of D-61 with the statistics of D-62 and *Kampvuur beëindigen*; the round join button of D-57
+ * (v0.26) sits at the bottom left, clear of the *Nu* buttons. The ▲ ≡ ▼ buttons of D-57 are not built yet.
  */
 @Composable
 fun LeaderScreen() {
@@ -83,6 +89,7 @@ fun LeaderScreen() {
     val list = rememberLazyListState()
     var confirmEnd by remember { mutableStateOf(false) }
     var showJoin by remember { mutableStateOf(false) }
+    var drawer by remember { mutableStateOf(false) }
     var songs by remember { mutableStateOf<Map<Int, Song>>(emptyMap()) }
     LaunchedEffect(m.songs) {
         songs = m.songs.withIndex().mapNotNull { (i, s) ->
@@ -93,24 +100,32 @@ fun LeaderScreen() {
     LaunchedEffect(Unit) { while (true) { now = gathering.now(); delay(1_000) } }
     KeepScreenOn()
     BackHandler { confirmEnd = true }
+    BackHandler(enabled = drawer) { drawer = false }
     BackHandler(enabled = showJoin) { showJoin = false }
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
-            LeaderBar(m, now, onEnd = { confirmEnd = true })
-            LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list) {
-                item(key = "block") {
-                    SetlistBlock(m) { i -> scope.launch { list.animateScrollToItem(1 + i) } }
-                }
-                itemsIndexed(m.songs, key = { i, _ -> "song:$i" }) { i, s ->
-                    Column {
-                        Separator(i, m, s) { scope.launch { gathering.push(i) } }
-                        val song = songs[i]
-                        if (song != null) LyricBody(song, LyricColors.Night, Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
-                        else Text(stringResource(R.string.setlist_not_found), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp))
+            LeaderBar(m, now, onOpen = { drawer = true })
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                // D-61: a tap on the lyrics closes the drawer; the lyrics keep scrolling under it.
+                LazyColumn(
+                    Modifier.fillMaxSize().then(if (drawer) Modifier.pointerInput(Unit) { detectTapGestures(onTap = { drawer = false }) } else Modifier),
+                    state = list,
+                ) {
+                    item(key = "block") {
+                        SetlistBlock(m) { i -> scope.launch { list.animateScrollToItem(1 + i) } }
                     }
+                    itemsIndexed(m.songs, key = { i, _ -> "song:$i" }) { i, s ->
+                        Column {
+                            Separator(i, m, s) { drawer = false; scope.launch { gathering.push(i) } }
+                            val song = songs[i]
+                            if (song != null) LyricBody(song, LyricColors.Night, Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
+                            else Text(stringResource(R.string.setlist_not_found), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp))
+                        }
+                    }
+                    if (m.songs.isEmpty()) item { Text(stringResource(R.string.leader_no_setlist), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp)) }
                 }
-                if (m.songs.isEmpty()) item { Text(stringResource(R.string.leader_no_setlist), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp)) }
+                DrawerSlot(drawer, m, now, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
             }
         }
         // D-57 (v0.26, the owner's request): the join button at the bottom left, where no *Nu* button is.
@@ -126,18 +141,34 @@ fun LeaderScreen() {
     )
 }
 
-/** The closed leader bar (D-61): one 32 dp line in the secondary colour, the fingerprint after the name (D-36). */
+/** D-61: the drawer slides open from under the leader bar over the top of the page. */
 @Composable
-private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, onEnd: () -> Unit) {
+private fun DrawerSlot(open: Boolean, m: Gathering.Mode.Leading, now: Long, onEnd: () -> Unit, onClose: () -> Unit) {
+    AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
+        LeaderDrawer(m, now, onEnd = onEnd, onClose = onClose)
+    }
+}
+
+/**
+ * The closed leader bar (D-61): one 32 dp line in the secondary colour, the fingerprint after the name
+ * (D-36), and a small handle in the middle of its lower edge; a tap or a drag down opens the drawer.
+ */
+@Composable
+private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, onOpen: () -> Unit) {
     val seconds = ((now - m.startedAt) / 1000).coerceAtLeast(0)
     val time = "%d:%02d".format(seconds / 3600, (seconds / 60) % 60)
-    Row(Modifier.fillMaxWidth().height(32.dp).padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+    val open = stringResource(R.string.drawer_open)
+    Box(
+        Modifier.fillMaxWidth().height(32.dp)
+            .clickable(onClickLabel = open, onClick = onOpen)
+            .pointerInput(Unit) { detectVerticalDragGestures { _, dy -> if (dy > 8f) onOpen() } },
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
             Text(m.name, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
             Text(" · " + m.fingerprint + " · " + pluralStringResource(R.plurals.leader_singers, m.singers, m.singers) + " · " + time,
                 color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
         }
-        TextButton(onClick = onEnd) { Text(stringResource(R.string.leader_end), fontSize = 13.sp, color = Palette.FireOrange) }
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).size(width = 32.dp, height = 3.dp).background(LyricColors.Night.secondary.copy(alpha = 0.6f), CircleShape))
     }
 }
 
