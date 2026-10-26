@@ -216,6 +216,14 @@
     <string name="start_qr_only">Only with the QR code</string>
     <string name="start_qr_only_detail">Singers scan the QR code; there is no code to type</string>
     <string name="leader_qr">Join QR code</string>
+    <string name="leader_words">Show the two words</string>
+    <string name="leader_words_glyph" translatable="false">abc</string>
+    <string name="leader_pin">Show the join code</string>
+    <string name="panel_words_title">The two words of this campfire</string>
+    <string name="panel_words_hint">Say them aloud: singers see them next to the campfire\'s name. Tap to close.</string>
+    <string name="panel_code_title">Join code</string>
+    <string name="panel_code_hint">Singers type this code after tapping the campfire. Tap to close.</string>
+    <string name="panel_show_qr">Show QR code</string>
     <string name="qr_code_text">Join code: %1$s</string>
     <string name="qr_hint">Scan with the camera app. Tap to close.</string>
     <string name="code_title">Join %1$s</string>

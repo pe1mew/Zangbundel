@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.30 (draft) |
+| Document version | 0.31 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -43,6 +43,7 @@
 | 0.28 | 2026-10-26 | Depends on FRD v0.15 (FR-NET-01 and FR-NET-03 widened to setlist addresses); no other change. |
 | 0.29 | 2026-10-26 | 10.11, from the phones (`design/test-results/2026-10-26-D-03-05-07.md`, D-07): the leave notice is sent in the background after the user is home, retried after a failed connection for up to 10 s, instead of one attempt within 2 s. Connect, MTU and write take 1.2–1.6 s on the Huawei when the connect is quick, and the 2 s budget missed 2 of 6 attempts. No wire change. |
 | 0.30 | 2026-10-26 | 6.6 and appendix A: the gathering fingerprint [FR-GATH-18] is fixed as two Dutch words, one from each list of 256 at `gid[0]` and `gid[1]`, the same on every phone whatever its language; a reading aid, not a security mechanism. Nothing new goes over the air. Implemented in `core/protocol` with the join code and the key pinned from the QR code (6.5). 6.5: a test build marks its join link with `?app=debug` or `?app=fieldtest`, so the join page opens that build instead of looking for the release app (found in test D-04 with the camera app). |
+| 0.31 | 2026-10-26 | 6.5, at the owner's request: the join code is fixed for a gathering, as guiDesign D-71 decided; the sentences saying the leader can rotate it and regenerates the QR code when it changes are replaced. No change on the air. |
 
 ---
 
@@ -271,13 +272,13 @@ The app also accepts the same payload as a path segment of its own scheme, `zang
 | 4 | `code` | tstr ≤ 8 | no | The join code, when the gathering requires one (`CODE` flag). In QR-only mode this is a random 8-character code that exists nowhere else [FR-GATH-21]. |
 | 5 | `name` | tstr ≤ 40 | no | Gathering name, for the "joining …" screen. Optional; it is the only human-readable field and carries no personal data by FR-GATH-01. |
 
-Size, as the encoder produces it: 45 bytes of payload without `code` and `name` (99 characters of URL, QR version 6 at error-correction level M), 98 bytes with an 8-character code and a 40-character ASCII name (170 characters, version 9); a 40-character name in accented letters takes twice the bytes (223 characters, version 11). Byte-mode capacity at level M is 106 characters for version 6, 152 for version 8 and 180 for version 9. Whether a phone camera reads versions 9 to 11 from arm's length at the size FR-DIST-02 prescribes is untested; the join test (F-07) will show it. The leader regenerates the code when the join code changes; nothing else in it changes during a gathering.
+Size, as the encoder produces it: 45 bytes of payload without `code` and `name` (99 characters of URL, QR version 6 at error-correction level M), 98 bytes with an 8-character code and a 40-character ASCII name (170 characters, version 9); a 40-character name in accented letters takes twice the bytes (223 characters, version 11). Byte-mode capacity at level M is 106 characters for version 6, 152 for version 8 and 180 for version 9. Whether a phone camera reads versions 9 to 11 from arm's length at the size FR-DIST-02 prescribes is untested; the join test (F-07) will show it. Nothing in it changes during a gathering, the join code included (guiDesign D-71).
 
 **Verification by the scanner.** `SHA-256(pk)[0..5]` MUST equal `gid`, else the code is rejected as malformed. The app then scans for a beacon with that `gid`; when found, it collects or reads the state record and verifies its signature with the `pk` from the code, **not** with a key from Info. A beacon with the right `gid` whose state does not verify is ignored, and the app keeps looking. After verification the normal registration follows (10.2) with `code` from the QR code when present. If no verified gathering appears within 30 s the app says the gathering is not in range and offers to retry.
 
 **Phones without the app, and the browser step.** Opening the URL in a browser shows the static page `docs/j/index.html` from this repository: it decodes the fragment locally, shows the gathering name, and offers "Open in Zangbundel" and the store link [FR-DIST-01, FR-GATH-22]. The button is an `intent://j/<payload>#Intent;scheme=zangbundel;package=nl.pe1mew.zangbundel.app;S.browser_fallback_url=<Play URL>;end` link on Android (Chrome launches the app or falls back to Play; with `?app=debug` or `?app=fieldtest` the package is that test build's, and the fallback stays the release app on Play) and a `zangbundel://j/<payload>` link elsewhere. The page loads nothing external and sends nothing. Until the App Link is verified (`docs/RUNBOOK.md` Step 5c) Android 12 and later always take this browser step; with verification the camera app opens Zangbundel directly.
 
-**What the code does not protect against.** Someone showing a code for their *own* gathering: the trust anchor is the leader's screen, which is what the scouts are told to scan. A photographed code reused later is useless once the gathering has ended, because the key is deleted (10.10). The code contains no secret except an optional join code, which the leader can rotate.
+**What the code does not protect against.** Someone showing a code for their *own* gathering: the trust anchor is the leader's screen, which is what the scouts are told to scan. A photographed code reused later is useless once the gathering has ended, because the key is deleted (10.10). The code contains no secret except an optional join code, which is fixed for the gathering: a leader who wants another code ends the gathering and starts a new one, which also gives a new key and a new QR code (guiDesign D-71).
 
 ### 6.6 Gathering fingerprint [FR-GATH-18]
 

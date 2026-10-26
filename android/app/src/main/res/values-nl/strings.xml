@@ -215,6 +215,13 @@
     <string name="start_qr_only">Alleen via de QR-code</string>
     <string name="start_qr_only_detail">Zangers scannen de QR-code; er is geen code om te typen</string>
     <string name="leader_qr">QR-code om mee te doen</string>
+    <string name="leader_words">De twee woorden tonen</string>
+    <string name="leader_pin">Deelnamecode tonen</string>
+    <string name="panel_words_title">De twee woorden van dit kampvuur</string>
+    <string name="panel_words_hint">Zeg ze hardop: zangers zien ze naast de naam van het kampvuur. Tik om te sluiten.</string>
+    <string name="panel_code_title">Deelnamecode</string>
+    <string name="panel_code_hint">Zangers typen deze code nadat ze op het kampvuur tikken. Tik om te sluiten.</string>
+    <string name="panel_show_qr">QR-code tonen</string>
     <string name="qr_code_text">Deelnamecode: %1$s</string>
     <string name="qr_hint">Scan met de camera-app. Tik om te sluiten.</string>
     <string name="code_title">Meedoen met %1$s</string>
