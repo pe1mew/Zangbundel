@@ -210,6 +210,11 @@
 **Root cause**: the `doFirst` of the bundle guard read `hasKeystore`, a top-level `val` of `app/build.gradle.kts`; a top-level script value is a member of the script object, so the action captured the whole script.
 **Fix**: decide at configuration time (`if (!hasKeystore) doFirst { throw … }`), so the action captures only a string. Any `doFirst`/`doLast` in a `.kts` file must not read script-level values; copy them into a local first, or decide outside the action.
 
+### Play generates an app signing key when the app is created (2026-10-27)
+**Problem**: at the first upload Play no longer offered the choice of app signing key; the app-signing page already showed a key *In gebruik* that was not the owner's.
+**Root cause**: new Play apps get a Google-generated signing key at creation; the settings moved from *App-integriteit* to *Beveiligd met Play*. `java` on the owner's PATH is Java 8, and PEPK needs 11+.
+**Fix**: before any upload, *Beveiligd met Play* → *Play Store-beveiliging* → app signing → *Sleutel wijzigen* → *via Java-keystore*; run PEPK with JDK 17 by full path; verify the fingerprint in the page's Digital Asset Links JSON before uploading a bundle. Details in RUNBOOK Step 6.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

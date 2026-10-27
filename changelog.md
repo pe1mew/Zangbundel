@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Fixed
+- The store listing texts (nl-NL, en-US) promised song requests and helpers, which are phase 2 since FRD v0.18; they now describe the app as built, including the Wi-Fi update check, the leader's notification and passing the app on without internet.
 - `bundleRelease` failed with the configuration cache on: the guard that refuses an unsigned bundle referred to a property of the build script from its task action. It now decides while configuring, and its message names the upload key, which is what signs the bundle.
 - The release build warned about the Kotlin metadata of every class: AGP 8.13.2 bundles R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer. R8 9.1.57 is now pinned on the build classpath (architecture v0.21, A-19); checked on the phones with the release configuration.
 - With no campfire running, turning the phone sent the app back to the home screen from any screen (songbook, settings, library): the effect that follows the gathering's mode ran again when the activity was made anew and took the idle mode for a change. It now acts only on a real change of mode, remembered through the rotation.
@@ -16,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The system bar icons were dark on the night-blue background on phones in light mode (seen on a Samsung A52, Android 14). `MainActivity` now declares both bars dark, so the icons stay light; checked on the A52 and a Huawei Mate 20 Lite (Android 10).
 
 ### Added
+- Play App Signing uses the owner's own key (`57:86:7B:…:9B:10`), set on 2026-10-27 before the first upload; RUNBOOK Step 6 records the route through *Beveiligd met Play* and the PEPK export with Java 11 or newer.
 - `docs/app-links/assetlinks.json`, ready to publish for App Links (RUNBOOK Step 5c); RUNBOOK Step 9.7 now signs the GitHub APK with the app signing key by `apksigner`, since `keystore.properties` names the upload key.
 - The foreground-service declaration for Play prepared (RUNBOOK Step 5): description, impact, and a 69 s screen recording of the leader flow kept outside git in `raw/`.
 - Five phone screenshots for the store listing (`docs/store-listing/graphics/phone-1` to `phone-5`, RUNBOOK Step 8): leader's page, singer's page, drawer, install panel, songbook; night theme, demo song only, fitted to 9:16.
