@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Added
+- The user manual for the GitHub wiki, in Dutch (`Handleiding`) and English (`Manual`), with a bilingual `Home`, written against version 0.1.1; sources in `wiki/`, the pages *Over* opens.
+
 ## [0.1.1] - 2026-10-27
 
 ### Added
