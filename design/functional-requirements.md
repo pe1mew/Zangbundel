@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.18 (draft) |
-| Date | 2026-10-26 |
+| Version | 0.19 (draft) |
+| Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -28,6 +28,7 @@
 | 0.16 | 2026-10-26 | Approved by the owner (`design/proposals/2026-10-26-songs-ahead.md`): FR-BLE-18 added, the leader broadcasts the setlist's songs ahead from the start of the gathering and *Nu* only switches; a singer never shows a song before it is pushed. FR-SING-05 amended: the reception view covers every song of the setlist, its switch is kept across starts, and while on it shows itself only while the current song is incomplete or when the singer asks; a tap hides it without switching it off. |
 | 0.17 | 2026-10-26 | FR-SING-05 amended at the owner's request: the reception view becomes a hidden feature with no setting; it opens only on a long press on the singer's header strip and never shows by itself. |
 | 0.18 | 2026-10-26 | At the owner's decision, requests (with the likes of `design/guiDesign.md` D-32, which are requests), the leader's request list and the delegate role move from phase 1 to phase 2, out of phase 1's mandatory list: FR-REQ-01 to FR-REQ-07, FR-LEAD-10 to FR-LEAD-13 and FR-LEAD-40 to FR-LEAD-46 are re-tagged P2; their key words are unchanged. Section 2.5 updated. |
+| 0.19 | 2026-10-27 | FR-DATA-09 added (MAY, P1): opt-in, anonymous campfire statistics on the leader's device, leaving it only as a file the leader shares by hand after seeing its content; the requirement `design/security-privacy-assessment.md` SP-16 asked for when the feature was designed in (`design/guiDesign.md` D-60 to D-62). No other requirement changed. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -492,6 +493,8 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 **FR-DATA-08** (MUST, P1) — Data the leader's device persists so that a gathering can be resumed after an app restart (FR-GATH-13: key material, the singer table with display names and tokens) MUST be deleted when the gathering ends and, if the app was not restarted in time, when the resume window expires, at the latest at the next app start. It MUST be kept in app-private storage only. (Assessment SP-06.)
 
+**FR-DATA-09** (MAY, P1) — The leader's device MAY keep **campfire statistics** (*statistieken*): one anonymous record per gathering it leads, for the leader's own overview and for sharing by hand. If it does: recording MUST be off by default and MUST be switched on only on a settings screen that lists in plain language what is kept and what never is, with no prompt or reminder elsewhere; while it is off nothing is recorded. A record MUST hold no more than the date; the song and library identifiers of the songs pushed, with times counted from the start of the gathering, and of setlist songs not sung; counts of joined singers; figures from the leader's own radio; and the app, format and protocol versions. It MUST NOT hold display names, the gathering name, identifiers or addresses of any device, anything hashed or pseudonymous, clock times finer than the day, location, or anything about one singer. Singers' devices MUST record nothing. The records MUST be kept in app-private storage, excluded from backup as in NFR-PRIV-02, and deletable on their own and with "remove all data" (FR-DATA-07). They MUST leave the device only when the leader exports them as a file through the platform's share sheet after the app has shown its full content; the app MUST NOT send them anywhere itself (FR-GEN-08, NFR-PRIV-01). (`design/guiDesign.md` D-60 to D-62; assessment SP-16.)
+
 ---
 
 ## 14. Phase 2 – Karaoke mode
@@ -637,7 +640,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Display (DISP) | 01, 03–07, 09, 10 | 02, 08, 11 | | |
 | Requests (REQ) | 01–03, 05 | 04, 06, 07 | | |
 | Network (NET) | 01–03 | 04 | | |
-| Data (DATA) | 01–04, 06–08 | 05 | | |
+| Data (DATA) | 01–04, 06–08 | 05, 09 | | |
 | Karaoke (KAR) | | | 01–09 | |
 | Instruments (INST) | | | | 01–07 |
 

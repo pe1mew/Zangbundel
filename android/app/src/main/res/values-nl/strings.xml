@@ -308,7 +308,7 @@
     <string name="privacy_internet_title">Verbinding met het internet</string>
     <string name="privacy_internet">Alleen om een bibliotheek of setlist te downloaden van de url die jij opgeeft of kiest. Die website ziet jouw download en het internetadres van de wifi of de provider waarmee je online bent.</string>
     <string name="privacy_keeps_title">Wat op je telefoon blijft</string>
-    <string name="privacy_keeps">Bibliotheken, setlists, instellingen en de herinneringen. De liedteksten van de leider worden gewist na het kampvuur.</string>
+    <string name="privacy_keeps">Bibliotheken, setlists, instellingen en de herinneringen. De liedteksten van de leider worden gewist na het kampvuur. Als je leidt en statistieken aanzet, ook een overzicht van elk kampvuur zonder namen; dat gaat alleen van je telefoon af als je het zelf deelt.</string>
     <string name="privacy_delete_title">Hoe je wist wat op je telefoon blijft</string>
     <string name="privacy_delete">Met Alle gegevens verwijderen in Instellingen wis je alles. Je kunt ook per onderdeel wissen, of de app verwijderen.</string>
     <string name="privacy_location_title">Locatie</string>
@@ -388,4 +388,38 @@
     <string name="library_auto_check_hint">Eén keer per dag, alleen op wifi. Er wordt niets gedownload tot je op Bijwerken tikt.</string>
     <string name="library_update_available">Nieuwe versie beschikbaar</string>
     <string name="library_update_available_version">Nieuwe versie beschikbaar: %1$s</string>
+    <!-- Statistieken van kampvuren (guiDesign D-60, D-62; assessment SP-16). -->
+    <string name="statistics_title">Statistieken</string>
+    <string name="settings_statistics">Statistieken van kampvuren</string>
+    <string name="statistics_kept_title">Wat er bewaard wordt, alleen op deze telefoon</string>
+    <string name="statistics_kept">Als je een kampvuur leidt terwijl dit aan staat, bewaart de telefoon: de datum; welke liederen je stuurde, wanneer (geteld vanaf het begin) en hoe lang elk duurde; de liederen op de setlist die je niet zong; hoeveel zangers er waren aangemeld, één keer per minuut; hoe goed de Bluetooth van je telefoon hen bereikte; en de versie van de app.</string>
+    <string name="statistics_never_title">Wat nooit bewaard wordt</string>
+    <string name="statistics_never">Namen, de naam van het kampvuur, iets over één zanger, welke telefoons meededen, de tijd van de dag, of waar je was.</string>
+    <string name="statistics_leaves">Er wordt niets verstuurd. Het gaat alleen van deze telefoon af als jij op Delen tikt en zelf een app kiest, bijvoorbeeld om het naar de makers van Zangbundel te sturen.</string>
+    <string name="statistics_switch">Statistieken bewaren</string>
+    <string name="statistics_season">Dit seizoen</string>
+    <string name="statistics_none">Nog niets bewaard.</string>
+    <plurals name="statistics_campfires">
+        <item quantity="one">%d kampvuur</item>
+        <item quantity="other">%d kampvuren</item>
+    </plurals>
+    <plurals name="statistics_songs">
+        <item quantity="one">%d lied</item>
+        <item quantity="other">%d liederen</item>
+    </plurals>
+    <plurals name="statistics_average_singers">
+        <item quantity="one">gemiddeld %d zanger</item>
+        <item quantity="other">gemiddeld %d zangers</item>
+    </plurals>
+    <plurals name="statistics_singers">
+        <item quantity="one">%d zanger</item>
+        <item quantity="other">%d zangers</item>
+    </plurals>
+    <string name="statistics_most">Het meest gezongen</string>
+    <string name="statistics_least">Het minst gezongen</string>
+    <string name="statistics_share">Delen</string>
+    <string name="statistics_preview_title">Dit deel je</string>
+    <string name="statistics_wipe">Wissen</string>
+    <string name="statistics_wipe_title">Alle statistieken wissen?</string>
+    <string name="drawer_share_statistics">Statistieken delen</string>
 </resources>

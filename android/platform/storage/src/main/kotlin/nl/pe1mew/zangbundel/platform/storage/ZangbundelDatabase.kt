@@ -196,16 +196,19 @@ abstract class LibraryDao {
     entities = [
         LibraryEntity::class, SongEntity::class, SongFtsEntity::class, SetlistEntity::class, ReportEntity::class,
         PreparedSetlistEntity::class, PreparedEntryEntity::class, MemoryEntity::class, MemorySongEntity::class,
+        CampfireStatsEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
-    // 2: library.enabled and library.releaseIndex. 3: prepared setlists (guiDesign D-54). 4: gathering memories (D-49). Every later version adds its migration here.
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+    // 2: library.enabled and library.releaseIndex. 3: prepared setlists (guiDesign D-54). 4: gathering memories (D-49).
+    // 5: opt-in campfire statistics (D-60). Every later version adds its migration here.
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
 )
 abstract class ZangbundelDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
     abstract fun preparedSetlistDao(): PreparedSetlistDao
     abstract fun memoryDao(): MemoryDao
+    abstract fun statisticsDao(): StatisticsDao
 
     companion object {
         const val NAME = "zangbundel.db"

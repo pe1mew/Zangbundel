@@ -36,12 +36,12 @@ import nl.pe1mew.zangbundel.platform.storage.AppSettings
 
 /**
  * Settings (guiDesign D-44; FR-SING-01, FR-DATA-07): the group *Zingen* with *Naam voor de leider*,
- * and the group *Gegevens* with *Alle gegevens verwijderen*. The lyric view's theme, text size and
- * keep-screen-on are set from the singer's toolbar (D-17); vibration, volume keys, the not-found time
- * and the statistics follow with their features.
+ * the group *Statistieken* (D-60, D-62) and the group *Gegevens* with *Alle gegevens verwijderen*. The
+ * lyric view's theme, text size and keep-screen-on are set from the singer's toolbar (D-17); vibration,
+ * volume keys and the not-found time follow with their features.
  */
 @Composable
-fun SettingsScreen(onAllRemoved: () -> Unit) {
+fun SettingsScreen(onStatistics: () -> Unit, onAllRemoved: () -> Unit) {
     val context = LocalContext.current
     val container = remember { (context.applicationContext as ZangbundelApp).container }
     val scope = rememberCoroutineScope()
@@ -64,6 +64,11 @@ fun SettingsScreen(onAllRemoved: () -> Unit) {
                     )
                     Text(stringResource(R.string.settings_name_note), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
                 }
+            }
+            // D-60: the opt-in lives on its own screen, which says exactly what is kept; no switch here (P7).
+            Text(stringResource(R.string.statistics_title), style = MaterialTheme.typography.titleMedium)
+            Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) {
+                OutlinedButton(onClick = onStatistics, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_statistics)) }
             }
             Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

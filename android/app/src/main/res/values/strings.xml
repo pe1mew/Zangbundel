@@ -309,7 +309,7 @@
     <string name="privacy_internet_title">Connection to the internet</string>
     <string name="privacy_internet">Only to download a library or setlist from the address you enter or choose. That website sees your download and the internet address of the Wi-Fi or the provider you are online through.</string>
     <string name="privacy_keeps_title">What stays on your phone</string>
-    <string name="privacy_keeps">Libraries, setlists, settings and the memories. The lyrics the leader sent are deleted after the campfire.</string>
+    <string name="privacy_keeps">Libraries, setlists, settings and the memories. The lyrics the leader sent are deleted after the campfire. If you lead and switch on statistics, also a summary of each campfire without any names; it only leaves your phone if you share it yourself.</string>
     <string name="privacy_delete_title">How to delete what stays on your phone</string>
     <string name="privacy_delete">Remove all data in Settings deletes everything. You can also delete things one by one, or remove the app.</string>
     <string name="privacy_location_title">Location</string>
@@ -389,4 +389,38 @@
     <string name="library_auto_check_hint">Once a day, on Wi-Fi only. Nothing is downloaded until you tap Update.</string>
     <string name="library_update_available">New version available</string>
     <string name="library_update_available_version">New version available: %1$s</string>
+    <!-- Campfire statistics (guiDesign D-60, D-62; assessment SP-16). -->
+    <string name="statistics_title">Statistics</string>
+    <string name="settings_statistics">Campfire statistics</string>
+    <string name="statistics_kept_title">What is kept, on this phone only</string>
+    <string name="statistics_kept">When you lead a campfire with this switched on, the phone keeps: the date; which songs you sent, when (counted from the start) and how long each lasted; the songs on the setlist you did not sing; how many singers had joined, once a minute; how well your phone\'s Bluetooth reached them; and the version of the app.</string>
+    <string name="statistics_never_title">What is never kept</string>
+    <string name="statistics_never">Names, the name of the campfire, anything about one singer, which phones took part, the time of day, or where you were.</string>
+    <string name="statistics_leaves">Nothing is sent anywhere. It only leaves this phone if you tap Share and choose an app yourself, for instance to send it to the people who make Zangbundel.</string>
+    <string name="statistics_switch">Keep statistics</string>
+    <string name="statistics_season">This season</string>
+    <string name="statistics_none">Nothing kept yet.</string>
+    <plurals name="statistics_campfires">
+        <item quantity="one">%d campfire</item>
+        <item quantity="other">%d campfires</item>
+    </plurals>
+    <plurals name="statistics_songs">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="statistics_average_singers">
+        <item quantity="one">on average %d singer</item>
+        <item quantity="other">on average %d singers</item>
+    </plurals>
+    <plurals name="statistics_singers">
+        <item quantity="one">%d singer</item>
+        <item quantity="other">%d singers</item>
+    </plurals>
+    <string name="statistics_most">Sung most</string>
+    <string name="statistics_least">Sung least</string>
+    <string name="statistics_share">Share</string>
+    <string name="statistics_preview_title">This is what you share</string>
+    <string name="statistics_wipe">Delete</string>
+    <string name="statistics_wipe_title">Delete all statistics?</string>
+    <string name="drawer_share_statistics">Share statistics</string>
 </resources>

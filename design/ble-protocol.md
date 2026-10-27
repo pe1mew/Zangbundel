@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.40 (draft) |
-| Date | 2026-10-26 |
+| Document version | 0.41 (draft) |
+| Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.18 |
+| Depends on | `design/functional-requirements.md` v0.19 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -53,6 +53,7 @@
 | 0.38 | 2026-10-26 | 10.9, the owner's choice of option B in `design/proposals/2026-10-26-singer-presence.md`: the leader no longer drops silent singers after 10 minutes (that expiry never ran, and with songs ahead a singer that hears well may never connect); the count is the registered singers minus those that left, an upper bound. A singer whose app is swiped away sends the leave notice first. |
 | 0.39 | 2026-10-27 | 10.1 step 2 and 10.9, the owner's request with resume after a crash (guiDesign D-67): the resume record also holds `ts`, since 9.4 makes singers ignore a state whose `ts` is not above the last one and a resumed leader counting from 0 again would be ignored by all of them; and the setlist as started (per position its `library-id/song-id`, or its title), the positions pushed in order and the current position, so a resumed leader publishes the same current song, `cpos`, `sung` and songs ahead and singers carry on where they were. The record is rewritten on every push and at least every 30 s; its last write marks when the leader stopped. A resume more than 5 min after that finds its singers ended (10.11). |
 | 0.40 | 2026-10-27 | `design/proposals/2026-10-27-setlist-during-campfire.md`, approved by the owner: the setlist may change during the gathering (songs added, removed or moved, FR-LEAD-03); 9.4 `cpos` and `sung` name positions in the setlist the same state's manifest names and are renumbered with it; 7.5: a singer reads them only against that setlist and remembers earlier songs by `dh`; 10.5: a setlist change is a new state with the same `cur`, and clearing the current song (FR-LEAD-06) leaves out `cur` and `cpos`. No wire change. |
+| 0.41 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09: the opt-in campfire statistics on the leader's device, export by hand only); no other change. |
 
 ---
 

@@ -45,7 +45,7 @@ class AppContainer(private val context: Context) {
     val setlistTransfer: SetlistTransfer by lazy { SetlistTransfer(storage.songbook, setlists, HttpsDownloads(fetcher)) }
 
     /** The one gathering, leading or singing (architecture A-06); its radio is [transport]. */
-    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings, ResumeStore.open(context)) }
+    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings, storage.statistics, versionName, ResumeStore.open(context)) }
 
     /** Whether the welcome screen was shown in this process (guiDesign D-05: never a second time while the app stays in memory). */
     var welcomed = false
@@ -60,6 +60,7 @@ class AppContainer(private val context: Context) {
         for (l in storage.index.all()) libraries.remove(l.id)
         for (s in storage.setlists.all()) storage.setlists.delete(s.uid)
         storage.memories.deleteAll()
+        storage.statistics.deleteAll()
         storage.settings.clear()
         scheduleUpdateCheck(false)
         ResumeStore.open(context).delete()

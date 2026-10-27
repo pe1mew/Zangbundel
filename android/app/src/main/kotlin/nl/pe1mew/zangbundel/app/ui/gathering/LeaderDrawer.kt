@@ -39,7 +39,17 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * handle at the bottom, a tap on the lyrics or *Nu* close it.
  */
 @Composable
-internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onJoin: (qr: Boolean) -> Unit, onInstall: () -> Unit, onEnd: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LeaderDrawer(
+    m: Gathering.Mode.Leading,
+    now: Long,
+    onJoin: (qr: Boolean) -> Unit,
+    onInstall: () -> Unit,
+    onEnd: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** D-61: *Statistieken delen*, only while the opt-in of D-60 is on; null hides the row. */
+    onShareStatistics: (() -> Unit)? = null,
+) {
     Column(
         modifier
             .fillMaxWidth()
@@ -74,6 +84,7 @@ internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onJoin: (qr: Boo
         JoinRow(stringResource(R.string.panel_show_qr), null, big = false) { onJoin(true) }
         // D-83: the install code, for a phone that should not join.
         JoinRow(stringResource(R.string.drawer_install), null, big = false, onClick = onInstall)
+        onShareStatistics?.let { JoinRow(stringResource(R.string.drawer_share_statistics), null, big = false, onClick = it) }
         HorizontalDivider(color = LyricColors.Night.divider)
         Text(
             stringResource(R.string.drawer_end),

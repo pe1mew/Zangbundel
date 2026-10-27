@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.9 (draft) |
-| Date | 2026-10-26 |
+| Document version | 0.10 (draft) |
+| Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.18, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.19, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -21,6 +21,7 @@
 | 0.7 | 2026-10-26 | Depends on FRD v0.16 (FR-BLE-18: the setlist's songs are broadcast ahead; FR-SING-05 amended); no other change. |
 | 0.8 | 2026-10-26 | Depends on FRD v0.17 (FR-SING-05: the reception view is a hidden feature, opened by a long press only); no other change. |
 | 0.9 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change. |
+| 0.10 | 2026-10-27 | Depends on FRD v0.19: FR-DATA-09 gets its row in the requirement table (unit tests of the record and the season, and the phone test of 2026-10-27). |
 
 ---
 
@@ -338,6 +339,7 @@ A production release (RUNBOOK Step 9) needs all of these:
 | FR-DISP-04, FR-DISP-05, FR-DISP-10, NFR-ACC-01, NFR-ACC-02 | 3.5 |
 | FR-SING-11 | F-10 |
 | FR-DATA-07 | Unit tests of storage logic |
+| FR-DATA-09 | `CampfireRecordTest` (the record holds only the permitted items, escaping, the season count); the phone test `design/test-results/2026-10-27-statistics.md` |
 | FR-NET-01, FR-NET-03, NFR-SEC-03 | G-03, G-04, G-05 |
 | NFR-PRIV-02 | G-02 |
 | NFR-SEC-04 | 3.4, G-09 |

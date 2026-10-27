@@ -24,6 +24,7 @@ import nl.pe1mew.zangbundel.app.ui.firstuse.WelcomeScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.LeaderScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.ResumeScreen
 import nl.pe1mew.zangbundel.app.ui.settings.SettingsScreen
+import nl.pe1mew.zangbundel.app.ui.settings.StatisticsScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.SingerScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.StartScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.SummaryScreen
@@ -103,8 +104,9 @@ fun ZangbundelApp() {
             }
             composable(Routes.PRIVACY) { PrivacyScreen() }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onAllRemoved = { navController.navigate(Routes.INTRO) { popUpTo(0) { inclusive = true } } })
+                SettingsScreen(onStatistics = { navController.navigate(Routes.STATISTICS) }, onAllRemoved = { navController.navigate(Routes.INTRO) { popUpTo(0) { inclusive = true } } })
             }
+            composable(Routes.STATISTICS) { StatisticsScreen() }
             composable(Routes.ABOUT) { AboutScreen(onPrivacy = { navController.navigate(Routes.PRIVACY) }) }
             composable(Routes.HOME) { HomeScreen { route -> navController.navigate(route) } }
             composable(Routes.SONGBOOK) {
@@ -155,6 +157,7 @@ object Routes {
     const val PRIVACY = "privacy"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
+    const val STATISTICS = "statistics"
     const val HOME = "home"
     const val SONGBOOK = "songbook"
     /** Library and song ids have id syntax (song-format 3.2), so they are safe as path segments. */

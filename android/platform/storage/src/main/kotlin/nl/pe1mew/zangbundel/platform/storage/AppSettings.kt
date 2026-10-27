@@ -43,6 +43,13 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         store.edit { it[if (landscape) FIT_LANDSCAPE else FIT_PORTRAIT] = on }
     }
 
+    /** guiDesign D-60 (assessment SP-16): campfire statistics are kept only after this opt-in; off by default. */
+    val statisticsOn: Flow<Boolean> = store.data.map { it[STATISTICS_ON] ?: false }
+
+    suspend fun setStatisticsOn(on: Boolean) {
+        store.edit { it[STATISTICS_ON] = on }
+    }
+
     /** FR-LIB-13 (architecture A-14, SP-29): the automatic check on Wi-Fi, off until the user switches it on. */
     val autoUpdateCheck: Flow<Boolean> = store.data.map { it[AUTO_UPDATE_CHECK] ?: false }
 
@@ -109,6 +116,7 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         private val FIT_PORTRAIT = booleanPreferencesKey("fit_portrait")
         private val FIT_LANDSCAPE = booleanPreferencesKey("fit_landscape")
         private val AUTO_UPDATE_CHECK = booleanPreferencesKey("auto_update_check")
+        private val STATISTICS_ON = booleanPreferencesKey("statistics_on")
         private const val UPDATE_PREFIX = "update_available_"
         private const val ETAG_PREFIX = "index_etag_"
         private val Context.settingsStore by preferencesDataStore(name = "settings")

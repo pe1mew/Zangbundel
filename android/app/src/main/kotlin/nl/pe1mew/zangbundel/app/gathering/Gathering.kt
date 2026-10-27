@@ -11,6 +11,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -36,6 +37,9 @@ import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
+import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
+import nl.pe1mew.zangbundel.core.songformat.ArchiveImport
+import nl.pe1mew.zangbundel.core.songformat.LibraryFileParser
 import nl.pe1mew.zangbundel.core.songformat.SetlistResolver
 import nl.pe1mew.zangbundel.core.songformat.Song
 import nl.pe1mew.zangbundel.core.songformat.SongParser
@@ -45,6 +49,7 @@ import nl.pe1mew.zangbundel.platform.storage.Memories
 import nl.pe1mew.zangbundel.platform.storage.MemorySong
 import nl.pe1mew.zangbundel.platform.storage.PreparedEntry
 import nl.pe1mew.zangbundel.platform.storage.ResumeStore
+import nl.pe1mew.zangbundel.platform.storage.Statistics
 import nl.pe1mew.zangbundel.platform.storage.Songbook
 import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
 
@@ -68,6 +73,9 @@ class Gathering(
     private val setlists: SetlistBook,
     private val memories: Memories,
     private val settings: AppSettings,
+    /** guiDesign D-60: where a campfire's statistics go when the leader opted in, and the app version they carry. */
+    private val statistics: Statistics,
+    private val appVersion: String,
     private val resumeStore: ResumeStore,
     private val clock: () -> Long = SystemClock::elapsedRealtime,
     private val wallClock: () -> Long = System::currentTimeMillis,
@@ -195,6 +203,11 @@ class Gathering(
     private var startedWall = 0L
     /** The lines pushed, in the order first pushed (v0.40: by line, as positions move); read by the resume record's writer while a push may add to it. */
     private val pushedLines = java.util.concurrent.CopyOnWriteArrayList<Long>()
+    // D-60 (SP-16): what a campfire's statistics are made of, collected only while the opt-in is on. A song event is the
+    // line pushed (null for *Wis*) and when, from the start; a singer sample is when, and how many were registered.
+    private var statsOn = false
+    private val songEvents = java.util.concurrent.CopyOnWriteArrayList<Pair<Long?, Long>>()
+    private val singerSamples = java.util.concurrent.CopyOnWriteArrayList<Pair<Long, Int>>()
     private var peakSingers = 0
     /** D-62: when the current song was pushed, for the last song's duration. */
     private var lastPushAt: Long? = null
@@ -276,6 +289,7 @@ class Gathering(
         pushedLines.clear()
         peakSingers = 0
         lastPushAt = null
+        startStatistics()
         _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, name).httpsUrl(testBuild()))
         running(l, s, t)
@@ -300,8 +314,17 @@ class Gathering(
         s.launch {
             var persisted = clock()
             var singersPersisted = l.singers
+            // A minute back, so the first sample is taken at once (Long.MIN_VALUE overflowed the difference, seen 2026-10-27).
+            var sampled = clock() - STATS_SAMPLE_MS
             while (isActive) {
                 delay(1_000)
+                // D-60: the singer count once a minute, while the opt-in is on.
+                (_mode.value as? Mode.Leading)?.let { m ->
+                    if (statsOn && clock() - sampled >= STATS_SAMPLE_MS) {
+                        sampled = clock()
+                        singerSamples += (clock() - m.startedAt) to l.singers
+                    }
+                }
                 // 10.1 step 2 (v0.39): the record follows the singer table and is rewritten every 30 s, its write time marking when the leader was last alive.
                 if (l.singers != singersPersisted || clock() - persisted >= RESUME_REWRITE_MS) {
                     singersPersisted = l.singers
@@ -341,6 +364,7 @@ class Gathering(
         val now = clock()
         val lastSongMs = lastPushAt?.let { now - it } ?: m.lastSongMs
         lastPushAt = null
+        if (statsOn) songEvents += null to (now - m.startedAt)
         Log.d("leader clear")
         _mode.value = publish(l, m, m.songs, current = null, setlistChanged = false).copy(lastSongMs = lastSongMs)
         persist(l)
@@ -395,6 +419,7 @@ class Gathering(
         val now = clock()
         val lastSongMs = if (line != previous && lastPushAt != null) now - lastPushAt!! else m.lastSongMs
         if (line != previous) lastPushAt = now
+        if (statsOn && line != previous) songEvents += line to (now - m.startedAt)
         _mode.value = publish(l, m, songs, line, setlistChanged).copy(lastSongMs = lastSongMs)
         persist(l)
     }
@@ -503,6 +528,7 @@ class Gathering(
         pushedLines += r.pushed.map { songs[it].line }
         peakSingers = r.peak
         lastPushAt = null
+        startStatistics()   // D-60: what came before the crash was in memory only; the record covers the campfire from here
         Log.d("leader resumed singers=${l.singers} current=$current pushed=${r.pushed} stoppedAgoMs=${wallClock() - r.writtenWall}")
         _mode.value = Mode.Leading(
             r.name, clock() - (wallClock() - r.startedWall).coerceAtLeast(0), l.singers, songs, current, r.pushed.toSet() - setOfNotNull(current),
@@ -544,6 +570,37 @@ class Gathering(
         return Prepared(ref, song.meta.title, if (song.meta.redistribute) SongDocument(ref, file, song.meta.licenceSummary(e.libraryName)) else null)
     }
 
+    /** D-60: reads the opt-in at the start of a campfire; nothing is collected while it is off. */
+    private suspend fun startStatistics() {
+        statsOn = settings.statisticsOn.first()
+        songEvents.clear()
+        singerSamples.clear()
+    }
+
+    /**
+     * D-60's record of the campfire that ends now, [endMs] after its start: identifiers, times from the start,
+     * counts and the leader's own radio figures, and the day; no name, no device, no clock time (SP-16).
+     */
+    private fun campfireRecord(m: Mode.Leading, l: LeaderSession, endMs: Long): CampfireRecord {
+        val byLine = m.songs.associateBy { it.line }
+        val events = songEvents.toList()
+        val pushes = events.mapIndexedNotNull { i, (line, at) ->
+            val song = line?.let { byLine[it]?.song } ?: return@mapIndexedNotNull null
+            val until = events.getOrNull(i + 1)?.second ?: endMs
+            CampfireRecord.Push(song.libraryId, song.songId, at, until - at)
+        }
+        val pushed = events.mapNotNull { it.first }.toSet()
+        val skipped = m.songs.filter { it.line !in pushed }.mapNotNull { s -> s.song?.let { it.libraryId to it.songId } ?: s.entry.songKey?.split('/', limit = 2)?.let { it[0] to it.getOrElse(1) { "" } } }
+        val date = java.time.Instant.ofEpochMilli(startedWall).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+        return CampfireRecord(
+            date, endMs, pushes, skipped, singerSamples.toList(), maxOf(peakSingers, m.singers),
+            CampfireRecord.Radio(l.legacySets, l.extendedSet, l.framesSent, l.service.transfersServed, l.service.bytesServed,
+                l.service.peakConnections, l.service.maxConnections, l.service.refusedConnections),
+            CampfireRecord.Versions(appVersion, LibraryFileParser.IMPLEMENTED_VERSION, ArchiveImport.IMPLEMENTED_ARCHIVE_VERSION,
+                "${ProtocolConstants.PROTOCOL_MAJOR}.${ProtocolConstants.PROTOCOL_MINOR}"),
+        )
+    }
+
     /** D-69: what the leader sees after ending a gathering; null once dismissed. */
     data class Summary(val name: String, val startedWall: Long, val durationMs: Long, val songs: Int, val singers: Int)
 
@@ -571,6 +628,13 @@ class Gathering(
         if (m != null) {
             val sung = pushedLines.mapNotNull { line -> m.songs.firstOrNull { it.line == line }?.song?.let { MemorySong(it.libraryId, it.songId, it.title) } }
             remember(m.name, led = true, singers = maxOf(peakSingers, m.singers), songs = sung)
+            if (statsOn) {
+                val record = campfireRecord(m, l, clock() - m.startedAt)
+                scope.launch(Dispatchers.IO) {
+                    runCatching { statistics.add(record.date, record.durationMs, record.pushes.size, record.maxSingers, record.json()) }
+                        .onFailure { Log.d("statistics not kept: ${it.message}") }
+                }
+            }
         }
         scope.launch {
             try {
@@ -805,6 +869,8 @@ class Gathering(
     companion object {
         /** A gathering not heard for this long leaves the list (D-22). */
         const val NEARBY_TIMEOUT_MS = 10_000L
+        /** guiDesign D-60: the singer count is kept once a minute. */
+        private const val STATS_SAMPLE_MS = 60_000L
         /** ble-protocol 10.9, FR-GATH-13: how long after the record's last write a resume is offered (D-67; its setting is not built). */
         const val RESUME_WINDOW_MS = 10 * 60_000L
         /** 10.1 step 2 (v0.39): the record is rewritten at least this often while leading. */

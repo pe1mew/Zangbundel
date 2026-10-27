@@ -70,6 +70,8 @@ import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.KeepTopLine
 import nl.pe1mew.zangbundel.app.ui.LineKeeper
 import nl.pe1mew.zangbundel.app.ui.LyricBody
+import nl.pe1mew.zangbundel.app.ui.settings.StatisticsPreview
+import nl.pe1mew.zangbundel.app.ui.settings.exportJson
 import nl.pe1mew.zangbundel.app.ui.LyricColors
 import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
@@ -100,6 +102,9 @@ fun LeaderScreen() {
     var confirmEnd by remember { mutableStateOf(false) }
     var showJoin by remember { mutableStateOf<Boolean?>(null) }   // null: closed; true: on the QR code
     var showInstall by remember { mutableStateOf(false) }          // D-83
+    // D-61: *Statistieken delen* while the opt-in of D-60 is on: the season kept so far, shown, then the share sheet.
+    val statisticsOn by container.storage.settings.statisticsOn.collectAsState(initial = false)
+    var statisticsPreview by remember { mutableStateOf<String?>(null) }
     var drawer by remember { mutableStateOf(false) }
     // D-57: the ▲ ≡ ▼ column, dimmed after 3 s without a touch, and the setlist sheet.
     var touched by remember { mutableLongStateOf(0L) }
@@ -169,7 +174,8 @@ fun LeaderScreen() {
                     // D-69: the closing bar ends the setlist and the page.
                     else item(key = "closing") { ClosingBar { confirmEnd = true } }
                 }
-                DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onInstall = { drawer = false; showInstall = true }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
+                DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onInstall = { drawer = false; showInstall = true }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false },
+                    onShareStatistics = if (statisticsOn) ({ drawer = false; scope.launch { statisticsPreview = exportJson(container.storage.statistics.all()) } }) else null)
             }
         }
         // Items: 0 is the setlist block, 1 + i the separator of song i. The ≡ button opens the sheet also without songs (D-58).
@@ -212,13 +218,17 @@ fun LeaderScreen() {
         confirmButton = { TextButton(onClick = { confirmEnd = false; gathering.end() }) { Text(stringResource(R.string.leader_end)) } },
         dismissButton = { TextButton(onClick = { confirmEnd = false }) { Text(stringResource(R.string.cancel)) } },
     )
+    statisticsPreview?.let { StatisticsPreview(it) { statisticsPreview = null } }
 }
 
 /** D-61: the drawer slides open from under the leader bar over the top of the page. */
 @Composable
-private fun DrawerSlot(open: Boolean, m: Gathering.Mode.Leading, now: Long, onJoin: (Boolean) -> Unit, onInstall: () -> Unit, onEnd: () -> Unit, onClose: () -> Unit) {
+private fun DrawerSlot(
+    open: Boolean, m: Gathering.Mode.Leading, now: Long, onJoin: (Boolean) -> Unit, onInstall: () -> Unit, onEnd: () -> Unit, onClose: () -> Unit,
+    onShareStatistics: (() -> Unit)?,
+) {
     AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
-        LeaderDrawer(m, now, onJoin = onJoin, onInstall = onInstall, onEnd = onEnd, onClose = onClose)
+        LeaderDrawer(m, now, onJoin = onJoin, onInstall = onInstall, onEnd = onEnd, onClose = onClose, onShareStatistics = onShareStatistics)
     }
 }
 

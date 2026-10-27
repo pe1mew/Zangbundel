@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.15 (draft) |
-| Date | 2026-10-26 |
+| Document version | 0.16 (draft) |
+| Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.18, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.19, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -27,6 +27,7 @@
 | 0.13 | 2026-10-27 | Section 5.4, with BLE protocol v0.39 and guiDesign D-67 built: the resume record also holds `ts`, the setlist as started, the positions pushed and the current position, and is rewritten on every push and every 30 s; the window counts from its last write; ending deletes it at once rather than after the 60 s end phase, so a leader that dies while ending is not offered an ended gathering. The record's code is `ResumeRecord` in `core/protocol` and `ResumeStore` in `platform/storage`. Assessment SP-27. No decision superseded. |
 | 0.14 | 2026-10-27 | Section 5.4, with BLE protocol v0.40 (guiDesign D-58): the resume record holds the setlist as it stands, which may change during the gathering, and is rewritten on every setlist change too. No decision superseded. |
 | 0.15 | 2026-10-27 | A-14 built: the Wi-Fi update check as `LibraryUpdateWorker` (once a day on an unmetered network, the first run as soon as it is switched on); section 9's manifest list gains `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED`, which WorkManager brings (assessment SP-29). No decision superseded. |
+| 0.16 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09). The statistics row of the data lifecycle table names its table and requirement; the statistics export is dropped from kotlinx-serialization-json's uses, since the built export writes its fixed JSON by hand (`CampfireRecord`). |
 
 ---
 
@@ -202,7 +203,7 @@ The leader persists a resume record in `noBackupFilesDir/gathering/resume.cbor` 
 | Import or update in progress | `filesDir/libraries/<library id>/.staging-<random>/` | swapped in one transaction, or deleted at the next start | never |
 | Prepared setlists (own and duplicated) | Room | removed by the user (FR-DATA-06, guiDesign D-55) | never |
 | Gathering memories, per-song usage | Room | removed by the user (FR-DATA-04, guiDesign D-49, D-52) | never |
-| Opt-in statistics records | Room, separate tables | *Wissen* or "remove all data" (guiDesign D-60, D-62) | never |
+| Opt-in statistics records | Room, table `campfire_statistics` | *Wissen* or "remove all data" (FR-DATA-09; guiDesign D-60, D-62) | never |
 | Settings: display name, theme, text size, language, keep-screen-on, vibration | DataStore `settings.preferences_pb` | "remove all data" (FR-DATA-07) | never |
 | Per-device radio figures (`max_conn`, advertising sets that worked) | DataStore | "remove all data" | never |
 | Running gathering: received documents and songs, setlist copy, requests, singer table, tokens, keys | memory, plus `noBackupFilesDir/gathering/` | end of gathering, leave, timeout, or the startup sweep (FR-DATA-01, FR-DATA-06, FR-DATA-08) | never |
@@ -242,7 +243,7 @@ Every library the app may use. Licences are as published by each project and are
 | Library | Purpose | Licence | Network |
 |---|---|---|---|
 | Kotlin standard library, kotlinx-coroutines | Language, the engine's actor and flows | Apache 2.0 | no |
-| kotlinx-serialization-json | `zangbundel.json`, archive manifest, `releases.json`, statistics export | Apache 2.0 | no |
+| kotlinx-serialization-json | `zangbundel.json`, archive manifest, `releases.json` | Apache 2.0 | no |
 | AndroidX core, activity-compose, lifecycle (ViewModel, service), navigation-compose | App structure | Apache 2.0 | no |
 | Jetpack Compose (BOM), Material 3 | UI (A-03) | Apache 2.0 | no |
 | AndroidX core-splashscreen | System splash (guiDesign D-05) | Apache 2.0 | no |
