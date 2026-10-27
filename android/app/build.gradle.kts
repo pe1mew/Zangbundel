@@ -56,7 +56,9 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".fieldtest"
             matchingFallbacks += listOf("release")
-            if (hasKeystore) signingConfig = signingConfigs.getByName("release")
+            // The owner's key when keystore.properties is there; otherwise the debug key, so a developer can install it.
+            // Its application id differs from the store app's, so neither signature ever meets the other.
+            signingConfig = signingConfigs.getByName(if (hasKeystore) "release" else "debug")
         }
     }
 

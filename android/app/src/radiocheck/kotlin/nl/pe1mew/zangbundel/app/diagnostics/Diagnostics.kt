@@ -138,6 +138,8 @@ fun RadioCheckScreen() {
                     context.startActivity(Intent.createChooser(send, null))
                 }) { Text(stringResource(R.string.radiocheck_share)) }
             }
+            // Architecture A-20: the field-test log, in the .fieldtest app only.
+            if (FieldLog.isFieldTest(context)) FieldLogPanel()
         }
     }
 }

@@ -10,4 +10,24 @@
     <string name="radiocheck_no_bluetooth">Deze telefoon heeft geen Bluetooth.</string>
     <string name="radiocheck_bluetooth_off">Bluetooth staat uit. Zet het aan en start de test opnieuw.</string>
     <string name="radiocheck_permission_denied">Zonder toestemming om Bluetooth-signalen uit te zenden kan de test niet draaien.</string>
+    <!-- Testplan 5.5: de toestemming bij de eerste start van de veldtestversie; architectuur A-20: het veldtestlog. -->
+    <string name="fieldtest_consent_title">Toestemming testversie Zangbundel</string>
+    <string name="fieldtest_consent_keeps">Deze testversie van Zangbundel houdt op deze telefoon een logbestand bij van hoe de Bluetooth-verbinding werkt: hoeveel uitzendkanalen openen, hoeveel berichten opnieuw verstuurd of opgevraagd worden, hoeveel verbindingen lukken of mislukken, de signaalsterkte in grove stappen, het aantal deelnemers, de Android-versie, de Bluetooth-mogelijkheden van de telefoon en het batterijniveau.</string>
+    <string name="fieldtest_consent_never">Het bestand bevat geen namen, geen naam van het kampvuur, geen liedteksten, geen sleutels of codes en geen adressen van telefoons.</string>
+    <string name="fieldtest_consent_leaves">Het verlaat de telefoon alleen als u het zelf deelt, via het deelmenu.</string>
+    <string name="fieldtest_consent_stop">U kunt op elk moment stoppen: verwijder de testversie, dan is het bestand weg. Meedoen is vrijwillig. Vragen: zangbundel@rfsee.nl.</string>
+    <string name="fieldtest_consent_statement">Ik ben 18 jaar of ouder, ik heb dit gelezen en ik doe mee.</string>
+    <string name="fieldtest_consent_accept">Ik doe mee</string>
+    <string name="fieldtest_consent_decline">Niet meedoen</string>
+    <string name="fieldtest_log_title">Veldtestlog</string>
+    <string name="fieldtest_log_empty">Nog niets vastgelegd.</string>
+    <plurals name="fieldtest_log_lines">
+        <item quantity="one">%d regel vastgelegd</item>
+        <item quantity="other">%d regels vastgelegd</item>
+    </plurals>
+    <string name="fieldtest_log_share">Log delen</string>
+    <string name="fieldtest_log_preview">Dit deel je</string>
+    <string name="fieldtest_log_clear">Log wissen</string>
+    <string name="fieldtest_log_clear_title">Het veldtestlog wissen?</string>
+    <string name="fieldtest_cancel">Annuleren</string>
 </resources>

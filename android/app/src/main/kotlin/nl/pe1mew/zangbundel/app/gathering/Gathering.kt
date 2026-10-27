@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.Log
+import nl.pe1mew.zangbundel.app.diagnostics.FieldLog
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.core.model.GatheringId
 import nl.pe1mew.zangbundel.core.model.LibraryId
@@ -307,8 +308,28 @@ class Gathering(
     }
 
     /** The loops of a running gathering, started or resumed: diagnostics, the leader's figures, and the resume record. */
-    private suspend fun running(l: LeaderSession, s: CoroutineScope, t: Transport) {
+    private suspend fun running(l: LeaderSession, s: CoroutineScope, t: Transport, resumed: Boolean = false) {
         persist(l)
+        // Architecture A-20: the fieldtest build's local log, once a minute while leading; counts and flags only.
+        if (FieldLog.active(context)) s.launch {
+            val t0 = clock()
+            fun figures() = mapOf(
+                "singers" to l.singers, "framesSent" to l.framesSent, "repairsServed" to l.service.transfersServed,
+                "bytesRepaired" to l.service.bytesServed, "peakConnections" to l.service.peakConnections,
+                "refusedConnections" to l.service.refusedConnections,
+            )
+            FieldLog.start(context, "leader", fieldStart(t) + mapOf(
+                "resumed" to resumed, "legacySets" to l.legacySets, "extendedSet" to l.extendedSet, "maxConnections" to l.service.maxConnections,
+            ))
+            try {
+                while (isActive) {
+                    FieldLog.sample(context, clock() - t0, figures())
+                    delay(FieldLog.SAMPLE_MS)
+                }
+            } finally {
+                FieldLog.end(context, clock() - t0, figures())
+            }
+        }
         // FR-GATH-17, ble-protocol 10.1 step 6: listen 2 s every 30 s for another gathering (two scan starts per
         // 30 s, under Android's limit of five); D-68 shows it quietly while it is heard. A resumed gathering's own beacons are ignored.
         s.launch {
@@ -573,7 +594,7 @@ class Gathering(
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, r.name).httpsUrl(testBuild()),
             peak = r.peak, songsSung = r.pushed.size,
         )
-        running(l, s, t)
+        running(l, s, t, resumed = true)
     }
 
     /** Writes the resume record for [l] (10.1 step 2); nothing once [l] is no longer the running gathering. */
@@ -727,8 +748,25 @@ class Gathering(
                 pinnedKey = pinnedKey, code = code)
             singer = engine
             GatheringService.start(context)
+            // Architecture A-20: the fieldtest build's local log, once a minute while singing; counts and flags only.
+            var repairs = 0
+            var repairsFailed = 0
+            if (FieldLog.active(context)) launch {
+                val t0 = clock()
+                fun figures() = mapOf("repairs" to repairs, "repairsFailed" to repairsFailed, "carrier" to engine.carrier.name.lowercase(), "state" to engine.machine.state.name.lowercase())
+                FieldLog.start(context, "singer", fieldStart(t))
+                try {
+                    while (isActive) {
+                        FieldLog.sample(context, clock() - t0, figures())
+                        delay(FieldLog.SAMPLE_MS)
+                    }
+                } finally {
+                    FieldLog.end(context, clock() - t0, figures())
+                }
+            }
             launch {
                 engine.events.collect { e ->
+                    if (e is SingerEngine.Event.Repaired) { if (e.ok) repairs++ else repairsFailed++ }
                     // A-20: event kinds, codes and times only; never names or song text.
                     when (e) {
                         is SingerEngine.Event.Delivered -> Log.d("singer delivered doc=${e.doc} repair=${e.viaRepair}")
@@ -922,6 +960,15 @@ class Gathering(
         val current = songs.indexOfFirst { it.ref == currentRef }.takeIf { it >= 0 } ?: m.current ?: songs.lastIndex
         _mode.value = m.copy(songs = songs, current = current)
     }
+
+    /** A-20: what every field-log session starts with besides the platform's own values: the radio's flags and the versions. */
+    private fun fieldStart(t: Transport): Map<String, Any?> = mapOf(
+        "caps" to mapOf(
+            "peripheral" to t.capabilities.peripheralMode, "multipleSets" to t.capabilities.multipleAdvertisingSets,
+            "extended" to t.capabilities.extendedAdvertising, "maxDataLength" to t.capabilities.maxAdvertisingDataLength,
+        ),
+        "app" to appVersion, "protocol" to "${ProtocolConstants.PROTOCOL_MAJOR}.${ProtocolConstants.PROTOCOL_MINOR}",
+    )
 
     private fun resolve(e: PreparedEntry, installed: List<SongbookEntry>): SongbookEntry? =
         e.songKey?.let { key -> installed.firstOrNull { it.libraryId + "/" + it.songId == key } }

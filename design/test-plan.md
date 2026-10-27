@@ -4,7 +4,7 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.10 (draft) |
+| Document version | 0.11 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
@@ -22,6 +22,7 @@
 | 0.8 | 2026-10-26 | Depends on FRD v0.17 (FR-SING-05: the reception view is a hidden feature, opened by a long press only); no other change. |
 | 0.9 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change. |
 | 0.10 | 2026-10-27 | Depends on FRD v0.19: FR-DATA-09 gets its row in the requirement table (unit tests of the record and the season, and the phone test of 2026-10-27). |
+| 0.11 | 2026-10-27 | 5.1 and 5.5 built in the `fieldtest` build (architecture A-20 as of v0.18): the consent screen on first start and the local log, shared from the radio check. |
 
 ---
 
@@ -190,6 +191,8 @@ Field tests answer what no simulation can: the radio, the battery, the phones th
 - the SP-16 data set: advertising sets opened, frames repeated and repaired, connection attempts and failures, signal-strength bands, singer counts over time, versions;
 - the Android major version and the radio's capability flags;
 - the battery level over time.
+
+*(Built 2026-10-27:)* the log's lines are described in architecture A-20; signal-strength bands and connection attempts are not measured yet. A tester shares it from the radio check with *Log delen*, which shows the file first.
 
 Delivery times are measured by video (5.3). Singers' phones record nothing beyond what the build type they run records. A singer phone runs the `fieldtest` build only when it belongs to an adult tester (5.4).
 

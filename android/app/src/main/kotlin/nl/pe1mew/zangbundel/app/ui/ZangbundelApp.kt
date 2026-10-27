@@ -16,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import nl.pe1mew.zangbundel.app.diagnostics.Diagnostics
+import nl.pe1mew.zangbundel.app.diagnostics.FieldConsentScreen
+import nl.pe1mew.zangbundel.app.diagnostics.FieldLog
 import nl.pe1mew.zangbundel.app.diagnostics.RadioCheckScreen
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.about.AboutScreen
@@ -89,6 +91,15 @@ fun ZangbundelApp() {
             }
         }
         val first = start ?: return@ZangbundelTheme
+        // Test plan 5.5, architecture A-20: the fieldtest build asks its tester's consent before anything else.
+        var consentAsked by remember { mutableStateOf(FieldLog.needsConsent(context)) }
+        if (consentAsked) {
+            FieldConsentScreen(
+                onAccept = { FieldLog.consent(context); consentAsked = false },
+                onDecline = { (context as? android.app.Activity)?.finishAndRemoveTask() },
+            )
+            return@ZangbundelTheme
+        }
         NavHost(navController = navController, startDestination = first) {
             composable(Routes.RESUME) {
                 offer?.let { o ->

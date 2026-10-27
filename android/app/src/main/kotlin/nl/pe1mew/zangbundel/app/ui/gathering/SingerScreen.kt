@@ -89,7 +89,8 @@ import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
  * turns into an orange bar that leaves on a tap (D-34 as amended in v0.19). The strip carries the fingerprint
  * (D-36); a join from a QR code shows the joining screen of D-35 until the leader accepts, and a refused join
  * code asks again (D-26). The reception grid of D-81 is a hidden feature since v0.30: a long press on
- * the strip opens it, a tap closes it; it never shows by itself. The round buttons of D-30 (previous
+ * the strip opens it, a tap closes it; it never shows by itself. Before anything is being sent it opens with
+ * empty bars for the song and the setlist, so the long press is seen to work (v0.54). The round buttons of D-30 (previous
  * song, songlist, next song) sit at the bottom right and open the songlist sheet of D-31, which ends with
  * *Kampvuur verlaten*. A tap on the strip or a long press on the lyrics shows the toolbar of D-17 (theme, text
  * size, song info, brightness, keep the screen on, follow the leader); a tap on the lyrics scrolls one line,
@@ -143,7 +144,7 @@ fun SingerScreen() {
     var islandHeight by remember { mutableIntStateOf(0) }
     // D-81 (v0.30): a hidden feature, open after a long press on the strip until a tap.
     var requested by remember { mutableStateOf(false) }
-    val showIsland = requested && m.reception.isNotEmpty()
+    val showIsland = requested
     // D-30, D-31: the round buttons, dimmed after 3 s without a touch, and the songlist sheet.
     var touched by remember { mutableLongStateOf(0L) }
     var dimmed by remember { mutableStateOf(false) }
@@ -302,7 +303,8 @@ fun SingerScreen() {
     if (showIsland) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
             ReceptionIsland(
-                m.reception,
+                // D-81 (v0.54, the owner's request): empty bars before any song or setlist is on the air.
+                m.reception.ifEmpty { NOTHING_ON_AIR },
                 titleOf = { ref -> m.songs.firstOrNull { it.ref == ref }?.title },
                 onDismiss = { requested = false },
                 modifier = Modifier.onSizeChanged { islandHeight = it.height },
@@ -386,6 +388,10 @@ fun SingerScreen() {
 
 /** The share of the page height left below the last song: enough to scroll it to the top, with its last line still in view. */
 private const val TAIL_FRACTION = 0.85f
+private val NOTHING_ON_AIR = listOf(
+    nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine.Reception(nl.pe1mew.zangbundel.core.protocol.payload.DocumentType.SONG, emptyList()),
+    nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine.Reception(nl.pe1mew.zangbundel.core.protocol.payload.DocumentType.SETLIST, emptyList()),
+)
 
 /** About one centimetre: 160 dp are an inch. */
 internal val SONG_BAR_WIDTH = 63.dp
