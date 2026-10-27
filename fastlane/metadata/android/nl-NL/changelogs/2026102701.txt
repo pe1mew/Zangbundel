@@ -1,0 +1,1 @@
+Verbeterd: na het beëindigen van een kampvuur vindt het startscherm weer andere kampvuren. Nieuw: tik op de twee woorden van een kampvuur om te lezen wat ze betekenen. Over heeft een link naar de broncode en een knop naar de handleiding. De QR-code van de leider opent de app nu direct vanuit de camera.

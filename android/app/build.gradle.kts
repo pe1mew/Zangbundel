@@ -105,6 +105,9 @@ android {
 
     packaging {
         resources.excludes += setOf("META-INF/AL2.0", "META-INF/LGPL2.1")
+        // The prebuilt native libraries ship as their libraries publish them. Stripping happens only where an NDK
+        // is installed, so it made a build on this PC differ from CI's and F-Droid's (FDROID-RUNBOOK Step 7).
+        jniLibs.keepDebugSymbols += "**/*.so"
     }
 }
 

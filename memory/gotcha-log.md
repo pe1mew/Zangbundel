@@ -225,6 +225,11 @@
 **Root cause**: `AndroidTransport` has one `ScanCallback`, so `stopScan()` stops whatever scan is running. The leader's listening loop stopped the scan in its `finally` when the session was cancelled, after `LeaderSession.end()`'s 60 s linger, by which time the home screen had started its own.
 **Fix**: stop a loop that scans when its owner ends, not when the session's scope dies; stop the scan in a `finally` only if that loop's own scan is running. Check scan ownership with `dumpsys bluetooth_manager` (per package: *Last 5 scans*, *Ongoing*), not with the screen.
 
+### A PC build differs from CI's only in `lib/*.so` (2026-10-27)
+**Problem**: the unsigned release APK of one commit was 240 KB smaller on the owner's PC than on CI; G-07 had passed comparing two builds on the same PC.
+**Root cause**: the Android Gradle Plugin strips prebuilt native libraries only when an NDK is installed; the PC has one, CI and F-Droid's build server need not.
+**Fix**: `jniLibs.keepDebugSymbols += "**/*.so"`; compare a build with CI's artifact (`gh run download … -n app-release-unsigned`), not with another build on the same machine. Sign for F-Droid with apksigner 34 and `--v1-signing-enabled false`; 36 re-aligns entries.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

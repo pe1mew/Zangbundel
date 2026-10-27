@@ -1,6 +1,6 @@
 # Store listing – English (en-US)
 
-Limits: app name ≤ 30, short description ≤ 80, full description ≤ 4000 characters. Plain text; Play ignores Markdown. Describes phase 1 only.
+Limits: app name ≤ 30, short description ≤ 80, full description ≤ 4000 characters. Plain text; Play ignores Markdown. Describes phase 1 only. F-Droid reads a copy in `fastlane/metadata/android/en-US/`: edit here, then run `bash scripts/store-metadata.sh`; each release note is headed `### <versionName> (<versionCode>)`.
 
 ## App name (≤ 30)
 
@@ -44,10 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
-### 0.1.1
+### 0.1.1 (2026102701)
 
 Fixed: after ending a campfire, the home screen finds other campfires again. New: tap the two words of a campfire to read what they mean. About links to the source code and has a button for the manual. Scanning the leader's QR code with the camera now opens the app directly.
 
-### 0.1.0
+### 0.1.0 (2026102201)
 
 First release: start or join a gathering by QR code, lyrics over Bluetooth, day and night display, import song libraries, pass the app on without internet.

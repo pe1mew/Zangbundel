@@ -4,7 +4,7 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.21 (draft) |
+| Document version | 0.22 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
@@ -33,6 +33,7 @@
 | 0.19 | 2026-10-27 | Section 8: the transitive artefacts named, and JUnit 5 under Jazzer with its licence (release checks G-06 and G-09). The fuzz targets of section 10 are built as a `fuzz` source set in `core/songformat` and `core/protocol` (test plan 3.4 as of v0.12). |
 | 0.20 | 2026-10-27 | A-06: the leader's one notification question built. |
 | 0.21 | 2026-10-27 | A-19: R8 9.1.57 pinned for Kotlin 2.4; the fieldtest build's signature follows `keystore.properties`. |
+| 0.22 | 2026-10-27 | A-19 section 9, reproducibility: native libraries keep their debug symbols, since stripping depended on an installed NDK; VCS info is on and records no repository (it said off); the GitHub APK is signed with apksigner 34, v2 and v3 only. CI checks the F-Droid store metadata. |
 
 ---
 
@@ -272,11 +273,11 @@ Not used, on purpose: Google Play Services, Firebase, ML Kit, Play Core, Play In
 - **Dependency verification.** `gradle/verification-metadata.xml` with SHA-256 for every artefact, regenerated only when a dependency changes, in the same commit as the change (NFR-SEC-05).
 - **Versions.** `versionName` semantic, `versionCode` in the form `YYYYMMDDnn`, both literal in `android/app/build.gradle.kts` (RUNBOOK Decisions, FDROID-RUNBOOK).
 - **Build types.** `debug` (pseudo-locales on, logging on), `release` (R8 minify and resource shrinking, logs stripped per A-20), `fieldtest` (release settings plus the field log, application ID suffix `.fieldtest`, never published).
-- **Reproducibility.** No build time, user or path in `BuildConfig` or resources; VCS info off; `dependenciesInfo { includeInApk = false; includeInBundle = false }`; no baseline profile in 1.0; fixed resource ordering. Two builds of the same tag are compared with `diffoscope` before the first F-Droid submission.
+- **Reproducibility.** No build time, user or path in `BuildConfig` or resources; VCS info on but finding no repository at `android/`, so every build records the same `NO_SUPPORTED_VCS_FOUND`; native libraries keep their debug symbols (`jniLibs.keepDebugSymbols`), so a build is the same with or without an NDK; the GitHub APK signed with apksigner 34, v2 and v3 only (FDROID-RUNBOOK Steps 6 and 7); `dependenciesInfo { includeInApk = false; includeInBundle = false }`; no baseline profile in 1.0; fixed resource ordering. Two builds of the same tag are compared with `diffoscope` before the first F-Droid submission.
 - **Bundle.** Splits disabled and no dynamic features (A-18).
 - **Signing.** Release signing reads `keystore.properties` outside git (RUNBOOK Step 6); the build fails with a clear message when it is absent. No signing key or password is available to CI.
 - **Manifest.** Permissions exactly as RUNBOOK Step 5: `BLUETOOTH_SCAN` with `neverForLocation`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT` (API 31+); `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION` with `maxSdkVersion="30"`; `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`; `INTERNET`, `ACCESS_NETWORK_STATE`; `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` from WorkManager for the opt-in update check (A-14, SP-29); `POST_NOTIFICATIONS` (API 33+) for the service notification, requested only from leaders as A-06 says. Backup attributes per A-13. App Link and scheme intent filters from `docs/app-links/intent-filters.xml`.
-- **CI.** A GitHub Actions workflow runs `bash scripts/check-design.sh`, `./gradlew check` (unit tests, lint with the translation checks as errors, dependency verification), the conformance corpus and a short fuzzing run per target, and builds an unsigned release APK. It has no secrets.
+- **CI.** A GitHub Actions workflow runs `bash scripts/check-design.sh`, `bash scripts/store-metadata.sh --check`, `./gradlew check` (unit tests, lint with the translation checks as errors, dependency verification), the conformance corpus and a short fuzzing run per target, and builds an unsigned release APK. It has no secrets.
 - **Source headers.** `SPDX-License-Identifier: Apache-2.0` in every new source file (FDROID-RUNBOOK).
 
 ---

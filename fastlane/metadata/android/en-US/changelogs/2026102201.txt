@@ -1,0 +1,1 @@
+First release: start or join a gathering by QR code, lyrics over Bluetooth, day and night display, import song libraries, pass the app on without internet.

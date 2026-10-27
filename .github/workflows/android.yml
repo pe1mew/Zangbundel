@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Design consistency check
         run: bash scripts/check-design.sh
+      - name: Store metadata in step
+        run: bash scripts/store-metadata.sh --check
       - uses: actions/setup-java@v5
         with:
           distribution: temurin

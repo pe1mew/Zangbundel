@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 - The user manual for the GitHub wiki, in Dutch (`Handleiding`) and English (`Manual`), with a bilingual `Home`, written against version 0.1.1; sources in `wiki/`, the pages *Over* opens.
+- F-Droid prepared for submission with the production release: store metadata in `fastlane/metadata/android/` generated from `docs/store-listing/` by `scripts/store-metadata.sh` (CI checks it is in step), the build metadata `docs/fdroid/nl.pe1mew.zangbundel.app.yml` with a tag pattern that leaves out library-style tags, and the steps for the owner-signed GitHub APK (FDROID-RUNBOOK Steps 5 to 8).
+
+### Changed
+- Native libraries keep their debug symbols, so the release APK is the same whether or not an NDK is installed; a build on the owner's PC is now byte-identical to CI's (architecture v0.22, G-07 on two machines). The APK grows by about 240 KB.
+- Release notes in the store listings are headed `### <versionName> (<versionCode>)`.
 
 ## [0.1.1] - 2026-10-27
 

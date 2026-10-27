@@ -1,0 +1,1 @@
+Eerste versie: kampvuur starten of meedoen via QR-code, liedteksten via Bluetooth, dag- en nachtweergave, liedbundels importeren, de app doorgeven zonder internet.

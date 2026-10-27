@@ -1,0 +1,1 @@
+Fixed: after ending a campfire, the home screen finds other campfires again. New: tap the two words of a campfire to read what they mean. About links to the source code and has a button for the manual. Scanning the leader's QR code with the camera now opens the app directly.

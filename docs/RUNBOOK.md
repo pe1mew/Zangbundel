@@ -211,13 +211,13 @@ The photos in `raw/` (untracked, 2–5 MB each) can serve the feature graphic af
 
 ### Step 9 — Release flow (once code exists)
 
-1. Bump `versionName` and `versionCode`; add the release to `changelog.md` under a dated heading.
+1. Bump `versionName` and `versionCode`; add the release to `changelog.md` under a dated heading, and its release note, headed `### <versionName> (<versionCode>)`, to `docs/store-listing/nl-NL.md` and `en-US.md`; then `bash scripts/store-metadata.sh` for F-Droid's copy.
 2. Run the checks (`bash scripts/check-design.sh` for the design; the Android unit tests once they exist).
 3. Build the release bundle: `./gradlew bundleRelease` with `keystore.properties` present. Never upload a debuggable build.
 4. Upload to **Internal testing**; wait for the pre-launch report; install from the Play link on two phones and run a gathering between them.
 5. Promote the same bundle to **Closed testing**; write release notes in nl and en.
 6. After the 14 days and production access: promote to **Production** with a staged rollout; watch Android vitals (crashes, ANRs) for a week before 100 %.
-7. Build the APK from the release tag `v<versionName>` and sign it with the **app signing key**, not the upload key that `keystore.properties` names for the bundle: move `keystore.properties` aside, run `./gradlew assembleRelease` (it then builds `app-release-unsigned.apk`), and sign that with `apksigner sign --ks <path>\zangbundel-appsigning.jks --ks-key-alias zangbundel --out zangbundel-<versionName>.apk app/build/outputs/apk/release/app-release-unsigned.apk`; put `keystore.properties` back. `apksigner verify --print-certs` must show `57:86:7B:…:9B:10` (check G-08). Name it `zangbundel-<versionName>.apk` and attach it to the GitHub release of that tag. This is the file F-Droid's `Binaries` URL points at (`docs/FDROID-RUNBOOK.md` Steps 6 and 7); do not use the App Bundle Explorer APK, which cannot be byte-identical to F-Droid's build.
+7. Build the APK from the release tag `v<versionName>` and sign it with the **app signing key**, not the upload key that `keystore.properties` names for the bundle: the commands are in `docs/FDROID-RUNBOOK.md` Step 6 (a fresh clone of the tag, `assembleRelease`, compared with CI's build, signed with apksigner 34, v2 and v3 only). `apksigner verify --print-certs` must show `57:86:7B:…:9B:10` (check G-08). Name it `zangbundel-<versionName>.apk` and attach it to the GitHub release of that tag, together with the production release. This is the file F-Droid's `Binaries` URL points at (`docs/FDROID-RUNBOOK.md` Steps 6 and 7); do not use the App Bundle Explorer APK, which cannot be byte-identical to F-Droid's build.
 
 ### Post-deploy verification
 

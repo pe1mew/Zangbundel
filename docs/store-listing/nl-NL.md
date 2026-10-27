@@ -1,6 +1,6 @@
 # Store listing – Nederlands (nl-NL, default language)
 
-Limits: app name ≤ 30, short description ≤ 80, full description ≤ 4000 characters. Plain text; Play ignores Markdown. Describes phase 1 only (nothing about karaoke or chords until they ship).
+Limits: app name ≤ 30, short description ≤ 80, full description ≤ 4000 characters. Plain text; Play ignores Markdown. Describes phase 1 only (nothing about karaoke or chords until they ship). F-Droid reads a copy in `fastlane/metadata/android/nl-NL/`: edit here, then run `bash scripts/store-metadata.sh`; each release note is headed `### <versionName> (<versionCode>)`.
 
 ## App name (≤ 30)
 
@@ -44,10 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
-### 0.1.1
+### 0.1.1 (2026102701)
 
 Verbeterd: na het beëindigen van een kampvuur vindt het startscherm weer andere kampvuren. Nieuw: tik op de twee woorden van een kampvuur om te lezen wat ze betekenen. Over heeft een link naar de broncode en een knop naar de handleiding. De QR-code van de leider opent de app nu direct vanuit de camera.
 
-### 0.1.0
+### 0.1.0 (2026102201)
 
 Eerste versie: kampvuur starten of meedoen via QR-code, liedteksten via Bluetooth, dag- en nachtweergave, liedbundels importeren, de app doorgeven zonder internet.
