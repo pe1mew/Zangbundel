@@ -132,12 +132,13 @@ class SingerEngine(
     /** 7.5 (v0.32): songs received ahead, framed bytes by `dh` (hex), oldest first; never shown before a manifest names them. */
     private val ahead = LinkedHashMap<String, ByteArray>()
     private var aheadBytes = 0L
-    /** The setlist's `dh` per position (9.5 key 2), from the newest verified setlist. */
+    /** The setlist's `dh` per position (9.5 key 2), from the newest verified setlist, and that setlist's own `dh`. */
     private var aheadOrder: List<ByteArray> = emptyList()
+    private var aheadOrderDh: ByteArray? = null
     /** The reference each pushed song's `dh` went out under, for the reception view's titles (D-81). */
     private val pushedRefs = HashMap<String, SongRef>()
-    /** Setlist positions seen as current or reported as [Event.EarlierSong] (v0.35). */
-    private val earlierDone = HashSet<Int>()
+    /** Songs (their `dh`, hex) seen as current or reported as [Event.EarlierSong] (v0.35; by `dh` since v0.40, as positions move). */
+    private val earlierDone = HashSet<String>()
 
     /**
      * One row of the reception view (FR-SING-05, guiDesign D-81): a document and its source blocks. Rows
@@ -184,6 +185,7 @@ class SingerEngine(
      * document 9 or, while it is current, of its document 3, whichever has more.
      */
     private fun aheadRows(rs: Reassembler): List<Reception> {
+        if (!orderIsCurrent()) return emptyList()   // 7.5 v0.40: positions only against the setlist the state names
         val s = state
         val cur = s?.body?.docs?.get(DocumentType.SONG)
         return aheadOrder.mapIndexed { i, dh ->
@@ -347,7 +349,10 @@ class SingerEngine(
                 if (!DocEntry.hashOf(c.bytes, crypto).contentEquals(manifest.dh)) { reassembler?.reset(c.doc, c.dv); return }
                 held += c.doc to c.dv
                 if (c.doc == DocumentType.SETLIST) {
-                    aheadOrder = try { SetlistDocument.decode(Deflate.unframe(manifest.enc, c.bytes, PayloadLimits.DOCUMENT_DECODED)).ahead } catch (e: Exception) { aheadOrder }
+                    try {
+                        aheadOrder = SetlistDocument.decode(Deflate.unframe(manifest.enc, c.bytes, PayloadLimits.DOCUMENT_DECODED)).ahead
+                        aheadOrderDh = manifest.dh.copyOf()
+                    } catch (e: Exception) { /* keep the order before; it no longer matches the state, so it is not read */ }
                 }
                 deliver(c, viaRepair)
                 if (c.doc == DocumentType.SETLIST) earlierSongs()
@@ -372,7 +377,7 @@ class SingerEngine(
         apply(machine.handle(SingerMachine.Event.StateApplied(clock(), s.body.seq, s.body.status == StateBody.STATUS_ENDED, songIsLocal = local, missing = missing)))
         deliver(Reassembler.Result.Complete(DocumentType.STATE, s.body.seq, bytes), viaRepair)
         fromAhead?.let { deliver(it, viaRepair = false) }
-        s.body.cpos?.let { earlierDone += it }
+        s.body.docs[DocumentType.SONG]?.let { earlierDone += it.dh.hex() }
         earlierSongs()
         // Documents completed before the manifest that lists them.
         val waiting = pendingDocs.entries.toList()
@@ -405,15 +410,26 @@ class SingerEngine(
     private fun earlierSongs() {
         val body = state?.body ?: return
         if (body.sung == null) return
+        if (!orderIsCurrent()) return
+        val current = body.docs[DocumentType.SONG]?.dh
         aheadOrder.forEachIndexed { i, dh ->
             val position = i + 1
-            if (dh.isEmpty() || position == body.cpos || position in earlierDone || !body.wasSung(position)) return@forEachIndexed
+            if (dh.isEmpty() || dh.contentEquals(current) || dh.hex() in earlierDone || !body.wasSung(position)) return@forEachIndexed
             val bytes = ahead[dh.hex()] ?: return@forEachIndexed
             val song = songOf(bytes) ?: return@forEachIndexed
-            earlierDone += position
+            earlierDone += dh.hex()
             pushedRefs[dh.hex()] = song.ref
             _events.tryEmit(Event.EarlierSong(clock(), position, song))
         }
+    }
+
+    /**
+     * 7.5 (v0.40): `cpos` and `sung` are positions in the setlist the applied state's manifest names; the
+     * setlist can change during the gathering, so an order from another version is not read.
+     */
+    private fun orderIsCurrent(): Boolean {
+        val named = state?.body?.docs?.get(DocumentType.SETLIST)?.dh ?: return false
+        return aheadOrderDh?.contentEquals(named) == true
     }
 
     private fun songOf(framed: ByteArray): SongDocument? {

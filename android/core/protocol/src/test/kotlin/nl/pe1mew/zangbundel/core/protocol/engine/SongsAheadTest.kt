@@ -145,6 +145,44 @@ class SongsAheadTest {
     }
 
     @Test
+    fun `after a song is added at the front the positions move, and a late joiner still shows only what was sung (v0_40)`() = runTest {
+        val air = SimulatedAir(backgroundScope)
+        val clock = { testScheduler.currentTime }
+        val leader = LeaderSession(SimulatedTransport(air), crypto, backgroundScope, clock, "Kampvuur", random = Random(3))
+        leader.start(LeaderSession.Publication(ahead = songs.take(2).map { it.document }))
+        leader.pushAt(0, emptySet())
+        testScheduler.advanceTimeBy(30_000)
+        leader.pushAt(1, setOf(1))
+        testScheduler.advanceTimeBy(30_000)
+        // FR-LEAD-03: song 3 is added at the front; songs 1 and 2 move to positions 2 and 3, and the state says so.
+        val s = songs[1]
+        leader.push(LeaderSession.Publication(s.ref, s.title, s.document, ahead = listOf(songs[2], songs[0], songs[1]).map { it.document }, cpos = 3, sung = setOf(2, 3)))
+        testScheduler.advanceTimeBy(30_000)
+        val engine = SingerEngine(SimulatedTransport(air, reception = 0.4), crypto, backgroundScope, clock, { it.name == "Kampvuur" }, random = Random(8))
+        val events = ArrayList<SingerEngine.Event>()
+        backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { engine.events.collect { events += it } }
+        engine.start()
+        testScheduler.advanceTimeBy(8 * 60_000)
+        val earlier = events.filterIsInstance<SingerEngine.Event.EarlierSong>()
+        assertEquals(listOf(songs[0].ref), earlier.map { it.song.ref }, "song 1 was sung; song 3, now first, was not")
+        assertEquals(listOf(2), earlier.map { it.position })
+        assertEquals(listOf(1, 2, 3), engine.reception().filter { it.doc == DocumentType.AHEAD }.map { it.position }, "rows follow the new setlist")
+    }
+
+    @Test
+    fun `a singer present when the setlist changes reports no earlier song twice and none it did not see sung (v0_40)`() = runTest {
+        val (leader, singer) = campfire(reception = 0.4)
+        testScheduler.advanceTimeBy(6 * 60_000)
+        leader.pushAt(0, emptySet())
+        testScheduler.advanceTimeBy(30_000)
+        // Song 3 moves to the front: positions 1, 2, 3 become songs 3, 1, 2.
+        val s = songs[0]
+        leader.push(LeaderSession.Publication(s.ref, s.title, s.document, ahead = listOf(songs[2], songs[0], songs[1]).map { it.document }, cpos = 2, sung = setOf(2)))
+        testScheduler.advanceTimeBy(60_000)
+        assertTrue(singer.events.filterIsInstance<SingerEngine.Event.EarlierSong>().isEmpty(), "the current song is no earlier song, before or after the move")
+    }
+
+    @Test
     fun `without songs ahead the push still arrives, more slowly`() = runTest {
         val (leader, singer) = campfire(reception = 0.4, ahead = false)
         testScheduler.advanceTimeBy(60_000)

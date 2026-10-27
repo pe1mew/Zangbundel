@@ -143,7 +143,7 @@ fun SingerScreen() {
         val state = stringResource(
             when (m.connection) {
                 Gathering.Connection.CONNECTING -> R.string.singer_connecting
-                Gathering.Connection.CONNECTED -> R.string.singer_connected
+                Gathering.Connection.CONNECTED -> if (m.cleared) R.string.singer_cleared else R.string.singer_connected
                 Gathering.Connection.RECONNECTING -> R.string.singer_reconnecting
                 Gathering.Connection.ENDED -> R.string.singer_ended
             },

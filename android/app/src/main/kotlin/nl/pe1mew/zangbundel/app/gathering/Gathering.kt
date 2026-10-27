@@ -102,8 +102,12 @@ class Gathering(
         }
     }
 
-    /** A line of the leader's setlist: the installed song it names, or null when it cannot be pushed (*niet gevonden*, D-59). */
-    data class LeaderSong(val entry: PreparedEntry, val song: SongbookEntry?) {
+    /**
+     * A line of the leader's setlist: the installed song it names, or null when it cannot be pushed
+     * (*niet gevonden*, D-59). [line] keeps the line's identity while the setlist changes (D-58), also
+     * when a song stands on it twice.
+     */
+    data class LeaderSong(val entry: PreparedEntry, val song: SongbookEntry?, val line: Long) {
         val title: String get() = song?.title ?: entry.title
     }
 
@@ -161,6 +165,8 @@ class Gathering(
             /** 6.5, D-35: a gathering with the code's id sends states the code's key does not sign. */
             val notTheCampfire: Boolean = false,
             val joiningSince: Long = 0,
+            /** D-65: the leader cleared the current song (*Wis*); the text stays, the strip says *gewist*. */
+            val cleared: Boolean = false,
         ) : Mode
     }
 
@@ -180,13 +186,15 @@ class Gathering(
     private var session: CoroutineScope? = null
     private var leader: LeaderSession? = null
     private var singer: SingerEngine? = null
-    private val refs = HashMap<Int, SongRef>()
+    /** The setlist's songs as pushed and sent ahead, by line; null for a line that cannot be broadcast. */
+    private val prepared = HashMap<Long, Prepared?>()
+    private val lines = java.util.concurrent.atomic.AtomicLong()
     /** Singing: the current song of the latest verified state. */
     private var currentRef: SongRef? = null
     /** For the gathering memory (FR-DATA-03): when it started, the songs in the order first pushed, the most singers at once. */
     private var startedWall = 0L
-    /** Read by the resume record's writer while a push may add to it. */
-    private val pushedOrder = java.util.concurrent.CopyOnWriteArrayList<Int>()
+    /** The lines pushed, in the order first pushed (v0.40: by line, as positions move); read by the resume record's writer while a push may add to it. */
+    private val pushedLines = java.util.concurrent.CopyOnWriteArrayList<Long>()
     private var peakSingers = 0
     /** D-62: when the current song was pushed, for the last song's duration. */
     private var lastPushAt: Long? = null
@@ -248,14 +256,15 @@ class Gathering(
         val t = checkNotNull(transport()) { "no Bluetooth" }
         runCatching { t.stopScan() }
         val installed = songbook.entries()
-        val songs = setlistUid?.let { setlists.entries(it) }.orEmpty().map { LeaderSong(it, resolve(it, installed)) }
+        val songs = setlistUid?.let { setlists.entries(it) }.orEmpty().map { LeaderSong(it, resolve(it, installed), lines.incrementAndGet()) }
         // FR-BLE-18, ble-protocol 7.4 rule 7: every song of the setlist goes out ahead from the start.
-        val prepared = songs.map { song -> song.song?.let { runCatching { prepare(it) }.getOrNull() } }
+        prepared.clear()
+        val ahead = songs.map { preparedOf(it)?.document }
         val s = CoroutineScope(scope.coroutineContext + Job(scope.coroutineContext[Job]))
         val l = LeaderSession(t, crypto, s, clock, name, joinCode = protection.code)
         GatheringService.start(context)
         try {
-            l.start(LeaderSession.Publication(ahead = prepared.map { it?.document }))
+            l.start(LeaderSession.Publication(ahead = ahead))
         } catch (e: Exception) {
             s.cancel()
             GatheringService.stop(context)
@@ -263,10 +272,8 @@ class Gathering(
         }
         session = s
         leader = l
-        refs.clear()
-        prepared.forEachIndexed { i, p -> p?.let { refs[i] = it.ref } }
         startedWall = wallClock()
-        pushedOrder.clear()
+        pushedLines.clear()
         peakSingers = 0
         lastPushAt = null
         _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
@@ -321,22 +328,97 @@ class Gathering(
      */
     suspend fun push(index: Int) = mutex.withLock {
         val m = _mode.value as? Mode.Leading ?: return@withLock
-        val l = leader ?: return@withLock
-        val e = m.songs.getOrNull(index)?.song ?: return@withLock
-        val p = prepare(e) ?: return@withLock
-        val ref = p.ref
-        refs[index] = ref
-        val sung = if (m.current != null && m.current != index) m.sung + m.current else m.sung
-        // BLE protocol v0.35: the setlist stays as it was; the state names the current position and every one pushed.
-        l.push(LeaderSession.Publication(ref, p.title, p.document, cpos = index + 1, sung = (pushedOrder + index).map { it + 1 }.toSet()))
+        val song = m.songs.getOrNull(index)?.takeIf { it.song != null } ?: return@withLock
         Log.d("leader push index=$index repush=${index == m.current}")
-        if (index !in pushedOrder) pushedOrder += index
+        pushLine(m, m.songs, song.line, setlistChanged = false)
+    }
+
+    /** *Wis* (D-65, FR-LEAD-06): nothing is being sung; the song that was current counts as sung. */
+    suspend fun clear() = mutex.withLock {
+        val m = _mode.value as? Mode.Leading ?: return@withLock
+        val l = leader ?: return@withLock
+        if (m.current == null) return@withLock
+        val now = clock()
+        val lastSongMs = lastPushAt?.let { now - it } ?: m.lastSongMs
+        lastPushAt = null
+        Log.d("leader clear")
+        _mode.value = publish(l, m, m.songs, current = null, setlistChanged = false).copy(lastSongMs = lastSongMs)
+        persist(l)
+    }
+
+    /** *Toevoegen* (D-58, FR-LEAD-03): the song goes at the end of the setlist and out ahead from now on. */
+    suspend fun add(entry: SongbookEntry) = mutex.withLock {
+        val m = _mode.value as? Mode.Leading ?: return@withLock
+        val l = leader ?: return@withLock
+        val songs = m.songs + LeaderSong(PreparedEntry(entry.libraryId, entry.songId, entry.title), entry, lines.incrementAndGet())
+        Log.d("leader add ${entry.libraryId}/${entry.songId}")
+        _mode.value = publish(l, m, songs, currentLine(m), setlistChanged = true)
+        persist(l)
+    }
+
+    /**
+     * *Nu zingen* (D-58, FR-LEAD-01): the song goes into the setlist right after the current one, at the
+     * end when none is current, and is pushed in the same state (ble-protocol 10.5, v0.40).
+     */
+    suspend fun singNow(entry: SongbookEntry) = mutex.withLock {
+        val m = _mode.value as? Mode.Leading ?: return@withLock
+        val song = LeaderSong(PreparedEntry(entry.libraryId, entry.songId, entry.title), entry, lines.incrementAndGet())
+        val at = m.current?.plus(1) ?: m.songs.size
+        val songs = m.songs.toMutableList().also { it.add(at, song) }
+        Log.d("leader sing now ${entry.libraryId}/${entry.songId} at=$at")
+        pushLine(m, songs, song.line, setlistChanged = true)
+    }
+
+    /**
+     * The setlist as the leader's sheet left it (D-58: a song moved, removed, or put back): the current
+     * song and every sung one stay in it; anything else is refused.
+     */
+    suspend fun edit(songs: List<LeaderSong>) = mutex.withLock {
+        val m = _mode.value as? Mode.Leading ?: return@withLock
+        val l = leader ?: return@withLock
+        val kept = songs.map { it.line }.toSet()
+        val fixed = pushedLines + listOfNotNull(currentLine(m))
+        if (!kept.containsAll(fixed) || kept.size != songs.size || songs.map { it.line } == m.songs.map { it.line }) return@withLock
+        Log.d("leader setlist edited ${m.songs.size} -> ${songs.size}")
+        _mode.value = publish(l, m, songs, currentLine(m), setlistChanged = true)
+        persist(l)
+    }
+
+    private fun currentLine(m: Mode.Leading): Long? = m.current?.let { m.songs.getOrNull(it)?.line }
+
+    /** A push of [line] in [songs], which may be a changed setlist; the last song's duration of D-62 follows. */
+    private suspend fun pushLine(m: Mode.Leading, songs: List<LeaderSong>, line: Long, setlistChanged: Boolean) {
+        val l = leader ?: return
+        val previous = currentLine(m)
+        if (line !in pushedLines) pushedLines += line
         // D-62: the song before this one lasted from its push until now (a re-push of the same song does not end it).
         val now = clock()
-        val lastSongMs = if (index != m.current && lastPushAt != null) now - lastPushAt!! else m.lastSongMs
-        if (index != m.current) lastPushAt = now
-        _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress(), songsSung = pushedOrder.size, lastSongMs = lastSongMs)
+        val lastSongMs = if (line != previous && lastPushAt != null) now - lastPushAt!! else m.lastSongMs
+        if (line != previous) lastPushAt = now
+        _mode.value = publish(l, m, songs, line, setlistChanged).copy(lastSongMs = lastSongMs)
         persist(l)
+    }
+
+    /**
+     * The state for [songs] with [current] (a line) as the current song (ble-protocol 10.5): `cpos` and
+     * `sung` are positions in this setlist (9.4, v0.40), renumbered whenever it changes; with
+     * [setlistChanged] the setlist document and the songs ahead follow (7.4 rule 7).
+     */
+    private suspend fun publish(l: LeaderSession, m: Mode.Leading, songs: List<LeaderSong>, current: Long?, setlistChanged: Boolean): Mode.Leading {
+        val cur = current?.let { c -> songs.indexOfFirst { it.line == c } }?.takeIf { it >= 0 }
+        val p = cur?.let { preparedOf(songs[it]) }
+        val sung = pushedLines.mapNotNull { line -> songs.indexOfFirst { it.line == line }.takeIf { it >= 0 } }.toSet()
+        val ahead = if (setlistChanged) songs.map { preparedOf(it)?.document } else null
+        l.push(LeaderSession.Publication(p?.ref, p?.title, p?.document, ahead = ahead, cpos = cur?.let { it + 1 }, sung = sung.map { it + 1 }.toSet()))
+        return m.copy(songs = songs, current = cur, sung = sung - setOfNotNull(cur), progress = l.progress(), songsSung = pushedLines.size)
+    }
+
+    /** The prepared song of a line, read once; null when it cannot be pushed or broadcast. */
+    private suspend fun preparedOf(song: LeaderSong): Prepared? {
+        if (song.line in prepared) return prepared[song.line]
+        val p = song.song?.let { runCatching { prepare(it) }.getOrNull() }
+        prepared[song.line] = p
+        return p
     }
 
     // ---- resume after the app died (FR-GATH-13, ble-protocol 10.9, guiDesign D-67) ----
@@ -387,11 +469,12 @@ class Gathering(
         val songs = r.setlist.map { p ->
             val key = p.songKey?.split('/', limit = 2)
             val entry = PreparedEntry(key?.getOrNull(0), key?.getOrNull(1), p.title)
-            LeaderSong(entry, resolve(entry, installed))
+            LeaderSong(entry, resolve(entry, installed), lines.incrementAndGet())
         }
-        val prepared = songs.map { song -> song.song?.let { runCatching { prepare(it) }.getOrNull() } }
-        val current = r.current?.takeIf { prepared.getOrNull(it) != null }
-        val cur = current?.let { prepared[it] }
+        prepared.clear()
+        val ahead = songs.map { preparedOf(it)?.document }
+        val current = r.current?.takeIf { songs.getOrNull(it)?.let { s -> prepared[s.line] } != null }
+        val cur = current?.let { prepared[songs[it].line] }
         val protection = when (r.protection) {
             ResumeRecord.PROTECTION_CODE -> r.session.joinCode?.let { Protection.Code(it) } ?: Protection.Open
             ResumeRecord.PROTECTION_QR_ONLY -> r.session.joinCode?.let { Protection.QrOnly(it) } ?: Protection.Open
@@ -403,7 +486,7 @@ class Gathering(
         try {
             l.start(
                 LeaderSession.Publication(
-                    cur?.ref, cur?.title, cur?.document, ahead = prepared.map { it?.document },
+                    cur?.ref, cur?.title, cur?.document, ahead = ahead,
                     cpos = current?.let { it + 1 }, sung = r.pushed.map { it + 1 }.toSet(),
                 ),
             )
@@ -415,11 +498,9 @@ class Gathering(
         session = s
         leader = l
         pendingResume = null
-        refs.clear()
-        prepared.forEachIndexed { i, p -> p?.let { refs[i] = it.ref } }
         startedWall = r.startedWall
-        pushedOrder.clear()
-        pushedOrder += r.pushed
+        pushedLines.clear()
+        pushedLines += r.pushed.map { songs[it].line }
         peakSingers = r.peak
         lastPushAt = null
         Log.d("leader resumed singers=${l.singers} current=$current pushed=${r.pushed} stoppedAgoMs=${wallClock() - r.writtenWall}")
@@ -443,7 +524,7 @@ class Gathering(
                 is Protection.QrOnly -> ResumeRecord.PROTECTION_QR_ONLY
             },
             m.songs.map { ResumeRecord.Position(it.entry.songKey, it.entry.title) },
-            pushedOrder.toList(), m.current, startedWall, wallClock(), maxOf(peakSingers, m.singers),
+            pushedLines.mapNotNull { line -> m.songs.indexOfFirst { it.line == line }.takeIf { it >= 0 } }, m.current, startedWall, wallClock(), maxOf(peakSingers, m.singers),
         ).encode()
         withContext(Dispatchers.IO) {
             resumeLock.withLock {
@@ -485,10 +566,10 @@ class Gathering(
         session = null
         // Architecture 5.4 (v0.13): the record goes at once, so a leader that dies while ending is not offered an ended gathering.
         scope.launch(Dispatchers.IO) { resumeLock.withLock { resumeStore.delete() } }
-        if (m != null) _summary.value = Summary(m.name, startedWall, clock() - m.startedAt, pushedOrder.size, maxOf(peakSingers, m.singers))
+        if (m != null) _summary.value = Summary(m.name, startedWall, clock() - m.startedAt, pushedLines.size, maxOf(peakSingers, m.singers))
         _mode.value = Mode.Idle
         if (m != null) {
-            val sung = pushedOrder.mapNotNull { i -> m.songs[i].song?.let { MemorySong(it.libraryId, it.songId, it.title) } }
+            val sung = pushedLines.mapNotNull { line -> m.songs.firstOrNull { it.line == line }?.song?.let { MemorySong(it.libraryId, it.songId, it.title) } }
             remember(m.name, led = true, singers = maxOf(peakSingers, m.singers), songs = sung)
         }
         scope.launch {
@@ -666,12 +747,17 @@ class Gathering(
     /** A new state: the current song moves; a song not yet received gets its place with the state's title (D-29). */
     private fun current(engine: SingerEngine) {
         val body = engine.state?.body ?: return
-        val cur = body.cur ?: return
+        val cur = body.cur
+        if (cur == null) {
+            // D-65, FR-LEAD-06: cleared; nothing is current, the songs stay on the page.
+            if (currentRef != null) { currentRef = null; singing { it.copy(current = null, cleared = true) } }
+            return
+        }
         currentRef = cur
         val m = _mode.value as? Mode.Singing ?: return
         val at = m.songs.indexOfFirst { it.ref == cur }
-        _mode.value = if (at >= 0) m.copy(current = at)
-        else m.copy(songs = m.songs + ReceivedSong(cur, body.title ?: cur.song.value, null, libraryOnly = DocumentType.SONG !in body.docs), current = m.songs.size)
+        _mode.value = if (at >= 0) m.copy(current = at, cleared = false)
+        else m.copy(songs = m.songs + ReceivedSong(cur, body.title ?: cur.song.value, null, libraryOnly = DocumentType.SONG !in body.docs), current = m.songs.size, cleared = false)
     }
 
     /** FR-BLE-04: shown only when the file matches its reference. */

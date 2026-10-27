@@ -78,8 +78,9 @@ import nl.pe1mew.zangbundel.core.songformat.SongParser
  * separator with *Nu*. The bar carries the fingerprint of D-36 and opens, on a tap or a drag down, the
  * drawer of D-61 with the statistics of D-62, the rows that show how to join (D-57 as of v0.34) and
  * *Kampvuur beëindigen*. The ▲ ≡ ▼ buttons of D-57 sit at the bottom
- * right and move between separators; ≡ opens the setlist as a sheet to jump to a song (the editing of D-58
- * comes later).
+ * right and move between separators; ≡ opens the leader's sheet of D-58 (v0.40): the setlist to jump,
+ * move, remove and put back, and the songbook to add a song or sing it now. *Wis* on the current song's
+ * separator clears it (D-65). A campfire without a setlist starts with *Kies een lied uit de zangbundel*.
  */
 @Composable
 fun LeaderScreen() {
@@ -96,12 +97,17 @@ fun LeaderScreen() {
     // D-57: the ▲ ≡ ▼ column, dimmed after 3 s without a touch, and the setlist sheet.
     var touched by remember { mutableLongStateOf(0L) }
     var dimmed by remember { mutableStateOf(false) }
-    var sheet by remember { mutableStateOf(false) }
+    var sheet by remember { mutableStateOf<Int?>(null) }   // null: closed; else the tab it opens on (D-58)
+    var songbook by remember { mutableStateOf<List<nl.pe1mew.zangbundel.platform.storage.SongbookEntry>>(emptyList()) }
+    LaunchedEffect(sheet != null) { if (sheet != null && songbook.isEmpty()) songbook = runCatching { container.storage.songbook.entries() }.getOrDefault(emptyList()) }
     val at by remember { derivedStateOf { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset } }
-    var songs by remember { mutableStateOf<Map<Int, Song>>(emptyMap()) }
+    // The lyrics by setlist line, read once per line (D-58: lines come, go and move).
+    var songs by remember { mutableStateOf<Map<Long, Song>>(emptyMap()) }
     LaunchedEffect(m.songs) {
-        songs = m.songs.withIndex().mapNotNull { (i, s) ->
-            s.song?.let { e -> runCatching { container.storage.songbook.read(e.libraryId, e.directory, e.fileName) }.getOrNull()?.let { SongParser.parse(it).song }?.let { i to it } }
+        val known = songs
+        songs = m.songs.mapNotNull { s ->
+            known[s.line]?.let { s.line to it }
+                ?: s.song?.let { e -> runCatching { container.storage.songbook.read(e.libraryId, e.directory, e.fileName) }.getOrNull()?.let { SongParser.parse(it).song }?.let { s.line to it } }
         }.toMap()
     }
     var now by remember { mutableLongStateOf(gathering.now()) }
@@ -125,42 +131,62 @@ fun LeaderScreen() {
                     item(key = "block") {
                         SetlistBlock(m) { i -> scope.launch { list.animateScrollToItem(1 + i) } }
                     }
-                    itemsIndexed(m.songs, key = { i, _ -> "song:$i" }) { i, s ->
+                    itemsIndexed(m.songs, key = { _, s -> "song:${s.line}" }) { i, s ->
                         Column {
-                            Separator(i, m, s) { drawer = false; scope.launch { gathering.push(i) } }
-                            val song = songs[i]
+                            Separator(i, m, s, onClear = { scope.launch { gathering.clear() } }) { drawer = false; scope.launch { gathering.push(i) } }
+                            val song = songs[s.line]
                             if (song != null) LyricBody(song, LyricColors.Night, Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
                             else Text(stringResource(R.string.setlist_not_found), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp))
                         }
                     }
-                    if (m.songs.isEmpty()) item { Text(stringResource(R.string.leader_no_setlist), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp)) }
+                    // D-55 (v0.40): without a setlist the page starts by asking for a song.
+                    if (m.songs.isEmpty()) item(key = "empty") {
+                        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(stringResource(R.string.leader_choose_song), color = LyricColors.Night.lyric, fontSize = 20.sp)
+                            Spacer(Modifier.height(16.dp))
+                            Button(onClick = { sheet = 1 }, colors = ButtonDefaults.buttonColors(containerColor = Palette.FireOrange, contentColor = Palette.NightBlueDark)) {
+                                Text(stringResource(R.string.leader_open_songbook), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                     // D-69: the closing bar ends the setlist and the page.
                     else item(key = "closing") { ClosingBar { confirmEnd = true } }
                 }
                 DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
             }
         }
-        // Items: 0 is the setlist block, 1 + i the separator of song i.
-        if (m.songs.isNotEmpty()) {
+        // Items: 0 is the setlist block, 1 + i the separator of song i. The ≡ button opens the sheet also without songs (D-58).
+        run {
             val (index, offset) = at
             val last = m.songs.size
             RoundButtons(
                 touched = touched, dimmed = dimmed, onDim = { dimmed = true },
-                prevEnabled = index > 0 || offset > 0,
+                prevEnabled = m.songs.isNotEmpty() && (index > 0 || offset > 0),
                 nextEnabled = index < last,
                 onPrev = { scope.launch { list.animateScrollToItem(if (offset > 0) index else (index - 1).coerceAtLeast(0)) } },
-                onList = { sheet = true },
+                onList = { sheet = 0 },
                 onNext = { scope.launch { list.animateScrollToItem((index + 1).coerceAtMost(last)) } },
                 modifier = Modifier.align(Alignment.BottomEnd).windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp),
             )
         }
         showJoin?.let { qr -> JoinPanel(m, startWithQr = qr) { showJoin = null } }
     }
-    if (sheet) SongSheet(
-        rows = m.songs.mapIndexed { i, s -> SheetRow(s.title, current = i == m.current, sung = i in m.sung) },
-        onPick = { i -> sheet = false; scope.launch { list.animateScrollToItem(1 + i) } },
-        onDismiss = { sheet = false },
-    )
+    sheet?.let { tab ->
+        LeaderSheet(
+            m, tab, songbook,
+            onPick = { i -> sheet = null; if (i >= 0) scope.launch { list.animateScrollToItem(1 + i) } },
+            onEdit = { rows -> scope.launch { gathering.edit(rows) } },
+            onAdd = { e -> scope.launch { gathering.add(e) } },
+            onSingNow = { e ->
+                sheet = null
+                scope.launch {
+                    gathering.singNow(e)
+                    (gathering.mode.value as? Gathering.Mode.Leading)?.current?.let { list.animateScrollToItem(1 + it) }
+                }
+            },
+            onDismiss = { sheet = null },
+        )
+    }
     if (confirmEnd) AlertDialog(
         onDismissRequest = { confirmEnd = false },
         title = { Text(stringResource(R.string.leader_end_title)) },
@@ -251,7 +277,7 @@ private fun HelpBar(share: Float, modifier: Modifier = Modifier) {
 
 /** D-56: 64 dp in night blue, colour square, position and title, state, and the round orange *Nu*. */
 @Composable
-private fun Separator(i: Int, m: Gathering.Mode.Leading, s: Gathering.LeaderSong, onNow: () -> Unit) {
+private fun Separator(i: Int, m: Gathering.Mode.Leading, s: Gathering.LeaderSong, onClear: () -> Unit, onNow: () -> Unit) {
     val state = when {
         i == m.current -> stringResource(R.string.leader_state_current)
         i in m.sung -> stringResource(R.string.leader_state_sung)
@@ -270,6 +296,8 @@ private fun Separator(i: Int, m: Gathering.Mode.Leading, s: Gathering.LeaderSong
                 }
             }
         }
+        // D-65: *Wis*, left of Nu, only on the song being sung; hidden elsewhere.
+        if (i == m.current) TextButton(onClick = onClear) { Text(stringResource(R.string.leader_clear), color = Palette.OffWhite) }
         Spacer(Modifier.width(8.dp))
         // D-56 (v0.19, the owner's request): the song the singers have now is the filled orange Nu; every other
         // Nu is black with an orange ring, a button not yet chosen.

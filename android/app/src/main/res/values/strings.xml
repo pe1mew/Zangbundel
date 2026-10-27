@@ -264,9 +264,9 @@
     <string name="summary_home">Back to start</string>
     <string name="leader_end_title">End the campfire for everyone?</string>
     <string name="leader_end_text">Singers see that the campfire has ended, and the lyrics leave their phones.</string>
-    <string name="leader_no_setlist">No setlist was chosen. Start again with a setlist to push songs.</string>
     <string name="singer_connecting">connecting…</string>
     <string name="singer_connected">connected</string>
+    <string name="singer_cleared">cleared</string>
     <string name="singer_reconnecting">reconnecting…</string>
     <string name="singer_ended">ended</string>
     <string name="singer_waiting">Waiting for the first song…</string>
@@ -363,4 +363,16 @@
     <string name="resume_resume">Resume</string>
     <string name="resume_restart">Start over</string>
     <string name="resume_failed">Could not resume. Switch Bluetooth on and try again.</string>
+    <!-- The leader's sheet and Wis (guiDesign D-58, D-65, D-55). -->
+    <string name="sheet_tab_setlist">Setlist</string>
+    <string name="sheet_tab_songbook">Songbook</string>
+    <string name="sheet_add_from_songbook">Add from the songbook</string>
+    <string name="sheet_add">Add</string>
+    <string name="sheet_sing_now">Sing now</string>
+    <string name="sheet_search">Search titles</string>
+    <string name="sheet_removed">%1$s removed</string>
+    <string name="sheet_undo">Undo</string>
+    <string name="leader_clear">Clear</string>
+    <string name="leader_choose_song">Choose a song from the songbook.</string>
+    <string name="leader_open_songbook">Open the songbook</string>
 </resources>

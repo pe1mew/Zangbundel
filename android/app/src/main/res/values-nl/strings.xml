@@ -263,9 +263,9 @@
     <string name="summary_home">Terug naar start</string>
     <string name="leader_end_title">Het kampvuur voor iedereen beëindigen?</string>
     <string name="leader_end_text">Zangers zien dat het kampvuur is afgelopen, en de liedteksten verdwijnen van hun telefoons.</string>
-    <string name="leader_no_setlist">Er is geen setlist gekozen. Start opnieuw met een setlist om liederen te sturen.</string>
     <string name="singer_connecting">verbinden…</string>
     <string name="singer_connected">verbonden</string>
+    <string name="singer_cleared">gewist</string>
     <string name="singer_reconnecting">opnieuw verbinden…</string>
     <string name="singer_ended">beëindigd</string>
     <string name="singer_waiting">Wachten op het eerste lied…</string>
@@ -362,4 +362,16 @@
     <string name="resume_resume">Hervatten</string>
     <string name="resume_restart">Opnieuw beginnen</string>
     <string name="resume_failed">Hervatten lukte niet. Zet Bluetooth aan en probeer het opnieuw.</string>
+    <!-- Het blad van de leider en Wis (guiDesign D-58, D-65, D-55). -->
+    <string name="sheet_tab_setlist">Setlist</string>
+    <string name="sheet_tab_songbook">Zangbundel</string>
+    <string name="sheet_add_from_songbook">Toevoegen uit zangbundel</string>
+    <string name="sheet_add">Toevoegen</string>
+    <string name="sheet_sing_now">Nu zingen</string>
+    <string name="sheet_search">Zoek op titel</string>
+    <string name="sheet_removed">%1$s verwijderd</string>
+    <string name="sheet_undo">Ongedaan maken</string>
+    <string name="leader_clear">Wis</string>
+    <string name="leader_choose_song">Kies een lied uit de zangbundel.</string>
+    <string name="leader_open_songbook">Zangbundel openen</string>
 </resources>
