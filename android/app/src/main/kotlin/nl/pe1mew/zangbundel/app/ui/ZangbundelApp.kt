@@ -14,7 +14,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import nl.pe1mew.zangbundel.app.diagnostics.BleTestScreen
 import nl.pe1mew.zangbundel.app.diagnostics.Diagnostics
 import nl.pe1mew.zangbundel.app.diagnostics.RadioCheckScreen
 import nl.pe1mew.zangbundel.app.gathering.Gathering
@@ -144,7 +143,6 @@ fun ZangbundelApp() {
             }
             if (Diagnostics.AVAILABLE) {
                 composable(Diagnostics.ROUTE) { RadioCheckScreen() }
-                composable(Diagnostics.BLE_TEST_ROUTE) { BleTestScreen() }
             }
         }
     }

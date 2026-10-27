@@ -225,7 +225,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - *Nothing.*
 
 ### Removed
-- *Nothing.*
+- The two-phone test (*Test met twee telefoons*), at the owner's request: every device test now runs in a real campfire. With it went what only it used: the in-memory reception switch (`SingerSettings`), the leader's raw test document (`LeaderSession.start` and `push` with bytes) and its extended-only switch, and the transport's diagnostic switches for scannable sets and the 2M PHY. Protocol tests now push real song documents. The radio check stays in the debug and field-test builds (assessment v0.12, SP-24 retired).
 
 <!-- Template for a release entry. Copy it above this comment when a version is cut.
 

@@ -8,7 +8,6 @@ import nl.pe1mew.zangbundel.app.library.HttpsDownloads
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.app.library.SetlistTransfer
-import nl.pe1mew.zangbundel.app.settings.SingerSettings
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
@@ -27,9 +26,6 @@ class AppContainer(private val context: Context) {
     val storage: LibraryStorage by lazy { LibraryStorage.open(context) }
 
     val crypto: Crypto by lazy { SodiumCrypto() }
-
-    /** The two-phone test's reception switch (D-81: singers have none since v0.30). */
-    val singerSettings = SingerSettings()
 
     /** Null when the device has no Bluetooth adapter at all; such a device can neither lead nor join. */
     val transport: Transport? by lazy {

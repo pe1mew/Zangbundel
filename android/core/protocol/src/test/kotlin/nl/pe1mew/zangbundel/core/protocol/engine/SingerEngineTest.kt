@@ -6,11 +6,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import nl.pe1mew.zangbundel.core.model.ContentHash
+import nl.pe1mew.zangbundel.core.model.LibraryId
+import nl.pe1mew.zangbundel.core.model.SongId
+import nl.pe1mew.zangbundel.core.model.SongRef
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.frame.Carrier
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
+import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
 import nl.pe1mew.zangbundel.core.testing.JvmSodiumCrypto
 import nl.pe1mew.zangbundel.core.testing.SimulatedAir
 import nl.pe1mew.zangbundel.core.testing.SimulatedTransport
@@ -24,7 +29,18 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class SingerEngineTest {
     private val crypto = JvmSodiumCrypto()
-    private fun song(seed: Int) = Random(seed).nextBytes(2000)
+    /**
+     * A song of random bytes (never lyrics) as the leader publishes one, since the raw test path went with
+     * the two-phone test (2026-10-27).
+     */
+    private fun song(seed: Int): SongDocument {
+        val file = Random(seed).nextBytes(2000)
+        return SongDocument(SongRef(LibraryId("test"), SongId("lied-$seed"), ContentHash(crypto.sha256(file).copyOf(ContentHash.SIZE))), file, null)
+    }
+
+    private fun publication(song: SongDocument) = LeaderSession.Publication(song.ref, null, song)
+
+    private fun fileOf(e: SingerEngine.Event.Delivered): ByteArray = SongDocument.decode(e.document()).file
 
     private class Singer(val engine: SingerEngine, val events: MutableList<SingerEngine.Event>)
 
@@ -39,7 +55,7 @@ class SingerEngineTest {
         val clock = { testScheduler.currentTime }
         val ext = Transport.Capabilities(true, true, true, 251)
         val leader = LeaderSession(SimulatedTransport(air, if (leaderExtended) ext else SimulatedTransport.DEFAULT_CAPABILITIES), crypto, backgroundScope, clock, "Testvuur", random = Random(9))
-        leader.start(song(1))
+        leader.start(publication(song(1)))
         val singers = receptions.mapIndexed { i, r ->
             val t = SimulatedTransport(air, if (extendedSingers) ext else SimulatedTransport.DEFAULT_CAPABILITIES, reception = r, extendedReception = extendedReception, dataReception = dataReception)
             val engine = SingerEngine(t, crypto, backgroundScope, clock, { it.name == "Testvuur" }, random = Random(100 + i))
@@ -55,11 +71,11 @@ class SingerEngineTest {
     private suspend fun TestScope.pushAndTime(leader: LeaderSession, singers: List<Singer>, seed: Int, limitMs: Long = 120_000): List<Long?> {
         val pushedAt = testScheduler.currentTime
         val song = song(seed)
-        leader.push(song)
+        leader.push(publication(song))
         testScheduler.advanceTimeBy(limitMs)
         return singers.map { s ->
             s.events.filterIsInstance<SingerEngine.Event.Delivered>()
-                .firstOrNull { it.doc == DocumentType.SONG && it.at >= pushedAt && it.bytes.contentEquals(song) }
+                .firstOrNull { it.doc == DocumentType.SONG && it.at >= pushedAt && fileOf(it).contentEquals(song.file) }
                 ?.let { it.at - pushedAt }
         }
     }
@@ -76,7 +92,7 @@ class SingerEngineTest {
         // v0.24: the whole state opens the burst, so a 2 kB song by broadcast would take about 5.7 s on
         // three legacy sets; the 5 s deadline of 7.6 sends even this singer to GATT for it.
         assertTrue(t < 5_000, "$t ms")
-        assertContentEquals(song(2), s.events.filterIsInstance<SingerEngine.Event.Delivered>().last { it.doc == DocumentType.SONG }.bytes)
+        assertContentEquals(song(2).file, fileOf(s.events.filterIsInstance<SingerEngine.Event.Delivered>().last { it.doc == DocumentType.SONG }))
     }
 
     @Test
@@ -171,7 +187,7 @@ class SingerEngineTest {
         val (leader, singers) = gathering(listOf(0.5))
         testScheduler.advanceTimeBy(30_000)
         val engine = singers.single().engine
-        leader.push(song(2))
+        leader.push(publication(song(2)))
         testScheduler.advanceTimeBy(1_000)
         val during = engine.reception().single { it.doc == DocumentType.SONG }.blocks
         assertTrue(Reassembler.Block.RECEIVED !in during, "nothing of the song yet: $during")

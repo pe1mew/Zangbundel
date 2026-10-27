@@ -9,7 +9,6 @@
     <!-- Reception bar (guiDesign D-81). -->
     <string name="reception_song">Song</string>
     <string name="reception_setlist">List</string>
-    <string name="reception_setting">Show reception</string>
     <string name="reception_description">Reception of the list and each song, block by block. Tap to hide.</string>
     <!-- Shared buttons. -->
     <string name="cancel">Cancel</string>

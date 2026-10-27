@@ -56,31 +56,10 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
             started.complete(status)
         }
         val dataSet = AtomicInteger()
-        val dataFailed = AtomicInteger()
-        @Volatile var lastDataStatus: Int? = null
         override fun onAdvertisingDataSet(advertisingSet: AdvertisingSet?, status: Int) {
-            if (status == ADVERTISE_SUCCESS) dataSet.incrementAndGet() else dataFailed.incrementAndGet()
-            lastDataStatus = status
+            if (status == ADVERTISE_SUCCESS) dataSet.incrementAndGet()
         }
     }
-
-    /**
-     * Whether legacy data sets are scannable, as ble-protocol 15.1 says. Off is a diagnostic: an
-     * active scanner backs off on scan requests, and some stacks report a scannable advertisement
-     * only with its scan response. Takes effect for sets opened afterwards.
-     */
-    @Volatile var scannableDataSets: Boolean = true
-
-    /**
-     * Whether the extended set uses the 2M secondary PHY where supported, as ble-protocol 15.1 says.
-     * Off (1M) is a diagnostic for phones whose extended set is not heard (D-05 run 14). Takes effect
-     * for an extended set opened afterwards.
-     */
-    @Volatile var extendedSecondaryPhy2M: Boolean = true
-
-    /** Diagnostic: data updates of the extended set the stack confirmed, refused, and the last status. */
-    fun extendedDataResults(): Triple<Int, Int, Int?>? =
-        extendedSet?.let { Triple(it.dataSet.get(), it.dataFailed.get(), it.lastDataStatus) }
 
     /** Diagnostic: data updates the stack confirmed on each legacy data set, Set S first. */
     fun legacyDataConfirmed(): List<Int> = legacySets.map { it.dataSet.get() }
@@ -113,7 +92,7 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
     override suspend fun openLegacyDataSets(max: Int): Int {
         while (legacySets.size < max) {
             val handle = SetHandle()
-            advertiser.startAdvertisingSet(legacyParameters(), manufacturer(EMPTY_FRAME), if (scannableDataSets) EMPTY else null, null, null, handle)
+            advertiser.startAdvertisingSet(legacyParameters(), manufacturer(EMPTY_FRAME), EMPTY, null, null, handle)
             val status = withTimeoutOrNull(START_TIMEOUT_MS) { handle.started.await() }
             if (status != AdvertisingSetCallback.ADVERTISE_SUCCESS) {
                 advertiser.stopAdvertisingSet(handle)
@@ -159,7 +138,7 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
 
     /** 7.1, 15.1: legacy data sets non-connectable and scannable, 100 ms. */
     private fun legacyParameters() = AdvertisingSetParameters.Builder()
-        .setLegacyMode(true).setConnectable(false).setScannable(scannableDataSets)
+        .setLegacyMode(true).setConnectable(false).setScannable(true)
         .setInterval(AdvertisingSetParameters.INTERVAL_LOW)
         .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
         .build()
@@ -168,7 +147,7 @@ class AndroidTransport(private val context: Context, private val adapter: Blueto
     private fun extendedParameters() = AdvertisingSetParameters.Builder()
         .setLegacyMode(false).setConnectable(false).setScannable(false)
         .setPrimaryPhy(BluetoothDevice.PHY_LE_1M)
-        .setSecondaryPhy(if (extendedSecondaryPhy2M && adapter.isLe2MPhySupported) BluetoothDevice.PHY_LE_2M else BluetoothDevice.PHY_LE_1M)
+        .setSecondaryPhy(if (adapter.isLe2MPhySupported) BluetoothDevice.PHY_LE_2M else BluetoothDevice.PHY_LE_1M)
         .setInterval(AdvertisingSetParameters.INTERVAL_LOW)
         .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
         .build()

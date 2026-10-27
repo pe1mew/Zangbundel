@@ -7,9 +7,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import nl.pe1mew.zangbundel.core.model.ContentHash
+import nl.pe1mew.zangbundel.core.model.LibraryId
+import nl.pe1mew.zangbundel.core.model.SongId
+import nl.pe1mew.zangbundel.core.model.SongRef
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
+import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
 import nl.pe1mew.zangbundel.core.testing.JvmSodiumCrypto
 import nl.pe1mew.zangbundel.core.testing.SimulatedAir
 import nl.pe1mew.zangbundel.core.testing.SimulatedTransport
@@ -28,7 +33,18 @@ import kotlin.test.assertTrue
 class SimulationScenariosTest {
     private val crypto = JvmSodiumCrypto()
     private val ext = Transport.Capabilities(true, true, true, 251)
-    private fun song(seed: Int) = Random(seed).nextBytes(SONG_BYTES)
+    /**
+     * A song of random bytes (never lyrics) as the leader publishes one, since the raw test path went with
+     * the two-phone test (2026-10-27).
+     */
+    private fun song(seed: Int): SongDocument {
+        val file = Random(seed).nextBytes(SONG_BYTES)
+        return SongDocument(SongRef(LibraryId("test"), SongId("lied-$seed"), ContentHash(crypto.sha256(file).copyOf(ContentHash.SIZE))), file, null)
+    }
+
+    private fun publication(song: SongDocument) = LeaderSession.Publication(song.ref, null, song)
+
+    private fun fileOf(e: SingerEngine.Event.Delivered): ByteArray = SongDocument.decode(e.document()).file
 
     private class Singer(val engine: SingerEngine, val events: MutableList<SingerEngine.Event>)
     private class Gathering(val leader: LeaderSession, val singers: List<Singer>)
@@ -46,7 +62,7 @@ class SimulationScenariosTest {
         val clock = { testScheduler.currentTime }
         val caps = if (extended) ext else SimulatedTransport.DEFAULT_CAPABILITIES
         val leader = LeaderSession(SimulatedTransport(air, caps), crypto, backgroundScope, clock, "Testvuur", random = Random(9), maxSingers = maxSingers)
-        leader.start(song(1))
+        leader.start(publication(song(1)))
         val join = Random(77)
         val singers = List(n) { i ->
             val t = SimulatedTransport(air, caps, reception = reception(i))
@@ -64,12 +80,12 @@ class SimulationScenariosTest {
     private suspend fun TestScope.push(g: Gathering, seed: Int, limitMs: Long = 60_000): List<Long?> {
         val pushedAt = testScheduler.currentTime
         val song = song(seed)
-        g.leader.push(song)
+        g.leader.push(publication(song))
         testScheduler.advanceTimeBy(limitMs)
         return g.singers.map { s ->
             s.events.firstOrNull {
                 it.at >= pushedAt && (
-                    (it is SingerEngine.Event.Delivered && it.doc == DocumentType.SONG && it.bytes.contentEquals(song)) ||
+                    (it is SingerEngine.Event.Delivered && it.doc == DocumentType.SONG && fileOf(it).contentEquals(song.file)) ||
                         (it is SingerEngine.Event.LocalSong && s.engine.state?.body?.seq == g.leader.seq)
                     )
             }?.let { it.at - pushedAt }
@@ -97,7 +113,7 @@ class SimulationScenariosTest {
         assertTrue(times.all { it != null }, "every singer shows the complete song")
         // FR-BLE-04: nothing but verified, complete songs is ever handed out.
         val songs = g.singers.flatMap { s -> s.events.filterIsInstance<SingerEngine.Event.Delivered>().filter { it.doc == DocumentType.SONG } }
-        assertTrue(songs.all { it.bytes.contentEquals(song(1)) || it.bytes.contentEquals(pushed) })
+        assertTrue(songs.all { fileOf(it).contentEquals(song(1).file) || fileOf(it).contentEquals(pushed.file) })
     }
 
     @Test

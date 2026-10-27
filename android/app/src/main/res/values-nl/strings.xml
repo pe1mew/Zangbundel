@@ -8,7 +8,6 @@
     <!-- Ontvangstbalk (guiDesign D-81). -->
     <string name="reception_song">Lied</string>
     <string name="reception_setlist">Lijst</string>
-    <string name="reception_setting">Ontvangst tonen</string>
     <string name="reception_description">Ontvangst van de lijst en elk lied, blok voor blok. Tik om te verbergen.</string>
     <!-- Gedeelde knoppen. -->
     <string name="cancel">Annuleren</string>

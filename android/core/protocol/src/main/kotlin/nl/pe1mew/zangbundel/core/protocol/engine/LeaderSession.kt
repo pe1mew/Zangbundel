@@ -8,10 +8,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import nl.pe1mew.zangbundel.core.model.ContentHash
 import nl.pe1mew.zangbundel.core.model.GatheringId
-import nl.pe1mew.zangbundel.core.model.LibraryId
-import nl.pe1mew.zangbundel.core.model.SongId
 import nl.pe1mew.zangbundel.core.model.SongRef
 import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
@@ -48,7 +45,6 @@ class LeaderSession(
     private val scope: CoroutineScope,
     private val clock: () -> Long,
     val name: String,
-    private val extendedOnly: Boolean = false,
     random: Random = Random.Default,
     maxSingers: Int = LeaderGattService.DEFAULT_MAX_SINGERS,
     /** FR-GATH-05: when set, a Join must carry it; the beacon sets `CODE` (6.2). Fixed for the gathering (guiDesign D-71). */
@@ -160,13 +156,8 @@ class LeaderSession(
     /** 10.1 step 4: GATT server, beacon, data sets; then the carousel. Throws if the beacon is refused. */
     suspend fun start(publication: Publication = Publication()) = start(build(publication))
 
-    /** The two-phone test's form: [song] goes out raw as document 3 under a fixed test reference. */
-    suspend fun start(song: ByteArray) = start(raw(song))
-
     /** 10.5: `seq` + 1, a new signed state; carousel, GATT and beacon follow. The same publication again is a re-push [FR-LEAD-06]. */
     suspend fun push(publication: Publication) = mutex.withLock { publish(build(publication)) }
-
-    suspend fun push(song: ByteArray) = mutex.withLock { publish(raw(song)) }
 
     /**
      * 10.10: the final state with `status` 1 and `ENDED`, broadcast for [lingerMs] while every write is
@@ -195,11 +186,11 @@ class LeaderSession(
     private suspend fun start(first: Built) = mutex.withLock {
         transport.startServer(service)
         transport.setBeacon(beaconBytes())
-        legacySets = if (extendedOnly) 0 else transport.openLegacyDataSets(Carousel.MAX_LEGACY_DATA_SETS)
+        legacySets = transport.openLegacyDataSets(Carousel.MAX_LEGACY_DATA_SETS)
         extendedSet = transport.openExtendedDataSet()
         flags = (if (legacySets > 0 || extendedSet) ProtocolConstants.FLAG_BCAST else 0) or (if (extendedSet) ProtocolConstants.FLAG_EXT else 0) or
             (if (joinCode != null) ProtocolConstants.FLAG_CODE else 0)
-        // The carousel needs a legacy lane; with extended only it is built but never sent.
+        // The carousel needs a legacy lane; on a phone that opens none it is built but never sent.
         val c = Carousel(gid16, legacySets.coerceAtLeast(1), extendedSet)
         carousel = c
         publish(first)
@@ -235,8 +226,8 @@ class LeaderSession(
 
     private class Built(val cur: SongRef?, val title: String?, val docs: Map<Int, Framed>, val cpos: Int?, val sung: Set<Int>)
 
-    private fun framed(document: ByteArray, raw: Boolean = false): Framed {
-        val (enc, bytes) = if (raw) Deflate.ENC_RAW to document else Deflate.frame(document)
+    private fun framed(document: ByteArray): Framed {
+        val (enc, bytes) = Deflate.frame(document)
         return Framed(enc, bytes, DocEntry.of(bytes, enc, crypto))
     }
 
@@ -263,11 +254,6 @@ class LeaderSession(
             .filterNotNull()
             .filter { seen.add(it.entry.dh.joinToString("") { b -> "%02x".format(b) }) }
             .map { Carousel.Document(DocumentType.AHEAD, it.entry.dv, it.bytes) }
-    }
-
-    private fun raw(song: ByteArray): Built {
-        val ref = SongRef(LibraryId(TEST_LIBRARY), SongId(TEST_SONG), ContentHash(crypto.sha256(song).copyOf(ContentHash.SIZE)))
-        return Built(ref, null, mapOf(DocumentType.SONG to framed(song, raw = true)), null, emptySet())
     }
 
     private suspend fun publish(b: Built) {
@@ -315,8 +301,6 @@ class LeaderSession(
     )
 
     companion object {
-        const val TEST_LIBRARY = "test"
-        const val TEST_SONG = "test-document"
         /** 10.10 step 2. */
         const val END_LINGER_MS = 60_000L
         /** guiDesign D-56: the leader's help bar looks back this far. */
