@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package nl.pe1mew.zangbundel.app.ui.gathering
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -20,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
@@ -51,7 +59,9 @@ import java.util.Date
  * [FR-GATH-01, assessment SP-01], and the prepared setlist to begin with, or none [FR-LEAD-02];
  * how singers join (FR-GATH-05, FR-GATH-21, D-71): open, with a four-digit code the leader can say, or
  * only through the QR code; *Starten* switches into leader mode. The code is drawn when the fire starts.
- * With battery saver on or the battery low, a line asks for a power bank (D-68).
+ * With battery saver on or the battery low, a line asks for a power bank (D-68). On Android 13 and later the
+ * first *Starten* explains the campfire's notification and then asks for the notification permission, once
+ * (architecture A-06, assessment SP-18); a refusal changes nothing, and a singer is never asked.
  */
 @Composable
 fun StartScreen() {
@@ -66,6 +76,8 @@ fun StartScreen() {
     var starting by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
     val power = rememberPower()
+    val notificationAsked by container.storage.settings.notificationAsked.collectAsState(initial = true)
+    var explainNotification by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { setlists = container.setlists.all() }
     ConfigurationScreen {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -95,26 +107,42 @@ fun StartScreen() {
             }
             if (failed) Text(stringResource(R.string.start_failed), color = Palette.FireOrangeLight, modifier = Modifier.padding(top = 8.dp))
             Spacer(Modifier.height(16.dp))
+            fun start() {
+                starting = true
+                failed = false
+                scope.launch {
+                    // On success the mode changes and the app opens the leader's page.
+                    failed = runCatching {
+                        val p = when (protection) {
+                            PROTECTION_CODE -> Gathering.Protection.newCode()
+                            PROTECTION_QR -> Gathering.Protection.newQrOnly()
+                            else -> Gathering.Protection.Open
+                        }
+                        container.gathering.lead(name.trim().ifEmpty { proposed }, chosen, p)
+                    }.isFailure
+                    starting = false
+                }
+            }
+            // A-06, SP-18: whatever the answer, the campfire starts after it; the permission is asked only this once.
+            val askNotification = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { start() }
             Button(
-                onClick = {
-                    starting = true
-                    failed = false
-                    scope.launch {
-                        // On success the mode changes and the app opens the leader's page.
-                        failed = runCatching { 
-                            val p = when (protection) {
-                                PROTECTION_CODE -> Gathering.Protection.newCode()
-                                PROTECTION_QR -> Gathering.Protection.newQrOnly()
-                                else -> Gathering.Protection.Open
-                            }
-                            container.gathering.lead(name.trim().ifEmpty { proposed }, chosen, p)
-                        }.isFailure
-                        starting = false
-                    }
-                },
+                onClick = { if (!notificationAsked && needsNotificationQuestion(context)) explainNotification = true else start() },
                 enabled = !starting,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
             ) { Text(stringResource(R.string.start_start)) }
+            // FR-GEN-05: the reason in plain words before Android's own question.
+            if (explainNotification) AlertDialog(
+                onDismissRequest = { explainNotification = false },
+                title = { Text(stringResource(R.string.start_notification_title)) },
+                text = { Text(stringResource(R.string.start_notification_text)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        explainNotification = false
+                        scope.launch { container.storage.settings.setNotificationAsked() }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) askNotification.launch(Manifest.permission.POST_NOTIFICATIONS) else start()
+                    }) { Text(stringResource(R.string.start_notification_continue)) }
+                },
+            )
         }
     }
 }
@@ -129,6 +157,11 @@ private fun Choice(title: String, detail: String?, selected: Boolean, onClick: (
         }
     }
 }
+
+/** Android 13 and later, and not granted yet. */
+private fun needsNotificationQuestion(context: android.content.Context): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 
 private const val PROTECTION_OPEN = 0
 private const val PROTECTION_CODE = 1

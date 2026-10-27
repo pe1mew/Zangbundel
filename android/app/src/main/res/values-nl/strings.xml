@@ -437,4 +437,8 @@
     <string name="install_offline_step4">Open Zangbundel en kies het kampvuur.</string>
     <string name="install_offline_share">Delen</string>
     <string name="install_offline_back">Terug</string>
+    <!-- Architectuur A-06, assessment SP-18: de enige vraag om meldingen, aan de leider (FR-GEN-05). -->
+    <string name="start_notification_title">Een melding zolang het kampvuur loopt</string>
+    <string name="start_notification_text">Zolang je kampvuur loopt, laat deze telefoon een melding zien. Zo zie je dat het uitzenden doorgaat en kun je het stoppen. Android vraagt zo of Zangbundel meldingen mag tonen. Weigeren mag: het kampvuur werkt dan precies hetzelfde.</string>
+    <string name="start_notification_continue">Verder</string>
 </resources>

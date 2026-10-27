@@ -50,6 +50,13 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         store.edit { it[STATISTICS_ON] = on }
     }
 
+    /** Architecture A-06, assessment SP-18: whether a leader was asked for the notification permission; asked once only. */
+    val notificationAsked: Flow<Boolean> = store.data.map { it[NOTIFICATION_ASKED] ?: false }
+
+    suspend fun setNotificationAsked() {
+        store.edit { it[NOTIFICATION_ASKED] = true }
+    }
+
     /** FR-LIB-13 (architecture A-14, SP-29): the automatic check on Wi-Fi, off until the user switches it on. */
     val autoUpdateCheck: Flow<Boolean> = store.data.map { it[AUTO_UPDATE_CHECK] ?: false }
 
@@ -117,6 +124,7 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         private val FIT_LANDSCAPE = booleanPreferencesKey("fit_landscape")
         private val AUTO_UPDATE_CHECK = booleanPreferencesKey("auto_update_check")
         private val STATISTICS_ON = booleanPreferencesKey("statistics_on")
+        private val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked")
         private const val UPDATE_PREFIX = "update_available_"
         private const val ETAG_PREFIX = "index_etag_"
         private val Context.settingsStore by preferencesDataStore(name = "settings")

@@ -4,7 +4,7 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.12 (draft) |
+| Document version | 0.13 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
@@ -24,6 +24,7 @@
 | 0.10 | 2026-10-27 | Depends on FRD v0.19: FR-DATA-09 gets its row in the requirement table (unit tests of the record and the season, and the phone test of 2026-10-27). |
 | 0.11 | 2026-10-27 | 5.1 and 5.5 built in the `fieldtest` build (architecture A-20 as of v0.18): the consent screen on first start and the local log, shared from the radio check. |
 | 0.12 | 2026-10-27 | 3.4 built: the Jazzer targets, `scripts/fuzz.sh`; release checks G-01, G-02, G-05, G-06 and G-09 at the CI budget run (`design/test-results/2026-10-27-release-checks.md`). |
+| 0.13 | 2026-10-27 | Release checks G-03, G-04, G-07 and G-10 run (`design/test-results/2026-10-27-release-checks.md`); G-03 and G-04 measured with the app's own network counters and sockets instead of a packet-capture app. |
 
 ---
 

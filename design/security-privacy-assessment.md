@@ -4,7 +4,7 @@
 |---|---|
 | Document | Assessment of the design against the project's security and privacy principles |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.20 |
+| Document version | 0.22 |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Assessment of the design as of FRD v0.5, BLE protocol v0.5, song format v0.2, docs/RUNBOOK.md; the changes it led to are in FRD v0.6 and BLE v0.6. v0.3 assesses the opt-in campfire statistics (`design/guiDesign.md` D-60) against FRD v0.8; decided export only without a server, so no requirement or policy changed. v0.4 assesses `design/architecture.md` v0.2 against FRD v0.11 and BLE v0.13: SP-05, SP-08, SP-09 and SP-15 checked against concrete choices, new findings SP-17 to SP-22. All resolved the same day; SP-21's policy wording was approved by the owner and published with effective date 22 October 2026 |
@@ -31,6 +31,8 @@
 | 0.18 | 2026-10-27 | SP-20: sharing the app's own package built (FR-DIST-05, guiDesign D-84, architecture A-18); the acceptance stands. |
 | 0.19 | 2026-10-27 | SP-31: the beacon names the current song, unsigned (BLE v0.43, option B of the state-after-push proposal), assessed before it was built. |
 | 0.20 | 2026-10-27 | SP-22: the field-test log built (architecture A-20 v0.18) and its content checked on a phone, for a singer and a leader. |
+| 0.21 | 2026-10-27 | Re-run for section 7 items 2 and 4 as release check G-10 (`design/test-results/2026-10-27-release-checks.md`): permissions and backup of the release build checked (G-01, G-02); every feature since v0.4 has its entry; SP-17, SP-18, SP-19 and SP-27 found built as resolved. One gap without privacy effect: the leader is never asked for `POST_NOTIFICATIONS` (architecture A-06). |
+| 0.22 | 2026-10-27 | SP-18: the leader's one notification question built as resolved; the gap found by G-10 is closed. |
 
 ---
 
