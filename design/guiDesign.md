@@ -4,7 +4,7 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.40 (draft) |
+| Document version | 0.41 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -52,6 +52,7 @@
 | 0.38 | 2026-10-26 | D-17 and D-70 built for the singer: the toolbar, tap-to-scroll and follow the leader; D-17 and D-70 record how (the toolbar's place and order, what pauses and resumes following). Fit-to-width (D-28) and the toolbar on the songbook's reading view are not built yet. |
 | 0.39 | 2026-10-27 | D-67 built: the resume screen after a crash, with the setlist, the current song and what was sung restored (BLE protocol v0.39). The window is fixed at 10 minutes for now; its setting under *Leiden* is not built. |
 | 0.40 | 2026-10-27 | D-58 built with the owner's answers to `design/proposals/2026-10-27-setlist-during-campfire.md`: the leader's sheet with the tabs *Setlist* and *Zangbundel*; *Toevoegen* adds at the end, *Nu zingen* adds after the current song and pushes it; the current and sung songs stay in place. D-55: a campfire without a setlist starts with *Kies een lied uit de zangbundel*. D-65: *Wis* built (the language button is not). BLE protocol v0.40. |
+| 0.41 | 2026-10-27 | The background image (D-08 to D-14) is replaced at the owner's request by `design/gui/Backdrop_002.png`, a wider crop of the same photograph with the fire in view; the landscape export is cut from it (rows 900–2300). Both pass D-10, D-13 and D-14 (white text 5.7 : 1 and 4.9 : 1 at the lightest point); measurements in `design/gui/README.md`. No decision changed. |
 
 ---
 
