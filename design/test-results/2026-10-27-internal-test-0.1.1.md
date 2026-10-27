@@ -1,0 +1,13 @@
+# Internal-testing build 0.1.1 (2026102701) – 2026-10-27
+
+The second bundle on Google Play's internal-testing track, uploaded by the owner the same evening: the fix of the home screen's scan (`2026-10-27-internal-test-0.1.0.md`, defect), the two words explained (guiDesign D-36 v0.56) and the links on *Over* (section 7 v0.56). Updated through the Play Store on the A52 and the S23 (`versionCode=2026102701`, `versionName=0.1.1`, installer `com.android.vending`); Play showed the Dutch release note under *Wat is er nieuw*. **Result: pass.**
+
+| Check | Result |
+|---|---|
+| **Home screen's scan after ending** | The S23 led *jaguar-pijl* from 19:30:15, listened for other campfires at 19:30:16 and 19:30:46 (2 s each), ended at 19:31:00, back to start at 19:31:05. Its home-screen scan started at 19:31:06.554 and was still running at 19:32:22 (`Ongoing` in `dumpsys bluetooth_manager`), past 19:32:00 where 0.1.0 stopped it; the list showed the A52's new campfire *hommel-vlieger · Dichtbij*. The scan ran on with the screen off from 19:31:43 (269 of 557 results with the screen off). **Pass** |
+| A first run was void | At 19:22 the same sequence stopped the scan at 19:23:09.8, 49 s after the end: the owner had tapped *Over* at 19:23:09 (`InputDispatcher`), and leaving the home screen stops its scan by design. Rerun as above, with the S23 untouched |
+| **The two words** | The S23 joined *hommel-vlieger* from the list; one tap on the underlined words opened *De twee woorden*; *Sluiten* closed it. **Pass** |
+| **Repository link** | *Over* shows *Versie 0.1.1 (2026102701)*, `github.com/pe1mew/Zangbundel` in the version tile and `57:86:7B:…:9B:10`. On the S23 the link opened in the **GitHub app**, which is installed there and claims `github.com` links; on the Huawei (debug, no GitHub app) it opened Chrome. **Pass**; the line *Opent in je browser, op GitHub* is not literally true on a phone with the GitHub app |
+| ***Handleiding*** | Opened `wiki/Handleiding` in a Chrome tab (through the GitHub app); the wiki has no pages yet, so GitHub shows the repository. **Pass** for what can be checked before the wiki exists |
+
+**The Huawei:** Play answered *Item niet gevonden* for `nl.pe1mew.zangbundel.app`: the Google account on that phone is not an internal tester, or has not accepted the tester link. It keeps the debug build.
