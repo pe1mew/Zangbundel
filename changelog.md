@@ -2,12 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/). The project has no released version yet; the design documents carry their own document versions in their headers.
+The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/). Versions go to Google Play's internal-testing track first (`docs/RUNBOOK.md` Step 9); the design documents carry their own document versions in their headers.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-27
+
+### Added
+- A singer can tap the two words in the strip to read what they are: made from the key of this one campfire, to be compared aloud, a help and not a lock (guiDesign D-36 v0.56).
+- *Over* links the repository from the version tile and has a *Handleiding* button that opens the manual on the GitHub wiki in the app's language (guiDesign v0.56 section 7, assessment SP-32).
+- App Links live: `pe1mew.github.io` (repository `pe1mew/pe1mew.github.io`) serves `.well-known/assetlinks.json` for `nl.pe1mew.zangbundel.app` with the app signing key; both test phones report the domain verified and the camera app opens a join code straight in Zangbundel (D-04). RUNBOOK Step 5c records it, with the `.nojekyll` that must sit at the repository root.
+
 ### Fixed
 - The home screen stopped finding campfires 60 s after the phone had ended one as leader: the leader's listening for other campfires was stopped only when the radio's linger ended, and its stop also ended the home screen's scan. It now stops when the campfire ends, and stops the scan only during a listen.
+
+## [0.1.0] - 2026-10-27
+
+The first build on Google Play's internal-testing track (versionCode 2026102201): everything below, from the design documents onward.
+
+### Fixed
 - The store listing texts (nl-NL, en-US) promised song requests and helpers, which are phase 2 since FRD v0.18; they now describe the app as built, including the Wi-Fi update check, the leader's notification and passing the app on without internet.
 - `bundleRelease` failed with the configuration cache on: the guard that refuses an unsigned bundle referred to a property of the build script from its task action. It now decides while configuring, and its message names the upload key, which is what signs the bundle.
 - The release build warned about the Kotlin metadata of every class: AGP 8.13.2 bundles R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer. R8 9.1.57 is now pinned on the build classpath (architecture v0.21, A-19); checked on the phones with the release configuration.
@@ -18,9 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The system bar icons were dark on the night-blue background on phones in light mode (seen on a Samsung A52, Android 14). `MainActivity` now declares both bars dark, so the icons stay light; checked on the A52 and a Huawei Mate 20 Lite (Android 10).
 
 ### Added
-- A singer can tap the two words in the strip to read what they are: made from the key of this one campfire, to be compared aloud, a help and not a lock (guiDesign D-36 v0.56).
-- *Over* links the repository from the version tile and has a *Handleiding* button that opens the manual on the GitHub wiki in the app's language (guiDesign v0.56 section 7, assessment SP-32).
-- App Links live: `pe1mew.github.io` (repository `pe1mew/pe1mew.github.io`) serves `.well-known/assetlinks.json` for `nl.pe1mew.zangbundel.app` with the app signing key; both test phones report the domain verified and the camera app opens a join code straight in Zangbundel (D-04). RUNBOOK Step 5c records it, with the `.nojekyll` that must sit at the repository root.
 - Play App Signing uses the owner's own key (`57:86:7B:…:9B:10`), set on 2026-10-27 before the first upload; RUNBOOK Step 6 records the route through *Beveiligd met Play* and the PEPK export with Java 11 or newer.
 - `docs/app-links/assetlinks.json`, ready to publish for App Links (RUNBOOK Step 5c); RUNBOOK Step 9.7 now signs the GitHub APK with the app signing key by `apksigner`, since `keystore.properties` names the upload key.
 - The foreground-service declaration for Play prepared (RUNBOOK Step 5): description, impact, and a 69 s screen recording of the leader flow kept outside git in `raw/`.

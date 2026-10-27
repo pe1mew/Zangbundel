@@ -42,6 +42,12 @@ Talen: Nederlands en Engels; liedbundels kunnen in elke taal zijn.
 
 Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
-## Release notes template (≤ 500)
+## Release notes (≤ 500)
+
+### 0.1.1
+
+Verbeterd: na het beëindigen van een kampvuur vindt het startscherm weer andere kampvuren. Nieuw: tik op de twee woorden van een kampvuur om te lezen wat ze betekenen. Over heeft een link naar de broncode en een knop naar de handleiding. De QR-code van de leider opent de app nu direct vanuit de camera.
+
+### 0.1.0
 
 Eerste versie: kampvuur starten of meedoen via QR-code, liedteksten via Bluetooth, dag- en nachtweergave, liedbundels importeren, de app doorgeven zonder internet.

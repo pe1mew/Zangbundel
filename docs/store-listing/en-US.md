@@ -42,6 +42,12 @@ Languages: Dutch and English; song libraries can be in any language.
 
 Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
-## Release notes template (≤ 500)
+## Release notes (≤ 500)
+
+### 0.1.1
+
+Fixed: after ending a campfire, the home screen finds other campfires again. New: tap the two words of a campfire to read what they mean. About links to the source code and has a button for the manual. Scanning the leader's QR code with the camera now opens the app directly.
+
+### 0.1.0
 
 First release: start or join a gathering by QR code, lyrics over Bluetooth, day and night display, import song libraries, pass the app on without internet.
