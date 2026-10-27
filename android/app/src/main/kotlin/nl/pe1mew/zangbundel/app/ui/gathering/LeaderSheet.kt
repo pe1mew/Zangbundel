@@ -255,7 +255,7 @@ private fun SongbookTab(
 }
 
 /** Case and accents do not count in the title search. */
-private fun fold(s: String): String =
+internal fun fold(s: String): String =
     Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
 
 /** How long a removed song can be put back (D-58). */

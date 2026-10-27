@@ -4,6 +4,7 @@ package nl.pe1mew.zangbundel.app.ui.about
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
+import nl.pe1mew.zangbundel.app.ui.gathering.InstallPanel
 import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
@@ -52,6 +54,12 @@ fun AboutScreen(onPrivacy: () -> Unit) {
     LaunchedEffect(Unit) { libraries = container.storage.index.all().sortedBy { it.name } }
     val code = remember { versionCode(context) }
     val fingerprint = remember { signingFingerprint(context) }
+    var install by remember { mutableStateOf(false) }   // D-83
+    BackHandler(enabled = install) { install = false }
+    if (install) {
+        InstallPanel { install = false }
+        return
+    }
     ConfigurationScreen {
         Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.about_title), style = MaterialTheme.typography.headlineMedium)
@@ -89,6 +97,8 @@ fun AboutScreen(onPrivacy: () -> Unit) {
                 Text(fingerprint ?: "?", fontFamily = FontFamily.Monospace)
                 Text(stringResource(R.string.about_signature_note), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
             }
+            // D-83: show or send the install link, also outside a campfire [FR-DIST-01, FR-DIST-04].
+            OutlinedButton(onClick = { install = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.about_install)) }
             OutlinedButton(onClick = onPrivacy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_privacy)) }
         }
     }

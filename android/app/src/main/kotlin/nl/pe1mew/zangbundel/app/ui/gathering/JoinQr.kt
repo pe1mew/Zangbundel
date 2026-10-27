@@ -52,13 +52,7 @@ import nl.pe1mew.zangbundel.app.gathering.Gathering
  */
 @Composable
 fun JoinPanel(m: Gathering.Mode.Leading, startWithQr: Boolean, onClose: () -> Unit) {
-    val activity = LocalActivity.current
-    DisposableEffect(activity) {
-        val window = activity?.window
-        val before = window?.attributes?.screenBrightness
-        window?.attributes = window?.attributes?.apply { screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL }
-        onDispose { if (window != null && before != null) window.attributes = window.attributes.apply { screenBrightness = before } }
-    }
+    FullBrightness()
     var qr by remember { mutableStateOf(startWithQr || m.protection is Gathering.Protection.QrOnly) }
     val code = (m.protection as? Gathering.Protection.Code)?.code
     Box(Modifier.fillMaxSize().background(Color.Black).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
@@ -96,9 +90,21 @@ fun JoinPanel(m: Gathering.Mode.Leading, startWithQr: Boolean, onClose: () -> Un
     }
 }
 
-/** The join link as a QR code, black modules on the white panel. */
+/** FR-DIST-02: the screen at full brightness while a code is shown; the brightness before comes back after. */
 @Composable
-private fun QrCode(link: String) {
+internal fun FullBrightness() {
+    val activity = LocalActivity.current
+    DisposableEffect(activity) {
+        val window = activity?.window
+        val before = window?.attributes?.screenBrightness
+        window?.attributes = window?.attributes?.apply { screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL }
+        onDispose { if (window != null && before != null) window.attributes = window.attributes.apply { screenBrightness = before } }
+    }
+}
+
+/** A link as a QR code, black modules on the white panel. */
+@Composable
+internal fun QrCode(link: String) {
     val modules = remember(link) {
         val matrix = QRCodeWriter().encode(link, BarcodeFormat.QR_CODE, 0, 0,
             mapOf(EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M, EncodeHintType.MARGIN to 2))
@@ -113,6 +119,8 @@ private fun QrCode(link: String) {
 }
 
 private val Grey = Color(0xFF444444)
+internal val PanelGrey = Grey
 
 /** Fire orange darkened for text on white (contrast about 5:1; the icon's orange is about 2.3:1 there). */
 private val LinkOrange = Color(0xFFB34A00)
+internal val PanelLinkOrange = LinkOrange

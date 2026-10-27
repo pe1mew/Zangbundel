@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package nl.pe1mew.zangbundel.app.ui.gathering
 
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -50,6 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -64,6 +67,8 @@ import kotlinx.coroutines.launch
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.gathering.Gathering
+import nl.pe1mew.zangbundel.app.ui.KeepTopLine
+import nl.pe1mew.zangbundel.app.ui.LineKeeper
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
 import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
@@ -81,6 +86,7 @@ import nl.pe1mew.zangbundel.core.songformat.SongParser
  * right and move between separators; ≡ opens the leader's sheet of D-58 (v0.40): the setlist to jump,
  * move, remove and put back, and the songbook to add a song or sing it now. *Wis* on the current song's
  * separator clears it (D-65). A campfire without a setlist starts with *Kies een lied uit de zangbundel*.
+ * The line at the top of the page stays there when the phone turns (D-42).
  */
 @Composable
 fun LeaderScreen() {
@@ -93,6 +99,7 @@ fun LeaderScreen() {
     val list = rememberLazyListState()
     var confirmEnd by remember { mutableStateOf(false) }
     var showJoin by remember { mutableStateOf<Boolean?>(null) }   // null: closed; true: on the QR code
+    var showInstall by remember { mutableStateOf(false) }          // D-83
     var drawer by remember { mutableStateOf(false) }
     // D-57: the ▲ ≡ ▼ column, dimmed after 3 s without a touch, and the setlist sheet.
     var touched by remember { mutableLongStateOf(0L) }
@@ -110,12 +117,22 @@ fun LeaderScreen() {
                 ?: s.song?.let { e -> runCatching { container.storage.songbook.read(e.libraryId, e.directory, e.fileName) }.getOrNull()?.let { SongParser.parse(it).song }?.let { s.line to it } }
         }.toMap()
     }
+    // D-28: the leader's page has no toolbar, so fit-to-width keeps its defaults: off in portrait, on in landscape.
+    val fit = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    // D-42, FR-DISP-04: items are the setlist block (0) and the songs (1 + i), keyed by their setlist line.
+    val lines = remember { LineKeeper() }
+    KeepTopLine(
+        list, lines,
+        keyAt = { i -> m.songs.getOrNull(i - 1)?.let { "song:${it.line}" } },
+        indexOf = { k -> m.songs.indexOfFirst { "song:${it.line}" == k }.let { if (it >= 0) it + 1 else -1 } },
+    )
     var now by remember { mutableLongStateOf(gathering.now()) }
     LaunchedEffect(Unit) { while (true) { now = gathering.now(); delay(1_000) } }
     KeepScreenOn()
     BackHandler { confirmEnd = true }
     BackHandler(enabled = drawer) { drawer = false }
     BackHandler(enabled = showJoin != null) { showJoin = null }
+    BackHandler(enabled = showInstall) { showInstall = false }
 
     Box(Modifier.fillMaxSize().onAnyTouch { touched++; dimmed = false }) {
         Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
@@ -132,10 +149,10 @@ fun LeaderScreen() {
                         SetlistBlock(m) { i -> scope.launch { list.animateScrollToItem(1 + i) } }
                     }
                     itemsIndexed(m.songs, key = { _, s -> "song:${s.line}" }) { i, s ->
-                        Column {
+                        Column(Modifier.onGloballyPositioned { lines.item("song:${s.line}", it) }) {
                             Separator(i, m, s, onClear = { scope.launch { gathering.clear() } }) { drawer = false; scope.launch { gathering.push(i) } }
                             val song = songs[s.line]
-                            if (song != null) LyricBody(song, LyricColors.Night, Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
+                            if (song != null) LyricBody(song, LyricColors.Night, Modifier.padding(horizontal = 16.dp, vertical = 16.dp), fitToWidth = fit) { code, c -> lines.line("song:${s.line}", code, c) }
                             else Text(stringResource(R.string.setlist_not_found), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp))
                         }
                     }
@@ -152,7 +169,7 @@ fun LeaderScreen() {
                     // D-69: the closing bar ends the setlist and the page.
                     else item(key = "closing") { ClosingBar { confirmEnd = true } }
                 }
-                DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
+                DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onInstall = { drawer = false; showInstall = true }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false })
             }
         }
         // Items: 0 is the setlist block, 1 + i the separator of song i. The ≡ button opens the sheet also without songs (D-58).
@@ -170,6 +187,7 @@ fun LeaderScreen() {
             )
         }
         showJoin?.let { qr -> JoinPanel(m, startWithQr = qr) { showJoin = null } }
+        if (showInstall) InstallPanel { showInstall = false }
     }
     sheet?.let { tab ->
         LeaderSheet(
@@ -198,9 +216,9 @@ fun LeaderScreen() {
 
 /** D-61: the drawer slides open from under the leader bar over the top of the page. */
 @Composable
-private fun DrawerSlot(open: Boolean, m: Gathering.Mode.Leading, now: Long, onJoin: (Boolean) -> Unit, onEnd: () -> Unit, onClose: () -> Unit) {
+private fun DrawerSlot(open: Boolean, m: Gathering.Mode.Leading, now: Long, onJoin: (Boolean) -> Unit, onInstall: () -> Unit, onEnd: () -> Unit, onClose: () -> Unit) {
     AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
-        LeaderDrawer(m, now, onJoin = onJoin, onEnd = onEnd, onClose = onClose)
+        LeaderDrawer(m, now, onJoin = onJoin, onInstall = onInstall, onEnd = onEnd, onClose = onClose)
     }
 }
 

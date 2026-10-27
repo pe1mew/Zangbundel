@@ -340,6 +340,7 @@
     <string name="toolbar_smaller">Kleiner</string>
     <string name="toolbar_larger">Groter</string>
     <string name="toolbar_info">Liedinfo</string>
+    <string name="toolbar_fit">Passend</string>
     <string name="toolbar_keep_on">Scherm blijft aan</string>
     <string name="toolbar_follow">Leider volgen</string>
     <string name="info_lyricist">Tekst</string>
@@ -373,4 +374,13 @@
     <string name="leader_clear">Wis</string>
     <string name="leader_choose_song">Kies een lied uit de zangbundel.</string>
     <string name="leader_open_songbook">Zangbundel openen</string>
+    <!-- Het installatiepaneel (guiDesign D-83). -->
+    <string name="install_title">Zangbundel installeren</string>
+    <string name="install_note">Installeren heeft internet nodig op die telefoon. Installeer de app het liefst thuis, vóór het kamp.</string>
+    <string name="install_share">Link delen</string>
+    <string name="about_install">Zangbundel op een andere telefoon</string>
+    <string name="drawer_install">App installeren</string>
+    <!-- Bladeren tijdens een kampvuur (guiDesign D-29, D-40). -->
+    <string name="singer_browsing">bladeren</string>
+    <string name="singer_back_to_current">Terug naar het huidige lied</string>
 </resources>

@@ -35,6 +35,14 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
     /** FR-DISP-07: the screen stays on in a gathering unless the singer switched it off. */
     val keepScreenOn: Flow<Boolean> = store.data.map { it[KEEP_SCREEN_ON] ?: true }
 
+    /** guiDesign D-28: fit-to-width, per orientation; off in portrait and on in landscape until the singer changes it. */
+    val fitPortrait: Flow<Boolean> = store.data.map { it[FIT_PORTRAIT] ?: false }
+    val fitLandscape: Flow<Boolean> = store.data.map { it[FIT_LANDSCAPE] ?: true }
+
+    suspend fun setFit(landscape: Boolean, on: Boolean) {
+        store.edit { it[if (landscape) FIT_LANDSCAPE else FIT_PORTRAIT] = on }
+    }
+
     suspend fun setLyricNight(night: Boolean) {
         store.edit { it[LYRIC_NIGHT] = night }
     }
@@ -74,6 +82,8 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         private val LYRIC_NIGHT = booleanPreferencesKey("lyric_night")
         private val LYRIC_SIZE = intPreferencesKey("lyric_size")
         private val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
+        private val FIT_PORTRAIT = booleanPreferencesKey("fit_portrait")
+        private val FIT_LANDSCAPE = booleanPreferencesKey("fit_landscape")
         private val Context.settingsStore by preferencesDataStore(name = "settings")
 
         fun open(context: Context) = AppSettings(context.applicationContext.settingsStore)

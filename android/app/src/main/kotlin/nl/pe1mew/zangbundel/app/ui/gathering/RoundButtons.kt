@@ -15,7 +15,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
+import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -95,14 +110,36 @@ internal class SheetRow(val title: String, val current: Boolean, val sung: Boole
 /**
  * The songlist sheet (guiDesign D-31 for singers, D-58 in part for the leader): the current song pinned
  * at the top with the orange bar, then the [rows] in order, sung ones with a check; a tap jumps to that
- * song. [footer] is the sheet's last row (*Kampvuur verlaten* for a singer), null for none.
+ * song. [footer] is the sheet's last row (*Kampvuur verlaten* for a singer), null for none. With a
+ * [songbook] the sheet has a second tab, *Zangbundel* (D-40): the installed songs with a title search; a
+ * tap opens one to read without leaving the campfire ([onBrowse], FR-SING-14).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SongSheet(rows: List<SheetRow>, onPick: (Int) -> Unit, onDismiss: () -> Unit, footer: String? = null, onFooter: () -> Unit = {}) {
+internal fun SongSheet(
+    rows: List<SheetRow>,
+    onPick: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    footer: String? = null,
+    onFooter: () -> Unit = {},
+    songbook: List<SongbookEntry>? = null,
+    onBrowse: (SongbookEntry) -> Unit = {},
+) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    var tab by remember { mutableIntStateOf(0) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = state, containerColor = SheetNight, contentColor = Color.White) {
-        Text(stringResource(R.string.round_list), color = LyricColors.Night.secondary, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp))
+        if (songbook == null) Text(stringResource(R.string.round_list), color = LyricColors.Night.secondary, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp))
+        else TabRow(
+            selectedTabIndex = tab, containerColor = SheetNight, contentColor = Color.White,
+            indicator = { positions -> TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(positions[tab]), color = Palette.FireOrange) },
+        ) {
+            Tab(tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.round_list)) })
+            Tab(tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.sheet_tab_songbook)) })
+        }
+        if (songbook != null && tab == 1) {
+            BrowseList(songbook, onBrowse)
+            return@ModalBottomSheet
+        }
         LazyColumn(Modifier.fillMaxWidth().navigationBarsPadding()) {
             val current = rows.indexOfFirst { it.current }
             if (current >= 0) item { SheetLine(current, rows[current], onPick) }
@@ -112,6 +149,38 @@ internal fun SongSheet(rows: List<SheetRow>, onPick: (Int) -> Unit, onDismiss: (
                 HorizontalDivider(color = LyricColors.Night.divider)
                 Text(footer, color = Palette.FireOrange, fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth().clickable(onClick = onFooter).padding(16.dp))
+            }
+        }
+    }
+}
+
+/** D-40: the songbook to browse during a campfire, title search only (lyrics search and filter chips are not built). */
+@Composable
+private fun BrowseList(songbook: List<SongbookEntry>, onBrowse: (SongbookEntry) -> Unit) {
+    var query by remember { mutableStateOf("") }
+    val shown = remember(songbook, query) {
+        val q = fold(query.trim())
+        songbook.filter { q.isEmpty() || fold(it.title).contains(q) }.sortedBy { fold(it.sortTitle ?: it.title) }
+    }
+    Column(Modifier.fillMaxWidth().fillMaxHeight(0.85f).navigationBarsPadding()) {
+        OutlinedTextField(
+            value = query, onValueChange = { query = it }, singleLine = true,
+            placeholder = { Text(stringResource(R.string.sheet_search)) },
+            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White, focusedBorderColor = Palette.FireOrange, cursorColor = Palette.FireOrange),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        // A singer's phone often has no library: say so, with the way to fill the songbook.
+        if (songbook.isEmpty()) Text(stringResource(R.string.songbook_empty), color = LyricColors.Night.secondary, modifier = Modifier.padding(16.dp))
+        LazyColumn(Modifier.weight(1f)) {
+            items(shown, key = { it.libraryId + "/" + it.songId }) { e ->
+                Row(Modifier.fillMaxWidth().clickable { onBrowse(e) }.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ColourSquare(e.colour)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(e.title, color = LyricColors.Night.lyric, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(e.libraryName, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
             }
         }
     }

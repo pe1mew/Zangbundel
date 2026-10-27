@@ -39,7 +39,7 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * handle at the bottom, a tap on the lyrics or *Nu* close it.
  */
 @Composable
-internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onJoin: (qr: Boolean) -> Unit, onEnd: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onJoin: (qr: Boolean) -> Unit, onInstall: () -> Unit, onEnd: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxWidth()
@@ -72,6 +72,8 @@ internal fun LeaderDrawer(m: Gathering.Mode.Leading, now: Long, onJoin: (qr: Boo
             is Gathering.Protection.QrOnly -> Unit
         }
         JoinRow(stringResource(R.string.panel_show_qr), null, big = false) { onJoin(true) }
+        // D-83: the install code, for a phone that should not join.
+        JoinRow(stringResource(R.string.drawer_install), null, big = false, onClick = onInstall)
         HorizontalDivider(color = LyricColors.Night.divider)
         Text(
             stringResource(R.string.drawer_end),

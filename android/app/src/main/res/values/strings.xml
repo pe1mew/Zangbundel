@@ -341,6 +341,7 @@
     <string name="toolbar_smaller">Smaller</string>
     <string name="toolbar_larger">Larger</string>
     <string name="toolbar_info">Song info</string>
+    <string name="toolbar_fit">Fit width</string>
     <string name="toolbar_keep_on">Keep the screen on</string>
     <string name="toolbar_follow">Follow the leader</string>
     <string name="info_lyricist">Lyrics</string>
@@ -374,4 +375,13 @@
     <string name="leader_clear">Clear</string>
     <string name="leader_choose_song">Choose a song from the songbook.</string>
     <string name="leader_open_songbook">Open the songbook</string>
+    <!-- The install panel (guiDesign D-83). -->
+    <string name="install_title">Install Zangbundel</string>
+    <string name="install_note">Installing needs internet on that phone. Best install the app at home, before the trip.</string>
+    <string name="install_share">Share the link</string>
+    <string name="about_install">Zangbundel on another phone</string>
+    <string name="drawer_install">Install the app</string>
+    <!-- Browsing during a campfire (guiDesign D-29, D-40). -->
+    <string name="singer_browsing">browsing</string>
+    <string name="singer_back_to_current">Back to the current song</string>
 </resources>

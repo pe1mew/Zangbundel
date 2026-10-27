@@ -41,7 +41,8 @@ import nl.pe1mew.zangbundel.core.songformat.SongMeta
  * The singer's toolbar of guiDesign D-17, under the header strip: theme, text size smaller and larger
  * (D-18), song info (D-45), brightness (FR-DISP-08), keep the screen on (FR-DISP-07) and follow the
  * leader (FR-SING-12, D-70). Dark in both themes so it never dazzles; the caller hides it 3 s after the
- * last touch. Fit-to-width (D-28) is not built yet. [onInfo] is null while the song in view has not come in.
+ * last touch. *Passend* switches fit-to-width (D-28) for the orientation the phone is in. [onInfo] is null
+ * while the song in view has not come in.
  */
 @Composable
 internal fun SingerToolbar(
@@ -50,6 +51,8 @@ internal fun SingerToolbar(
     sizeStep: Int,
     sizeSteps: Int,
     onSize: (Int) -> Unit,
+    fit: Boolean,
+    onFit: (Boolean) -> Unit,
     onInfo: (() -> Unit)?,
     brightness: Float,
     onBrightness: (Float) -> Unit,
@@ -68,6 +71,7 @@ internal fun SingerToolbar(
             Tool(if (night) "☀︎" else "☾︎", stringResource(if (night) R.string.toolbar_day else R.string.toolbar_night), true, onTheme, Modifier.weight(1f))
             Tool("A−", stringResource(R.string.toolbar_smaller), sizeStep > 0, { onSize(sizeStep - 1) }, Modifier.weight(1f))
             Tool("A+", stringResource(R.string.toolbar_larger), sizeStep < sizeSteps - 1, { onSize(sizeStep + 1) }, Modifier.weight(1f))
+            Tool("↔", stringResource(R.string.toolbar_fit), true, { onFit(!fit) }, Modifier.weight(1f), selected = fit)
             Tool("ⓘ", stringResource(R.string.toolbar_info), onInfo != null, { onInfo?.invoke() }, Modifier.weight(1f))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -84,8 +88,8 @@ internal fun SingerToolbar(
 }
 
 @Composable
-private fun Tool(glyph: String, label: String, enabled: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    val ink = Color.White.copy(alpha = if (enabled) 1f else 0.3f)
+private fun Tool(glyph: String, label: String, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, selected: Boolean = false) {
+    val ink = (if (selected) Palette.FireOrange else Color.White).copy(alpha = if (enabled) 1f else 0.3f)
     Column(
         modifier.heightIn(min = 56.dp).clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
