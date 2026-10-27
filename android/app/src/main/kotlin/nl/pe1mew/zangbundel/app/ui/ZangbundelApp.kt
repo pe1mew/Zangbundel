@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
@@ -21,6 +23,7 @@ import nl.pe1mew.zangbundel.app.ui.firstuse.IntroScreen
 import nl.pe1mew.zangbundel.app.ui.firstuse.PrivacyScreen
 import nl.pe1mew.zangbundel.app.ui.firstuse.WelcomeScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.LeaderScreen
+import nl.pe1mew.zangbundel.app.ui.gathering.ResumeScreen
 import nl.pe1mew.zangbundel.app.ui.settings.SettingsScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.SingerScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.StartScreen
@@ -53,16 +56,46 @@ fun ZangbundelApp() {
                 is Gathering.Mode.Singing -> Routes.SINGER
                 Gathering.Mode.Idle -> Routes.HOME
             }
+            // Before the graph exists (the start is still being chosen) the start itself is right for an idle app.
+            if (navController.currentDestination == null) return@LaunchedEffect
             if (navController.currentDestination?.route != target) {
+                // D-67: a gathering resumed from the resume screen has no home below it yet; put it there first.
+                if (target != Routes.HOME && runCatching { navController.getBackStackEntry(Routes.HOME) }.isFailure) {
+                    navController.navigate(Routes.HOME) { popUpTo(0) { inclusive = true } }
+                }
                 // D-69: a leader who just ended sees the summary first, on top of home.
                 if (target == Routes.HOME && gathering.summary.value != null) navController.navigate(Routes.SUMMARY) { popUpTo(Routes.HOME) }
                 else if (target == Routes.HOME) navController.popBackStack(Routes.HOME, inclusive = false)
                 else navController.navigate(target) { popUpTo(Routes.HOME) }
             }
         }
-        // D-05: the welcome screen once per process; D-07: the introduction until it was finished once.
-        val start = remember { if (gathering.mode.value == Gathering.Mode.Idle && !(context.applicationContext as nl.pe1mew.zangbundel.app.ZangbundelApp).container.welcomed) Routes.WELCOME else Routes.HOME }
-        NavHost(navController = navController, startDestination = start) {
+        // D-05: the welcome screen once per process; D-07: the introduction until it was finished once; D-67: after
+        // the app died while leading, the resume screen in place of the welcome screen. Nothing shows until that is known.
+        val container = remember { (context.applicationContext as nl.pe1mew.zangbundel.app.ZangbundelApp).container }
+        val fresh = remember { gathering.mode.value == Gathering.Mode.Idle && !container.welcomed }
+        var offer by remember { mutableStateOf<Gathering.ResumeOffer?>(null) }
+        var start by remember { mutableStateOf(if (fresh) null else Routes.HOME) }
+        LaunchedEffect(Unit) {
+            if (start == null) {
+                offer = gathering.resumeOffer()
+                start = if (offer != null) Routes.RESUME else Routes.WELCOME
+            }
+        }
+        val first = start ?: return@ZangbundelTheme
+        NavHost(navController = navController, startDestination = first) {
+            composable(Routes.RESUME) {
+                offer?.let { o ->
+                    ResumeScreen(
+                        o, now = System::currentTimeMillis,
+                        onResume = { container.welcomed = true; gathering.resume() },
+                        onRestart = {
+                            gathering.discardResume()
+                            container.welcomed = true
+                            navController.navigate(Routes.HOME) { popUpTo(Routes.RESUME) { inclusive = true } }
+                        },
+                    )
+                }
+            }
             composable(Routes.WELCOME) {
                 WelcomeScreen { firstUse -> navController.navigate(if (firstUse) Routes.INTRO else Routes.HOME) { popUpTo(Routes.WELCOME) { inclusive = true } } }
             }
@@ -119,6 +152,7 @@ fun ZangbundelApp() {
 
 object Routes {
     const val WELCOME = "welcome"
+    const val RESUME = "resume"
     const val INTRO = "intro"
     const val PRIVACY = "privacy"
     const val SETTINGS = "settings"

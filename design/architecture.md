@@ -4,7 +4,7 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.12 (draft) |
+| Document version | 0.13 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
@@ -24,6 +24,7 @@
 | 0.10 | 2026-10-26 | Depends on FRD v0.16 (FR-BLE-18: the setlist's songs are broadcast ahead; FR-SING-05 amended); no other change. |
 | 0.11 | 2026-10-26 | Depends on FRD v0.17 (FR-SING-05: the reception view is a hidden feature, opened by a long press only); no other change. |
 | 0.12 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change. |
+| 0.13 | 2026-10-27 | Section 5.4, with BLE protocol v0.39 and guiDesign D-67 built: the resume record also holds `ts`, the setlist as started, the positions pushed and the current position, and is rewritten on every push and every 30 s; the window counts from its last write; ending deletes it at once rather than after the 60 s end phase, so a leader that dies while ending is not offered an ended gathering. The record's code is `ResumeRecord` in `core/protocol` and `ResumeStore` in `platform/storage`. Assessment SP-27. No decision superseded. |
 
 ---
 
@@ -186,7 +187,7 @@ Joining (ble-protocol 10.2, 6.5): from the home screen's scan or from the join l
 
 ### 5.4 Resume, ending and the startup sweep
 
-The leader persists a resume record in `noBackupFilesDir/gathering/resume.cbor` when the gathering starts and whenever the singer table or delegate list changes: the Ed25519 and X25519 secret keys, `gid`, name, join code, `seq`, the singer table (`sid`, `tok`, `xk`, display name) and the delegate list. It is written atomically (temporary file, then rename) and is never part of a backup (A-13). It is encrypted with AES-GCM under a key held in the Android Keystore. The key is non-exportable, created once per installation and needs no user authentication, so a copy of the file alone is useless (assessment SP-19). Uses the platform API, no new dependency. After a crash, a start within the resume window (10 minutes, ble-protocol 10.9) offers *Hervatten* (guiDesign D-67). Ending deletes the record after the 60 s end phase (ble-protocol 10.10). At every app start, before anything else, the startup sweep deletes any resume record older than the resume window and every singer-side gathering file, so nothing outlives a crash for longer than the next start (FR-DATA-08). A singer persists nothing across its own restart except what the gathering memory keeps (FR-DATA-03); it rejoins as a new registration if the app was killed.
+The leader persists a resume record in `noBackupFilesDir/gathering/resume.cbor` when the gathering starts, on every push, whenever the singer table changes, and at least every 30 s: the Ed25519 and X25519 secret keys, `gid`, name, join code, `seq`, `ts`, the singer table (`sid`, `tok`, `xk`) and the delegate list, and since v0.13 the setlist as started (per position `library-id/song-id` and title), the positions pushed in order, the current position, the start time and the time of the write (BLE protocol 10.1 step 2, v0.39). The record is `ResumeRecord` in `core/protocol`, written and read by `ResumeStore` in `platform/storage`. It is written atomically (temporary file, then rename) and is never part of a backup (A-13). It is encrypted with AES-GCM under a key held in the Android Keystore. The key is non-exportable, created once per installation and needs no user authentication, so a copy of the file alone is useless (assessment SP-19). Uses the platform API, no new dependency. After a crash, a start within the resume window (10 minutes from the record's last write, ble-protocol 10.9) offers *Hervatten* (guiDesign D-67). Ending deletes the record at once (v0.13; before, after the 60 s end phase of ble-protocol 10.10, which would have offered to resume a gathering that was ending). At every app start, before anything else, the startup sweep deletes any resume record older than the resume window and every singer-side gathering file, so nothing outlives a crash for longer than the next start (FR-DATA-08). A singer persists nothing across its own restart except what the gathering memory keeps (FR-DATA-03); it rejoins as a new registration if the app was killed.
 
 ---
 

@@ -354,4 +354,12 @@
     <string name="info_tags">Labels</string>
     <string name="info_library">Bibliotheek</string>
     <string name="info_from_leader">Ontvangen van de leider</string>
+    <!-- Hervatten nadat de app stopte tijdens het leiden (guiDesign D-67). -->
+    <string name="resume_title">Het kampvuur is gestopt</string>
+    <string name="resume_stopped_now">Gestopt, minder dan een minuut geleden</string>
+    <string name="resume_stopped">Gestopt, %1$d min geleden</string>
+    <string name="resume_text">De app sloot terwijl je leidde. Hervat om verder te gaan met dezelfde zangers en liederen.</string>
+    <string name="resume_resume">Hervatten</string>
+    <string name="resume_restart">Opnieuw beginnen</string>
+    <string name="resume_failed">Hervatten lukte niet. Zet Bluetooth aan en probeer het opnieuw.</string>
 </resources>

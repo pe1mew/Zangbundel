@@ -15,6 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.Log
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.core.model.GatheringId
@@ -29,6 +30,8 @@ import nl.pe1mew.zangbundel.core.protocol.beacon.Fingerprint
 import nl.pe1mew.zangbundel.core.protocol.beacon.JoinLink
 import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.protocol.engine.LeaderSession
+import nl.pe1mew.zangbundel.core.protocol.engine.ResumeRecord
+import nl.pe1mew.zangbundel.core.protocol.payload.gatheringIdOf
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
@@ -41,6 +44,7 @@ import nl.pe1mew.zangbundel.platform.storage.AppSettings
 import nl.pe1mew.zangbundel.platform.storage.Memories
 import nl.pe1mew.zangbundel.platform.storage.MemorySong
 import nl.pe1mew.zangbundel.platform.storage.PreparedEntry
+import nl.pe1mew.zangbundel.platform.storage.ResumeStore
 import nl.pe1mew.zangbundel.platform.storage.Songbook
 import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
 
@@ -50,7 +54,11 @@ import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
  * two at once. It lives as long as the process; [GatheringService] keeps the process alive and shows
  * the neutral notification while a gathering runs.
  *
- * Not yet: requests and likes, delegates, resume after a restart, follow the leader.
+ * A leader's gathering survives the app dying (FR-GATH-13, ble-protocol 10.9, guiDesign D-67): the
+ * resume record is written on start, on every push, when the singer count changes and every 30 s;
+ * [resumeOffer] reads it at the next start and [resume] carries the gathering on.
+ *
+ * Not yet: requests and likes, delegates (phase 2).
  */
 class Gathering(
     private val context: Context,
@@ -60,11 +68,14 @@ class Gathering(
     private val setlists: SetlistBook,
     private val memories: Memories,
     private val settings: AppSettings,
+    private val resumeStore: ResumeStore,
     private val clock: () -> Long = SystemClock::elapsedRealtime,
     private val wallClock: () -> Long = System::currentTimeMillis,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
+    /** Orders writes and the delete of the resume record, so a write never revives an ended gathering. */
+    private val resumeLock = Mutex()
 
     /** A gathering heard nearby (D-22): its name and how strongly it is heard [FR-GATH-04]. */
     data class Nearby(val gid: GatheringId, val name: String, val rssi: Int, val codeRequired: Boolean, val seenAt: Long) {
@@ -174,7 +185,8 @@ class Gathering(
     private var currentRef: SongRef? = null
     /** For the gathering memory (FR-DATA-03): when it started, the songs in the order first pushed, the most singers at once. */
     private var startedWall = 0L
-    private val pushedOrder = ArrayList<Int>()
+    /** Read by the resume record's writer while a push may add to it. */
+    private val pushedOrder = java.util.concurrent.CopyOnWriteArrayList<Int>()
     private var peakSingers = 0
     /** D-62: when the current song was pushed, for the last song's duration. */
     private var lastPushAt: Long? = null
@@ -259,6 +271,12 @@ class Gathering(
         lastPushAt = null
         _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, name).httpsUrl(testBuild()))
+        running(l, s, t)
+    }
+
+    /** The loops of a running gathering, started or resumed: diagnostics, the leader's figures, and the resume record. */
+    private suspend fun running(l: LeaderSession, s: CoroutineScope, t: Transport) {
+        persist(l)
         s.launch {
             // Diagnostics: the send loop's real rate, and what the stack confirmed per legacy set, every 5 s.
             var t0 = clock(); var ticks0 = l.ticks; var work0 = l.tickWorkMs
@@ -273,8 +291,16 @@ class Gathering(
             }
         }
         s.launch {
+            var persisted = clock()
+            var singersPersisted = l.singers
             while (isActive) {
                 delay(1_000)
+                // 10.1 step 2 (v0.39): the record follows the singer table and is rewritten every 30 s, its write time marking when the leader was last alive.
+                if (l.singers != singersPersisted || clock() - persisted >= RESUME_REWRITE_MS) {
+                    singersPersisted = l.singers
+                    persisted = clock()
+                    persist(l)
+                }
                 peakSingers = maxOf(peakSingers, l.singers)
                 val progress = l.progress()
                 val help = l.helpShare()
@@ -310,6 +336,120 @@ class Gathering(
         val lastSongMs = if (index != m.current && lastPushAt != null) now - lastPushAt!! else m.lastSongMs
         if (index != m.current) lastPushAt = now
         _mode.value = m.copy(current = index, sung = sung - index, progress = l.progress(), songsSung = pushedOrder.size, lastSongMs = lastSongMs)
+        persist(l)
+    }
+
+    // ---- resume after the app died (FR-GATH-13, ble-protocol 10.9, guiDesign D-67) ----
+
+    /** What the resume screen shows: the gathering's name and two words, and when its record was last written. */
+    data class ResumeOffer(val name: String, val fingerprint: String, val stoppedWall: Long)
+
+    private var pendingResume: ResumeRecord? = null
+
+    /**
+     * Called once at the start of the process, before the welcome screen. It is also the startup sweep
+     * (architecture 5.4, FR-DATA-08): a record older than the window, or one that cannot be read, is deleted.
+     */
+    suspend fun resumeOffer(): ResumeOffer? = withContext(Dispatchers.IO) {
+        if (_mode.value != Mode.Idle) return@withContext null
+        resumeLock.withLock {
+            if (!resumeStore.exists) return@withLock null
+            val record = resumeStore.read()?.let { runCatching { ResumeRecord.decode(it) }.getOrNull() }
+            val age = record?.let { wallClock() - it.writtenWall }
+            if (record == null || age == null || age < 0 || age > RESUME_WINDOW_MS) {
+                resumeStore.delete()
+                Log.d("resume record deleted: ${if (record == null) "unreadable" else "older than the window"}")
+                return@withLock null
+            }
+            pendingResume = record
+            ResumeOffer(record.name, Fingerprint.of(gatheringIdOf(record.session.signing.publicKey, crypto)), record.writtenWall)
+        }
+    }
+
+    /** *Opnieuw beginnen* (D-67): the record goes, and the app starts as usual. */
+    suspend fun discardResume() {
+        pendingResume = null
+        withContext(Dispatchers.IO) { resumeLock.withLock { resumeStore.delete() } }
+    }
+
+    /**
+     * *Hervatten* (D-67, 10.9): the same keys, `gid`, singers, `seq` and `ts`, and the setlist, the current
+     * song and the sung ones as they were, the setlist resolved anew against the songbook. Throws when the
+     * radio cannot start, leaving the record for another try.
+     */
+    suspend fun resume() = mutex.withLock {
+        val r = checkNotNull(pendingResume) { "nothing to resume" }
+        check(_mode.value == Mode.Idle) { "one gathering at a time (FR-GEN-02)" }
+        stopScanning(stopRadio = false)
+        val t = checkNotNull(transport()) { "no Bluetooth" }
+        runCatching { t.stopScan() }
+        val installed = songbook.entries()
+        val songs = r.setlist.map { p ->
+            val key = p.songKey?.split('/', limit = 2)
+            val entry = PreparedEntry(key?.getOrNull(0), key?.getOrNull(1), p.title)
+            LeaderSong(entry, resolve(entry, installed))
+        }
+        val prepared = songs.map { song -> song.song?.let { runCatching { prepare(it) }.getOrNull() } }
+        val current = r.current?.takeIf { prepared.getOrNull(it) != null }
+        val cur = current?.let { prepared[it] }
+        val protection = when (r.protection) {
+            ResumeRecord.PROTECTION_CODE -> r.session.joinCode?.let { Protection.Code(it) } ?: Protection.Open
+            ResumeRecord.PROTECTION_QR_ONLY -> r.session.joinCode?.let { Protection.QrOnly(it) } ?: Protection.Open
+            else -> Protection.Open
+        }
+        val s = CoroutineScope(scope.coroutineContext + Job(scope.coroutineContext[Job]))
+        val l = LeaderSession(t, crypto, s, clock, r.name, joinCode = r.session.joinCode, resume = r.session)
+        GatheringService.start(context)
+        try {
+            l.start(
+                LeaderSession.Publication(
+                    cur?.ref, cur?.title, cur?.document, ahead = prepared.map { it?.document },
+                    cpos = current?.let { it + 1 }, sung = r.pushed.map { it + 1 }.toSet(),
+                ),
+            )
+        } catch (e: Exception) {
+            s.cancel()
+            GatheringService.stop(context)
+            throw e
+        }
+        session = s
+        leader = l
+        pendingResume = null
+        refs.clear()
+        prepared.forEachIndexed { i, p -> p?.let { refs[i] = it.ref } }
+        startedWall = r.startedWall
+        pushedOrder.clear()
+        pushedOrder += r.pushed
+        peakSingers = r.peak
+        lastPushAt = null
+        Log.d("leader resumed singers=${l.singers} current=$current pushed=${r.pushed} stoppedAgoMs=${wallClock() - r.writtenWall}")
+        _mode.value = Mode.Leading(
+            r.name, clock() - (wallClock() - r.startedWall).coerceAtLeast(0), l.singers, songs, current, r.pushed.toSet() - setOfNotNull(current),
+            fingerprint = Fingerprint.of(l.gid), protection = protection,
+            joinLink = JoinLink(l.gid, l.publicKey, protection.code, r.name).httpsUrl(testBuild()),
+            peak = r.peak, songsSung = r.pushed.size,
+        )
+        running(l, s, t)
+    }
+
+    /** Writes the resume record for [l] (10.1 step 2); nothing once [l] is no longer the running gathering. */
+    private suspend fun persist(l: LeaderSession) {
+        val m = _mode.value as? Mode.Leading ?: return
+        val record = ResumeRecord(
+            l.snapshot(), m.name,
+            when (m.protection) {
+                Protection.Open -> ResumeRecord.PROTECTION_OPEN
+                is Protection.Code -> ResumeRecord.PROTECTION_CODE
+                is Protection.QrOnly -> ResumeRecord.PROTECTION_QR_ONLY
+            },
+            m.songs.map { ResumeRecord.Position(it.entry.songKey, it.entry.title) },
+            pushedOrder.toList(), m.current, startedWall, wallClock(), maxOf(peakSingers, m.singers),
+        ).encode()
+        withContext(Dispatchers.IO) {
+            resumeLock.withLock {
+                if (leader === l) runCatching { resumeStore.write(record) }.onFailure { Log.d("resume record not written: ${it.message}") }
+            }
+        }
     }
 
     /** A setlist song as it is pushed and as it is sent ahead; [document] is null for a song that may not be broadcast (FR-LIB-22). */
@@ -343,6 +483,8 @@ class Gathering(
         val m = _mode.value as? Mode.Leading
         leader = null
         session = null
+        // Architecture 5.4 (v0.13): the record goes at once, so a leader that dies while ending is not offered an ended gathering.
+        scope.launch(Dispatchers.IO) { resumeLock.withLock { resumeStore.delete() } }
         if (m != null) _summary.value = Summary(m.name, startedWall, clock() - m.startedAt, pushedOrder.size, maxOf(peakSingers, m.singers))
         _mode.value = Mode.Idle
         if (m != null) {
@@ -577,6 +719,10 @@ class Gathering(
     companion object {
         /** A gathering not heard for this long leaves the list (D-22). */
         const val NEARBY_TIMEOUT_MS = 10_000L
+        /** ble-protocol 10.9, FR-GATH-13: how long after the record's last write a resume is offered (D-67; its setting is not built). */
+        const val RESUME_WINDOW_MS = 10 * 60_000L
+        /** 10.1 step 2 (v0.39): the record is rewritten at least this often while leading. */
+        private const val RESUME_REWRITE_MS = 30_000L
         /** D-62: the link quality looks back this far. */
         private const val QUALITY_WINDOW_MS = 60_000L
         /** FR-GATH-16: listen this long before a gathering may start (D-23). */

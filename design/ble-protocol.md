@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.38 (draft) |
+| Document version | 0.39 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -51,6 +51,7 @@
 | 0.36 | 2026-10-26 | Depends on FRD v0.17 (FR-SING-05: the reception view is a hidden feature, opened by a long press only); no other change. |
 | 0.37 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change, the Request write, `reqstat`, document 8 and the delegate Control commands stay specified for phase 2. |
 | 0.38 | 2026-10-26 | 10.9, the owner's choice of option B in `design/proposals/2026-10-26-singer-presence.md`: the leader no longer drops silent singers after 10 minutes (that expiry never ran, and with songs ahead a singer that hears well may never connect); the count is the registered singers minus those that left, an upper bound. A singer whose app is swiped away sends the leave notice first. |
+| 0.39 | 2026-10-27 | 10.1 step 2 and 10.9, the owner's request with resume after a crash (guiDesign D-67): the resume record also holds `ts`, since 9.4 makes singers ignore a state whose `ts` is not above the last one and a resumed leader counting from 0 again would be ignored by all of them; and the setlist as started (per position its `library-id/song-id`, or its title), the positions pushed in order and the current position, so a resumed leader publishes the same current song, `cpos`, `sung` and songs ahead and singers carry on where they were. The record is rewritten on every push and at least every 30 s; its last write marks when the leader stopped. A resume more than 5 min after that finds its singers ended (10.11). |
 
 ---
 
@@ -708,7 +709,7 @@ Op 8 is optional in 1.0; a leader without it answers `0x8A` and the delegate sho
 ### 10.1 Start a gathering (leader)
 
 1. **Pre-start scan** [FR-GATH-16]. Scan with the service UUID filter for at least 5 s. If any beacon with `ENDED` = 0 and `RELAY` = 0 is received, regardless of `gid`, do not start: show the gathering name(s) found and offer to join. A beacon with `ENDED` = 1 does not block. A device that cannot scan MUST NOT start a gathering.
-2. Generate the Ed25519 key pair, derive `gid`, set `seq` = random u16, `ts` = 0, `status` = 0; persist both key pairs with their secret keys (the Ed25519 signing key and the X25519 key behind `ek`, 8.4), `gid`, name, join code, `seq`, the singer table and the delegate list `dlg` until the gathering ends [FR-GATH-13]; without the X25519 secret a resumed leader cannot open sealed writes, and without `dlg` it loses its delegates. The record is app-private and deleted as FR-DATA-08 requires.
+2. Generate the Ed25519 key pair, derive `gid`, set `seq` = random u16, `ts` = 0, `status` = 0; persist both key pairs with their secret keys (the Ed25519 signing key and the X25519 key behind `ek`, 8.4), `gid`, name, join code, `seq`, `ts`, the singer table, the delegate list `dlg`, and (v0.39) the setlist as started, the positions pushed in order and the current position, until the gathering ends [FR-GATH-13]; the record is rewritten on every push and at least every 30 s, so its last write tells when the leader stopped; without the X25519 secret a resumed leader cannot open sealed writes, and without `dlg` it loses its delegates. The record is app-private and deleted as FR-DATA-08 requires.
 3. Build the state, info and initial documents (an empty or prepared setlist [FR-LEAD-02]).
 4. Start the GATT server; start the beacon set; open legacy data sets until the stack refuses (max 3); start the extended set if supported. Set `BCAST`/`EXT` accordingly [FR-GATH-02].
 5. Start the carousel (section 7.4).
@@ -780,7 +781,7 @@ Connections now occur for registration, requests, delegate commands and repair. 
 
 - **Singer side.** Nothing received for 10 s → "reconnecting", keep the current lyrics [FR-GATH-10]. Beacon or frames return with the same `gid` → compare `seq`, continue; the carousel delivers whatever was missed, so normally no connection is needed. 5 min without anything → ended (10.11) [FR-GATH-11].
 - **Leader side.** A singer that leaves on purpose sends Control op 10 (9.8) and is removed from the count at once [FR-GATH-07, FR-GATH-12]. Since v0.38 a singer that falls silent without it (a crash, a flat battery, walked out of range) stays counted until the end: singers send nothing on a schedule, and one that hears the broadcast well may never connect, so silence says nothing about presence. The count is therefore the registered singers minus those that left, an upper bound, and the leader's drawer labels it *aangemeld*. A singer whose app is swiped away sends the leave notice before the app goes (v0.38). (v0.11 to v0.37 removed silent singers after 10 minutes without GATT activity; that was never built, and option A of `design/proposals/2026-10-26-singer-presence.md`, a presence notice every 4 minutes, is the way back to it.)
-- **Leader app restart.** On start, a persisted running gathering younger than the resume window (default 10 min) is offered for resumption [FR-GATH-13]. Resuming reuses both key pairs, `gid`, name, join code, the singer table with its tokens, the delegate list `dlg`, and `seq` (+1, so a burst follows), all from the record persisted in 10.1 step 2.
+- **Leader app restart.** On start, a persisted running gathering whose record was last written less than the resume window ago (default 10 min) is offered for resumption [FR-GATH-13]. Resuming reuses both key pairs, `gid`, name, join code, the singer table with its tokens, the delegate list `dlg`, `seq` (+1, so a burst follows) and `ts` (continuing above the last value, 9.4), all from the record persisted in 10.1 step 2. Since v0.39 it also publishes again what the singers had: the setlist's songs ahead, the current song with its `cpos`, and `sung`, resolved anew against the leader's songbook; a song no longer installed is skipped as at a start (D-59). Registered singers need no connection: they hear the same `gid` again within the 5 minutes of the singer side and continue. After those 5 minutes they show the gathering ended (10.11) and join again from the list.
 
 ### 10.10 End a gathering (leader)
 

@@ -55,6 +55,13 @@ class LeaderGattService(
 
     private class Singer(val tok: ByteArray, var xk: ByteArray, var lastSeen: Long)
 
+    /** A registered singer as the resume record keeps it (ble-protocol 10.1 step 2): `sid`, `tok`, `xk`. */
+    class Registered(sid: ByteArray, tok: ByteArray, xk: ByteArray) {
+        val sid: ByteArray = sid.copyOf()
+        val tok: ByteArray = tok.copyOf()
+        val xk: ByteArray = xk.copyOf()
+    }
+
     private class Client(val slot: Long?) {
         var joinAnswer: ByteArray? = null
         var transfer: Job? = null
@@ -114,6 +121,16 @@ class LeaderGattService(
             versions.addLast(d)
             while (versions.size > VERSIONS_KEPT) versions.removeFirst()
         }
+    }
+
+    /** The singer table, for the resume record (10.1 step 2). */
+    fun registered(): List<Registered> = synchronized(lock) {
+        singers.map { (sid, s) -> Registered(sid.chunked(2).map { it.toInt(16).toByte() }.toByteArray(), s.tok, s.xk) }
+    }
+
+    /** 10.9, resuming: the singers registered before the app died keep their tokens and are counted again. */
+    fun restore(table: List<Registered>) = synchronized(lock) {
+        for (r in table) singers[r.sid.toHex()] = Singer(r.tok.copyOf(), r.xk.copyOf(), clock())
     }
 
     /** 10.10 step 3: from now on every write is refused with `0x88`. */

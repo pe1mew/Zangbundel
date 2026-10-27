@@ -355,4 +355,12 @@
     <string name="info_tags">Tags</string>
     <string name="info_library">Library</string>
     <string name="info_from_leader">Received from the leader</string>
+    <!-- Resume after the app died while leading (guiDesign D-67). -->
+    <string name="resume_title">The campfire stopped</string>
+    <string name="resume_stopped_now">Stopped less than a minute ago</string>
+    <string name="resume_stopped">Stopped %1$d min ago</string>
+    <string name="resume_text">The app closed while you were leading. Resume to carry on with the same singers and songs.</string>
+    <string name="resume_resume">Resume</string>
+    <string name="resume_restart">Start over</string>
+    <string name="resume_failed">Could not resume. Switch Bluetooth on and try again.</string>
 </resources>

@@ -4,7 +4,7 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.38 (draft) |
+| Document version | 0.39 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -50,6 +50,7 @@
 | 0.36 | 2026-10-26 | Depends on FRD v0.18: requests, likes and the delegate role move to phase 2. D-32, D-46, D-63 and D-73 are marked phase 2; the drawer of D-61 and the sheets of D-31 and D-58 have no request or delegate rows in phase 1. |
 | 0.37 | 2026-10-26 | D-62: the singers figure in the drawer is labelled *Aangemeld*, since the count is an upper bound (BLE protocol v0.38, 10.9). |
 | 0.38 | 2026-10-26 | D-17 and D-70 built for the singer: the toolbar, tap-to-scroll and follow the leader; D-17 and D-70 record how (the toolbar's place and order, what pauses and resumes following). Fit-to-width (D-28) and the toolbar on the songbook's reading view are not built yet. |
+| 0.39 | 2026-10-27 | D-67 built: the resume screen after a crash, with the setlist, the current song and what was sung restored (BLE protocol v0.39). The window is fixed at 10 minutes for now; its setting under *Leiden* is not built. |
 
 ---
 
@@ -340,7 +341,7 @@ The leader prepares at home, with light and time, and leads at the fire, in the 
 
 #### Resuming, warnings and the end
 
-**D-67 — After a crash the welcome screen is replaced by two buttons.** When the app starts within the resume window of FR-GATH-13 after it died while leading, the welcome screen (D-04) is not shown; in its place, on the same background, stand the gathering's name and fingerprint, the time since it died, and two buttons: **Hervatten** (resume the same gathering with the same identifier and keys, singers reconnect by themselves) and **Opnieuw beginnen** (discard the resume data and go to the home screen). When the window has expired the resume data is deleted and the normal welcome screen appears [FR-DATA-08]. The window length is a setting under *Leiden* (default as the FRD says, configurable). *Why:* the owner's instruction: at a crash the startup screen is replaced by resume or restart buttons.
+**D-67 — After a crash the welcome screen is replaced by two buttons.** When the app starts within the resume window of FR-GATH-13 after it died while leading, the welcome screen (D-04) is not shown; in its place, on the same background, stand the gathering's name and fingerprint, the time since it died, and two buttons: **Hervatten** (resume the same gathering with the same identifier and keys, singers reconnect by themselves) and **Opnieuw beginnen** (discard the resume data and go to the home screen). When the window has expired the resume data is deleted and the normal welcome screen appears [FR-DATA-08]. The window length is a setting under *Leiden* (default as the FRD says, configurable). *Why:* the owner's instruction: at a crash the startup screen is replaced by resume or restart buttons. *(Built in v0.39:)* the window counts from the resume record's last write, which happens on every push and every 30 s, so "the time since it died" is at most 30 s early. The screen shows the gathering's name, its two words (D-36) and *Gestopt, x min geleden*. *Hervatten* puts the leader's page back as it was: the setlist, the current song with its orange bar, the sung songs, the singers who were registered. When Bluetooth is off or the start fails, the screen says so and keeps both buttons. *Opnieuw beginnen* deletes the record and goes on to the home screen. The window's setting under *Leiden* is not built; it is fixed at 10 minutes.
 
 **D-68 — Battery is settled before the fire; other gatherings are a quiet indicator.** The gathering settings screen (D-25) runs a check before *Starten*: when battery saver is on, or the battery is below 30 %, it shows a line *Zet de batterijbespaarstand uit en gebruik een powerbank: een kampvuur duurt uren* with a button to the system setting; starting is still allowed [FR-GATH-15]. If the platform's state changes during the gathering, only the warning icon of the leader bar (D-61) appears; nothing interrupts. Other gatherings coming into range [FR-GATH-17] never produce a notification: the system is resilient against them, and the leader is not actively informed. The leader bar's drawer shows a row *Ander kampvuur in de buurt: "<name>"* while one is detected, as information only. *Why:* the owner's instruction: mention the battery before the start and suggest a power bank; no active warnings about other gatherings, an indicator in the bar at most.
 

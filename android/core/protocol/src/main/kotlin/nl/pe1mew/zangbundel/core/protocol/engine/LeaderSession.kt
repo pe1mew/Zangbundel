@@ -38,7 +38,9 @@ import kotlin.random.Random
  * behind them, kept in step on every [push].
  *
  * The setlist's songs go out ahead from the start (7.4 rule 7, FR-BLE-18), so a push only switches.
- * Not wired in yet: [LeaderMachine]'s lifecycle (pre-start scan, resume), messages and requests.
+ * With [resume] it carries on a gathering whose app died (10.9): the same keys, `gid` and singers,
+ * `seq` and `ts` going on from where they were. [snapshot] gives what to persist for that.
+ * Not wired in yet: [LeaderMachine]'s lifecycle (pre-start scan), messages and requests.
  */
 class LeaderSession(
     private val transport: Transport,
@@ -51,7 +53,19 @@ class LeaderSession(
     maxSingers: Int = LeaderGattService.DEFAULT_MAX_SINGERS,
     /** FR-GATH-05: when set, a Join must carry it; the beacon sets `CODE` (6.2). Fixed for the gathering (guiDesign D-71). */
     val joinCode: String? = null,
+    /** 10.9: a gathering to carry on; the caller passes its join code as [joinCode] too. */
+    private val resume: Resume? = null,
 ) {
+    /** The protocol's part of the resume record (10.1 step 2, v0.39). The delegate list `dlg` follows with delegates (phase 2). */
+    class Resume(
+        val signing: Crypto.SigningKeyPair,
+        val box: Crypto.BoxKeyPair,
+        val joinCode: String?,
+        val seq: Int,
+        val ts: Long,
+        val singers: List<LeaderGattService.Registered>,
+    )
+
     /**
      * What the singers get (9.4, 9.5): the current song and the setlist as far as it has been sung
      * (guiDesign D-47: nothing upcoming). [song] is null for a song its library marks "do not
@@ -74,20 +88,21 @@ class LeaderSession(
         init { require(song == null || song.ref == cur) { "the song document is the current song" } }
     }
 
-    private val signing = crypto.generateSigningKeyPair()
+    private val signing = resume?.signing ?: crypto.generateSigningKeyPair()
     val gid: GatheringId = gatheringIdOf(signing.publicKey, crypto)
     /** The gathering's public key, for the fingerprint words and the join QR code (FR-GATH-18, ble-protocol 6.5). */
     val publicKey: ByteArray get() = signing.publicKey.copyOf()
     private val gid16 = ((gid.bytes[0].toInt() and 0xFF) shl 8) or (gid.bytes[1].toInt() and 0xFF)
-    private val ek = crypto.generateBoxKeyPair()
+    private val ek = resume?.box ?: crypto.generateBoxKeyPair()
     private val mutex = Mutex()
     private var flags = 0
     private var busy = false
     private var ended = false
-    var seq: Int = random.nextInt(0x10000)
+    var seq: Int = resume?.seq ?: random.nextInt(0x10000)
         private set
-    private var ts = 0L
-    private val startedAt = clock()
+    private var ts = resume?.ts ?: 0L
+    /** 9.4: a resumed gathering's `ts` goes on from the last one, so singers take its states as newer. */
+    private val startedAt = clock() - ts
     private var carousel: Carousel? = null
     private var loop: Job? = null
     private var last: Built = Built(null, null, emptyMap(), null, emptySet())
@@ -95,6 +110,10 @@ class LeaderSession(
     private var songsAhead: List<Framed?> = emptyList()
 
     val service = LeaderGattService(gid, ek, crypto, scope, clock, maxSingers = maxSingers, joinCode = joinCode, onBusyChanged = { b -> scope.launch { busyChanged(b) } })
+        .also { s -> resume?.let { s.restore(it.singers) } }
+
+    /** What to persist now to resume later (10.1 step 2): keys, `seq`, `ts` and the singer table. */
+    suspend fun snapshot(): Resume = mutex.withLock { Resume(signing, ek, joinCode, seq, ts, service.registered()) }
 
     /** Singers registered and not left or timed out (10.9). */
     val singers: Int get() = service.singerCount

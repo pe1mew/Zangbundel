@@ -16,6 +16,7 @@ import nl.pe1mew.zangbundel.platform.crypto.SodiumCrypto
 import nl.pe1mew.zangbundel.platform.net.HttpsFetcher
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
 import nl.pe1mew.zangbundel.platform.storage.LibraryStorage
+import nl.pe1mew.zangbundel.platform.storage.ResumeStore
 
 /**
  * Wires the app's objects by hand (architecture A-17). Everything is created lazily, so a screen
@@ -48,7 +49,7 @@ class AppContainer(private val context: Context) {
     val setlistTransfer: SetlistTransfer by lazy { SetlistTransfer(storage.songbook, setlists, HttpsDownloads(fetcher)) }
 
     /** The one gathering, leading or singing (architecture A-06); its radio is [transport]. */
-    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings) }
+    val gathering: Gathering by lazy { Gathering(context, { transport }, crypto, storage.songbook, setlists, storage.memories, storage.settings, ResumeStore.open(context)) }
 
     /** Whether the welcome screen was shown in this process (guiDesign D-05: never a second time while the app stays in memory). */
     var welcomed = false
@@ -64,6 +65,7 @@ class AppContainer(private val context: Context) {
         for (s in storage.setlists.all()) storage.setlists.delete(s.uid)
         storage.memories.deleteAll()
         storage.settings.clear()
+        ResumeStore.open(context).delete()
         java.io.File(context.cacheDir, "share").deleteRecursively()
     }
 
