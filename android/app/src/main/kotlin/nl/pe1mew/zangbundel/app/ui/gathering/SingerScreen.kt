@@ -9,6 +9,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -58,6 +60,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -141,6 +144,7 @@ fun SingerScreen() {
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     var confirmLeave by remember { mutableStateOf(false) }
+    var explainWords by remember { mutableStateOf(false) }   // D-36 (v0.56)
     var islandHeight by remember { mutableIntStateOf(0) }
     // D-81 (v0.30): a hidden feature, open after a long press on the strip until a tap.
     var requested by remember { mutableStateOf(false) }
@@ -240,7 +244,11 @@ fun SingerScreen() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(m.name, color = colors.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                Text(" · " + m.fingerprint + " · " + state, color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
+                Text(" · ", color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
+                // D-36 (v0.56): a tap on the words explains them; elsewhere the strip keeps its tap and long press.
+                Text(m.fingerprint, color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false,
+                    textDecoration = TextDecoration.Underline, modifier = Modifier.clickable { explainWords = true })
+                Text(" · " + state, color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
             }
         }
         // D-81: while the island is shown, the page ends with room for it, so it never covers the line being sung.
@@ -383,6 +391,12 @@ fun SingerScreen() {
         text = { Text(stringResource(R.string.singer_leave_text)) },
         confirmButton = { TextButton(onClick = { confirmLeave = false; scope.launch { gathering.leave() } }) { Text(stringResource(R.string.singer_leave)) } },
         dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.singer_stay)) } },
+    )
+    if (explainWords) AlertDialog(
+        onDismissRequest = { explainWords = false },
+        title = { Text(stringResource(R.string.words_title)) },
+        text = { Text(stringResource(R.string.words_text), modifier = Modifier.verticalScroll(rememberScrollState())) },
+        confirmButton = { TextButton(onClick = { explainWords = false }) { Text(stringResource(R.string.words_close)) } },
     )
 }
 

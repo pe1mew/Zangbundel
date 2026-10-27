@@ -279,6 +279,10 @@
     <string name="singer_leave_text">Je ziet de liedteksten dan niet meer.</string>
     <string name="singer_leave">Verlaten</string>
     <string name="singer_stay">Blijven</string>
+    <!-- D-36 (v0.56): wat de twee woorden zijn, bij een tik erop in de balk van de zanger. -->
+    <string name="words_title">De twee woorden</string>
+    <string name="words_text">De twee woorden horen bij dit ene kampvuur. Ze zijn gemaakt uit de sleutel die de telefoon van de leider voor dit kampvuur heeft bedacht; een volgend kampvuur krijgt een nieuwe sleutel en andere woorden.\n\nLaat de leider de woorden hardop zeggen. Zie je dezelfde woorden, dan zit je bij het goede kampvuur.\n\nMet die sleutel zet de leider een handtekening onder elk lied. Je telefoon laat alleen liederen zien met die handtekening, dus een ander kan geen liederen in dit kampvuur zetten. Je naam is versleuteld: alleen de leider kan hem lezen. De liedteksten zelf zijn niet geheim.\n\nDe woorden zijn een hulpmiddel, geen slot: twee kampvuren kunnen dezelfde woorden hebben, bij toeval of expres. Wie de QR-code van de leider scant, zit altijd bij het goede kampvuur.</string>
+    <string name="words_close">Sluiten</string>
     <plurals name="leader_singers">
         <item quantity="one">%d zanger</item>
         <item quantity="other">%d zangers</item>
@@ -379,6 +383,10 @@
     <string name="install_note">Installeren heeft internet nodig op die telefoon. Installeer de app het liefst thuis, vóór het kamp.</string>
     <string name="install_share">Link delen</string>
     <string name="about_install">Zangbundel op een andere telefoon</string>
+    <!-- guiDesign sectie 7 (v0.56): de handleiding in de taal van de app en de broncode, in de browser. -->
+    <string name="about_manual">Handleiding</string>
+    <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Handleiding</string>
+    <string name="about_links_note">Opent in je browser, op GitHub.</string>
     <string name="drawer_install">App installeren</string>
     <!-- Bladeren tijdens een kampvuur (guiDesign D-29, D-40). -->
     <string name="singer_browsing">bladeren</string>

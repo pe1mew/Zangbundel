@@ -280,6 +280,10 @@
     <string name="singer_leave_text">You will no longer see the lyrics.</string>
     <string name="singer_leave">Leave</string>
     <string name="singer_stay">Stay</string>
+    <!-- D-36 (v0.56): what the two words are, on a tap on them in the singer's strip. -->
+    <string name="words_title">The two words</string>
+    <string name="words_text">The two words belong to this one campfire. They are made from the key that the leader\'s phone created for this campfire; the next campfire gets a new key and other words.\n\nAsk the leader to say the words aloud. If you see the same words, you are at the right campfire.\n\nWith that key the leader signs every song. Your phone shows only songs with that signature, so nobody else can put songs into this campfire. Your name is encrypted: only the leader can read it. The lyrics themselves are not secret.\n\nThe words are a help, not a lock: two campfires can have the same words, by chance or on purpose. If you scan the leader\'s QR code, you are always at the right campfire.</string>
+    <string name="words_close">Close</string>
     <plurals name="leader_singers">
         <item quantity="one">%d singer</item>
         <item quantity="other">%d singers</item>
@@ -380,6 +384,11 @@
     <string name="install_note">Installing needs internet on that phone. Best install the app at home, before the trip.</string>
     <string name="install_share">Share the link</string>
     <string name="about_install">Zangbundel on another phone</string>
+    <!-- guiDesign section 7 (v0.56): the manual in the app's language and the source code, opened in the browser. -->
+    <string name="about_manual">Manual</string>
+    <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Manual</string>
+    <string name="about_source_url" translatable="false">https://github.com/pe1mew/Zangbundel</string>
+    <string name="about_links_note">Opens in your browser, on GitHub.</string>
     <string name="drawer_install">Install the app</string>
     <!-- Browsing during a campfire (guiDesign D-29, D-40). -->
     <string name="singer_browsing">browsing</string>

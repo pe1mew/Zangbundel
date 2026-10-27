@@ -2,9 +2,12 @@
 package nl.pe1mew.zangbundel.app.ui.about
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
@@ -73,6 +77,11 @@ fun AboutScreen(onPrivacy: () -> Unit) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(stringResource(R.string.about_free), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
+                // Section 7 (v0.56, the owner's choice): the source as a link in this tile, opened in the browser.
+                val source = stringResource(R.string.about_source_url)
+                Text(source.removePrefix("https://"), style = MaterialTheme.typography.bodySmall, color = Palette.FireOrange,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.padding(top = 4.dp).clickable { open(context, source) }.padding(vertical = 8.dp))
             }
             Text(stringResource(R.string.about_libraries), style = MaterialTheme.typography.titleMedium)
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -100,8 +109,17 @@ fun AboutScreen(onPrivacy: () -> Unit) {
             // D-83: show or send the install link, also outside a campfire [FR-DIST-01, FR-DIST-04].
             OutlinedButton(onClick = { install = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.about_install)) }
             OutlinedButton(onClick = onPrivacy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_privacy)) }
+            // Section 7 (v0.56): the manual in the app's language, in the browser; the app itself does not go online for it.
+            val manual = stringResource(R.string.about_manual_url)
+            OutlinedButton(onClick = { open(context, manual) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.about_manual)) }
+            Text(stringResource(R.string.about_links_note), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
         }
     }
+}
+
+/** Hands [url] to the browser; a phone without one keeps the About screen as it is. */
+private fun open(context: Context, url: String) {
+    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)) }
 }
 
 private fun versionCode(context: Context): Long {
