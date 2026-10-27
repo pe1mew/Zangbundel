@@ -428,4 +428,13 @@
     <string name="drawer_battery_saver">Batterijbespaarstand staat aan</string>
     <string name="drawer_other_campfire">Ander kampvuur in de buurt: “%1$s”</string>
     <string name="leader_warning">Waarschuwing, open de lade voor meer</string>
+    <!-- guiDesign D-84: het eigen installatiebestand naar een telefoon zonder internet (FR-DIST-05). -->
+    <string name="install_offline">Delen zonder internet</string>
+    <string name="install_offline_intro">Voor een Android-telefoon in de buurt zonder internet. De app is ongeveer %1$d MB.</string>
+    <string name="install_offline_step1">Tik op Delen, kies Quick Share of Bluetooth en dan de andere telefoon.</string>
+    <string name="install_offline_step2">Op de andere telefoon: accepteer het bestand en open het.</string>
+    <string name="install_offline_step3">Vraagt die telefoon om installeren uit deze bron toe te staan: sta het toe voor de app die het bestand opent, installeer, en zet het daarna weer uit.</string>
+    <string name="install_offline_step4">Open Zangbundel en kies het kampvuur.</string>
+    <string name="install_offline_share">Delen</string>
+    <string name="install_offline_back">Terug</string>
 </resources>

@@ -429,4 +429,13 @@
     <string name="drawer_battery_saver">Battery saver is on</string>
     <string name="drawer_other_campfire">Another campfire nearby: “%1$s”</string>
     <string name="leader_warning">Warning, open the drawer for details</string>
+    <!-- guiDesign D-84: the app's own package to a phone without internet (FR-DIST-05). -->
+    <string name="install_offline">Share without internet</string>
+    <string name="install_offline_intro">For an Android phone nearby that has no internet. The app is about %1$d MB.</string>
+    <string name="install_offline_step1">Tap Share, choose Quick Share or Bluetooth, then the other phone.</string>
+    <string name="install_offline_step2">On the other phone: accept the file and open it.</string>
+    <string name="install_offline_step3">If that phone asks to allow installing from this source, allow it for the app that opens the file, install, and switch it off again afterwards.</string>
+    <string name="install_offline_step4">Open Zangbundel and choose the campfire.</string>
+    <string name="install_offline_share">Share</string>
+    <string name="install_offline_back">Back</string>
 </resources>
