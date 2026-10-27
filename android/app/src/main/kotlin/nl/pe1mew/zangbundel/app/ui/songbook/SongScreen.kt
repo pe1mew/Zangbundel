@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package nl.pe1mew.zangbundel.app.ui.songbook
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,8 +33,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +58,7 @@ import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
+import nl.pe1mew.zangbundel.app.ui.gathering.SongInfoSheet
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.app.ui.setlists.NameDialog
 import nl.pe1mew.zangbundel.core.songformat.Song
@@ -140,42 +149,41 @@ class SongViewModel(private val songbook: Songbook, private val book: SetlistBoo
     }
 }
 
-/** The day theme of guiDesign D-15: outside a gathering the lyric view reads black on white. */
-private val Background = Color.White
-private val Lyric = Color.Black
-private val Secondary = Color(0xFF444444)
-private val Divider = Color(0xFFDDDDDD)
 
 /**
- * Reading a song in preparation (guiDesign D-53): the lyric view's styling in the day theme, at the
- * default lyric size of D-18, lines wrapping with a hanging indent of 1 em (D-28); below, D-53's one
- * button that adds the song to a setlist. The song-info sheet of D-45 is not built yet.
+ * Reading a song in preparation (guiDesign D-53): the lyric view's styling in the theme the singer chose in
+ * the toolbar (D-17; night unless changed, D-53 as amended in v0.48), at the default lyric size of D-18, lines wrapping with a hanging indent of 1 em (D-28); below, D-53's one
+ * button that adds the song to a setlist. The song's metadata and licence (D-45, FR-LIB-20) open from the ⓘ
+ * beside the title or a long press on the title (D-33).
  */
 @Composable
 fun SongScreen(model: SongViewModel = viewModel(factory = SongViewModel.Factory)) {
     val state by model.state.collectAsState()
-    Column(Modifier.fillMaxSize().background(Background)) {
+    val settings = (LocalContext.current.applicationContext as ZangbundelApp).container.storage.settings
+    val night by settings.lyricNight.collectAsState(initial = true)
+    val colors = if (night) LyricColors.Night else LyricColors.Day
+    Column(Modifier.fillMaxSize().background(colors.background)) {
         // The system bars keep light icons (MainActivity); a black band under each keeps them readable on white.
         Spacer(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(Color.Black))
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 24.dp)) {
             when (val s = state) {
                 SongViewModel.State.Loading -> Unit
-                SongViewModel.State.Unreadable -> Text(stringResource(R.string.song_unreadable), color = Lyric)
-                is SongViewModel.State.Shown -> Lyrics(s.entry, s.song)
+                SongViewModel.State.Unreadable -> Text(stringResource(R.string.song_unreadable), color = colors.lyric)
+                is SongViewModel.State.Shown -> Lyrics(s.entry, s.song, colors)
             }
         }
-        (state as? SongViewModel.State.Shown)?.let { AddButton(it.target, model) }
+        (state as? SongViewModel.State.Shown)?.let { AddButton(it.target, model, colors) }
         Spacer(Modifier.fillMaxWidth().windowInsetsBottomHeight(WindowInsets.navigationBars).background(Color.Black))
     }
 }
 
 /** D-53: one primary button, naming the setlist being edited, or asking which one. */
 @Composable
-private fun AddButton(target: SongViewModel.Target, model: SongViewModel) {
+private fun AddButton(target: SongViewModel.Target, model: SongViewModel, colors: LyricColors) {
     val choices by model.choices.collectAsState()
     var naming by rememberSaveable { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().background(Background)) {
-        HorizontalDivider(color = Divider)
+    Column(Modifier.fillMaxWidth().background(colors.background)) {
+        HorizontalDivider(color = colors.divider)
         val (label, enabled) = when (target) {
             is SongViewModel.Target.Editing ->
                 if (target.contains) stringResource(R.string.song_in_setlist) to false else stringResource(R.string.song_add_to, target.title) to true
@@ -185,8 +193,8 @@ private fun AddButton(target: SongViewModel.Target, model: SongViewModel) {
         Button(
             onClick = { if (target is SongViewModel.Target.Editing) model.addToEditing() else model.choose() },
             enabled = enabled,
-            // Disabled reads as a state here (D-53), so it keeps day-theme contrast instead of the dark theme's faded white.
-            colors = ButtonDefaults.buttonColors(disabledContainerColor = Color(0xFFEEEEEE), disabledContentColor = Secondary),
+            // Disabled reads as a state here (D-53), so it keeps the theme's contrast instead of a faded button.
+            colors = ButtonDefaults.buttonColors(disabledContainerColor = if (colors == LyricColors.Night) Color(0xFF2A2A2A) else Color(0xFFEEEEEE), disabledContentColor = colors.secondary),
             modifier = Modifier.fillMaxWidth().padding(16.dp),
         ) { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
@@ -207,10 +215,20 @@ private fun AddButton(target: SongViewModel.Target, model: SongViewModel) {
     if (naming) NameDialog(R.string.setlists_new, "", onDismiss = { naming = false }) { naming = false; model.addToNew(it) }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Lyrics(entry: SongbookEntry, song: Song) {
-    Text(song.meta.title, fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold, color = Lyric)
-    Text(listOf(entry.libraryName, entry.language).joinToString(" · "), fontSize = 14.sp, color = Secondary)
+private fun Lyrics(entry: SongbookEntry, song: Song, colors: LyricColors) {
+    var info by rememberSaveable { mutableStateOf(false) }
+    val infoLabel = stringResource(R.string.toolbar_info)
+    Row(verticalAlignment = Alignment.Top) {
+        Text(song.meta.title, fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold, color = colors.lyric,
+            modifier = Modifier.weight(1f).combinedClickable(onClick = {}, onLongClick = { info = true }, onLongClickLabel = infoLabel))
+        Box(Modifier.size(48.dp).clickable(onClickLabel = infoLabel) { info = true }, contentAlignment = Alignment.Center) {
+            Text("ⓘ", fontSize = 24.sp, color = colors.secondary)
+        }
+    }
+    Text(listOf(entry.libraryName, entry.language).joinToString(" · "), fontSize = 14.sp, color = colors.secondary)
+    if (info) SongInfoSheet(song.meta, entry.libraryName, onDismiss = { info = false })
     Spacer(Modifier.height(20.dp))
-    LyricBody(song, LyricColors.Day)
+    LyricBody(song, colors)
 }

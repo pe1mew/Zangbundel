@@ -27,6 +27,7 @@ class LibraryRepositoryTest {
         override suspend fun fetch(url: String, maxBytes: Long, ifNoneMatch: String?): Downloads.Fetched {
             asked += url
             val b = served[url] ?: return Downloads.Fetched(404, null, ByteArray(0))
+            if (ifNoneMatch == "\"e1\"") return Downloads.Fetched(304, ifNoneMatch, ByteArray(0))
             if (b.size > maxBytes) throw IOException("too large")
             return Downloads.Fetched(200, "\"e1\"", b)
         }
@@ -121,5 +122,30 @@ class LibraryRepositoryTest {
         assertEquals(null, repo.updateSource(row.copy(repository = null, source = "a.zbl")), "from a file: the leader picks the new file")
         repo.setEnabled(row.id, false)
         assertFalse(index.rows.getValue(row.id).enabled)
+    }
+
+    @Test
+    fun `the Wi-Fi check reads only the index, and says current, newer, unchanged or not checkable`() = runTest {
+        val index = FakeIndex()
+        val zbl = archive("release")
+        val raw = "https://raw.githubusercontent.com/example/zangbundel-voorbeeld/HEAD/releases.json"
+        val url = "https://example.org/zangbundel-voorbeeld-2026.10.0.zbl"
+        val (repo, net) = repository(mapOf(raw to indexJson(url, zbl)), index)
+        repo.install(repo.checkFile(zbl, "a.zbl"))
+        // A GitHub repository maps to its release index (song-format 12.6); the archive's own example.org one would not.
+        val row = index.rows.getValue("zangbundel-voorbeeld").copy(repository = "https://github.com/example/zangbundel-voorbeeld")
+
+        assertEquals(LibraryRepository.UpdateCheck.Current("\"e1\""), repo.checkUpdate(row, null), "the installed archive is the newest")
+        assertEquals(listOf(raw), net.asked, "FR-LIB-12: the index, never the archive")
+        assertEquals(LibraryRepository.UpdateCheck.Unchanged, repo.checkUpdate(row, "\"e1\""), "song-format 12.7: a conditional request")
+
+        val newer = repo.checkUpdate(row.copy(archiveSha256 = "0".repeat(64)), null)
+        assertEquals(LibraryRepository.UpdateCheck.Available("2026.10.0", "\"e1\""), newer, "a different archive in the index is newer")
+
+        val fromFile = row.copy(repository = null, source = "a.zbl")
+        assertEquals(LibraryRepository.UpdateCheck.NotCheckable, repo.checkUpdate(fromFile, null))
+        val fromArchive = row.copy(repository = null, source = url)
+        assertEquals(LibraryRepository.UpdateCheck.NotCheckable, repo.checkUpdate(fromArchive, null), "an archive address would mean downloading it")
+        assertEquals(3, net.asked.size, "nothing fetched for the last two")
     }
 }

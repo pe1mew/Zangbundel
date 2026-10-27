@@ -384,4 +384,9 @@
     <!-- Browsing during a campfire (guiDesign D-29, D-40). -->
     <string name="singer_browsing">browsing</string>
     <string name="singer_back_to_current">Back to the current song</string>
+    <!-- The automatic update check on Wi-Fi (guiDesign D-50, FR-LIB-13). -->
+    <string name="library_auto_check">Check automatically on Wi-Fi</string>
+    <string name="library_auto_check_hint">Once a day, on Wi-Fi only. Nothing is downloaded until you tap Update.</string>
+    <string name="library_update_available">New version available</string>
+    <string name="library_update_available_version">New version available: %1$s</string>
 </resources>

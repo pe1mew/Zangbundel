@@ -103,7 +103,7 @@ fun ZangbundelApp() {
             }
             composable(Routes.PRIVACY) { PrivacyScreen() }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onPrivacy = { navController.navigate(Routes.PRIVACY) }, onAllRemoved = { navController.navigate(Routes.INTRO) { popUpTo(0) { inclusive = true } } })
+                SettingsScreen(onAllRemoved = { navController.navigate(Routes.INTRO) { popUpTo(0) { inclusive = true } } })
             }
             composable(Routes.ABOUT) { AboutScreen(onPrivacy = { navController.navigate(Routes.PRIVACY) }) }
             composable(Routes.HOME) { HomeScreen { route -> navController.navigate(route) } }

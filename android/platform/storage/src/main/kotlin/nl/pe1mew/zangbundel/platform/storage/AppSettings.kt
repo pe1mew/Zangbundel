@@ -43,6 +43,30 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         store.edit { it[if (landscape) FIT_LANDSCAPE else FIT_PORTRAIT] = on }
     }
 
+    /** FR-LIB-13 (architecture A-14, SP-29): the automatic check on Wi-Fi, off until the user switches it on. */
+    val autoUpdateCheck: Flow<Boolean> = store.data.map { it[AUTO_UPDATE_CHECK] ?: false }
+
+    suspend fun setAutoUpdateCheck(on: Boolean) {
+        store.edit { it[AUTO_UPDATE_CHECK] = on }
+    }
+
+    /** What the check found, by library id: the newer release's version, or empty when the index names none. */
+    val availableUpdates: Flow<Map<String, String>> = store.data.map { prefs ->
+        prefs.asMap().mapNotNull { (k, v) -> if (k.name.startsWith(UPDATE_PREFIX)) k.name.removePrefix(UPDATE_PREFIX) to v.toString() else null }.toMap()
+    }
+
+    /** Records what the check found for library [id]; null when it is current. */
+    suspend fun setAvailableUpdate(id: String, version: String?) {
+        store.edit { if (version == null) it.remove(stringPreferencesKey(UPDATE_PREFIX + id)) else it[stringPreferencesKey(UPDATE_PREFIX + id)] = version }
+    }
+
+    /** The release index's `ETag` from the last check of library [id], for a conditional request (song-format 12.7). */
+    suspend fun indexEtag(id: String): String? = store.data.first()[stringPreferencesKey(ETAG_PREFIX + id)]
+
+    suspend fun setIndexEtag(id: String, etag: String?) {
+        store.edit { if (etag == null) it.remove(stringPreferencesKey(ETAG_PREFIX + id)) else it[stringPreferencesKey(ETAG_PREFIX + id)] = etag }
+    }
+
     suspend fun setLyricNight(night: Boolean) {
         store.edit { it[LYRIC_NIGHT] = night }
     }
@@ -84,6 +108,9 @@ class AppSettings private constructor(private val store: DataStore<Preferences>)
         private val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
         private val FIT_PORTRAIT = booleanPreferencesKey("fit_portrait")
         private val FIT_LANDSCAPE = booleanPreferencesKey("fit_landscape")
+        private val AUTO_UPDATE_CHECK = booleanPreferencesKey("auto_update_check")
+        private const val UPDATE_PREFIX = "update_available_"
+        private const val ETAG_PREFIX = "index_etag_"
         private val Context.settingsStore by preferencesDataStore(name = "settings")
 
         fun open(context: Context) = AppSettings(context.applicationContext.settingsStore)

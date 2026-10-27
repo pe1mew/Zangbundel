@@ -41,7 +41,7 @@ import nl.pe1mew.zangbundel.platform.storage.AppSettings
  * and the statistics follow with their features.
  */
 @Composable
-fun SettingsScreen(onPrivacy: () -> Unit, onAllRemoved: () -> Unit) {
+fun SettingsScreen(onAllRemoved: () -> Unit) {
     val context = LocalContext.current
     val container = remember { (context.applicationContext as ZangbundelApp).container }
     val scope = rememberCoroutineScope()
@@ -67,7 +67,6 @@ fun SettingsScreen(onPrivacy: () -> Unit, onAllRemoved: () -> Unit) {
             }
             Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onPrivacy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_privacy)) }
                 OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_remove_all)) }
             }
         }

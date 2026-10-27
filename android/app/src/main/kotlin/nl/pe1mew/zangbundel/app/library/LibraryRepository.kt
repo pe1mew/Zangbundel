@@ -108,6 +108,34 @@ class LibraryRepository(
     fun updateSource(library: LibraryRow): String? =
         library.releaseIndex ?: library.repository ?: library.source?.takeIf { it.startsWith("https://") }
 
+    /** The outcome of one automatic check (FR-LIB-13, song-format 12.7): it looks, and never downloads an archive. */
+    sealed interface UpdateCheck {
+        /** A newer release is in the index; [version] when the index names one. */
+        data class Available(val version: String?, val etag: String?) : UpdateCheck
+        data class Current(val etag: String?) : UpdateCheck
+        /** HTTP 304: the index has not changed since [etag] was kept, so neither has the answer. */
+        data object Unchanged : UpdateCheck
+        /** A library without a release index (an archive address, a file) cannot be checked without downloading it. */
+        data object NotCheckable : UpdateCheck
+        data object Failed : UpdateCheck
+    }
+
+    /**
+     * The opt-in check on Wi-Fi (FR-LIB-13, architecture A-14, assessment SP-29): the release index of
+     * [library] with a conditional request on [etag], its newest release compared with the installed
+     * archive by SHA-256, as *Bijwerken* compares them.
+     */
+    suspend fun checkUpdate(library: LibraryRow, etag: String?): UpdateCheck {
+        val source = updateSource(library) ?: return UpdateCheck.NotCheckable
+        val url = (LibraryUrl.of(source) as? LibraryUrl.Index)?.url ?: return UpdateCheck.NotCheckable
+        val fetched = try { downloads.fetch(url, ReleaseIndex.MAX_BYTES.toLong(), etag) } catch (e: Exception) { return UpdateCheck.Failed }
+        if (fetched.code == HTTP_NOT_MODIFIED) return UpdateCheck.Unchanged
+        if (fetched.code != HTTP_OK) return UpdateCheck.Failed
+        val newest = ReleaseIndex.parse(fetched.bytes)?.newest ?: return UpdateCheck.Failed
+        return if (newest.sha256.equals(library.archiveSha256, ignoreCase = true)) UpdateCheck.Current(fetched.etag)
+        else UpdateCheck.Available(newest.version, fetched.etag)
+    }
+
     /**
      * 4.3, L006: a library id already installed from another repository is refused, and the message
      * names the owner. A snapshot carries no repository and cannot clash; the same repository is an update.
@@ -124,4 +152,9 @@ class LibraryRepository(
 
     private fun failure(code: String, detail: String) = failure(ReportEntry(ReportLevel.LIBRARY_ERROR, code, "", detail = detail))
     private fun failure(entry: ReportEntry) = ArchiveImport.Result(null, null, null, "", emptyMap(), listOf(entry))
+
+    private companion object {
+        const val HTTP_OK = 200
+        const val HTTP_NOT_MODIFIED = 304
+    }
 }

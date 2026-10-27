@@ -4,7 +4,7 @@
 |---|---|
 | Document | Assessment of the design against the project's security and privacy principles |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.13 |
+| Document version | 0.14 |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Assessment of the design as of FRD v0.5, BLE protocol v0.5, song format v0.2, docs/RUNBOOK.md; the changes it led to are in FRD v0.6 and BLE v0.6. v0.3 assesses the opt-in campfire statistics (`design/guiDesign.md` D-60) against FRD v0.8; decided export only without a server, so no requirement or policy changed. v0.4 assesses `design/architecture.md` v0.2 against FRD v0.11 and BLE v0.13: SP-05, SP-08, SP-09 and SP-15 checked against concrete choices, new findings SP-17 to SP-22. All resolved the same day; SP-21's policy wording was approved by the owner and published with effective date 22 October 2026 |
@@ -24,6 +24,7 @@
 | 0.11 | 2026-10-27 | SP-27: the leader's resume record now holds the setlist and what was sung (BLE protocol v0.39, architecture v0.13), assessed before it was built. |
 | 0.12 | 2026-10-27 | SP-24 retired: the two-phone test is removed from the code, at the owner's request; every device test now runs in a real campfire. The radio check of SP-23 stays in the debug and field-test builds. |
 | 0.13 | 2026-10-27 | SP-28: the install panel and *Link delen* (guiDesign D-83), assessed before it was built. |
+| 0.14 | 2026-10-27 | SP-29: the opt-in automatic update check on Wi-Fi (FR-LIB-13, architecture A-14), the first job that uses the network without a tap, and the two permissions WorkManager brings; assessed before it was built. |
 
 ---
 
@@ -118,6 +119,7 @@ Severity: **High** = violates a principle in a way a minor could be harmed by or
 | SP-26 | **Songs ahead are kept before anything vouches for them** (FR-BLE-18, BLE 7.5, v0.32). A singer keeps document 9 frames and completed songs ahead that no signed state has named yet, so anyone in range can fill that store with forged data, and a singer's phone holds lyrics of songs it may never be shown. | S4, P2 | Low | **Resolved in design 2026-10-26.** Nothing kept ahead is parsed or shown until a verified state's manifest names its `dh` (8 bytes of SHA-256); incomplete groups and kept songs are each capped at 1 MiB and 64 versions, oldest dropped first, so a forger can only push genuine songs out and make them come by the normal push. The setlist document lists only `dh` values by position, no titles or references, so upcoming titles never reach a singer's phone (guiDesign D-47). Everything kept ahead is in memory only and goes with the gathering (FR-DATA-01). |
 | SP-27 | **The resume record holds the setlist and what was sung** (BLE 10.1, 10.9 v0.39; architecture 5.4 v0.13; guiDesign D-67). Besides the keys and the singer table of SP-19 it now keeps the setlist's song references and titles, the positions pushed and the current one, and the wall-clock times of the start and of the last write. These are song identifiers and two times, the same kind of data as the gathering memory (FR-DATA-03); nothing names or describes a person. The singer table holds random `sid`, `tok` and `xk` values, no display names. | P5, S6 | Low | **Resolved in the design 2026-10-27:** the same AES-GCM encryption under the Keystore key as SP-19; deleted at the end of the gathering, now at once instead of after the 60 s end phase, by *Opnieuw beginnen*, by "remove all data", and by the startup sweep once its last write is older than the 10-minute window (FR-DATA-08). A record that cannot be decrypted or decoded is deleted, never shown. No requirement, policy or declaration changes. |
 | SP-28 | **The install code and the shared link** (guiDesign D-83, FR-DIST-01, FR-DIST-04). The panel shows a QR code of a fixed address, `https://pe1mew.github.io/Zangbundel/j/`, and *Link delen* hands the same address to the system share sheet. The address carries nothing about the phone, the user or a gathering; the app opens no connection; the receiving phone loads a static page that runs no tracking and sends nothing (the join page of FR-GATH-22, whose only outside address is the Play link). The share sheet goes only where the user sends it. | P6 | Low | **Resolved in the design 2026-10-27:** a fixed address in the code, no parameters, no gathering data; nothing new reaches the developer. No requirement, policy or declaration changes. |
+| SP-29 | **The automatic update check on Wi-Fi** (FR-LIB-13, architecture A-14, guiDesign D-50). When the user switches on *Automatisch controleren op wifi*, a WorkManager job fetches, once a day and only on an unmetered network, the release index (`releases.json`) of each installed library that has one, with a conditional request; it compares the newest release's SHA-256 with the installed archive and keeps, per library, whether a newer one exists. It downloads no archive and installs nothing; the library screen shows *Nieuwe versie beschikbaar* and the user updates as before. WorkManager's manifest adds `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED` (and `ACCESS_NETWORK_STATE`, `FOREGROUND_SERVICE`, which the app has already): normal permissions granted at install, no prompt; the boot receiver only reschedules the job, and is enabled only while work is scheduled. | P6, S6 | Low | **Resolved in the design 2026-10-27:** off by default; the request goes only to the index address of a library the user added, with the fixed user agent of A-14 and nothing else, so the host learns what it learns from a manual *Bijwerken*; the `ETag` kept per library comes from that host and goes back only to it. The privacy policy already names the check (SP-21). Switching it off cancels the job; "remove all data" clears its results. No requirement, policy or declaration changes. |
 
 ### 5.1 SP-16 in detail: opt-in campfire statistics (D-60)
 
@@ -203,6 +205,8 @@ At the owner's request the same day, the resolutions were applied to architectur
 - **v0.5 (radio check):** SP-23 assessed and resolved in the code before the check ran on a phone. No requirement, policy or declaration changed; the store build is unaffected.
 
 - **v0.6 (two-phone test):** SP-24 assessed and resolved in the code before the test ran. No requirement, policy or declaration changed; the store build is unaffected.
+
+- **v0.14 (update check):** SP-29 assessed before the job was built; Low, resolved in the design. No requirement, policy or declaration changed.
 
 - **v0.11 (resume after a crash):** SP-27 assessed before the record was extended; Low, resolved in the design. No requirement, policy or declaration changed.
 

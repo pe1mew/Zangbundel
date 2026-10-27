@@ -61,9 +61,13 @@ class AppContainer(private val context: Context) {
         for (s in storage.setlists.all()) storage.setlists.delete(s.uid)
         storage.memories.deleteAll()
         storage.settings.clear()
+        scheduleUpdateCheck(false)
         ResumeStore.open(context).delete()
         java.io.File(context.cacheDir, "share").deleteRecursively()
     }
+
+    /** The opt-in update check on Wi-Fi (FR-LIB-13, A-14): on, a check now and then daily; off, cancelled. */
+    fun scheduleUpdateCheck(on: Boolean) = nl.pe1mew.zangbundel.app.library.LibraryUpdateWorker.schedule(context, on)
 
     /** Adding, updating and removing libraries (guiDesign D-50); files under `filesDir/libraries/` (architecture section 6). */
     val libraries: LibraryRepository by lazy {

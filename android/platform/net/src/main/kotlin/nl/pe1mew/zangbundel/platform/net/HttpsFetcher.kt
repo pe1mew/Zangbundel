@@ -26,6 +26,10 @@ class HttpsFetcher(versionName: String) {
         if (ifNoneMatch != null) connection.setRequestProperty("If-None-Match", ifNoneMatch)
         connection.connect()
         val code = connection.responseCode
+        // 304 answers a conditional request (song-format 12.7): no body, no Location; it is not a redirect.
+        if (code == HttpURLConnection.HTTP_NOT_MODIFIED) {
+            return Response(code, connection.getHeaderField("ETag") ?: ifNoneMatch, 0, java.io.ByteArrayInputStream(ByteArray(0)), connection)
+        }
         if (code in 300..399) {
             val location = connection.getHeaderField("Location") ?: ""
             connection.disconnect()

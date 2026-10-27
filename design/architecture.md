@@ -4,7 +4,7 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.14 (draft) |
+| Document version | 0.15 (draft) |
 | Date | 2026-10-26 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
@@ -26,6 +26,7 @@
 | 0.12 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change. |
 | 0.13 | 2026-10-27 | Section 5.4, with BLE protocol v0.39 and guiDesign D-67 built: the resume record also holds `ts`, the setlist as started, the positions pushed and the current position, and is rewritten on every push and every 30 s; the window counts from its last write; ending deletes it at once rather than after the 60 s end phase, so a leader that dies while ending is not offered an ended gathering. The record's code is `ResumeRecord` in `core/protocol` and `ResumeStore` in `platform/storage`. Assessment SP-27. No decision superseded. |
 | 0.14 | 2026-10-27 | Section 5.4, with BLE protocol v0.40 (guiDesign D-58): the resume record holds the setlist as it stands, which may change during the gathering, and is rewritten on every setlist change too. No decision superseded. |
+| 0.15 | 2026-10-27 | A-14 built: the Wi-Fi update check as `LibraryUpdateWorker` (once a day on an unmetered network, the first run as soon as it is switched on); section 9's manifest list gains `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED`, which WorkManager brings (assessment SP-29). No decision superseded. |
 
 ---
 
@@ -267,7 +268,7 @@ Not used, on purpose: Google Play Services, Firebase, ML Kit, Play Core, Play In
 - **Reproducibility.** No build time, user or path in `BuildConfig` or resources; VCS info off; `dependenciesInfo { includeInApk = false; includeInBundle = false }`; no baseline profile in 1.0; fixed resource ordering. Two builds of the same tag are compared with `diffoscope` before the first F-Droid submission.
 - **Bundle.** Splits disabled and no dynamic features (A-18).
 - **Signing.** Release signing reads `keystore.properties` outside git (RUNBOOK Step 6); the build fails with a clear message when it is absent. No signing key or password is available to CI.
-- **Manifest.** Permissions exactly as RUNBOOK Step 5: `BLUETOOTH_SCAN` with `neverForLocation`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT` (API 31+); `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION` with `maxSdkVersion="30"`; `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`; `INTERNET`, `ACCESS_NETWORK_STATE`; `POST_NOTIFICATIONS` (API 33+) for the service notification, requested only from leaders as A-06 says. Backup attributes per A-13. App Link and scheme intent filters from `docs/app-links/intent-filters.xml`.
+- **Manifest.** Permissions exactly as RUNBOOK Step 5: `BLUETOOTH_SCAN` with `neverForLocation`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT` (API 31+); `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION` with `maxSdkVersion="30"`; `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`; `INTERNET`, `ACCESS_NETWORK_STATE`; `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` from WorkManager for the opt-in update check (A-14, SP-29); `POST_NOTIFICATIONS` (API 33+) for the service notification, requested only from leaders as A-06 says. Backup attributes per A-13. App Link and scheme intent filters from `docs/app-links/intent-filters.xml`.
 - **CI.** A GitHub Actions workflow runs `bash scripts/check-design.sh`, `./gradlew check` (unit tests, lint with the translation checks as errors, dependency verification), the conformance corpus and a short fuzzing run per target, and builds an unsigned release APK. It has no secrets.
 - **Source headers.** `SPDX-License-Identifier: Apache-2.0` in every new source file (FDROID-RUNBOOK).
 

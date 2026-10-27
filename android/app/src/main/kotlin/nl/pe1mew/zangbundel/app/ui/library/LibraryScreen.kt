@@ -78,7 +78,8 @@ fun LibraryScreen(model: LibraryViewModel = viewModel(factory = LibraryViewModel
             Text(stringResource(R.string.library_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
             if (step == null) Libraries(state.libraries, onAdd = model::add, onAddDefault = model::addDefault, onUpdate = model::update,
-                onEnabled = model::setEnabled, onRemove = model::askRemove)
+                onEnabled = model::setEnabled, onRemove = model::askRemove,
+                autoCheck = state.autoCheck, onAutoCheck = { model.setAutoCheck(it) }, updates = state.updates)
             else Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) { AddStep(step, model, state.offerDefault) }
         }
     }
@@ -101,7 +102,21 @@ private fun ColumnScope.Libraries(
     onUpdate: (LibraryRow) -> Unit,
     onEnabled: (LibraryRow, Boolean) -> Unit,
     onRemove: (LibraryRow) -> Unit,
+    autoCheck: Boolean,
+    onAutoCheck: (Boolean) -> Unit,
+    updates: Map<String, String>,
 ) {
+    // D-50, FR-LIB-13: the opt-in check, off by default; it only looks and tells, here.
+    if (libraries.isNotEmpty()) {
+        Row(Modifier.fillMaxWidth().textPanel().padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.library_auto_check))
+                Text(stringResource(R.string.library_auto_check_hint), style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(checked = autoCheck, onCheckedChange = onAutoCheck)
+        }
+        Spacer(Modifier.height(8.dp))
+    }
     if (libraries.isEmpty()) {
         // FR-LIB-02: the default library is pre-configured and offered here; it is added only on this tap (FR-LIB-12).
         Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) {
@@ -112,7 +127,7 @@ private fun ColumnScope.Libraries(
         Spacer(Modifier.weight(1f))
     } else {
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(libraries, key = { it.id }) { LibraryItem(it, onUpdate, onEnabled, onRemove) }
+            items(libraries, key = { it.id }) { LibraryItem(it, updates[it.id], onUpdate, onEnabled, onRemove) }
         }
     }
     Spacer(Modifier.height(16.dp))
@@ -130,7 +145,7 @@ private fun DefaultOffer(onAddDefault: () -> Unit) {
 }
 
 @Composable
-private fun LibraryItem(library: LibraryRow, onUpdate: (LibraryRow) -> Unit, onEnabled: (LibraryRow, Boolean) -> Unit, onRemove: (LibraryRow) -> Unit) {
+private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (LibraryRow) -> Unit, onEnabled: (LibraryRow, Boolean) -> Unit, onRemove: (LibraryRow) -> Unit) {
     Column(Modifier.fillMaxWidth().textPanel().padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // A library that is off stays installed but leaves the songbook (D-50); its row is dimmed.
@@ -148,6 +163,11 @@ private fun LibraryItem(library: LibraryRow, onUpdate: (LibraryRow) -> Unit, onE
                 Text(stringResource(if (library.enabled) R.string.library_on else R.string.library_off), style = MaterialTheme.typography.labelSmall)
             }
         }
+        // FR-LIB-13: what the Wi-Fi check found; *Bijwerken* then works as always.
+        if (update != null) Text(
+            if (update.isEmpty()) stringResource(R.string.library_update_available) else stringResource(R.string.library_update_available_version, update),
+            color = Palette.FireOrange, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp),
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = { onUpdate(library) }) { Text(stringResource(R.string.library_update)) }
             TextButton(onClick = { onRemove(library) }) { Text(stringResource(R.string.library_remove)) }

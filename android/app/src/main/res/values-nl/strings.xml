@@ -383,4 +383,9 @@
     <!-- Bladeren tijdens een kampvuur (guiDesign D-29, D-40). -->
     <string name="singer_browsing">bladeren</string>
     <string name="singer_back_to_current">Terug naar het huidige lied</string>
+    <!-- Automatisch controleren op wifi (guiDesign D-50, FR-LIB-13). -->
+    <string name="library_auto_check">Automatisch controleren op wifi</string>
+    <string name="library_auto_check_hint">Eén keer per dag, alleen op wifi. Er wordt niets gedownload tot je op Bijwerken tikt.</string>
+    <string name="library_update_available">Nieuwe versie beschikbaar</string>
+    <string name="library_update_available_version">Nieuwe versie beschikbaar: %1$s</string>
 </resources>
