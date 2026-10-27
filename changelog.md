@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The system bar icons were dark on the night-blue background on phones in light mode (seen on a Samsung A52, Android 14). `MainActivity` now declares both bars dark, so the icons stay light; checked on the A52 and a Huawei Mate 20 Lite (Android 10).
 
 ### Added
+- App Links live: `pe1mew.github.io` (repository `pe1mew/pe1mew.github.io`) serves `.well-known/assetlinks.json` for `nl.pe1mew.zangbundel.app` with the app signing key; both test phones report the domain verified and the camera app opens a join code straight in Zangbundel (D-04). RUNBOOK Step 5c records it, with the `.nojekyll` that must sit at the repository root.
 - Play App Signing uses the owner's own key (`57:86:7B:…:9B:10`), set on 2026-10-27 before the first upload; RUNBOOK Step 6 records the route through *Beveiligd met Play* and the PEPK export with Java 11 or newer.
 - `docs/app-links/assetlinks.json`, ready to publish for App Links (RUNBOOK Step 5c); RUNBOOK Step 9.7 now signs the GitHub APK with the app signing key by `apksigner`, since `keystore.properties` names the upload key.
 - The foreground-service declaration for Play prepared (RUNBOOK Step 5): description, impact, and a 69 s screen recording of the leader flow kept outside git in `raw/`.

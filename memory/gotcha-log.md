@@ -215,6 +215,11 @@
 **Root cause**: new Play apps get a Google-generated signing key at creation; the settings moved from *App-integriteit* to *Beveiligd met Play*. `java` on the owner's PATH is Java 8, and PEPK needs 11+.
 **Fix**: before any upload, *Beveiligd met Play* → *Play Store-beveiliging* → app signing → *Sleutel wijzigen* → *via Java-keystore*; run PEPK with JDK 17 by full path; verify the fingerprint in the page's Digital Asset Links JSON before uploading a bundle. Details in RUNBOOK Step 6.
 
+### GitHub Pages drops `.well-known` without a root `.nojekyll` (2026-10-27)
+**Problem**: `pe1mew.github.io/.well-known/assetlinks.json` stayed 404 after the repository was pushed; the Pages API said `errored`.
+**Root cause**: `.nojekyll` had been created inside `.well-known/`, so Jekyll still ran and skipped the dot-folder. The `errored` status came from builds cancelled by quick successive commits, not from the content.
+**Fix**: an empty `.nojekyll` at the repository root; check with `curl -D -` (200, `application/json`) and Google's `assetlinks:check`, then `pm verify-app-links --re-verify` on the phones instead of a reinstall.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

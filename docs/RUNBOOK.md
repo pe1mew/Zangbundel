@@ -153,11 +153,11 @@ Verified App Links make the camera app open Zangbundel directly, skipping the br
 - [x] `docs/app-links/assetlinks.json` is the file to publish (2026-10-27): the release package with the app signing key's SHA-256, known since option B, so it need not wait for the first upload. Test builds carry other package names and are not listed; `assetlinks.template.json` stays as the pattern.
 - [ ] `docs/app-links/intent-filters.xml` holds the two intent filters (verified `https` form, `zangbundel:` scheme form) for the Android manifest.
 
-When the app has been uploaded once (Step 6 records the app signing key SHA-256):
+When the app has been uploaded once (Step 6 records the app signing key SHA-256). **Done 2026-10-27**, steps 1 to 4 (`design/test-results/2026-10-27-internal-test-0.1.0.md`, D-04 direct route):
 
-1. Create the repository `pe1mew/pe1mew.github.io` with Pages enabled on `main`, containing `.nojekyll` and `.well-known/assetlinks.json` copied from the template with the real fingerprint(s). An `index.html` that redirects to `https://pe1mew.github.io/Zangbundel/` is optional.
+1. Create the repository `pe1mew/pe1mew.github.io` with Pages enabled on `main`, containing `.nojekyll` **at the repository root** and `.well-known/assetlinks.json` copied from `docs/app-links/assetlinks.json`. A `.nojekyll` anywhere else leaves Jekyll on, and Jekyll drops the `.well-known` folder. An `index.html` that redirects to `https://pe1mew.github.io/Zangbundel/` is optional.
 2. Confirm `curl -s https://pe1mew.github.io/.well-known/assetlinks.json` returns the JSON with `Content-Type: application/json`.
-3. Install a build that carries the `autoVerify` filter and check on the phone: `adb shell pm get-app-links nl.pe1mew.zangbundel.app` must show `pe1mew.github.io: verified`. Verification runs at install time; reinstall after publishing the file.
+3. Install a build that carries the `autoVerify` filter and check on the phone: `adb shell pm get-app-links nl.pe1mew.zangbundel.app` must show `pe1mew.github.io: verified`. Verification runs at install time; on a phone that installed the app before the file was published, `adb shell pm verify-app-links --re-verify nl.pe1mew.zangbundel.app` repeats it without a reinstall.
 4. Scan a join code with the camera app: Zangbundel opens without a browser step.
 
 Nothing in the QR code or in the page changes between option 1 and option 2.
