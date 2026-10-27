@@ -91,7 +91,7 @@ Zangbundel/
 │   ├── privacy/, j/              ← GitHub Pages: rendered privacy policy, join-and-install page
 │   ├── app-links/                ← assetlinks template and intent filters for App Links
 │   └── store-listing/            ← listing texts and graphics for Play
-├── wiki/                         ← sources of the GitHub wiki: Home, Handleiding (nl), Manual (en); the owner pastes them in
+├── wiki/                         ← sources of the GitHub wiki: Home, Handleiding (nl), Manual (en); the owner pushes them to the wiki repo
 ├── memory/                       ← MEMORY.md index, gotcha-log.md, session records (committed, shared)
 ├── .claude/                      ← review-profile.md, launch.json (preview servers)
 ├── raw/                          ← owner's scratch folder, ignored by git
