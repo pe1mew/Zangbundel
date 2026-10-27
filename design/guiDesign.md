@@ -4,7 +4,7 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.52 (draft) |
+| Document version | 0.53 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -64,6 +64,7 @@
 | 0.50 | 2026-10-27 | Depends on FRD v0.19: D-60 cites FR-DATA-09, the requirement for the statistics; the privacy screen of D-44 names them under *Wat op je telefoon blijft*. |
 | 0.51 | 2026-10-27 | D-68 built: the battery line before *Starten*, the warning sign on the leader bar while battery saver is on or another gathering is heard, and the drawer rows that say which; at the owner's decision the other gathering is named by its two words when its name is this gathering's own. D-61: the bar's badge is this warning sign. |
 | 0.52 | 2026-10-27 | D-84 added and built: *Delen zonder internet* on the install panel of D-83 hands the app's own package to the share sheet after the steps for the receiving phone [FR-DIST-05]. |
+| 0.53 | 2026-10-27 | D-42 built for the songbook's reading view; a rotation with no campfire running no longer sends the app home. |
 
 ---
 
@@ -272,7 +273,7 @@ Section 6.1 is the page the singer reads. This section is everything else a sing
 
 #### Display rules and settings
 
-**D-42 — Rotation keeps the line.** When the device is rotated the line at the top of the viewport, or the current line when following the leader, stays in view at the same position in the song [FR-DISP-04]; fit-to-width is re-evaluated for the new width (D-28). The round buttons and the header strip keep their places (D-27, D-30). *Why:* a rotation at the fire is usually accidental; the singer must not lose the line. *(Built in v0.44 for the singer's page:)* the page remembers the line at its top as song and line; after a rotation, when the text has wrapped anew, it scrolls that line back to the top. Follow-the-leader, its pause and the song being browsed survive the rotation too, and a rotation never counts as a new push. Not yet on the leader's page or in the songbook's reading view; fit-to-width (D-28) is not built. *(Leader's page in v0.45:)* the same, with the same code; the songbook's reading view still has no line keeping.
+**D-42 — Rotation keeps the line.** When the device is rotated the line at the top of the viewport, or the current line when following the leader, stays in view at the same position in the song [FR-DISP-04]; fit-to-width is re-evaluated for the new width (D-28). The round buttons and the header strip keep their places (D-27, D-30). *Why:* a rotation at the fire is usually accidental; the singer must not lose the line. *(Built in v0.44 for the singer's page:)* the page remembers the line at its top as song and line; after a rotation, when the text has wrapped anew, it scrolls that line back to the top. Follow-the-leader, its pause and the song being browsed survive the rotation too, and a rotation never counts as a new push. Not yet on the leader's page or in the songbook's reading view; fit-to-width (D-28) is not built. *(Leader's page in v0.45:)* the same, with the same code; the songbook's reading view still has no line keeping. *(Songbook's reading view in v0.53:)* the same again, so a rotation keeps the line on every lyric page. Testing it showed that, with no campfire running, a rotation sent the app home from any screen (the songbook, settings, the library); that is fixed, and a rotation now leaves every screen where it was.
 
 **D-43 — A new song is announced, not interrupted.** When the leader pushes a song the page scrolls to its start, its title row carries the orange bar of D-16 for one second, and the device vibrates twice briefly when *Trillen bij nieuw lied* is on in settings (default on) [FR-SING-02]. No sound, no dialog. The same cue plays when the singer is in browse state (D-40). *Why:* the cue must be noticed in the dark and in the noise, and must not need a tap to dismiss.
 

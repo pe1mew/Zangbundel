@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -50,7 +51,13 @@ fun ZangbundelApp() {
         val gathering = remember { (context.applicationContext as nl.pe1mew.zangbundel.app.ZangbundelApp).container.gathering }
         val mode by gathering.mode.collectAsState()
         // The gathering decides the screen: leading or singing opens its page, the end returns home (D-25, D-26, D-34, D-37).
+        // Only on a change of mode: a rotation runs this effect again with the mode unchanged, and an idle app sent
+        // every screen home then (the songbook's reading view, 2026-10-27).
+        var followed by rememberSaveable { mutableStateOf<String?>(null) }
         LaunchedEffect(mode::class) {
+            val name = mode::class.java.name
+            if (followed == name) return@LaunchedEffect
+            followed = name
             val target = when (mode) {
                 is Gathering.Mode.Leading -> Routes.LEADER
                 is Gathering.Mode.Singing -> Routes.SINGER

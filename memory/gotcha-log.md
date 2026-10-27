@@ -195,6 +195,11 @@
 **Root cause**: Within `ColumnScope` the call resolves to `ColumnScope.AnimatedVisibility`, an extension with its own expectations, not the general one.
 **Fix**: Move the animated part into its own composable (`DrawerSlot`), outside the scope. Related: an import clean-up that removed `getValue` / `setValue` broke every `by remember` delegate; prune imports with the compiler, not by eye.
 
+### A LaunchedEffect keyed on app state runs again after a rotation (2026-10-27)
+**Problem**: With no campfire running, turning the phone sent the app home from the songbook's reading view, settings and the library. No crash; the activity was made anew at home.
+**Root cause**: `LaunchedEffect(mode::class)` in `ZangbundelApp` navigates to the screen the gathering's mode asks for. When the activity is recreated the effect starts again with the same key; for the idle mode its target is home, so it popped the restored back stack. Rotation tests on the leader's and singer's pages passed because there the target was the current screen.
+**Fix**: Act only on a real change: remember the mode last followed with `rememberSaveable` and return when it is unchanged. Any effect that navigates or acts once per change needs the same guard; test a rotation on a screen the effect does not own.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

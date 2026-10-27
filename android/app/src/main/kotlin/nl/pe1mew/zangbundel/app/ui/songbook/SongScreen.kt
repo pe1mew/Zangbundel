@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -31,11 +34,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +61,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
+import nl.pe1mew.zangbundel.app.ui.KeepTopLine
+import nl.pe1mew.zangbundel.app.ui.LineKeeper
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
 import nl.pe1mew.zangbundel.app.ui.gathering.SongInfoSheet
@@ -154,7 +161,8 @@ class SongViewModel(private val songbook: Songbook, private val book: SetlistBoo
  * Reading a song in preparation (guiDesign D-53): the lyric view's styling in the theme the singer chose in
  * the toolbar (D-17; night unless changed, D-53 as amended in v0.48), at the default lyric size of D-18, lines wrapping with a hanging indent of 1 em (D-28); below, D-53's one
  * button that adds the song to a setlist. The song's metadata and licence (D-45, FR-LIB-20) open from the ⓘ
- * beside the title or a long press on the title (D-33).
+ * beside the title or a long press on the title (D-33). A rotation keeps the line at the top (D-42, FR-DISP-04),
+ * as on the lyric pages of a campfire.
  */
 @Composable
 fun SongScreen(model: SongViewModel = viewModel(factory = SongViewModel.Factory)) {
@@ -165,11 +173,20 @@ fun SongScreen(model: SongViewModel = viewModel(factory = SongViewModel.Factory)
     Column(Modifier.fillMaxSize().background(colors.background)) {
         // The system bars keep light icons (MainActivity); a black band under each keeps them readable on white.
         Spacer(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(Color.Black))
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 24.dp)) {
+        // D-42: item 0 is the title block, item 1 the song, whose lines the keeper follows through a rotation.
+        val list = rememberLazyListState()
+        val lines = remember { LineKeeper() }
+        KeepTopLine(list, lines, keyAt = { i -> if (i == SONG_ITEM) SONG_KEY else null }, indexOf = { k -> if (k == SONG_KEY) SONG_ITEM else -1 })
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)) {
             when (val s = state) {
                 SongViewModel.State.Loading -> Unit
-                SongViewModel.State.Unreadable -> Text(stringResource(R.string.song_unreadable), color = colors.lyric)
-                is SongViewModel.State.Shown -> Lyrics(s.entry, s.song, colors)
+                SongViewModel.State.Unreadable -> item { Text(stringResource(R.string.song_unreadable), color = colors.lyric) }
+                is SongViewModel.State.Shown -> {
+                    item { Heading(s.entry, s.song, colors) }
+                    item {
+                        LyricBody(s.song, colors, Modifier.onGloballyPositioned { lines.item(SONG_KEY, it) }) { code, c -> lines.line(SONG_KEY, code, c) }
+                    }
+                }
             }
         }
         (state as? SongViewModel.State.Shown)?.let { AddButton(it.target, model, colors) }
@@ -217,7 +234,7 @@ private fun AddButton(target: SongViewModel.Target, model: SongViewModel, colors
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Lyrics(entry: SongbookEntry, song: Song, colors: LyricColors) {
+private fun Heading(entry: SongbookEntry, song: Song, colors: LyricColors) {
     var info by rememberSaveable { mutableStateOf(false) }
     val infoLabel = stringResource(R.string.toolbar_info)
     Row(verticalAlignment = Alignment.Top) {
@@ -230,5 +247,7 @@ private fun Lyrics(entry: SongbookEntry, song: Song, colors: LyricColors) {
     Text(listOf(entry.libraryName, entry.language).joinToString(" · "), fontSize = 14.sp, color = colors.secondary)
     if (info) SongInfoSheet(song.meta, entry.libraryName, onDismiss = { info = false })
     Spacer(Modifier.height(20.dp))
-    LyricBody(song, colors)
 }
+
+private const val SONG_ITEM = 1
+private const val SONG_KEY = "song"
