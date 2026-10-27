@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.42 (draft) |
+| Document version | 0.43 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -55,6 +55,7 @@
 | 0.40 | 2026-10-27 | `design/proposals/2026-10-27-setlist-during-campfire.md`, approved by the owner: the setlist may change during the gathering (songs added, removed or moved, FR-LEAD-03); 9.4 `cpos` and `sung` name positions in the setlist the same state's manifest names and are renumbered with it; 7.5: a singer reads them only against that setlist and remembers earlier songs by `dh`; 10.5: a setlist change is a new state with the same `cur`, and clearing the current song (FR-LEAD-06) leaves out `cur` and `cpos`. No wire change. |
 | 0.41 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09: the opt-in campfire statistics on the leader's device, export by hand only); no other change. |
 | 0.42 | 2026-10-27 | 10.1 step 6 as built: the leader's app shows another gathering for as long as it is heard (`design/guiDesign.md` D-68) instead of warning once; no change on the air. |
+| 0.43 | 2026-10-27 | Option B of `design/proposals/2026-10-26-state-after-push.md`, approved by the owner 2026-10-27: the beacon gets `cdv` (6.1–6.3), the `dv` of the current song, and a singer that keeps that song ahead from the signed setlist shows it at once, provisionally, until the verified state confirms or withdraws it (7.5, 10.3, 10.5; section 13; assessment SP-31). The gathering name in the beacon shrinks to 15 bytes on Android and 6 on iOS. Incompatible with earlier versions at the same `ver`; no release has gone out, so every phone must run this version. Built and tested the same day: on the phones every push was on screen from the beacon within 0.07–1.66 s (`design/test-results/2026-10-27-beacon-hint.md`). |
 
 ---
 
@@ -225,7 +226,7 @@ Hashing by content rather than by library revision is a deliberate reading of FR
 
 ### 6.1 Content
 
-The beacon carries 10 bytes of fields plus the gathering name:
+The beacon carries 12 bytes of fields plus the gathering name (10 before v0.43):
 
 | Offset | Field | Type | Meaning |
 |---|---|---|---|
@@ -234,21 +235,22 @@ The beacon carries 10 bytes of fields plus the gathering name:
 | 6–7 | `seq` | u16 | State sequence number. |
 | 8 | `flags` | u8 | Bit 0 `CODE` join code required · bit 1 `REQ_OPEN` requests accepted · bit 2 `BUSY` no free connection slot · bit 3 `ENDED` gathering has ended · bit 4 `RELAY` sender is a relay, not the leader · bit 5 `KARAOKE` reserved for P2 · bit 6 `BCAST` broadcast data channel running (legacy carrier) · bit 7 `EXT` extended carrier also running. |
 | 9 | `pos` | u8 | Leader line position (section 5). |
-| 10… | `name` | UTF-8 | Gathering name, truncated at a character boundary to fit. The full name is in the Info document. |
+| 10–11 | `cdv` | u16 | v0.43: the `dv` of the current song's document 3 in the newest state; 0 when nothing is current or the song is not broadcast [FR-LIB-22]. Unsigned: a hint a singer may act on only as 7.5 allows. |
+| 12… | `name` | UTF-8 | Gathering name, truncated at a character boundary to fit. The full name is in the Info document. |
 
 ### 6.2 Encoding A – Android leader (binary)
 
 - **Advertisement (≤ 31 bytes):** Flags AD structure (3 bytes, set by the stack; connectable, general discoverable) + *Complete List of 128-bit Service UUIDs* containing the Zangbundel service UUID (18 bytes). Device name MUST NOT be included.
-- **Scan response (≤ 31 bytes):** one *Manufacturer Specific Data* AD structure: length, type `0xFF`, company identifier `0xFFFF` (little-endian), then the 10 field bytes, then up to 17 bytes of `name`.
+- **Scan response (≤ 31 bytes):** one *Manufacturer Specific Data* AD structure: length, type `0xFF`, company identifier `0xFFFF` (little-endian), then the 12 field bytes, then up to 15 bytes of `name` (17 before v0.43).
 
 Company identifier `0xFFFF` is reserved by the Bluetooth SIG for internal use and testing; see open question Q1.
 
 ### 6.3 Encoding B – iOS leader (text)
 
 - **Advertisement:** the Zangbundel service UUID as the only advertised service.
-- **Scan response:** local name = `"ZB"` + Base32 (RFC 4648, no padding, upper case) of the 10 field bytes (16 characters) + `" "` + up to 10 bytes of `name`. Total ≤ 29 bytes.
+- **Scan response:** local name = `"ZB"` + Base32 (RFC 4648, no padding, upper case) of the 12 field bytes (20 characters) + `" "` + up to 6 bytes of `name` (16 characters and 10 bytes before v0.43). Total ≤ 29 bytes.
 
-An iOS leader MUST restart advertising whenever `seq`, `flags` or `pos` change. `BCAST` and `EXT` are always 0 for an iOS leader.
+An iOS leader MUST restart advertising whenever `seq`, `flags`, `pos` or `cdv` change. `BCAST` and `EXT` are always 0 for an iOS leader.
 
 ### 6.4 Rules
 
@@ -389,6 +391,7 @@ The leader publishes the *pass time* (the time one full pass of the current song
 - When a group has `k` distinct frames, source or repair, the singer decodes it (7.3), strips the padding to `len`, and verifies it: *state* by signature with the pinned `pk`; *info* by `SHA-256(pk)[0..5] == gid`; every other document by its `dh` against the manifest in the newest verified state. A document that fails verification is discarded and the group is reset.
 - A verified state record is applied only if its `ts` is newer than the last applied one (section 9.4). A verified song is shown only if its `ref.hash` equals `cur.hash` in the applied state [FR-BLE-04].
 - The singer MUST NOT connect for anything it can still expect from the carousel; section 7.6 defines when the expectation lapses.
+- **Beacon hint (v0.43).** The beacon's `cdv` (6.1) names the `dv` of the current song's document 3. When a singer with an applied state sees a beacon of its gathering whose `cdv` is not 0, differs from the `dv` its applied state's manifest gives the song, and comes with a `seq` other than the applied state's, it looks for that song among the songs it keeps ahead: a kept song qualifies when its `dh` starts with `cdv` **and** is listed in the newest verified setlist that the applied state's manifest names (9.5 key 2), and when its file's SHA-256 matches its `ref.hash` (decoded as for earlier songs above). If exactly one distinct `dh` qualifies, the singer shows that song as the current one at once, without waiting for the state; if none or more than one qualifies, it does nothing and waits for the state as before. The hint is **provisional** and unsigned: the next verified state confirms it when its manifest names the same `dh` (and the singer takes the kept bytes as document 3 as usual), and withdraws it otherwise; it is also withdrawn when a beacon's `cdv` returns to the applied state's song, and when no state confirms it within 10 s. A withdrawn hint leaves the page as the applied state has it, without the hinted song unless the state names it. Only a song of the leader's own signed setlist can be shown this way, so a forged beacon can at worst show another genuine song of that setlist until the next state, at most 10 s (section 13, assessment SP-31). A song from the singer's own library, or one not kept ahead, is not hinted.
 - **Songs ahead** (document 9, v0.32). Groups are per `dv` as for every document, with up to 64 versions and at most 1 MiB in incomplete groups, the oldest dropped first. A completed song ahead is kept as its framed bytes, unverified and **never shown** [FR-BLE-18], keyed by its `dh` (section 5) and checked only for `dv` = the first two bytes of that `dh`; at most 1 MiB is kept, oldest dropped first. When a verified state names in its manifest a song (document 3) whose `dh` equals a kept song ahead, the singer takes those bytes as that document 3 version at once: the manifest's `dh` is the verification, and the song is shown as in the bullet above. Everything kept ahead is discarded with the gathering [FR-DATA-01]. **Earlier sung songs (v0.35):** for every position the verified state's `sung` names, other than `cpos`, whose `dh` in the newest verified setlist matches a song kept ahead, the singer may show that song as sung before it arrived: the signed setlist's `dh` is the verification, and the song was pushed in this gathering. Its encoding is not in any manifest, so the singer tries DEFLATE and then raw, and keeps the result only if the song file's SHA-256 matches its `ref.hash`. **Since v0.40** the setlist can change during the gathering (FR-LEAD-03), so positions are read only against the setlist whose `dh` the applied state's manifest names: until that version has arrived, the singer shows no earlier songs and draws no setlist rows (D-81), and it remembers the earlier songs it showed by their `dh`, not by position.
 
 ### 7.6 Repair: requesting what was missed [FR-BLE-16]
@@ -745,7 +748,7 @@ sequenceDiagram
 
 Routine operation never opens a connection:
 
-1. The beacon `seq` changes → the singer expects a new state record and starts watching it for repair (7.6).
+1. The beacon `seq` changes → the singer expects a new state record and starts watching it for repair (7.6). If the beacon's `cdv` names a song it keeps ahead from the current setlist, it shows that song at once, provisionally (7.5, v0.43).
 2. State frames arrive (first pass within 0.5–1.5 s on the legacy carrier); the record is verified and applied. `cur`, `title`, `docs`, `dlg`, `rseq` are compared with what the singer has.
 3. For the current song: local library file with `cur.hash` → use it, ignore song frames. Otherwise collect song frames; show "receiving…" with the title meanwhile.
 4. Other documents are collected as their frames come round; the user sees the setlist or message update when the group completes and verifies.
@@ -759,7 +762,7 @@ Connect after the random delay, request the missing ranges of every document sti
 
 1. Update the document(s), compress and frame them, compute `dh`/`dv`. A push changes the song document and the state's `cur`, `cpos` and `sung`, not the setlist (v0.35). A setlist change during the gathering (v0.40, FR-LEAD-03: a song added, removed or moved) changes the setlist document, the songs ahead (7.4 rule 7) and the positions in `cpos` and `sung`, with the same `cur`; the song is not in the burst, since its `dv` did not change. A song pushed from the songbook is first added to the setlist after the current song, then pushed in the same state. Clearing the current song (FR-LEAD-06) leaves `cur`, `title` and `cpos` out and keeps `sung`.
 2. Build the new state body with `seq` + 1 and a larger `ts`, sign it.
-3. Update the beacon [FR-BLE-03] and restart the carousel in burst mode (section 7.4).
+3. Update the beacon [FR-BLE-03], with the new `seq` and the new song's `cdv` (v0.43), and restart the carousel in burst mode (section 7.4).
 4. Notify State on any `stay` connection.
 5. A "re-push" [FR-LEAD-06] increments `seq` without changing the song: the burst repeats the song three more times, and singers that already have it do nothing.
 
@@ -893,6 +896,7 @@ Singers scan continuously in the foreground; this costs more than the v0.1 desig
 | Reading lyrics without joining | Lyrics are broadcast in clear by design; "do not redistribute" songs are never sent. | By design. |
 | Learning who requested what | `reqstat` carries only random request IDs; names are only in document 8, sealed to a delegate. | A sniffer can link a `rid` to the device address that wrote a sealed request, not to a name. Accepted. |
 | Tracking a person across gatherings | `sid`, token and `xk` are per gathering; the OS randomises addresses; nothing persistent is sent [NFR-PRIV-01]. | None of note. |
+| A forged beacon `cdv` (v0.43) | A singer acts on it only for a song kept ahead whose `dh` is in the leader's signed setlist and whose file matches its reference; the next verified state confirms or withdraws it, and it lapses after 10 s. | For up to 10 s a singer in range of the forger can show another genuine song of the same setlist (assessment SP-31). |
 | A second gathering started in range | Pre-start scan refuses [FR-GATH-16]; singers pick by name and RSSI. | A modified app can ignore it; the leader is warned [FR-GATH-17]. |
 | Guessing the helper code to become a delegate | Four digits, valid 120 s or until used, one code at a time, locked after 3 wrong tries, one try per 2 s per connection, only from a registered singer's sealed Control write, and only while the leader has chosen to show a code (10.12). The leader sees every delegate in the drawer and revokes with one tap. | A child who reads the code over the leader's shoulder within those two minutes becomes a delegate until revoked; the leader's screen is the trust anchor, as with the QR code. Accepted. |
 | A singer leaving in another singer's name | Leave (op 10) needs the token, which travels only sealed. | A compromised phone can only remove itself. |

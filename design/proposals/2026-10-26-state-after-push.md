@@ -4,7 +4,7 @@
 |---|---|
 | Proposal | Why singers fetch the new state record over GATT after a push, and three changes that get a song held ahead on screen faster |
 | Date | 2026-10-26 |
-| Status | **Options A and C approved by the owner 2026-10-26 and built as BLE protocol v0.33 (7.1, 7.6); B left for later.** Results on the phones in `design/test-results/2026-10-26-state-after-push.md`: A took the S23 to 0.85–1.2 s; C showed no measurable gain on the Huawei in two pushes. |
+| Status | **Options A and C approved by the owner 2026-10-26 and built as BLE protocol v0.33 (7.1, 7.6). Option B approved by the owner 2026-10-27 and specified as BLE protocol v0.43 (iOS name 6 bytes, not 7: Base32 of 12 bytes is 20 characters).** Results on the phones in `design/test-results/2026-10-26-state-after-push.md`: A took the S23 to 0.85–1.2 s; C showed no measurable gain on the Huawei in two pushes. |
 | Asked by | The owner, 2026-10-26, after `design/test-results/2026-10-26-songs-ahead.md` |
 | Affects | `design/ble-protocol.md` 7.1 (option A), 6.1–6.3 and 7.5 (option B), 7.6 (option C); `design/security-privacy-assessment.md` (option B) |
 | Evidence | `design/test-results/2026-10-26-songs-ahead.md` (phones), `design/test-results/2026-10-25-D-05.md` run 13 (S23 reception), simulation below |

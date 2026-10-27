@@ -10,7 +10,12 @@ import nl.pe1mew.zangbundel.core.model.ContentHash
 import nl.pe1mew.zangbundel.core.model.LibraryId
 import nl.pe1mew.zangbundel.core.model.SongId
 import nl.pe1mew.zangbundel.core.model.SongRef
+import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
+import nl.pe1mew.zangbundel.core.protocol.beacon.Beacon
+import nl.pe1mew.zangbundel.core.protocol.beacon.BeaconCodec
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
+import nl.pe1mew.zangbundel.core.protocol.payload.Deflate
+import nl.pe1mew.zangbundel.core.protocol.payload.DocEntry
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
 import nl.pe1mew.zangbundel.core.protocol.payload.SetlistDocument
 import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
@@ -180,6 +185,56 @@ class SongsAheadTest {
         leader.push(LeaderSession.Publication(s.ref, s.title, s.document, ahead = listOf(songs[2], songs[0], songs[1]).map { it.document }, cpos = 2, sung = setOf(2)))
         testScheduler.advanceTimeBy(60_000)
         assertTrue(singer.events.filterIsInstance<SingerEngine.Event.EarlierSong>().isEmpty(), "the current song is no earlier song, before or after the move")
+    }
+
+    @Test
+    fun `at 13 percent the beacon shows a song held ahead within 2 s, and the state confirms it (v0_43)`() = runTest {
+        val (leader, singer) = campfire(reception = 0.13)
+        testScheduler.advanceTimeBy(10 * 60_000)
+        leader.pushAt(0, emptySet())
+        testScheduler.advanceTimeBy(30_000)
+        val pushedAt = testScheduler.currentTime
+        leader.pushAt(1, setOf(1))
+        testScheduler.advanceTimeBy(30_000)
+        val hint = singer.events.filterIsInstance<SingerEngine.Event.HintedSong>().first { it.at >= pushedAt }
+        assertEquals(songs[1].ref, hint.song.ref)
+        assertTrue(hint.at - pushedAt < 2_000, "NFR-PERF-01: under 2 s from the beacon; took ${hint.at - pushedAt} ms")
+        assertTrue(singer.events.filterIsInstance<SingerEngine.Event.HintWithdrawn>().none { it.at >= pushedAt }, "the signed state confirmed it")
+        assertEquals(songs[1].ref, singer.engine.state!!.body.cur)
+        assertTrue(singer.events.filterIsInstance<SingerEngine.Event.Delivered>().any { it.doc == DocumentType.SONG && it.at >= pushedAt }, "then delivered as document 3")
+    }
+
+    @Test
+    fun `a forged cdv can only point at a song of the signed setlist, and is withdrawn (v0_43)`() = runTest {
+        val air = SimulatedAir(backgroundScope)
+        val clock = { testScheduler.currentTime }
+        val leader = LeaderSession(SimulatedTransport(air), crypto, backgroundScope, clock, "Kampvuur", random = Random(3))
+        leader.start(LeaderSession.Publication(ahead = songs.map { it.document }))
+        val engine = SingerEngine(SimulatedTransport(air, reception = 0.4), crypto, backgroundScope, clock, { it.name == "Kampvuur" }, random = Random(4))
+        val events = ArrayList<SingerEngine.Event>()
+        backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { engine.events.collect { events += it } }
+        engine.start()
+        testScheduler.advanceTimeBy(6 * 60_000)
+        leader.pushAt(0, emptySet())
+        testScheduler.advanceTimeBy(30_000)
+        val forgedFrom = testScheduler.currentTime      // the genuine push of song 1 was hinted too
+        val forger = SimulatedTransport(air)
+        fun forged(cdv: Int) = BeaconCodec.encodeA(Beacon(1, leader.gid, 0xBEEF, ProtocolConstants.FLAG_BCAST, 0, "Kampvuur", cdv = cdv))
+        // A dv no song of the setlist has: nothing is hinted.
+        val third = DocEntry.of(Deflate.frame(songs[2].document.encode()).second, Deflate.frame(songs[2].document.encode()).first, crypto).dv
+        forger.setBeacon(forged(third xor 0x5A5A))
+        testScheduler.advanceTimeBy(5_000)
+        assertTrue(events.none { it is SingerEngine.Event.HintedSong && it.at >= forgedFrom }, "only a song kept ahead from the signed setlist")
+        // The dv of song 3, which is in the setlist: hinted, but never confirmed.
+        forger.setBeacon(forged(third))
+        testScheduler.advanceTimeBy(5_000)
+        forger.stopAdvertising()
+        testScheduler.advanceTimeBy(15_000)
+        val hinted = events.filterIsInstance<SingerEngine.Event.HintedSong>().filter { it.at >= forgedFrom }
+        assertTrue(hinted.isNotEmpty(), "song 3 was hinted")
+        assertTrue(hinted.all { it.song.ref == songs[2].ref }, "never a song outside the signed setlist")
+        assertEquals(hinted.size, events.count { it is SingerEngine.Event.HintWithdrawn && it.at >= forgedFrom }, "every forged hint withdrawn")
+        assertEquals(songs[0].ref, engine.state!!.body.cur, "the signed state still names song 1")
     }
 
     @Test

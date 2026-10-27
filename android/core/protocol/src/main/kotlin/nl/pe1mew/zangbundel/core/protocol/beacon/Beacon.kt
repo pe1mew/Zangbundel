@@ -6,7 +6,10 @@ import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 
-/** The discovery beacon of ble-protocol 6.1: 10 field bytes plus the (truncated) gathering name. */
+/**
+ * The discovery beacon of ble-protocol 6.1: 12 field bytes plus the (truncated) gathering name. [cdv]
+ * (v0.43) is the `dv` of the current song's document 3, 0 for none: an unsigned hint (7.5).
+ */
 class Beacon(
     val ver: Int,
     val gid: GatheringId,
@@ -14,9 +17,10 @@ class Beacon(
     val flags: Int,
     val pos: Int,
     val name: String,
+    val cdv: Int = 0,
 ) {
     init {
-        require(ver in 0..0xFF && seq in 0..0xFFFF && flags in 0..0xFF && pos in 0..0xFF) { "beacon field out of range" }
+        require(ver in 0..0xFF && seq in 0..0xFFFF && flags in 0..0xFF && pos in 0..0xFF && cdv in 0..0xFFFF) { "beacon field out of range" }
     }
 
     fun has(flag: Int): Boolean = flags and flag != 0
@@ -25,7 +29,7 @@ class Beacon(
     val busy: Boolean get() = has(ProtocolConstants.FLAG_BUSY)
     val codeRequired: Boolean get() = has(ProtocolConstants.FLAG_CODE)
 
-    /** The 10 field bytes, big-endian (section 2). */
+    /** The 12 field bytes, big-endian (section 2). */
     fun fields(): ByteArray {
         val b = ByteArray(FIELD_BYTES)
         b[0] = ver.toByte()
@@ -33,13 +37,14 @@ class Beacon(
         b[6] = (seq ushr 8).toByte(); b[7] = seq.toByte()
         b[8] = flags.toByte()
         b[9] = pos.toByte()
+        b[10] = (cdv ushr 8).toByte(); b[11] = cdv.toByte()
         return b
     }
 
-    override fun toString(): String = "Beacon(ver=$ver $gid seq=$seq flags=0x%02x pos=$pos \"$name\")".format(flags)
+    override fun toString(): String = "Beacon(ver=$ver $gid seq=$seq flags=0x%02x pos=$pos cdv=0x%04x \"$name\")".format(flags, cdv)
 
     companion object {
-        const val FIELD_BYTES = 10
+        const val FIELD_BYTES = 12
 
         internal fun fromFields(b: ByteArray, name: String) = Beacon(
             ver = b[0].toInt() and 0xFF,
@@ -48,6 +53,7 @@ class Beacon(
             flags = b[8].toInt() and 0xFF,
             pos = b[9].toInt() and 0xFF,
             name = name,
+            cdv = ((b[10].toInt() and 0xFF) shl 8) or (b[11].toInt() and 0xFF),
         )
     }
 }
@@ -57,10 +63,10 @@ class Beacon(
  * the decoders return null for anything that is not a well-formed beacon and never throw.
  */
 object BeaconCodec {
-    /** Encoding A: manufacturer data after the company identifier, at most 10 + 17 bytes (6.2). */
-    const val NAME_BYTES_A = 17
-    /** Encoding B: local name `"ZB"` + Base32 of the fields + `" "` + at most 10 name bytes (6.3). */
-    const val NAME_BYTES_B = 10
+    /** Encoding A: manufacturer data after the company identifier, at most 12 + 15 bytes (6.2, v0.43). */
+    const val NAME_BYTES_A = 15
+    /** Encoding B: local name `"ZB"` + Base32 of the fields + `" "` + at most 6 name bytes (6.3, v0.43). */
+    const val NAME_BYTES_B = 6
     private const val PREFIX_B = "ZB"
 
     /**
@@ -90,7 +96,7 @@ object BeaconCodec {
 
     fun decodeB(localName: String): Beacon? {
         if (!localName.startsWith(PREFIX_B) || localName.length < PREFIX_B.length + Base32.FIELDS_CHARS) return null
-        val fields = Base32.decode(localName.substring(PREFIX_B.length, PREFIX_B.length + Base32.FIELDS_CHARS)) ?: return null
+        val fields = Base32.decode(localName.substring(PREFIX_B.length, PREFIX_B.length + Base32.FIELDS_CHARS))?.takeIf { it.size == Beacon.FIELD_BYTES } ?: return null
         val rest = localName.substring(PREFIX_B.length + Base32.FIELDS_CHARS)
         val name = when {
             rest.isEmpty() -> ""
@@ -130,11 +136,11 @@ object BeaconCodec {
     private const val NOT_A_VERSION = 0x7F
 }
 
-/** RFC 4648 Base32, upper case, without padding; just enough for the 10 beacon field bytes. */
+/** RFC 4648 Base32, upper case, without padding; just enough for the 12 beacon field bytes. */
 internal object Base32 {
     private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
-    /** 10 bytes = 80 bits = 16 characters, no padding needed. */
-    const val FIELDS_CHARS = 16
+    /** 12 bytes = 96 bits = 20 characters, the last carrying 4 bits of padding. */
+    const val FIELDS_CHARS = 20
 
     fun encode(bytes: ByteArray): String {
         val sb = StringBuilder()

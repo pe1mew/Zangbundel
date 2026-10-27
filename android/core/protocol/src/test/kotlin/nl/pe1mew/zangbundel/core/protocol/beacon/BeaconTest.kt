@@ -25,13 +25,13 @@ import kotlin.test.fail
 class BeaconTest {
     private val gid = GatheringId(byteArrayOf(0x3B, 0x7D, 0x01, 0x02, 0x03))
     private fun ByteArray.hex() = joinToString("") { "%02x".format(it) }
-    private fun beacon(name: String = "Kampvuur 25-10", flags: Int = FLAG_BCAST or FLAG_CODE) =
-        Beacon(ver = 1, gid = gid, seq = 0x1234, flags = flags, pos = 12, name = name)
+    private fun beacon(name: String = "Kampvuur 25-10", flags: Int = FLAG_BCAST or FLAG_CODE, cdv: Int = 0xA1B2) =
+        Beacon(ver = 1, gid = gid, seq = 0x1234, flags = flags, pos = 12, name = name, cdv = cdv)
 
     @Test
     fun `the field bytes follow 6-1`() {
-        // ver, gid (5), seq (u16 big-endian), flags, pos
-        assertEquals("01" + "3b7d010203" + "1234" + "41" + "0c", beacon().fields().hex())
+        // ver, gid (5), seq (u16 big-endian), flags, pos, cdv (u16 big-endian, v0.43)
+        assertEquals("01" + "3b7d010203" + "1234" + "41" + "0c" + "a1b2", beacon().fields().hex())
     }
 
     @Test
@@ -42,22 +42,26 @@ class BeaconTest {
         assertEquals("Kampvuur 25-10", back.name)
         assertEquals(0x1234, back.seq)
         assertEquals(12, back.pos)
+        assertEquals(0xA1B2, back.cdv)
+        assertEquals("Kampvuur 25-10", BeaconCodec.decodeA(BeaconCodec.encodeA(beacon(cdv = 0)))!!.name)
+        assertEquals(0, BeaconCodec.decodeA(BeaconCodec.encodeA(beacon(cdv = 0)))!!.cdv)
         assertTrue(back.codeRequired && !back.ended && !back.busy)
         assertEquals(gid, back.gid)
     }
 
     @Test
     fun `names are cut at a character boundary`() {
-        assertEquals(16, BeaconCodec.encodeA(beacon(name = "é".repeat(9))).size - 10)   // 8 × 2 bytes, not 17
-        assertEquals("é".repeat(8), BeaconCodec.decodeA(BeaconCodec.encodeA(beacon(name = "é".repeat(9))))!!.name)
-        assertEquals("Kampvuur 2", BeaconCodec.decodeB(BeaconCodec.encodeB(beacon()))!!.name)  // 10 bytes in B
+        assertEquals(14, BeaconCodec.encodeA(beacon(name = "é".repeat(9))).size - 12)   // 7 × 2 bytes, not 15
+        assertEquals("é".repeat(7), BeaconCodec.decodeA(BeaconCodec.encodeA(beacon(name = "é".repeat(9))))!!.name)
+        assertEquals("Kampvuur 25 okt", BeaconCodec.decodeA(BeaconCodec.encodeA(beacon(name = "Kampvuur 25 oktober")))!!.name)  // 15 bytes in A
+        assertEquals("Kampvu", BeaconCodec.decodeB(BeaconCodec.encodeB(beacon()))!!.name)  // 6 bytes in B
     }
 
     @Test
     fun `encoding A refuses frames, test signals and malformed payloads`() {
         val good = BeaconCodec.encodeA(beacon())
         for (first in listOf(0x00, 0x7F, 0xD1, 0xD2)) assertNull(BeaconCodec.decodeA(good.copyOf().also { it[0] = first.toByte() }))
-        assertNull(BeaconCodec.decodeA(good.copyOf(9)))
+        assertNull(BeaconCodec.decodeA(good.copyOf(11)))
         assertNull(BeaconCodec.decodeA(good + ByteArray(20)))
         assertNull(BeaconCodec.decodeA(beacon().fields() + byteArrayOf(0xC3.toByte(), 0x28)))   // invalid UTF-8
         assertEquals("", BeaconCodec.decodeA(beacon().fields())!!.name)
@@ -69,22 +73,24 @@ class BeaconTest {
         assertEquals("MZXW6YQ", Base32.encode("foob".toByteArray()))
         assertContentEquals("foobar".toByteArray(), Base32.decode("MZXW6YTBOI"))
         assertEquals(16, Base32.encode(ByteArray(10)).length)
+        assertEquals(20, Base32.encode(ByteArray(12)).length)
     }
 
     @Test
     fun `encoding B round-trips within 29 bytes`() {
         val b = beacon(flags = FLAG_ENDED)
         val name = BeaconCodec.encodeB(b)
-        assertTrue(name.startsWith("ZB") && name[18] == ' ')
+        assertTrue(name.startsWith("ZB") && name[22] == ' ')
         assertTrue(name.toByteArray().size <= 29)
         val back = assertNotNull(BeaconCodec.decodeB(name))
         assertTrue(back.ended)
         assertContentEquals(b.fields(), back.fields())
+        assertEquals(0xA1B2, back.cdv)
         assertNull(BeaconCodec.decodeB("XY" + name.substring(2)))
         assertNull(BeaconCodec.decodeB(name.substring(0, 10)))
-        assertNull(BeaconCodec.decodeB(name.substring(0, 18) + "#name"))
+        assertNull(BeaconCodec.decodeB(name.substring(0, 22) + "#name"))
         assertNull(BeaconCodec.decodeB(name.substring(0, 2) + "1" + name.substring(3)))      // not Base32
-        assertNull(BeaconCodec.decodeB(name.substring(0, 19) + "a much longer name"))
+        assertNull(BeaconCodec.decodeB(name.substring(0, 23) + "a much longer name"))
     }
 
     @Test

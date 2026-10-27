@@ -296,8 +296,9 @@ class LeaderSession(
         transport.setBeacon(beaconBytes())
     }
 
+    /** 6.1: `cdv` (v0.43) names the current song's document 3, so a singer holding it ahead can show it at once (7.5). */
     private fun beaconBytes() = BeaconCodec.encodeA(
-        Beacon(1, gid, seq, flags or (if (busy) ProtocolConstants.FLAG_BUSY else 0), 0, name),
+        Beacon(1, gid, seq, flags or (if (busy) ProtocolConstants.FLAG_BUSY else 0), 0, name, cdv = last.docs[DocumentType.SONG]?.entry?.dv ?: 0),
     )
 
     companion object {

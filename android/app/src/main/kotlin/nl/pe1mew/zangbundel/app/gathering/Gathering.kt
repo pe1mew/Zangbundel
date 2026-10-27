@@ -207,6 +207,9 @@ class Gathering(
     private val lines = java.util.concurrent.atomic.AtomicLong()
     /** Singing: the current song of the latest verified state. */
     private var currentRef: SongRef? = null
+    /** BLE 7.5 (v0.43): the song a beacon hinted, until a state confirms it, and whether the hint put it on the page. */
+    private var hintedRef: SongRef? = null
+    private var hintAdded = false
     /** For the gathering memory (FR-DATA-03): when it started, the songs in the order first pushed, the most singers at once. */
     private var startedWall = 0L
     /** The lines pushed, in the order first pushed (v0.40: by line, as positions move); read by the resume record's writer while a push may add to it. */
@@ -749,6 +752,8 @@ class Gathering(
                         }
                         is SingerEngine.Event.LocalSong -> local[e.ref.hash.toHex()]?.let { entry -> localSong(e.ref, entry) }
                         is SingerEngine.Event.EarlierSong -> earlier(e)
+                        is SingerEngine.Event.HintedSong -> { Log.d("singer hint ${e.song.ref.song.value}"); hinted(e) }
+                        is SingerEngine.Event.HintWithdrawn -> { Log.d("singer hint withdrawn ${e.ref.song.value}"); unhinted(e, engine) }
                         is SingerEngine.Event.Ended -> connection(Connection.ENDED)
                         else -> Unit
                     }
@@ -845,6 +850,7 @@ class Gathering(
     /** A new state: the current song moves; a song not yet received gets its place with the state's title (D-29). */
     private fun current(engine: SingerEngine) {
         val body = engine.state?.body ?: return
+        hintedRef = null      // the engine confirmed or withdrew any hint before delivering this state
         val cur = body.cur
         if (cur == null) {
             // D-65, FR-LEAD-06: cleared; nothing is current, the songs stay on the page.
@@ -884,6 +890,27 @@ class Gathering(
         val songs = m.songs.toMutableList().also { it.add(at, ReceivedSong(e.song.ref, song.meta.title, song, earlier = e.position)) }
         val current = songs.indexOfFirst { it.ref == currentRef }.takeIf { it >= 0 }
         _mode.value = m.copy(songs = songs, current = current)
+    }
+
+    /** BLE 7.5 (v0.43): the beacon named a song held ahead; it is the current song now, until the state says otherwise. */
+    private fun hinted(e: SingerEngine.Event.HintedSong) {
+        val m = _mode.value as? Mode.Singing ?: return
+        val song = SongParser.parse(e.song.file).song ?: return
+        hintAdded = m.songs.none { it.ref == e.song.ref }
+        hintedRef = e.song.ref
+        currentRef = e.song.ref
+        place(e.song.ref, song)
+        singing { it.copy(cleared = false) }
+    }
+
+    /** The hint was not confirmed: the page as the applied state has it, without the hinted song if the hint brought it. */
+    private fun unhinted(e: SingerEngine.Event.HintWithdrawn, engine: SingerEngine) {
+        if (hintedRef != e.ref) return
+        hintedRef = null
+        val m = _mode.value as? Mode.Singing ?: return
+        val songs = if (hintAdded) m.songs.filterNot { it.ref == e.ref } else m.songs
+        currentRef = engine.state?.body?.cur
+        _mode.value = m.copy(songs = songs, current = songs.indexOfFirst { it.ref == currentRef }.takeIf { it >= 0 })
     }
 
     private fun place(ref: SongRef, song: Song, library: String? = null) {

@@ -50,6 +50,10 @@ import kotlin.random.Random
  * Songs ahead (7.5 as of v0.32, FR-BLE-18): completed documents 9 are kept as framed bytes by their
  * `dh`, hidden and bounded, and never reach the app until a verified manifest names that `dh` as the
  * current song; then they are delivered as that document 3 at once, without waiting for the burst.
+ *
+ * The beacon hint (7.5 as of v0.43): a beacon whose `cdv` names a song kept ahead from the signed setlist
+ * makes it [Event.HintedSong] at once, before the state; the next verified state confirms it (and delivers
+ * it as document 3 as above) or it becomes [Event.HintWithdrawn], as it does after [HINT_CONFIRM_MS].
  */
 class SingerEngine(
     private val transport: Transport,
@@ -94,6 +98,13 @@ class SingerEngine(
          * songs kept ahead and verified by the signed setlist's `dh`; for a singer that joined late.
          */
         class EarlierSong(override val at: Long, val position: Int, val song: SongDocument) : Event
+        /**
+         * 7.5 (v0.43): the beacon names this song, kept ahead from the signed setlist and matching its
+         * reference; show it as the current song now, provisionally, until a verified state confirms it.
+         */
+        class HintedSong(override val at: Long, val song: SongDocument) : Event
+        /** 7.5 (v0.43): the hinted song was not confirmed; the page goes back to what the applied state says. */
+        data class HintWithdrawn(override val at: Long, val ref: SongRef) : Event
         /** Diagnostics: a frame of a state record heard, and whether it was new to its group (7.5, 7.6). */
         data class StateFrame(override val at: Long, val seq: Int, val idx: Int, val fresh: Boolean) : Event
         /** Diagnostics: the repair rule of 7.6 fired; the connection follows after [delayMs]. */
@@ -139,6 +150,11 @@ class SingerEngine(
     private val pushedRefs = HashMap<String, SongRef>()
     /** Songs (their `dh`, hex) seen as current or reported as [Event.EarlierSong] (v0.35; by `dh` since v0.40, as positions move). */
     private val earlierDone = HashSet<String>()
+    /** 7.5 (v0.43): the song a beacon hinted, by `dh` (hex), until a state confirms or withdraws it. */
+    private class Hint(val dh: String, val ref: SongRef, val since: Long)
+    private var hint: Hint? = null
+    /** The beacon's `cdv` last acted on; a hint is considered once per change. */
+    private var lastCdv = 0
 
     /**
      * One row of the reception view (FR-SING-05, guiDesign D-81): a document and its source blocks. Rows
@@ -260,6 +276,7 @@ class SingerEngine(
                 mutex.withLock {
                     apply(machine.handle(SingerMachine.Event.Tick(clock())))
                     fallBack(clock())
+                    if (hint?.let { clock() - it.since >= HINT_CONFIRM_MS } == true) withdraw(clock())
                 }
             }
         }
@@ -288,6 +305,7 @@ class SingerEngine(
             if (lastSeq != null && beacon.seq != lastSeq) _events.tryEmit(Event.NewSeq(now, beacon.seq))
             lastSeq = beacon.seq
             apply(machine.handle(SingerMachine.Event.BeaconSeen(now, beacon.gid, beacon.seq, beacon.ended, beacon.busy, beacon.has(ProtocolConstants.FLAG_BCAST))))
+            hinted(beacon, now)
             return
         }
         val rs = reassembler ?: return
@@ -369,6 +387,8 @@ class SingerEngine(
         if (!s.supersedes(state?.body?.ts)) return
         val wasLocal = state?.body?.cur?.let(hasSong) == true && state?.body?.cur == s.body.cur
         state = s
+        // 7.5 (v0.43): the signed state confirms the hinted song, or the hint goes before the state is delivered.
+        hint?.let { h -> if (s.body.docs[DocumentType.SONG]?.dh?.hex() == h.dh) hint = null else withdraw(clock()) }
         s.body.cur?.let { cur -> s.body.docs[DocumentType.SONG]?.let { e -> pushedRefs[e.dh.hex()] = cur } }
         val fromAhead = takeAhead()
         val local = s.body.cur?.let(hasSong) == true
@@ -430,6 +450,34 @@ class SingerEngine(
     private fun orderIsCurrent(): Boolean {
         val named = state?.body?.docs?.get(DocumentType.SETLIST)?.dh ?: return false
         return aheadOrderDh?.contentEquals(named) == true
+    }
+
+    /**
+     * 7.5 (v0.43): a beacon whose `cdv` changed, is not 0, is not the applied song and comes with another
+     * `seq` than the applied state: the one song kept ahead whose `dh` starts with `cdv`, is listed in the
+     * setlist the applied state names and matches its reference, if exactly one, is hinted. A beacon whose
+     * `cdv` is the applied song again withdraws a hint.
+     */
+    private fun hinted(beacon: Beacon, now: Long) {
+        val cdv = beacon.cdv
+        if (cdv == lastCdv) return
+        lastCdv = cdv
+        val body = state?.body ?: return
+        val applied = body.docs[DocumentType.SONG]?.dv
+        if (cdv == applied) { withdraw(now); return }
+        if (cdv == 0 || beacon.seq == body.seq || !orderIsCurrent()) return
+        val keys = aheadOrder.filter { it.isNotEmpty() && dvOf(it) == cdv }.map { it.hex() }.distinct().filter { it in ahead }
+        if (keys.size != 1) return
+        val song = songOf(ahead.getValue(keys.single())) ?: return
+        withdraw(now)
+        hint = Hint(keys.single(), song.ref, now)
+        _events.tryEmit(Event.HintedSong(now, song))
+    }
+
+    private fun withdraw(now: Long) {
+        val h = hint ?: return
+        hint = null
+        _events.tryEmit(Event.HintWithdrawn(now, h.ref))
     }
 
     private fun songOf(framed: ByteArray): SongDocument? {
@@ -600,6 +648,8 @@ class SingerEngine(
         /** 7.5 (v0.32): songs kept ahead, at most this many and this many bytes, oldest dropped first. */
         const val MAX_AHEAD_SONGS = 64
         const val AHEAD_KEPT_BYTES = 1L shl 20
+        /** 7.5 (v0.43): a hinted song no verified state has confirmed within this time is withdrawn. */
+        const val HINT_CONFIRM_MS = 10_000L
 
         private fun ByteArray.hex(): String = joinToString("") { "%02x".format(it) }
         private fun dvOf(dh: ByteArray): Int = ((dh[0].toInt() and 0xFF) shl 8) or (dh[1].toInt() and 0xFF)
