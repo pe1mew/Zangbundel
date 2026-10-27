@@ -220,6 +220,11 @@
 **Root cause**: `.nojekyll` had been created inside `.well-known/`, so Jekyll still ran and skipped the dot-folder. The `errored` status came from builds cancelled by quick successive commits, not from the content.
 **Fix**: an empty `.nojekyll` at the repository root; check with `curl -D -` (200, `application/json`) and Google's `assetlinks:check`, then `pm verify-app-links --re-verify` on the phones instead of a reinstall.
 
+### One scan callback: a late `stopScan()` ends someone else's scan (2026-10-27)
+**Problem**: 60 s after a leader ended, the home screen showed *Zoeken naar kampvuren…* but found nothing; `dumpsys bluetooth_manager` showed the app's scan stopped 4 s after it started.
+**Root cause**: `AndroidTransport` has one `ScanCallback`, so `stopScan()` stops whatever scan is running. The leader's listening loop stopped the scan in its `finally` when the session was cancelled, after `LeaderSession.end()`'s 60 s linger, by which time the home screen had started its own.
+**Fix**: stop a loop that scans when its owner ends, not when the session's scope dies; stop the scan in a `finally` only if that loop's own scan is running. Check scan ownership with `dumpsys bluetooth_manager` (per package: *Last 5 scans*, *Ongoing*), not with the screen.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

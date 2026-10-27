@@ -202,6 +202,8 @@ class Gathering(
     @Volatile private var leaveJob: Job? = null
     private var session: CoroutineScope? = null
     private var leader: LeaderSession? = null
+    /** The leader's listening for other gatherings; [end] stops it at once, not after the radio's 60 s linger. */
+    private var othersJob: Job? = null
     private var singer: SingerEngine? = null
     /** The setlist's songs as pushed and sent ahead, by line; null for a line that cannot be broadcast. */
     private val prepared = HashMap<Long, Prepared?>()
@@ -332,8 +334,9 @@ class Gathering(
         }
         // FR-GATH-17, ble-protocol 10.1 step 6: listen 2 s every 30 s for another gathering (two scan starts per
         // 30 s, under Android's limit of five); D-68 shows it quietly while it is heard. A resumed gathering's own beacons are ignored.
-        s.launch {
+        othersJob = s.launch {
             val others = OtherCampfires(l.gid, OTHER_TIMEOUT_MS)
+            var listening = false
             try {
                 launch {
                     t.scanResults().collect { r ->
@@ -342,17 +345,20 @@ class Gathering(
                     }
                 }
                 while (isActive) {
+                    listening = true
                     runCatching { t.startScan(Transport.ScanMode.LOW_DUTY) }
                     delay(OTHER_LISTEN_MS)
                     runCatching { t.stopScan() }
+                    listening = false
                     val other = others.near(clock(), (_mode.value as? Mode.Leading)?.name.orEmpty())
                     if (other != _otherNearby.value) Log.d("leader other gathering nearby: ${other ?: "none"}")
                     _otherNearby.value = other
                     delay(OTHER_EVERY_MS - OTHER_LISTEN_MS)
                 }
             } finally {
-                // Ended during a listen: the scan must not run on into the home screen's own scan.
-                withContext(NonCancellable) { runCatching { t.stopScan() } }
+                // Ended during a listen: the scan must not run on into the home screen's own scan. Only then: the
+                // transport has one scan callback, so a stop outside a listen would end the home screen's scan instead.
+                if (listening) withContext(NonCancellable) { runCatching { t.stopScan() } }
                 _otherNearby.value = null
             }
         }
@@ -679,6 +685,10 @@ class Gathering(
         val m = _mode.value as? Mode.Leading
         leader = null
         session = null
+        // The listening stops now, before the home screen can start its scan; left to the session's cancel after
+        // the 60 s linger, its stop ended the home screen's scan (design/test-results/2026-10-27-internal-test-0.1.0.md).
+        othersJob?.cancel()
+        othersJob = null
         // Architecture 5.4 (v0.13): the record goes at once, so a leader that dies while ending is not offered an ended gathering.
         scope.launch(Dispatchers.IO) { resumeLock.withLock { resumeStore.delete() } }
         if (m != null) _summary.value = Summary(m.name, startedWall, clock() - m.startedAt, pushedLines.size, maxOf(peakSingers, m.singers))

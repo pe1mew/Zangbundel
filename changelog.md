@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Fixed
+- The home screen stopped finding campfires 60 s after the phone had ended one as leader: the leader's listening for other campfires was stopped only when the radio's linger ended, and its stop also ended the home screen's scan. It now stops when the campfire ends, and stops the scan only during a listen.
 - The store listing texts (nl-NL, en-US) promised song requests and helpers, which are phase 2 since FRD v0.18; they now describe the app as built, including the Wi-Fi update check, the leader's notification and passing the app on without internet.
 - `bundleRelease` failed with the configuration cache on: the guard that refuses an unsigned bundle referred to a property of the build script from its task action. It now decides while configuring, and its message names the upload key, which is what signs the bundle.
 - The release build warned about the Kotlin metadata of every class: AGP 8.13.2 bundles R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer. R8 9.1.57 is now pinned on the build classpath (architecture v0.21, A-19); checked on the phones with the release configuration.
