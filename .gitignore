@@ -28,3 +28,6 @@ raw/
 Thumbs.db
 
 # Note: .claude/ is deliberately NOT ignored; .claude/review-profile.md is tracked on purpose.
+
+# Jazzer working corpus (scripts/fuzz.sh); findings live in src/fuzz/resources and are committed.
+.cifuzz-corpus/

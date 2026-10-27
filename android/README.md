@@ -11,7 +11,8 @@ Requirements: JDK 17, Android SDK with platform 36 and build-tools 36.0.0 (`ANDR
 ```bash
 cd android
 ./gradlew assembleDebug        # debug APK, pseudo-locales on, application id suffix .debug
-./gradlew check                # unit tests of every module, lint (missing translations are errors)
+./gradlew check                # unit tests of every module, lint (missing translations are errors), fuzz targets replayed
+bash ../scripts/fuzz.sh 60      # fuzz each Jazzer target for 60 s (3600 before a release; test plan 3.4)
 ./gradlew assembleRelease      # unsigned when keystore.properties is absent
 ./gradlew bundleRelease        # refuses without keystore.properties (docs/RUNBOOK.md Step 6)
 ```

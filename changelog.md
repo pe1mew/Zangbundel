@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The system bar icons were dark on the night-blue background on phones in light mode (seen on a Samsung A52, Android 14). `MainActivity` now declares both bars dark, so the icons stay light; checked on the A52 and a Huawei Mate 20 Lite (Android 10).
 
 ### Added
+- Fuzzing (test plan v0.12, 3.4; release check G-09): 14 Jazzer targets for every parser of library input and every decoder of bytes from the air or a QR code, and the leader's GATT writes, in a `fuzz` source set of `core/songformat` and `core/protocol`; `check` replays them, `scripts/fuzz.sh` fuzzes them. First run: 60 s per target, no finding. New test-only dependencies Jazzer 0.30.0 and JUnit 5.11.4, in the verification metadata.
+- Release checks G-01, G-02, G-05 and G-06 run on the release configuration (`design/test-results/2026-10-27-release-checks.md`): passed; RUNBOOK Step 5 now names AndroidX Core's own receiver permission, and architecture section 8 the transitive artefacts.
 - The field-test log and its consent (architecture v0.18, A-20; test plan v0.11, 5.1 and 5.5; assessment v0.20, SP-22): the `fieldtest` build asks the tester's consent on first start, then keeps a local log of radio figures, Android version, radio capability flags and battery level once a minute per session, shared by hand from the radio check after a preview. Without a keystore the `fieldtest` build is signed with the debug key.
 - The reception grid opens on a long press also before anything is sent, with empty bars (guiDesign v0.54, D-81).
 - Rotation keeps the line in the songbook's reading view too (guiDesign v0.53, D-42, FR-DISP-04).

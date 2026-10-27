@@ -4,7 +4,7 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.18 (draft) |
+| Document version | 0.19 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
@@ -30,6 +30,7 @@
 | 0.16 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09). The statistics row of the data lifecycle table names its table and requirement; the statistics export is dropped from kotlinx-serialization-json's uses, since the built export writes its fixed JSON by hand (`CampfireRecord`). |
 | 0.17 | 2026-10-27 | A-18 built (FR-DIST-05, guiDesign D-84): the copy, its name, and why it outlives the share sheet. |
 | 0.18 | 2026-10-27 | A-20 built: the field-test log, its consent screen, its export, and the `fieldtest` build's debug-key fallback without a keystore. |
+| 0.19 | 2026-10-27 | Section 8: the transitive artefacts named, and JUnit 5 under Jazzer with its licence (release checks G-06 and G-09). The fuzz targets of section 10 are built as a `fuzz` source set in `core/songformat` and `core/protocol` (test plan 3.4 as of v0.12). |
 
 ---
 
@@ -255,7 +256,8 @@ Every library the app may use. Licences are as published by each project and are
 | AndroidX WorkManager | Opt-in Wi-Fi update check only (A-14) | Apache 2.0 | no (schedules our own job) |
 | lazysodium-android, with JNA | Ed25519, X25519, sealed box (A-09) | MPL 2.0; JNA Apache 2.0 or LGPL 2.1 | no |
 | ZXing core | QR code generation (A-15) | Apache 2.0 | no |
-| *Test only:* JUnit 4, kotlin-test, kotlinx-coroutines-test, lazysodium-java, Jazzer, Compose UI test, AndroidX test runner | Tests (A-21) | Apache 2.0, MPL 2.0 (lazysodium) | no |
+| *Transitive, brought in by the libraries above:* Guava `listenablefuture` (WorkManager, Room), okio (DataStore), kotlinx atomicfu (coroutines), JetBrains annotations, JSpecify (AndroidX); named here since check G-06 (2026-10-27) | — | Apache 2.0 | no |
+| *Test only:* JUnit 4, kotlin-test, kotlinx-coroutines-test, lazysodium-java, Jazzer (`jazzer-junit`, with the JUnit 5 Jupiter engine and platform launcher it runs on, in the `fuzz` source sets only), Compose UI test, AndroidX test runner | Tests (A-21) | Apache 2.0, MPL 2.0 (lazysodium), EPL (JUnit 4 and 5) | no |
 
 Not used, on purpose: Google Play Services, Firebase, ML Kit, Play Core, Play Integrity (CLAUDE.md); Hilt and Dagger (A-17); OkHttp and Retrofit (A-14); Jackson and other CBOR libraries (A-08); JGit (A-11); any analytics, crash-reporting or advertising SDK (FR-NET-03, NFR-SEC-03). The platform itself supplies SHA-256 (`MessageDigest`), NFC normalisation (`java.text.Normalizer`), DEFLATE and ZIP (`java.util.zip`), collation (`java.text.Collator`) and the secure random source (`SecureRandom`).
 

@@ -4,7 +4,7 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.11 (draft) |
+| Document version | 0.12 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
@@ -23,6 +23,7 @@
 | 0.9 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change. |
 | 0.10 | 2026-10-27 | Depends on FRD v0.19: FR-DATA-09 gets its row in the requirement table (unit tests of the record and the season, and the phone test of 2026-10-27). |
 | 0.11 | 2026-10-27 | 5.1 and 5.5 built in the `fieldtest` build (architecture A-20 as of v0.18): the consent screen on first start and the local log, shared from the radio check. |
+| 0.12 | 2026-10-27 | 3.4 built: the Jazzer targets, `scripts/fuzz.sh`; release checks G-01, G-02, G-05, G-06 and G-09 at the CI budget run (`design/test-results/2026-10-27-release-checks.md`). |
 
 ---
 
@@ -142,6 +143,8 @@ Jazzer runs one target per parser of untrusted input (NFR-SEC-04, assessment SP-
 | Erasure-code decoder | Any set of frames with indices, `k` and `fs` | `n` ≤ 256, frame sizes checked, no exception for any subset |
 | Join-link payload | URL or intent text as the camera app delivers it | base64url length, then the CBOR bound (ble-protocol 6.5) |
 | Leader's GATT write handlers | Join, Request, Control and Transfer writes, sealed or plain | 512-byte values, ranges ≤ 32, rate limits |
+
+*(Built 2026-10-27:)* 14 targets in two classes, `SongFormatFuzz` (song parser, setlist parser, library file, release index, archive manifest, whole archive through the ZIP reader) and `ProtocolFuzz` (CBOR, every payload decoder and the signed state, DEFLATE with its cap, both beacon encodings, the join link, frame reassembly with repair ranges, the erasure decoder, the leader's GATT writes), in a `fuzz` source set of `core/songformat` and `core/protocol` with its own Gradle task `fuzzTest` on the JUnit 5 platform. Without `JAZZER_FUZZ=1` the task replays each target's saved inputs and is part of `check`; `bash scripts/fuzz.sh [seconds] [target]` fuzzes each target in turn. A finding's input is saved under `src/fuzz/resources/…Inputs/<target>/` and committed with its fix; the working corpus in `.cifuzz-corpus/` is not. Not yet done: seeds from the conformance vectors, and the 60 s per target in CI (CI replays only).
 
 Budgets: 60 s per target on every push in CI, 1 hour per target before a release. Seed corpora come from the conformance vectors. Every finding becomes a regression test before it is fixed. Pass: no crash, no uncaught exception, no time-bound overrun and no allocation above the target's bound in the long run.
 
