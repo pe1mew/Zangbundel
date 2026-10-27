@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Fixed
+- `bundleRelease` failed with the configuration cache on: the guard that refuses an unsigned bundle referred to a property of the build script from its task action. It now decides while configuring, and its message names the upload key, which is what signs the bundle.
 - The release build warned about the Kotlin metadata of every class: AGP 8.13.2 bundles R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer. R8 9.1.57 is now pinned on the build classpath (architecture v0.21, A-19); checked on the phones with the release configuration.
 - With no campfire running, turning the phone sent the app back to the home screen from any screen (songbook, settings, library): the effect that follows the gathering's mode ran again when the activity was made anew and took the idle mode for a change. It now acts only on a real change of mode, remembered through the rotation.
 - `HttpsFetcher` treated *304 Not Modified* as a redirect without a `Location` and threw, so the conditional request of song-format 12.7 never worked; a 304 now comes back as itself with an empty body.

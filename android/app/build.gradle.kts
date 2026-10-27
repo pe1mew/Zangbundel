@@ -112,11 +112,12 @@ kotlin {
     jvmToolchain(17)
 }
 
-// bundleRelease is the Play upload path: it must not run unsigned (A-19).
+// bundleRelease is the Play upload path: it must not run unsigned (A-19). Decided while configuring, so the
+// action captures no reference to this script, which the configuration cache cannot store (2026-10-27).
 tasks.matching { it.name == "bundleRelease" || it.name == "bundleFieldtest" }.configureEach {
-    doFirst {
-        if (!hasKeystore) throw GradleException(
-            "keystore.properties is missing next to android/: a bundle for Play must be signed with the app signing key (docs/RUNBOOK.md Step 6)."
+    if (!hasKeystore) doFirst {
+        throw GradleException(
+            "keystore.properties is missing next to android/: a bundle for Play must be signed with the upload key (docs/RUNBOOK.md Step 6)."
         )
     }
 }

@@ -205,6 +205,11 @@
 **Root cause**: AGP bundles its own R8; AGP 8.13.2 brings R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer (developer.android.com/build/kotlin-support). Debug builds never run R8, so only the release path shows it.
 **Fix**: pin a newer R8 on the root build script's classpath (`buildscript { dependencies { classpath(libs.r8) } }`) and regenerate the verification metadata. When Kotlin is bumped, check that table first. Related: once `keystore.properties` exists the `fieldtest` build is signed with the upload key and cannot update a debug-signed copy; uninstalling it loses its data.
 
+### A task action that reads a build-script property breaks the configuration cache (2026-10-27)
+**Problem**: `./gradlew bundleRelease` failed: *cannot serialize Gradle script object references*. Nothing else used that guard, so it surfaced only when the owner first built a bundle.
+**Root cause**: the `doFirst` of the bundle guard read `hasKeystore`, a top-level `val` of `app/build.gradle.kts`; a top-level script value is a member of the script object, so the action captured the whole script.
+**Fix**: decide at configuration time (`if (!hasKeystore) doFirst { throw … }`), so the action captures only a string. Any `doFirst`/`doLast` in a `.kts` file must not read script-level values; copy them into a local first, or decide outside the action.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
