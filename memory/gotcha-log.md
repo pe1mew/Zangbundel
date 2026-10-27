@@ -200,6 +200,11 @@
 **Root cause**: `LaunchedEffect(mode::class)` in `ZangbundelApp` navigates to the screen the gathering's mode asks for. When the activity is recreated the effect starts again with the same key; for the idle mode its target is home, so it popped the restored back stack. Rotation tests on the leader's and singer's pages passed because there the target was the current screen.
 **Fix**: Act only on a real change: remember the mode last followed with `rememberSaveable` and return when it is unchanged. Any effect that navigates or acts once per change needs the same guard; test a rotation on a screen the effect does not own.
 
+### R8 older than Kotlin floods the release build with metadata warnings (2026-10-27)
+**Problem**: `bundleRelease` printed about 150 times *An error occurred when parsing kotlin metadata*; the build still succeeded.
+**Root cause**: AGP bundles its own R8; AGP 8.13.2 brings R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer (developer.android.com/build/kotlin-support). Debug builds never run R8, so only the release path shows it.
+**Fix**: pin a newer R8 on the root build script's classpath (`buildscript { dependencies { classpath(libs.r8) } }`) and regenerate the verification metadata. When Kotlin is bumped, check that table first. Related: once `keystore.properties` exists the `fieldtest` build is signed with the upload key and cannot update a debug-signed copy; uninstalling it loses its data.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

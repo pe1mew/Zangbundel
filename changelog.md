@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 ### Fixed
+- The release build warned about the Kotlin metadata of every class: AGP 8.13.2 bundles R8 8.13, and Kotlin 2.4 needs R8 9.1.29 or newer. R8 9.1.57 is now pinned on the build classpath (architecture v0.21, A-19); checked on the phones with the release configuration.
 - With no campfire running, turning the phone sent the app back to the home screen from any screen (songbook, settings, library): the effect that follows the gathering's mode ran again when the activity was made anew and took the idle mode for a change. It now acts only on a real change of mode, remembered through the rotation.
 - `HttpsFetcher` treated *304 Not Modified* as a redirect without a `Location` and threw, so the conditional request of song-format 12.7 never worked; a 304 now comes back as itself with an empty body.
 - The library screen could show a switch or list from a stale state: its view model wrote `_state.value.copy(x = suspendingCall())`, which reads the state before the call suspends and writes that old copy back. Every change now goes through `update { }` with the value computed first.
@@ -14,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The system bar icons were dark on the night-blue background on phones in light mode (seen on a Samsung A52, Android 14). `MainActivity` now declares both bars dark, so the icons stay light; checked on the A52 and a Huawei Mate 20 Lite (Android 10).
 
 ### Added
+- `docs/app-links/assetlinks.json`, ready to publish for App Links (RUNBOOK Step 5c); RUNBOOK Step 9.7 now signs the GitHub APK with the app signing key by `apksigner`, since `keystore.properties` names the upload key.
+- The foreground-service declaration for Play prepared (RUNBOOK Step 5): description, impact, and a 69 s screen recording of the leader flow kept outside git in `raw/`.
 - Five phone screenshots for the store listing (`docs/store-listing/graphics/phone-1` to `phone-5`, RUNBOOK Step 8): leader's page, singer's page, drawer, install panel, songbook; night theme, demo song only, fitted to 9:16.
 - Fuzzing (test plan v0.12, 3.4; release check G-09): 14 Jazzer targets for every parser of library input and every decoder of bytes from the air or a QR code, and the leader's GATT writes, in a `fuzz` source set of `core/songformat` and `core/protocol`; `check` replays them, `scripts/fuzz.sh` fuzzes them. First run: 60 s per target, no finding. New test-only dependencies Jazzer 0.30.0 and JUnit 5.11.4, in the verification metadata.
 - The leader is asked for the notification permission once, before the first campfire on Android 13 and later, after a plain-language explanation; a singer never is (architecture v0.20, A-06; guiDesign v0.55, D-25; assessment v0.22, SP-18). Found missing by release check G-10.

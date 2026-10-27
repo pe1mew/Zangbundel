@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "nl.pe1mew.zangbundel.app",
+      "sha256_cert_fingerprints": [
+        "57:86:7B:3F:C1:4D:1F:35:F6:38:40:A8:41:BB:05:F6:DD:FD:A9:C3:6D:C0:58:29:5F:87:F5:46:A2:C8:9B:10"
+      ]
+    }
+  }
+]

@@ -5,6 +5,8 @@
 
 [versions]
 agp = "8.13.2"
+# R8 over AGP's own: Kotlin 2.4 metadata needs R8 9.1.29 or newer (root build.gradle.kts).
+r8 = "9.1.57"
 kotlin = "2.4.21"
 ksp = "2.3.9"
 coroutines = "1.11.0"
@@ -31,6 +33,7 @@ androidxTestRunner = "1.7.0"
 androidxTestJunit = "1.3.0"
 
 [libraries]
+r8 = { module = "com.android.tools:r8", version.ref = "r8" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }

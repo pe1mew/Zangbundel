@@ -128,6 +128,12 @@ The opt-in campfire statistics (`design/guiDesign.md` D-60, assessment SP-16) we
 | `REQUEST_INSTALL_PACKAGES` | **Not** requested: sharing the app's own package (FR-DIST-05) goes through the system share sheet; the receiver's file manager performs the install. | Avoids a restricted-permission review. |
 | `QUERY_ALL_PACKAGES`, accessibility services, SMS, contacts | Not requested. | |
 
+**Foreground service declaration (prepared 2026-10-27).** Play Console → App content → Foreground service permissions, type *Connected device*:
+
+- *Describe the task:* "A campfire leader's phone broadcasts the song lyrics of a sing-along over Bluetooth Low Energy to the phones of the singers around the fire, without internet, and answers their short Bluetooth connections. The foreground service of type connectedDevice keeps this Bluetooth advertising and GATT server running while the leader's screen is off or the app is in the background, for the hours a campfire lasts. It starts when the leader starts a campfire or a singer joins one, and stops when the campfire ends. A notification 'Campfire running' shows for as long as it runs."
+- *Impact if deferred or interrupted:* "The broadcast stops: the singers' phones no longer receive the song being sung, and the campfire ends for everyone."
+- *Video:* `raw/foreground-service-leader.mp4` (69 s, 10 MB, on the owner's machine only; `raw/` is not in git). The leader starts a campfire, pushes the demo song *Lorem Ipsum!*, goes to the home screen and opens the notification shade, which shows *Kampvuur actief*; meanwhile two singers join; back in the app the leader's page shows them. Recorded on the A52 with Do Not Disturb on, so the shade shows nothing personal. Play asks for a link: upload it unlisted (YouTube or a shared drive) and paste the link.
+
 ### Step 5b — GitHub Pages for the join link (option 1, do now)
 
 The join QR code (FRD FR-GATH-19 to 23, BLE section 6.5) encodes `https://pe1mew.github.io/Zangbundel/j/#<payload>` (trailing slash; without it Pages redirects first). The page lives in this repository at `docs/j/index.html`; `docs/.nojekyll` makes GitHub serve the folder as is.
@@ -144,7 +150,7 @@ With only this step, Android 12 and later open the link in the browser first; th
 
 Verified App Links make the camera app open Zangbundel directly, skipping the browser. Android verifies by fetching `https://pe1mew.github.io/.well-known/assetlinks.json`, the **host root**, which GitHub Pages serves only from a repository named `pe1mew.github.io`. Preparation that needs no code is done:
 
-- [ ] `docs/app-links/assetlinks.template.json` holds the file to publish, with the package name filled in and the fingerprints as placeholders.
+- [x] `docs/app-links/assetlinks.json` is the file to publish (2026-10-27): the release package with the app signing key's SHA-256, known since option B, so it need not wait for the first upload. Test builds carry other package names and are not listed; `assetlinks.template.json` stays as the pattern.
 - [ ] `docs/app-links/intent-filters.xml` holds the two intent filters (verified `https` form, `zangbundel:` scheme form) for the Android manifest.
 
 When the app has been uploaded once (Step 6 records the app signing key SHA-256):
@@ -211,7 +217,7 @@ The photos in `raw/` (untracked, 2–5 MB each) can serve the feature graphic af
 4. Upload to **Internal testing**; wait for the pre-launch report; install from the Play link on two phones and run a gathering between them.
 5. Promote the same bundle to **Closed testing**; write release notes in nl and en.
 6. After the 14 days and production access: promote to **Production** with a staged rollout; watch Android vitals (crashes, ANRs) for a week before 100 %.
-7. Build the APK from the release tag `v<versionName>` with `./gradlew assembleRelease` (signed with the app signing key through `keystore.properties`), name it `zangbundel-<versionName>.apk` and attach it to the GitHub release of that tag. This is the file F-Droid's `Binaries` URL points at (`docs/FDROID-RUNBOOK.md` Steps 6 and 7); do not use the App Bundle Explorer APK, which cannot be byte-identical to F-Droid's build.
+7. Build the APK from the release tag `v<versionName>` and sign it with the **app signing key**, not the upload key that `keystore.properties` names for the bundle: move `keystore.properties` aside, run `./gradlew assembleRelease` (it then builds `app-release-unsigned.apk`), and sign that with `apksigner sign --ks <path>\zangbundel-appsigning.jks --ks-key-alias zangbundel --out zangbundel-<versionName>.apk app/build/outputs/apk/release/app-release-unsigned.apk`; put `keystore.properties` back. `apksigner verify --print-certs` must show `57:86:7B:…:9B:10` (check G-08). Name it `zangbundel-<versionName>.apk` and attach it to the GitHub release of that tag. This is the file F-Droid's `Binaries` URL points at (`docs/FDROID-RUNBOOK.md` Steps 6 and 7); do not use the App Bundle Explorer APK, which cannot be byte-identical to F-Droid's build.
 
 ### Post-deploy verification
 
