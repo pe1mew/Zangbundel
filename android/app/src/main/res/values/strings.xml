@@ -423,4 +423,10 @@
     <string name="statistics_wipe">Delete</string>
     <string name="statistics_wipe_title">Delete all statistics?</string>
     <string name="drawer_share_statistics">Share statistics</string>
+    <!-- guiDesign D-68: the battery before the fire, and quiet warnings while leading. -->
+    <string name="start_battery">Turn off battery saver and use a power bank: a campfire lasts for hours.</string>
+    <string name="battery_settings">Battery settings</string>
+    <string name="drawer_battery_saver">Battery saver is on</string>
+    <string name="drawer_other_campfire">Another campfire nearby: “%1$s”</string>
+    <string name="leader_warning">Warning, open the drawer for details</string>
 </resources>

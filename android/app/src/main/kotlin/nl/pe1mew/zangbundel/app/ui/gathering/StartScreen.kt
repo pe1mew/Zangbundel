@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,6 +51,7 @@ import java.util.Date
  * [FR-GATH-01, assessment SP-01], and the prepared setlist to begin with, or none [FR-LEAD-02];
  * how singers join (FR-GATH-05, FR-GATH-21, D-71): open, with a four-digit code the leader can say, or
  * only through the QR code; *Starten* switches into leader mode. The code is drawn when the fire starts.
+ * With battery saver on or the battery low, a line asks for a power bank (D-68).
  */
 @Composable
 fun StartScreen() {
@@ -63,6 +65,7 @@ fun StartScreen() {
     var setlists by remember { mutableStateOf<List<PreparedSetlist>>(emptyList()) }
     var starting by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
+    val power = rememberPower()
     LaunchedEffect(Unit) { setlists = container.setlists.all() }
     ConfigurationScreen {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -80,6 +83,14 @@ fun StartScreen() {
                 item { Choice(stringResource(R.string.start_no_setlist), null, chosen == null) { chosen = null } }
                 items(setlists, key = { it.uid }) { s ->
                     Choice(s.title, pluralStringResource(R.plurals.library_songs, s.songs, s.songs), chosen == s.uid) { chosen = s.uid }
+                }
+            }
+            // D-68: the battery is settled before the fire; starting stays allowed [FR-GATH-15].
+            if (power.warnBeforeStart) {
+                // The button under the line: beside it the line was squeezed to a narrow column (S23, 2026-10-27).
+                Column(Modifier.fillMaxWidth().padding(top = 8.dp).textPanel().padding(start = 12.dp, end = 4.dp, top = 8.dp)) {
+                    Text(stringResource(R.string.start_battery), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(end = 8.dp))
+                    TextButton(onClick = { openBatterySettings(context) }, modifier = Modifier.align(Alignment.End)) { Text(stringResource(R.string.battery_settings)) }
                 }
             }
             if (failed) Text(stringResource(R.string.start_failed), color = Palette.FireOrangeLight, modifier = Modifier.padding(top = 8.dp))

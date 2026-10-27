@@ -105,6 +105,9 @@ fun LeaderScreen() {
     // D-61: *Statistieken delen* while the opt-in of D-60 is on: the season kept so far, shown, then the share sheet.
     val statisticsOn by container.storage.settings.statisticsOn.collectAsState(initial = false)
     var statisticsPreview by remember { mutableStateOf<String?>(null) }
+    // D-68: battery saver during the gathering [FR-GATH-15] and another gathering nearby [FR-GATH-17], shown quietly.
+    val power = rememberPower()
+    val other by gathering.otherNearby.collectAsState()
     var drawer by remember { mutableStateOf(false) }
     // D-57: the ▲ ≡ ▼ column, dimmed after 3 s without a touch, and the setlist sheet.
     var touched by remember { mutableLongStateOf(0L) }
@@ -141,7 +144,7 @@ fun LeaderScreen() {
 
     Box(Modifier.fillMaxSize().onAnyTouch { touched++; dimmed = false }) {
         Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
-            LeaderBar(m, now, onOpen = { drawer = true })
+            LeaderBar(m, now, warning = power.saver || other != null, onOpen = { drawer = true })
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 // D-61: a tap on the lyrics closes the drawer; the lyrics keep scrolling under it.
                 LazyColumn(
@@ -175,7 +178,8 @@ fun LeaderScreen() {
                     else item(key = "closing") { ClosingBar { confirmEnd = true } }
                 }
                 DrawerSlot(drawer, m, now, onJoin = { qr -> drawer = false; showJoin = qr }, onInstall = { drawer = false; showInstall = true }, onEnd = { drawer = false; confirmEnd = true }, onClose = { drawer = false },
-                    onShareStatistics = if (statisticsOn) ({ drawer = false; scope.launch { statisticsPreview = exportJson(container.storage.statistics.all()) } }) else null)
+                    onShareStatistics = if (statisticsOn) ({ drawer = false; scope.launch { statisticsPreview = exportJson(container.storage.statistics.all()) } }) else null,
+                    saver = power.saver, onBatterySettings = { drawer = false; openBatterySettings(context) }, other = other)
             }
         }
         // Items: 0 is the setlist block, 1 + i the separator of song i. The ≡ button opens the sheet also without songs (D-58).
@@ -226,18 +230,24 @@ fun LeaderScreen() {
 private fun DrawerSlot(
     open: Boolean, m: Gathering.Mode.Leading, now: Long, onJoin: (Boolean) -> Unit, onInstall: () -> Unit, onEnd: () -> Unit, onClose: () -> Unit,
     onShareStatistics: (() -> Unit)?,
+    saver: Boolean, onBatterySettings: () -> Unit, other: String?,
 ) {
     AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
-        LeaderDrawer(m, now, onJoin = onJoin, onInstall = onInstall, onEnd = onEnd, onClose = onClose, onShareStatistics = onShareStatistics)
+        LeaderDrawer(
+            m, now, onJoin = onJoin, onInstall = onInstall, onEnd = onEnd, onClose = onClose, onShareStatistics = onShareStatistics,
+            saver = saver, onBatterySettings = onBatterySettings, other = other,
+        )
     }
 }
 
 /**
  * The closed leader bar (D-61): one 32 dp line in the secondary colour, the fingerprint after the name
  * (D-36), and a small handle in the middle of its lower edge; a tap or a drag down opens the drawer.
+ * The badge at the right is the warning sign of D-68 while battery saver is on or another gathering is
+ * heard; the drawer says which. The request count of D-61 is phase 2.
  */
 @Composable
-private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, onOpen: () -> Unit) {
+private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, warning: Boolean, onOpen: () -> Unit) {
     val seconds = ((now - m.startedAt) / 1000).coerceAtLeast(0)
     val time = "%d:%02d".format(seconds / 3600, (seconds / 60) % 60)
     val open = stringResource(R.string.drawer_open)
@@ -246,12 +256,16 @@ private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, onOpen: () -> Unit) 
             .clickable(onClickLabel = open, onClick = onOpen)
             .pointerInput(Unit) { detectVerticalDragGestures { _, dy -> if (dy > 8f) onOpen() } },
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = if (warning) 36.dp else 16.dp).align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
             Text(m.name, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
             Text(" · " + m.fingerprint + " · " + pluralStringResource(R.plurals.leader_singers, m.singers, m.singers) + " · " + time,
                 color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
         }
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).size(width = 32.dp, height = 3.dp).background(LyricColors.Night.secondary.copy(alpha = 0.6f), CircleShape))
+        if (warning) {
+            val label = stringResource(R.string.leader_warning)
+            Text(WARNING, color = Palette.FireOrange, fontSize = 16.sp, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp).semantics { contentDescription = label })
+        }
     }
 }
 

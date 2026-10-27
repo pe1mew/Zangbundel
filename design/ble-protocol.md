@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.41 (draft) |
+| Document version | 0.42 (draft) |
 | Date | 2026-10-27 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -54,6 +54,7 @@
 | 0.39 | 2026-10-27 | 10.1 step 2 and 10.9, the owner's request with resume after a crash (guiDesign D-67): the resume record also holds `ts`, since 9.4 makes singers ignore a state whose `ts` is not above the last one and a resumed leader counting from 0 again would be ignored by all of them; and the setlist as started (per position its `library-id/song-id`, or its title), the positions pushed in order and the current position, so a resumed leader publishes the same current song, `cpos`, `sung` and songs ahead and singers carry on where they were. The record is rewritten on every push and at least every 30 s; its last write marks when the leader stopped. A resume more than 5 min after that finds its singers ended (10.11). |
 | 0.40 | 2026-10-27 | `design/proposals/2026-10-27-setlist-during-campfire.md`, approved by the owner: the setlist may change during the gathering (songs added, removed or moved, FR-LEAD-03); 9.4 `cpos` and `sung` name positions in the setlist the same state's manifest names and are renumbered with it; 7.5: a singer reads them only against that setlist and remembers earlier songs by `dh`; 10.5: a setlist change is a new state with the same `cur`, and clearing the current song (FR-LEAD-06) leaves out `cur` and `cpos`. No wire change. |
 | 0.41 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09: the opt-in campfire statistics on the leader's device, export by hand only); no other change. |
+| 0.42 | 2026-10-27 | 10.1 step 6 as built: the leader's app shows another gathering for as long as it is heard (`design/guiDesign.md` D-68) instead of warning once; no change on the air. |
 
 ---
 
@@ -715,7 +716,7 @@ Op 8 is optional in 1.0; a leader without it answers `0x8A` and the delegate sho
 3. Build the state, info and initial documents (an empty or prepared setlist [FR-LEAD-02]).
 4. Start the GATT server; start the beacon set; open legacy data sets until the stack refuses (max 3); start the extended set if supported. Set `BCAST`/`EXT` accordingly [FR-GATH-02].
 5. Start the carousel (section 7.4).
-6. **Keep scanning while leading** [FR-GATH-17] at a low duty cycle (2 s every 30 s). A beacon with another `gid`, `ENDED` = 0 and `RELAY` = 0 triggers a one-time warning naming the other gathering. Resuming a gathering repeats step 1 but ignores beacons carrying the resumed `gid`.
+6. **Keep scanning while leading** [FR-GATH-17] at a low duty cycle (2 s every 30 s). A beacon with another `gid`, `ENDED` = 0 and `RELAY` = 0 triggers a one-time warning naming the other gathering. Resuming a gathering repeats step 1 but ignores beacons carrying the resumed `gid`. *(As built, v0.42:)* the app keeps another gathering as near while it was heard within the last 65 s, about two listens, and shows it quietly as `design/guiDesign.md` D-68 describes, rather than warning once; the scan is started and stopped for each listen, two starts per 30 s, under Android's limit of five (15.1).
 
 ### 10.2 Discover, verify and register (singer)
 

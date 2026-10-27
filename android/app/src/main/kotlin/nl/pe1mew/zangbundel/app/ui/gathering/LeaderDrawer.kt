@@ -34,9 +34,10 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
  * The leader bar's drawer (guiDesign D-61) as far as its functions exist: on top the live statistics of
  * D-62 (time since the start, songs sung, singers now with the evening's maximum, link quality as one
  * word with the last song's duration under it), the rows that open the join panels of D-57 (the two
- * words or the *Deelnamecode*, and *QR-code tonen*; v0.34), and, set apart, *Kampvuur beëindigen* (D-69). Requests (D-63), assistants (D-73), sharing
- * statistics (D-60) and another campfire nearby (D-68) get their rows when they are built. A swipe up, the
- * handle at the bottom, a tap on the lyrics or *Nu* close it.
+ * words or the *Deelnamecode*, and *QR-code tonen*; v0.34), *Installeren* (D-83), *Statistieken delen*
+ * (D-60), the warnings of D-68 (battery saver on, another campfire nearby), and, set apart, *Kampvuur
+ * beëindigen* (D-69). Requests (D-63) and assistants (D-73) are phase 2. A swipe up, the handle at the
+ * bottom, a tap on the lyrics or *Nu* close it.
  */
 @Composable
 internal fun LeaderDrawer(
@@ -49,6 +50,11 @@ internal fun LeaderDrawer(
     modifier: Modifier = Modifier,
     /** D-61: *Statistieken delen*, only while the opt-in of D-60 is on; null hides the row. */
     onShareStatistics: (() -> Unit)? = null,
+    /** D-68: battery saver came on during the gathering [FR-GATH-15]; the row opens the system setting. */
+    saver: Boolean = false,
+    onBatterySettings: () -> Unit = {},
+    /** D-68: the name of another gathering heard nearby [FR-GATH-17], information only; null hides the row. */
+    other: String? = null,
 ) {
     Column(
         modifier
@@ -85,6 +91,9 @@ internal fun LeaderDrawer(
         // D-83: the install code, for a phone that should not join.
         JoinRow(stringResource(R.string.drawer_install), null, big = false, onClick = onInstall)
         onShareStatistics?.let { JoinRow(stringResource(R.string.drawer_share_statistics), null, big = false, onClick = it) }
+        // D-68: what the bar's warning sign stands for; nothing here interrupts.
+        if (saver) JoinRow(WARNING + "  " + stringResource(R.string.drawer_battery_saver), null, big = false, onClick = onBatterySettings)
+        if (other != null) Text(WARNING + "  " + stringResource(R.string.drawer_other_campfire, other), color = Palette.OffWhite, modifier = Modifier.padding(vertical = 6.dp))
         HorizontalDivider(color = LyricColors.Night.divider)
         Text(
             stringResource(R.string.drawer_end),
@@ -128,3 +137,5 @@ private fun elapsed(ms: Long, seconds: Boolean = false): String {
 private const val GOOD_BELOW = 0.3f
 private const val FAIR_BELOW = 0.7f
 private const val DRAG_PX = 8f
+/** D-61, D-68: the warning sign of the leader bar and the drawer; U+FE0E asks for the plain glyph, not the colour emoji. */
+internal const val WARNING = "⚠︎"

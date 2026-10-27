@@ -6,6 +6,7 @@ import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -184,6 +185,13 @@ class Gathering(
     private val _nearby = MutableStateFlow<List<Nearby>>(emptyList())
     val nearby: StateFlow<List<Nearby>> = _nearby
 
+    /**
+     * While leading: the name of another gathering heard nearby (FR-GATH-17, D-68), null when none. Its own
+     * flow rather than a field of [Mode.Leading], which the 1-s loop rewrites from a copy.
+     */
+    private val _otherNearby = MutableStateFlow<String?>(null)
+    val otherNearby: StateFlow<String?> = _otherNearby
+
     /** When the current scan started, for the 5 seconds of listening before a start (FR-GATH-16, D-23); null when not scanning. */
     private val _scanningSince = MutableStateFlow<Long?>(null)
     val scanningSince: StateFlow<Long?> = _scanningSince
@@ -298,6 +306,32 @@ class Gathering(
     /** The loops of a running gathering, started or resumed: diagnostics, the leader's figures, and the resume record. */
     private suspend fun running(l: LeaderSession, s: CoroutineScope, t: Transport) {
         persist(l)
+        // FR-GATH-17, ble-protocol 10.1 step 6: listen 2 s every 30 s for another gathering (two scan starts per
+        // 30 s, under Android's limit of five); D-68 shows it quietly while it is heard. A resumed gathering's own beacons are ignored.
+        s.launch {
+            val others = OtherCampfires(l.gid, OTHER_TIMEOUT_MS)
+            try {
+                launch {
+                    t.scanResults().collect { r ->
+                        val b = r.manufacturerData?.let(BeaconCodec::decodeA) ?: r.localName?.let(BeaconCodec::decodeB) ?: return@collect
+                        others.seen(b.gid, b.name, b.ended, b.relay, clock())
+                    }
+                }
+                while (isActive) {
+                    runCatching { t.startScan(Transport.ScanMode.LOW_DUTY) }
+                    delay(OTHER_LISTEN_MS)
+                    runCatching { t.stopScan() }
+                    val other = others.near(clock(), (_mode.value as? Mode.Leading)?.name.orEmpty())
+                    if (other != _otherNearby.value) Log.d("leader other gathering nearby: ${other ?: "none"}")
+                    _otherNearby.value = other
+                    delay(OTHER_EVERY_MS - OTHER_LISTEN_MS)
+                }
+            } finally {
+                // Ended during a listen: the scan must not run on into the home screen's own scan.
+                withContext(NonCancellable) { runCatching { t.stopScan() } }
+                _otherNearby.value = null
+            }
+        }
         s.launch {
             // Diagnostics: the send loop's real rate, and what the stack confirmed per legacy set, every 5 s.
             var t0 = clock(); var ticks0 = l.ticks; var work0 = l.tickWorkMs
@@ -877,6 +911,11 @@ class Gathering(
         private const val RESUME_REWRITE_MS = 30_000L
         /** D-62: the link quality looks back this far. */
         private const val QUALITY_WINDOW_MS = 60_000L
+        /** ble-protocol 10.1 step 6: while leading, listen this long, this often. */
+        private const val OTHER_LISTEN_MS = 2_000L
+        private const val OTHER_EVERY_MS = 30_000L
+        /** D-68: another gathering not heard in two listens in a row is no longer shown. */
+        private const val OTHER_TIMEOUT_MS = 65_000L
         /** FR-GATH-16: listen this long before a gathering may start (D-23). */
         const val LISTEN_BEFORE_START_MS = 5_000L
         private const val COLLECTING_REFRESH_MS = 500L

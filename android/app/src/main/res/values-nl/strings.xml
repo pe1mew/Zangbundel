@@ -422,4 +422,10 @@
     <string name="statistics_wipe">Wissen</string>
     <string name="statistics_wipe_title">Alle statistieken wissen?</string>
     <string name="drawer_share_statistics">Statistieken delen</string>
+    <!-- guiDesign D-68: de batterij vóór het vuur, en stille waarschuwingen tijdens het leiden. -->
+    <string name="start_battery">Zet de batterijbespaarstand uit en gebruik een powerbank: een kampvuur duurt uren.</string>
+    <string name="battery_settings">Batterij-instellingen</string>
+    <string name="drawer_battery_saver">Batterijbespaarstand staat aan</string>
+    <string name="drawer_other_campfire">Ander kampvuur in de buurt: “%1$s”</string>
+    <string name="leader_warning">Waarschuwing, open de lade voor meer</string>
 </resources>
