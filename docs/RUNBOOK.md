@@ -128,7 +128,7 @@ The opt-in campfire statistics (`design/guiDesign.md` D-60, assessment SP-16) we
 | `REQUEST_INSTALL_PACKAGES` | **Not** requested: sharing the app's own package (FR-DIST-05) goes through the system share sheet; the receiver's file manager performs the install. | Avoids a restricted-permission review. |
 | `QUERY_ALL_PACKAGES`, accessibility services, SMS, contacts | Not requested. | |
 
-**Foreground service declaration (prepared 2026-10-27).** Play Console → App content → Foreground service permissions, type *Connected device*:
+**Foreground service declaration (prepared 2026-10-27, submitted 2026-10-28).** Play Console → App content → Foreground service permissions, type *Connected device*, task *Continue gegevensoverdracht naar een extern apparaat* (continuous data transfer to an external device; not *Autosleutel*, not *Overig*):
 
 - *Describe the task:* "A campfire leader's phone broadcasts the song lyrics of a sing-along over Bluetooth Low Energy to the phones of the singers around the fire, without internet, and answers their short Bluetooth connections. The foreground service of type connectedDevice keeps this Bluetooth advertising and GATT server running while the leader's screen is off or the app is in the background, for the hours a campfire lasts. It starts when the leader starts a campfire or a singer joins one, and stops when the campfire ends. A notification 'Campfire running' shows for as long as it runs."
 - *Impact if deferred or interrupted:* "The broadcast stops: the singers' phones no longer receive the song being sung, and the campfire ends for everyone."
@@ -215,7 +215,7 @@ The photos in `raw/` (untracked, 2–5 MB each) can serve the feature graphic af
 2. Run the checks (`bash scripts/check-design.sh` for the design; the Android unit tests once they exist).
 3. Build the release bundle: `./gradlew bundleRelease` with `keystore.properties` present. Never upload a debuggable build.
 4. Upload to **Internal testing**; wait for the pre-launch report; install from the Play link on two phones and run a gathering between them.
-5. Promote the same bundle to **Closed testing**; write release notes in nl and en.
+5. Promote the same bundle to **Closed testing**, or in the closed-test draft add it with *Toevoegen uit bibliotheek* (a draft without a bundle gives "geen app-bundels toegevoegd"); write release notes in nl and en. First done 2026-10-28: 0.1.1 (2026102701) on *Gesloten test – Alpha*, submitted for review.
 6. After the 14 days and production access: promote to **Production** with a staged rollout; watch Android vitals (crashes, ANRs) for a week before 100 %.
 7. Build the APK from the release tag `v<versionName>` and sign it with the **app signing key**, not the upload key that `keystore.properties` names for the bundle: the commands are in `docs/FDROID-RUNBOOK.md` Step 6 (a fresh clone of the tag, `assembleRelease`, compared with CI's build, signed with apksigner 34, v2 and v3 only). `apksigner verify --print-certs` must show `57:86:7B:…:9B:10` (check G-08). Name it `zangbundel-<versionName>.apk` and attach it to the GitHub release of that tag, together with the production release. This is the file F-Droid's `Binaries` URL points at (`docs/FDROID-RUNBOOK.md` Steps 6 and 7); do not use the App Bundle Explorer APK, which cannot be byte-identical to F-Droid's build.
 
@@ -230,6 +230,7 @@ The photos in `raw/` (untracked, 2–5 MB each) can serve the feature graphic af
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Upload refused: "version code already used" | `versionCode` not higher than a previous upload on any track, including deleted releases | Bump `versionCode`; never reuse |
+| Warning: "versiecode … aanzienlijk hoger dan je vorige versiecode" | The `YYYYMMDDnn` scheme (Decisions) looks large to Play | *Toch doorgaan*: the scheme's highest code, 2099123199, stays under Play's limit of 2 100 000 000 |
 | Upload refused: target API too low | `targetSdk` below the current requirement (36 from 31 August 2026) | Raise `targetSdk`, rebuild |
 | Upload refused: wrong signing key | Bundle signed with a key other than the registered upload key | Use the registered keystore; if lost, request an upload key reset |
 | Release blocked by a red task on the dashboard | Data safety, content rating, foreground service declaration or privacy policy incomplete | Complete Step 3 and Step 5 items |
