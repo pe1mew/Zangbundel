@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.2.0 (2026102801)
+
+New: choose the app's language under Settings → Language, or let it follow the phone. The two words of a campfire appear in your phone's language. In the songbook, swipe to the next or previous song, or use the round buttons at the bottom; the middle one shows the song info. Settings is tidier.
+
 ### 0.1.1 (2026102701)
 
 Fixed: after ending a campfire, the home screen finds other campfires again. New: tap the two words of a campfire to read what they mean. About links to the source code and has a button for the manual. Scanning the leader's QR code with the camera now opens the app directly.

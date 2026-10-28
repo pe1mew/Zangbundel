@@ -87,7 +87,7 @@ A text is only right when it fits its screen. You need an Android phone (Android
 1. Sign in to GitHub, open **Actions** in the repository (`https://github.com/pe1mew/Zangbundel/actions`), choose the workflow **android**, and open its newest run on `main`, marked green.
 2. Under **Artifacts**, download **zangbundel-review-build**. It is a zip file holding `app-debug.apk`; review builds are kept for 30 days.
 3. Unzip it on the phone, or copy the APK to the phone, and open it. Android asks to allow installing from this source: allow it for the app that opens the file, install, and switch it off again afterwards.
-4. The review build installs **next to** the store app, not over it: there are then two *Zangbundel* icons. It is signed with a throwaway development key, so its fingerprint on *Over* differs from the store app's; that is expected. Remove it when you are done.
+4. The review build installs **next to** the store app, not over it: there are then two *Zangbundel* icons. It is signed with a throwaway development key, so its fingerprint on *Over* differs from the store app's; that is expected. Every build makes a new key, so a newer review build does not install over an older one: remove the older one first (its settings and libraries go with it). Remove it when you are done (assessment SP-35).
 5. Open it, and choose your language under **Instellingen → Taal** (*Settings → Language*, *Einstellungen → Sprache*).
 6. Go through the screens, and compare what you see with the file:
    - first use: *Zo werkt het*, and the privacy screen behind *Wat gebeurt er met mijn gegevens?*;

@@ -1,0 +1,1 @@
+New: choose the app's language under Settings → Language, or let it follow the phone. The two words of a campfire appear in your phone's language. In the songbook, swipe to the next or previous song, or use the round buttons at the bottom; the middle one shows the song info. Settings is tidier.

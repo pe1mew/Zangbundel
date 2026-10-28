@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.2.0 (2026102801)
+
+Nieuw: kies de taal van de app onder Instellingen → Taal, of laat hem de telefoon volgen. De twee woorden van een kampvuur staan in de taal van je telefoon. In de zangbundel veeg je naar het volgende of vorige lied, of gebruik je de ronde knoppen onderaan; de middelste toont de liedinfo. Instellingen is overzichtelijker.
+
 ### 0.1.1 (2026102701)
 
 Verbeterd: na het beëindigen van een kampvuur vindt het startscherm weer andere kampvuren. Nieuw: tik op de twee woorden van een kampvuur om te lezen wat ze betekenen. Over heeft een link naar de broncode en een knop naar de handleiding. De QR-code van de leider opent de app nu direct vanuit de camera.

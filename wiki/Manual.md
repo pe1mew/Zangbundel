@@ -6,7 +6,7 @@ Zangbundel is a songbook for the campfire. One phone is the **campfire leader**:
 
 The app itself contains no lyrics. Songs come from **libraries** that the leader adds; each library has its own licence. To sing along you need no library: the leader sends every song.
 
-The app shows its screens in Dutch or English, following the phone's language. This manual names the English labels; the [Dutch manual](Handleiding) has the Dutch ones. It belongs to version 0.1.1.
+The app shows its screens in Dutch or English, following the phone's language unless you choose one under **Settings → Language**. This manual names the English labels; the [Dutch manual](Handleiding) has the Dutch ones. It belongs to version 0.2.0.
 
 ---
 
@@ -65,7 +65,10 @@ If the app refuses a library with *This library needs a newer version of the app
 
 - **Search** searches titles; with **Also in the lyrics** the lyrics too.
 - The buttons under the search field filter, for example by language or kind of song; **A–Z** changes the order.
-- Tap a song to read it. The **ⓘ** next to the title, or a long press on the title, shows the song info: words and music, licence, source.
+- Tap a song to read it.
+- **Swipe** to the next or previous song: to the left for the next, to the right for the previous, in the order of the list as you saw it (with your search, filters and sort). It stops at the first and the last song.
+- At the bottom are three **round buttons**: **‹** previous song, **ⓘ** song info (words and music, licence, source) and **›** next song. They fade when you leave them alone for a few seconds; a touch brings them back. A long press on the title shows the song info too.
+- A song opened from a memory is a single song: you do not swipe there.
 - From a song you add it to a setlist.
 
 ## 5. Setlists
@@ -117,7 +120,7 @@ You see the same lyrics as the singers. The setlist is at the top; each song sta
 The thin bar at the top shows the name, **the two words**, the number of singers and the time. Tap it (or pull it down) to open it:
 
 - **Time**, **Songs**, **Signed in** (with the highest number) and **Reach** (*good*, *fair* or *weak*);
-- **The two words of this campfire**: large, to say aloud. Singers see the same words next to the campfire's name;
+- **The two words of this campfire**: large, to say aloud. Singers see the same words next to the campfire's name; a phone set to another language shows them translated (*kalf-harp* becomes *calf-harp*);
 - **Join code** (when you chose one) and **Show QR code**: the QR code large on a white panel; tap to close;
 - **Install the app**: the link to the app for whoever does not have it;
 - **Share statistics**, when you keep statistics (see [Settings](#9-settings));
@@ -139,7 +142,7 @@ If the app stops while you lead, open it again within 10 minutes: you get **Resu
 - **From the list**: open the app. Under *Campfires nearby* each campfire shows its two words and how close it is. Tap it. If it shows a lock, type the **join code** the leader says.
 - **With the QR code**: scan the QR code on the leader's screen with your **camera app**. Zangbundel opens and looks for the campfire. If you do not have the app yet, a web page opens that leads to Google Play.
 
-Two campfires with nearly the same name? Ask the leader for **the two words**.
+Two campfires with nearly the same name? Ask the leader for **the two words**. If your phone is set to another language than the leader's, you see the same words translated.
 
 ### The singer's screen
 
@@ -161,6 +164,7 @@ Press back (or choose **Leave the campfire** at the bottom of the list) and conf
 
 ## 9. Settings
 
+- **Language**: **Automatic** follows the phone's language; or choose **Nederlands** or **English**. A phone set to a language the app does not have shows English. On Android 13 and later this can also be set in the phone's settings, under the app.
 - **Name for the leader**: optional; just your first name or a nickname. Only the leader can read it; without a name you are a singer with a number.
 - **Campfire statistics** (for leaders, off by default): for each campfire, without names, the phone keeps which songs were sent, how many singers there were and how well Bluetooth reached them. The screen says exactly what is and is not kept. Nothing is sent; it leaves your phone only when you tap **Share** yourself.
 - **Remove all data**: libraries, setlists, memories and settings are removed from the phone; the app starts again as on the first day.

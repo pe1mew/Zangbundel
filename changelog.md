@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-28
+
+Prepared for Google Play (versionCode 2026102801); it goes to internal testing and then the closed test.
+
 ### Added
+- Round buttons at the bottom of the songbook's reading view (guiDesign v0.62, D-85): previous song, song info and next song, like the singer's buttons and dimming the same way; the middle one replaces the ⓘ beside the title. Tested on the A52 (`design/test-results/2026-10-28-reading-buttons-and-english.md`).
 - Swiping between songs while reading in the songbook (guiDesign v0.61, D-85): to the left the next song, to the right the previous one, of the songbook as it was shown with its search, filters and sort; the first and last song stop there. A song opened from a memory stays one page. Tested on the A52 (`design/test-results/2026-10-28-swipe-songs.md`).
 - *Taal* in settings (FR-LANG-03, guiDesign D-76, architecture A-16), a pull-down: *Automatisch* (the phone's language, English when the app lacks it), then *Nederlands* and *English* in their own names; Android 13's per-app language setting offers the same list, and AppCompat keeps the choice on Android 8 to 12.
 - `docs/TRANSLATING.md` for translators and reviewers of Dutch, English and German: what to review, the mandatory rules and why the files are as they are, reviewing on a phone, and the fork-and-pull-request steps. `scripts/check-translation.py` checks one language or all of them against English (missing and extra strings, placeholders, plural forms, escapes, links, the glossary of guiDesign D-79, the language lists of each build); CI runs it, and `scripts/test-check-translation.py`, which makes each kind of mistake on purpose and confirms the check reports it. CI also uploads a **review build** (`zangbundel-review-build`, the debug build with the languages under review, kept 30 days) for reviewers to install next to the store app, and an issue form *Translation feedback* takes reviews from people who do not send a pull request. The guide adds the German gender forms (decided by the reviewers) and the two words, which stay Dutch.

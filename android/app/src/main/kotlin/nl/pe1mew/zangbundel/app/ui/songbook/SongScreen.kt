@@ -36,8 +36,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -70,7 +72,9 @@ import nl.pe1mew.zangbundel.app.ui.KeepTopLine
 import nl.pe1mew.zangbundel.app.ui.LineKeeper
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
+import nl.pe1mew.zangbundel.app.ui.gathering.RoundButtonRow
 import nl.pe1mew.zangbundel.app.ui.gathering.SongInfoSheet
+import nl.pe1mew.zangbundel.app.ui.gathering.onAnyTouch
 import nl.pe1mew.zangbundel.app.ui.setlists.NameDialog
 import nl.pe1mew.zangbundel.core.songformat.Song
 import nl.pe1mew.zangbundel.core.songformat.SongParser
@@ -207,10 +211,11 @@ class SongViewModel(
 
 
 /**
- * Reading a song in preparation (guiDesign D-53): the lyric view's styling in the theme the singer chose in
+ * Reading a song in preparation (guiDesign D-53, D-85): the lyric view's styling in the theme the singer chose in
  * the toolbar (D-17; night unless changed, D-53 as amended in v0.48), at the default lyric size of D-18, lines wrapping with a hanging indent of 1 em (D-28); below, D-53's one
- * button that adds the song to a setlist. The song's metadata and licence (D-45, FR-LIB-20) open from the ⓘ
- * beside the title or a long press on the title (D-33). A rotation keeps the line at the top (D-42, FR-DISP-04),
+ * button that adds the song to a setlist. The song's metadata and licence (D-45, FR-LIB-20) open from
+ * the middle one of the round buttons, or a long press on the title (D-33). Previous and next, left and right of it, do
+ * what a swipe does (D-85). A rotation keeps the line at the top (D-42, FR-DISP-04),
  * as on the lyric pages of a campfire. Opened from the songbook, a swipe to the left shows the next song of the
  * songbook as it was shown, a swipe to the right the previous one; the first and the last song stop there (D-85).
  */
@@ -226,10 +231,29 @@ fun SongScreen(model: SongViewModel = viewModel(factory = SongViewModel.Factory)
     Column(Modifier.fillMaxSize().background(colors.background)) {
         // The system bars keep light icons (MainActivity); a black band under each keeps them readable on white.
         Spacer(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(Color.Black))
-        // D-85: one page per song; the neighbours are read ahead so a swipe shows text at once.
-        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), beyondViewportPageCount = 1, key = { model.order[it].toString() }) { page ->
-            LaunchedEffect(page) { model.load(page) }
-            SongPage(pages[page], colors)
+        // D-85 as amended in v0.62: the round buttons of D-30 in a row, dimming when not touched.
+        var touched by remember { mutableLongStateOf(0L) }
+        var dimmed by remember { mutableStateOf(false) }
+        var info by rememberSaveable { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        Box(Modifier.weight(1f).fillMaxWidth().onAnyTouch { touched = System.nanoTime(); dimmed = false }) {
+            // D-85: one page per song; the neighbours are read ahead so a swipe shows text at once.
+            HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { model.order[it].toString() }) { page ->
+                LaunchedEffect(page) { model.load(page) }
+                SongPage(pages[page], colors, onInfo = { info = true })
+            }
+            RoundButtonRow(
+                touched = touched, dimmed = dimmed, onDim = { dimmed = true },
+                prevEnabled = pager.currentPage > 0, nextEnabled = pager.currentPage < model.order.size - 1,
+                onPrev = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } },
+                onInfo = { info = true },
+                onNext = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+                day = !night,
+            )
+        }
+        (pages[pager.currentPage] as? SongViewModel.State.Shown)?.let { s ->
+            if (info) SongInfoSheet(s.song.meta, s.entry.libraryName, onDismiss = { info = false })
         }
         target?.let { AddButton(it, model, colors) }
         Spacer(Modifier.fillMaxWidth().windowInsetsBottomHeight(WindowInsets.navigationBars).background(Color.Black))
@@ -238,17 +262,18 @@ fun SongScreen(model: SongViewModel = viewModel(factory = SongViewModel.Factory)
 
 /** One song: its heading and lyrics, scrolling on its own, its top line kept through a rotation (D-42). */
 @Composable
-private fun SongPage(state: SongViewModel.State?, colors: LyricColors) {
+private fun SongPage(state: SongViewModel.State?, colors: LyricColors, onInfo: () -> Unit) {
     // D-42: item 0 is the title block, item 1 the song, whose lines the keeper follows through a rotation.
     val list = rememberLazyListState()
     val lines = remember { LineKeeper() }
     KeepTopLine(list, lines, keyAt = { i -> if (i == SONG_ITEM) SONG_KEY else null }, indexOf = { k -> if (k == SONG_KEY) SONG_ITEM else -1 })
-    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)) {
+    // The bottom padding keeps the last line clear of the round buttons (56 dp and 16 dp below them).
+    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 96.dp)) {
         when (state) {
             null, SongViewModel.State.Loading -> Unit
             SongViewModel.State.Unreadable -> item { Text(stringResource(R.string.song_unreadable), color = colors.lyric) }
             is SongViewModel.State.Shown -> {
-                item { Heading(state.entry, state.song, colors) }
+                item { Heading(state.entry, state.song, colors, onInfo) }
                 item {
                     LyricBody(state.song, colors, Modifier.onGloballyPositioned { lines.item(SONG_KEY, it) }) { code, c -> lines.line(SONG_KEY, code, c) }
                 }
@@ -295,20 +320,13 @@ private fun AddButton(target: SongViewModel.Target, model: SongViewModel, colors
     if (naming) NameDialog(R.string.setlists_new, "", onDismiss = { naming = false }) { naming = false; model.addToNew(it) }
 }
 
+/** The title and its library; the song info opens from the round buttons' middle one, or a long press on the title (D-33). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Heading(entry: SongbookEntry, song: Song, colors: LyricColors) {
-    var info by rememberSaveable { mutableStateOf(false) }
-    val infoLabel = stringResource(R.string.toolbar_info)
-    Row(verticalAlignment = Alignment.Top) {
-        Text(song.meta.title, fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold, color = colors.lyric,
-            modifier = Modifier.weight(1f).combinedClickable(onClick = {}, onLongClick = { info = true }, onLongClickLabel = infoLabel))
-        Box(Modifier.size(48.dp).clickable(onClickLabel = infoLabel) { info = true }, contentAlignment = Alignment.Center) {
-            Text("ⓘ", fontSize = 24.sp, color = colors.secondary)
-        }
-    }
+private fun Heading(entry: SongbookEntry, song: Song, colors: LyricColors, onInfo: () -> Unit) {
+    Text(song.meta.title, fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold, color = colors.lyric,
+        modifier = Modifier.fillMaxWidth().combinedClickable(onClick = {}, onLongClick = onInfo, onLongClickLabel = stringResource(R.string.toolbar_info)))
     Text(listOf(entry.libraryName, entry.language).joinToString(" · "), fontSize = 14.sp, color = colors.secondary)
-    if (info) SongInfoSheet(song.meta, entry.libraryName, onDismiss = { info = false })
     Spacer(Modifier.height(20.dp))
 }
 

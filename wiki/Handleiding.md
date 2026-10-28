@@ -6,7 +6,7 @@ Zangbundel is een zangbundel voor bij het kampvuur. Eén telefoon is de **kampvu
 
 De app bevat zelf geen liedteksten. Liederen komen uit **bibliotheken** die de leider toevoegt; elke bibliotheek heeft een eigen licentie. Om mee te zingen heb je geen bibliotheek nodig: de leider stuurt elk lied.
 
-Deze handleiding hoort bij versie 0.1.1.
+Deze handleiding hoort bij versie 0.2.0.
 
 ---
 
@@ -65,7 +65,10 @@ Weigert de app een bibliotheek met *Deze bibliotheek vraagt een nieuwere versie 
 
 - **Zoeken** zoekt op titel; met **Ook in de tekst** ook in de liedteksten.
 - De knoppen onder het zoekveld filteren, bijvoorbeeld op taal of soort lied; **A–Z** wisselt de volgorde.
-- Tik op een lied om het te lezen. Het **ⓘ** naast de titel, of lang drukken op de titel, toont de liedinfo: tekst en muziek, licentie, bron.
+- Tik op een lied om het te lezen.
+- **Vegen** gaat naar het volgende of vorige lied: naar links het volgende, naar rechts het vorige, in de volgorde van de lijst zoals je hem zag (met je zoekwoord, filters en volgorde). Bij het eerste en laatste lied houdt het op.
+- Onderaan staan drie **ronde knoppen**: **‹** vorig lied, **ⓘ** liedinfo (tekst en muziek, licentie, bron) en **›** volgend lied. Ze worden lichter als je ze een paar seconden niet gebruikt; aanraken haalt ze terug. Lang drukken op de titel toont ook de liedinfo.
+- Een lied dat je uit een herinnering opent, is één los lied: daar veeg je niet.
 - Vanuit een lied voeg je het toe aan een setlist.
 
 ## 5. Setlists
@@ -117,7 +120,7 @@ Je ziet dezelfde tekst als de zangers. Bovenaan staat de setlist; elk lied begin
 De smalle balk bovenaan toont de naam, **de twee woorden**, het aantal zangers en de tijd. Tik erop (of trek hem omlaag) om hem te openen:
 
 - **Tijd**, **Liederen**, **Aangemeld** (met het hoogste aantal) en **Bereik** (*goed*, *matig* of *zwak*);
-- **De twee woorden van dit kampvuur**: groot, om hardop te zeggen. Zangers zien dezelfde woorden naast de naam van het kampvuur;
+- **De twee woorden van dit kampvuur**: groot, om hardop te zeggen. Zangers zien dezelfde woorden naast de naam van het kampvuur; een telefoon die in een andere taal staat, toont ze vertaald (*kalf-harp* wordt *calf-harp*);
 - **Deelnamecode** (als je die koos) en **QR-code tonen**: de QR-code groot op een wit vlak; tik om te sluiten;
 - **App installeren**: de link naar de app voor wie hem nog niet heeft;
 - **Statistieken delen**, als je statistieken bewaart (zie [Instellingen](#9-instellingen));
@@ -139,7 +142,7 @@ Stopt de app terwijl je leidt, open hem dan binnen 10 minuten opnieuw: je krijgt
 - **Uit de lijst**: open de app. Onder *Kampvuren in de buurt* staat elk kampvuur met zijn twee woorden en hoe dichtbij het is (*Dichtbij*, *Binnen bereik*, *Ver weg*). Tik erop. Staat er een slotje, typ dan de **deelnamecode** die de leider zegt.
 - **Met de QR-code**: scan de QR-code op het scherm van de leider met je **camera-app**. Zangbundel opent en zoekt het kampvuur (*Kampvuur zoeken…*, *Gevonden, controleren…*). Heb je de app nog niet, dan opent een webpagina die naar Google Play leidt.
 
-Zie je twee kampvuren met bijna dezelfde naam? Vraag de leider naar **de twee woorden**.
+Zie je twee kampvuren met bijna dezelfde naam? Vraag de leider naar **de twee woorden**. Staat jouw telefoon in een andere taal dan die van de leider, dan zie je dezelfde woorden vertaald.
 
 ### Het scherm van de zanger
 
@@ -161,6 +164,7 @@ Druk op terug (of kies **Kampvuur verlaten** onderaan de lijst) en bevestig met 
 
 ## 9. Instellingen
 
+- **Taal**: **Automatisch** volgt de taal van de telefoon; of kies **Nederlands** of **English**. Staat de telefoon in een taal die de app niet heeft, dan toont de app Engels. Op Android 13 en nieuwer kan het ook in de instellingen van de telefoon, bij de app.
 - **Naam voor de leider**: niet verplicht; alleen je voornaam of bijnaam. Alleen de leider kan hem lezen; zonder naam ben je een zanger met een nummer.
 - **Statistieken van kampvuren** (voor leiders, standaard uit): de telefoon bewaart per kampvuur zonder namen welke liederen er gestuurd werden, hoeveel zangers er waren en hoe goed Bluetooth hen bereikte. Het scherm zegt precies wat wel en niet. Er wordt niets verstuurd; het gaat alleen van je telefoon af als je zelf op **Delen** tikt.
 - **Alle gegevens verwijderen**: bibliotheken, setlists, herinneringen en instellingen gaan van de telefoon; de app begint opnieuw zoals op de eerste dag.

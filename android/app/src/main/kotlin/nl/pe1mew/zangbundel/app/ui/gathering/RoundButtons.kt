@@ -86,6 +86,31 @@ internal fun RoundButtons(
     }
 }
 
+/**
+ * D-30's buttons in a row, for the songbook's reading view (D-85 as amended in v0.62): previous song, song
+ * info, next song, with the same size, colours and dimming as the singer's column.
+ */
+@Composable
+internal fun RoundButtonRow(
+    touched: Long,
+    dimmed: Boolean,
+    onDim: () -> Unit,
+    prevEnabled: Boolean,
+    nextEnabled: Boolean,
+    onPrev: () -> Unit,
+    onInfo: () -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier,
+    day: Boolean = false,
+) {
+    LaunchedEffect(touched) { delay(DIM_AFTER_MS); onDim() }
+    Row(modifier.alpha(if (dimmed) DIMMED else 1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Round(R.drawable.ic_chevron_left, stringResource(R.string.round_prev), prevEnabled, day, onPrev)
+        Round(R.drawable.ic_about, stringResource(R.string.toolbar_info), true, day, onInfo)
+        Round(R.drawable.ic_chevron_right, stringResource(R.string.round_next), nextEnabled, day, onNext)
+    }
+}
+
 @Composable
 private fun Round(icon: Int, label: String, enabled: Boolean, day: Boolean, onClick: () -> Unit) {
     val ink = if (day) Color.Black else Color.White
