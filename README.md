@@ -9,7 +9,7 @@ Zangbundel ("songbook" in Dutch) is a mobile songbook app for singing together a
 - Version 0.1.1 runs on Google Play's internal-testing track. The closed test, which Play requires before a public release, has been submitted for review.
 - The release checks for permissions, backups, network use, logs, dependencies, reproducible builds, signing and the security and privacy assessment passed in a run before release; they are repeated on the release commit. Every parser of library or over-the-air input has been fuzzed for an hour without a finding.
 - F-Droid's build container produces the same APK, byte for byte, as the project's CI and the owner's PC. The app goes to F-Droid together with the first public release.
-- Still to do before the public release: field tests on real phones around a real fire (range, group size, battery, recovery), the 14-day closed test with at least 12 testers, and a Bluetooth SIG company identifier for the beacon.
+- Still to do before the public release: field tests on real phones around a real fire (range, group size, battery, recovery), and the 14-day closed test with at least 12 testers.
 - An iOS version is planned for later and must interoperate over BLE.
 
 The [changelog](changelog.md) lists what changed and when.

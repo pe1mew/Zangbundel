@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.45 (draft) |
+| Document version | 0.46 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -58,6 +58,7 @@
 | 0.43 | 2026-10-27 | Option B of `design/proposals/2026-10-26-state-after-push.md`, approved by the owner 2026-10-27: the beacon gets `cdv` (6.1–6.3), the `dv` of the current song, and a singer that keeps that song ahead from the signed setlist shows it at once, provisionally, until the verified state confirms or withdraws it (7.5, 10.3, 10.5; section 13; assessment SP-31). The gathering name in the beacon shrinks to 15 bytes on Android and 6 on iOS. Incompatible with earlier versions at the same `ver`; no release has gone out, so every phone must run this version. Built and tested the same day: on the phones every push was on screen from the beacon within 0.07–1.66 s (`design/test-results/2026-10-27-beacon-hint.md`). |
 | 0.44 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
 | 0.45 | 2026-10-28 | Depends on FRD v0.21 (Q9 closed, Q10 and Q12 deferred to phase 2); no change to the protocol. Open questions after the owner's decisions: Q1 decided (apply for a SIG company identifier before the public release), Q12 closed (answered by songs ahead), Q4, Q6, Q8, Q10 and Q15 deferred. |
+| 0.46 | 2026-10-28 | Q1 closed by the owner: the beacon and frames keep company identifier `0xFFFF`, since a SIG identifier or 16-bit UUID is out of reach and a 128-bit UUID would not fit the legacy frame; 6.2 says so (assessment SP-33). No change to the protocol. |
 
 ---
 
@@ -245,7 +246,7 @@ The beacon carries 12 bytes of fields plus the gathering name (10 before v0.43):
 - **Advertisement (≤ 31 bytes):** Flags AD structure (3 bytes, set by the stack; connectable, general discoverable) + *Complete List of 128-bit Service UUIDs* containing the Zangbundel service UUID (18 bytes). Device name MUST NOT be included.
 - **Scan response (≤ 31 bytes):** one *Manufacturer Specific Data* AD structure: length, type `0xFF`, company identifier `0xFFFF` (little-endian), then the 12 field bytes, then up to 15 bytes of `name` (17 before v0.43).
 
-Company identifier `0xFFFF` is reserved by the Bluetooth SIG for internal use and testing; see open question Q1.
+Company identifier `0xFFFF` is reserved by the Bluetooth SIG for internal use and testing. The project keeps it, since its own identifier is out of reach (Q1, closed 2026-10-28; assessment SP-33).
 
 ### 6.3 Encoding B – iOS leader (text)
 
@@ -996,7 +997,7 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 
 | # | Question | Impact |
 |---|---|---|
-| Q1 | *Decided 2026-10-28, by the owner:* apply for a Bluetooth SIG company identifier before the public release and put it in place of `0xFFFF`; the format stays. Open until the identifier is assigned. Company identifier `0xFFFF` is for testing only. Register a Bluetooth SIG company identifier before public release, or use a Service Data AD type with a 16-bit UUID? | Beacon and frame encoding |
+| Q1 | *Closed 2026-10-28, by the owner:* the project keeps `0xFFFF`. A company identifier and a 16-bit service UUID both come from the Bluetooth SIG, which is out of reach for a volunteer project. Service data under a free 128-bit UUID would take 14 more bytes of a 31-byte legacy structure and cut the 26-byte frame to 12. Other devices that use the testing identifier are kept apart only by Zangbundel's own layout (the beacon's version byte and fields, `magic` and the campfire's `gid16` in every data frame) and by the signed documents; the accepted risk is assessment SP-33. | Beacon and frame encoding |
 | Q2 | How many advertising sets, and what advertising-data update rate, do the Android phones scouting groups actually own support? This decides whether the legacy carrier alone meets the 5-second target for singers without the library. First sample 2026-10-25 (`design/test-results/2026-10-25-F-01.md`): 16 sets on a Samsung A52 (Android 14), one on a Huawei Mate 20 Lite (Android 10, degraded mode); advertising-data updates 6–17 ms. Open until the survey of scout phones. | 7.1, 7.7, 12.1 |
 | Q3 | Battery cost of continuous foreground scanning on singers and of 3–5 advertising sets at 100 ms on the leader, against NFR-PERF-02. | 12.3 |
 | Q4 | *Deferred 2026-10-28 to a later protocol version:* Use a 6-byte `gid` (2^48 forgery work) and move `pos` to a broadcast tick document, or keep 5 bytes + `pos` in the beacon? | Beacon layout, security margin |
