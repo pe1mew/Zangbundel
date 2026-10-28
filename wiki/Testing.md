@@ -10,17 +10,24 @@ The test is for **adults** (18+): leaders, parents and other volunteers. You nee
 
 ## How to start
 
-1. **Join the Google group** *Zangbundel testers* with your phone's Google account. You may have done so already if you found this page through the group.
+1. **Join the Google group** [Zangbundel testers](https://groups.google.com/g/zangbundel-testers) with your phone's Google account. You may have done so already if you found this page through the group.
 2. **Open the test link** on your phone or computer, signed in with that same account: <https://play.google.com/apps/testing/nl.pe1mew.zangbundel.app>. Tap **Become a tester**.
 3. **Install Zangbundel** from the link on that page, or search for *Zangbundel* in the Play Store. After step 2 it can take a few minutes before the app shows up for you.
 4. **Keep the app installed for 14 days** and stay in the test. If the test drops below 12 testers, the count starts again.
+
+## Songs
+
+The app contains no songs. Only the leader needs them: singers receive every song over Bluetooth.
+
+- **The default library.** In the app, go to **Songbook → Libraries** and tap **Add Zangbundel bibliotheek**. It downloads the app's own library of campfire and children's songs from GitHub. Accept its licence, and the songs are in your songbook. Without internet on the phone: download [zangbundel-bibliotheek-latest.zbl](https://github.com/pe1mew/Zangbundel-bibliotheek/releases/latest/download/zangbundel-bibliotheek-latest.zbl) on a computer, copy it to the phone, and open it with **Add a library → From a file**.
+- **Your own library.** You can make a library of your own songs, for example your group's song or songs you may sing but not publish. Copy the Zangbundel bibliotheek repository into a private repository of your own, add your songs as ChordPro text files (`.cho`), check them with its validator and build a `.zbl` file. Then open that file on the leader's phone with **Add a library → From a file**. [Your own private library](https://github.com/pe1mew/Zangbundel-bibliotheek#your-own-private-library) gives every step. Only add songs you are allowed to share with your group.
 
 ## What to test
 
 At your own pace; note what strikes you. The [manual](Manual) explains everything.
 
 1. **First use**: open the app, read *How it works* and *What happens to my data?*.
-2. **Songs**: under **Songbook → Libraries**, add the *Zangbundel bibliotheek*. Read a few songs; swipe left and right, or use the round buttons at the bottom.
+2. **Songs**: under **Songbook → Libraries**, add the *Zangbundel bibliotheek* (see [Songs](#songs)), and your own library if you made one. Read a few songs; swipe left and right, or use the round buttons at the bottom.
 3. **A campfire**, with two phones: one taps **Start a campfire**, the other joins **from the list**. Also try **with the QR code**: scan it with the second phone's camera app.
 4. **Sending songs**: the leader taps **Now** on a few songs. Do they reach the singer, and how fast?
 5. **Screen off**: turn the leader's screen off for 5 minutes, then send a song. Does it still work?

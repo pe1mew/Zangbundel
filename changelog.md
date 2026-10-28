@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-- F-Droid: 0.2.0 was submitted as fdroiddata !54679. A maintainer closed it on the inclusion policy's Quality point 6, which asks for 3 months of development; the repository began on 2026-10-18. Resubmission from 2027-01-18. Its pipeline built the app and accepted the owner-signed GitHub APK (FDROID-RUNBOOK Step 9, `design/test-results/2026-10-28-fdroid-0.2.0.md`). The README describes 0.2.0 and has a *Join the test* section: the Google group *Zangbundel testers*, the Play test link and the wiki's tester pages.
+- F-Droid: 0.2.0 was submitted as fdroiddata !54679. A maintainer closed it on the inclusion policy's Quality point 6, which asks for 3 months of development; the repository began on 2026-10-18. Resubmission from 2027-01-18. Its pipeline built the app and accepted the owner-signed GitHub APK (FDROID-RUNBOOK Step 9, `design/test-results/2026-10-28-fdroid-0.2.0.md`). The README describes 0.2.0 and has a *Join the test* section: the Google group *Zangbundel testers*, the Play test link and the wiki's tester pages. The wiki's *Testing* and *Testen* pages link to the group. A new *Songs* section explains how to add the default library, online or from a `.zbl` file, and points to how a group makes its own library.
 
 ## [0.2.0] - 2026-10-28
 
