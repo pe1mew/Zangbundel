@@ -50,6 +50,9 @@ class AppContainer(private val context: Context) {
     /** Whether the welcome screen was shown in this process (guiDesign D-05: never a second time while the app stays in memory). */
     var welcomed = false
 
+    /** guiDesign D-85: the songbook's songs as shown when one was opened from it (library id, song id), the order a swipe walks. Memory only. */
+    var readingOrder: List<Pair<String, String>> = emptyList()
+
     /**
      * "Remove all data" (FR-DATA-07, architecture section 6): libraries with their files, setlists,
      * gathering memories, settings and the share cache, so the app is back at its first use. Only

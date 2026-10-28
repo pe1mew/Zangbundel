@@ -34,17 +34,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.util.Locale
 import nl.pe1mew.zangbundel.app.R
+import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.library.SongbookFilter
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
-import java.util.Locale
 
 /**
  * The *Zangbundel* screen (guiDesign D-52, D-21 as amended in v0.16): every song of the enabled libraries
@@ -64,6 +66,7 @@ fun SongbookScreen(
     model: SongbookViewModel = viewModel(factory = SongbookViewModel.Factory),
 ) {
     val state by model.state.collectAsState()
+    val container = (LocalContext.current.applicationContext as ZangbundelApp).container
     LaunchedEffect(Unit) { model.load() }
     val f = state.filter
     ConfigurationScreen {
@@ -112,7 +115,11 @@ fun SongbookScreen(
                 if (state.rows.isEmpty() && !state.loading) Text(stringResource(R.string.songbook_none), modifier = Modifier.padding(16.dp))
                 LazyColumn {
                     items(state.rows, key = { it.key }) { row ->
-                        SongRow(row, editing?.let { e -> (row.key in e.keys) to { model.toggle(row.entry) } }) { onSong(row.entry.libraryId, row.entry.songId) }
+                        SongRow(row, editing?.let { e -> (row.key in e.keys) to { model.toggle(row.entry) } }) {
+                            // D-85: the reading view swipes through the songbook as shown now: search, filters and sort.
+                            container.readingOrder = state.rows.map { it.entry.libraryId to it.entry.songId }
+                            onSong(row.entry.libraryId, row.entry.songId)
+                        }
                         HorizontalDivider(color = Palette.NightBlue)
                     }
                 }

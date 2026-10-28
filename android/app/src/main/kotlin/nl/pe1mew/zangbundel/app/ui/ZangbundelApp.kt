@@ -131,13 +131,17 @@ fun ZangbundelApp() {
                 SongbookScreen(
                     onLibraries = { navController.navigate(Routes.LIBRARY) },
                     onSetlists = { navController.navigate(Routes.SETLISTS) },
-                    onSong = { l, s -> navController.navigate("song/$l/$s") },
+                    onSong = { l, s -> navController.navigate("song/$l/$s?${SongViewModel.LIST}=true") },
                     onDone = { navController.popBackStack() },
                 )
             }
             composable(
                 Routes.SONG,
-                arguments = listOf(navArgument(SongViewModel.LIBRARY) { type = NavType.StringType }, navArgument(SongViewModel.SONG) { type = NavType.StringType }),
+                arguments = listOf(
+                    navArgument(SongViewModel.LIBRARY) { type = NavType.StringType },
+                    navArgument(SongViewModel.SONG) { type = NavType.StringType },
+                    navArgument(SongViewModel.LIST) { type = NavType.BoolType; defaultValue = false },
+                ),
             ) { SongScreen() }
             composable(Routes.LIBRARY) { LibraryScreen() }
             composable(Routes.START) { StartScreen() }
@@ -179,7 +183,7 @@ object Routes {
     const val HOME = "home"
     const val SONGBOOK = "songbook"
     /** Library and song ids have id syntax (song-format 3.2), so they are safe as path segments. */
-    const val SONG = "song/{${SongViewModel.LIBRARY}}/{${SongViewModel.SONG}}"
+    const val SONG = "song/{${SongViewModel.LIBRARY}}/{${SongViewModel.SONG}}?${SongViewModel.LIST}={${SongViewModel.LIST}}"
     const val LIBRARY = "library"
     const val START = "start"
     const val MEMORIES = "memories"

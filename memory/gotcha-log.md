@@ -235,6 +235,11 @@
 **Root cause**: the buildserver image is Debian 13 (JDK 21 only); fdroid runs `sudo:` only with `--on-server`; it reports failure in its output; Windows Git writes symlinks as text files.
 **Fix**: JDK 17 from Debian 12 (`-t bookworm`) in the recipe, `fdroid build --on-server --no-tarball`, grep the output for *build failed*, clone fdroiddata inside the container. All in `scripts/fdroid-container-test.sh`.
 
+### An edit script emptied changelog.md, which was then staged (2026-10-28)
+**Problem**: a failed replacement left `changelog.md` with 0 bytes, and the next `git add` staged the deletion of all 304 lines.
+**Root cause**: the helper wrote with `open(p, "w").write(fn(t))`: `open(…, "w")` truncates the file before `fn(t)` runs, so an exception in `fn` leaves it empty.
+**Fix**: compute first, write after (`new = fn(t)`, then open and write); check `git diff --cached --stat` before staging a file an edit script touched. Restore an emptied tracked file with `git restore <file>` (the owner's step).
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
