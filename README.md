@@ -48,7 +48,7 @@ android/                      the Android app: Gradle project with core, platfor
 docs/                         Play and F-Droid runbooks, privacy policy, store listing, the GitHub Pages join page
 fastlane/metadata/android/    store texts and graphics for F-Droid, generated from docs/store-listing/
 wiki/                         sources of the GitHub wiki (the user manual)
-scripts/                      design consistency check, fuzzing, store metadata, F-Droid container build
+scripts/                      design consistency check, translation check, fuzzing, store metadata, F-Droid container build
 memory/                       working memory for AI coding agents (index, gotcha log, session records)
 CLAUDE.md                     orientation file for AI coding agents
 ```
@@ -92,7 +92,7 @@ This repository contains no lyrics and will not accept any. Songs live in separa
 
 ## Contributing
 
-See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct.md). The most useful help right now is testing: adults with an Android phone who join the closed test or a field test, and reports of problems through [GitHub issues](https://github.com/pe1mew/Zangbundel/issues) or zangbundel@rfsee.nl.
+See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct.md). Translators and reviewers of the Dutch, English and German texts start with [docs/TRANSLATING.md](docs/TRANSLATING.md). The most useful help right now is testing: adults with an Android phone who join the closed test or a field test, and reports of problems through [GitHub issues](https://github.com/pe1mew/Zangbundel/issues) or zangbundel@rfsee.nl.
 
 ## License
 

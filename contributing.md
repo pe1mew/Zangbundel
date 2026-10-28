@@ -9,6 +9,7 @@ Thank you for considering contributing to Zangbundel. The project is in its desi
 | Question or improve a requirement | Open an issue or a pull request against `design/functional-requirements.md`. Quote the requirement ID. |
 | Answer one of the open questions at the end of a design document | Open an issue with your reasoning or, better, measurements from real devices (BLE connection limits, advertising-set counts, battery). |
 | Work on the BLE protocol or the song format | Read `design/functional-requirements.md` first; the other documents state the FRD version they depend on. |
+| Review or improve a translation of the app (Dutch, English, German) | Follow [docs/TRANSLATING.md](docs/TRANSLATING.md): the rules, the check `python scripts/check-translation.py`, and how to send a pull request. |
 | Contribute songs or lyrics | **Not here.** This repository contains no lyrics and does not accept any. Songs go in a library repository in the format of `design/song-format.md`, with their own licence metadata. |
 | Start on the Android app | Read `design/architecture.md` (toolkit, modules, allowed dependencies) and open an issue before code lands in `android/`. |
 

@@ -83,11 +83,12 @@ Zangbundel/
 │   ├── ble/                      ← BLE sequence diagrams per scenario (.puml/.svg/.png)
 │   ├── icon/                     ← app icon master, launcher layers, feature graphic
 │   └── icon-proposals/           ← the six icon proposals and their contact sheet
-├── scripts/check-design.sh       ← cross-document consistency check; store-metadata.sh writes fastlane/ from docs/store-listing/; fdroid-container-test.sh builds as F-Droid does
+├── scripts/check-design.sh       ← cross-document consistency check; store-metadata.sh writes fastlane/ from docs/store-listing/; fdroid-container-test.sh builds as F-Droid does; check-translation.py checks the app's languages
 ├── fastlane/metadata/android/    ← F-Droid's store texts and graphics, generated; never edit by hand
 ├── docs/
 │   ├── RUNBOOK.md                ← Google Play setup, signing, tracks, release flow
 │   ├── FDROID-RUNBOOK.md         ← F-Droid requirements, signing decision, metadata, submission
+│   ├── TRANSLATING.md            ← for translators and reviewers: rules, the check script, pull requests
 │   ├── privacy-policy.md         ← published for the Play listing (EN + NL)
 │   ├── privacy/, j/              ← GitHub Pages: rendered privacy policy, join-and-install page
 │   ├── app-links/                ← assetlinks template and intent filters for App Links

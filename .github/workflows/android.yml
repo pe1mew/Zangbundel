@@ -18,6 +18,8 @@ jobs:
         run: bash scripts/check-design.sh
       - name: Store metadata in step
         run: bash scripts/store-metadata.sh --check
+      - name: Translations (docs/TRANSLATING.md)
+        run: python3 scripts/check-translation.py all
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
