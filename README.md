@@ -1,22 +1,34 @@
 # Zangbundel
 
-Zangbundel ("songbook" in Dutch) is a mobile songbook app for singing together around a campfire, for example at scouting events. One phone is the **leader** (*kampvuurleider*): it starts a gathering, advertises a Bluetooth Low Energy beacon and broadcasts the lyrics of the current song to every **singer** (*zanger*) phone around the fire. No internet, Wi-Fi or hotspot is involved. Lyrics come from external, git-hosted song libraries, so copyright and licences are managed outside the app.
+Zangbundel ("songbook" in Dutch) is a mobile songbook app for singing together around a campfire, for example at scouting events. One phone is the **leader** (*kampvuurleider*): it starts a campfire, advertises a Bluetooth Low Energy beacon and broadcasts the lyrics of the current song to every **singer** (*zanger*) phone around the fire. No internet, Wi-Fi, hotspot or pairing is involved. Lyrics come from external, git-hosted song libraries, so copyright and licences are managed outside the app.
 
-**Status: implementation started.** The specifications are complete for phase 1 and the Android project under `android/` is scaffolded as the architecture prescribes; the protocol, parsers and screens are being written against it. An iOS version is planned to follow and must interoperate over BLE.
+## Status (28 October 2026)
 
-## What the app will do
+**Phase 1 is built for Android and in testing; the app is not public yet.**
 
-Phase 1 — songbook over BLE:
+- Version 0.1.1 runs on Google Play's internal-testing track. The closed test, which Play requires before a public release, has been submitted for review.
+- The release checks for permissions, backups, network use, logs, dependencies, reproducible builds, signing and the security and privacy assessment passed in a run before release; they are repeated on the release commit. Every parser of library or over-the-air input has been fuzzed for an hour without a finding.
+- F-Droid's build container produces the same APK, byte for byte, as the project's CI and the owner's PC. The app goes to F-Droid together with the first public release.
+- Still to do before the public release: field tests on real phones around a real fire (range, group size, battery, recovery), the 14-day closed test with at least 12 testers, and a Bluetooth SIG company identifier for the beacon.
+- An iOS version is planned for later and must interoperate over BLE.
 
-- Import and update song libraries from git repositories when online; browse, search and filter them offline.
-- Start a gathering as leader, or join one by tapping it in the list of gatherings in range. No system pairing, no join code unless the leader sets one.
-- The leader pushes a song; every singer sees it within seconds. Singers with the library locally receive only an identifier; others receive the lyrics over the air.
-- Day theme (black on white) and night theme (white on black), portrait and landscape, line-by-line scrolling, adjustable text size, optional "follow the leader".
-- Singers send song requests; the leader or a delegate accepts, declines or pushes them.
-- Leaving and ending: a singer leaves at any time; the leader ends the gathering for everyone. Lyrics received over the air are discarded; the list of titles sung is kept as a memory of the evening.
-- Dutch and English UI, more languages by adding a translation file.
+The [changelog](changelog.md) lists what changed and when.
 
-Phase 2 adds karaoke mode (timed, synchronised lyric highlighting). Phase 3 adds chords and notation for instrument players.
+## What the app does
+
+Phase 1, the songbook over BLE:
+
+- **Libraries.** Install song libraries from their release archives when online, update them by hand or with a daily check on Wi-Fi, and browse and search them offline. The default library is [Zangbundel-bibliotheek](https://github.com/pe1mew/Zangbundel-bibliotheek).
+- **Setlists.** Prepare a setlist from the songbook or import one; change it during the campfire.
+- **Leading.** Start a campfire that is open to everyone nearby, needs a four-digit join code, or can only be joined through its QR code. Push a song and every singer sees it; the songs of the setlist are broadcast ahead, so a push usually only switches the song.
+- **Singing.** Join from the list of campfires nearby, with a join code, or by scanning the leader's QR code with the camera app. Read in night or day theme, at five text sizes, fitted to the screen width if wanted, and follow the leader from song to song.
+- **Trust.** Every campfire shows two words made from its key; leader and singers compare them aloud.
+- **Afterwards.** Received lyrics are deleted when the campfire ends; the list of titles sung stays as a memory. A leader can opt in to anonymous campfire statistics that never leave the phone unless shared by hand.
+- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, Dutch and English.
+
+Phase 2 adds song requests, likes, delegates and karaoke (timed lyric highlighting). Phase 3 adds chords and notation for instrument players.
+
+The user manual is on the wiki, in [Dutch](https://github.com/pe1mew/Zangbundel/wiki/Handleiding) and [English](https://github.com/pe1mew/Zangbundel/wiki/Manual). The privacy policy is at [pe1mew.github.io/Zangbundel/privacy](https://pe1mew.github.io/Zangbundel/privacy/).
 
 ## Checking a copy of the app
 
@@ -29,15 +41,15 @@ The full SHA-256 is `57:86:7B:3F:C1:4D:1F:35:F6:38:40:A8:41:BB:05:F6:DD:FD:A9:C3
 ## Repository structure
 
 ```
-design/
-  prompts.md                  the original ask, verbatim and dated
-  functional-requirements.md  what the app must do (FRD) — the canonical spec
-  ble-protocol.md             how leader and singers communicate over BLE
-  song-format.md              song file format and library repository layout
-scripts/
-  check-design.sh             cross-document consistency check
-memory/                       working memory for AI coding agents (index + gotcha log)
+design/                       the specification: requirements, protocol, song format, GUI, architecture, tests
+  test-results/               one file per test run
+  proposals/                  dated change proposals for the owner's approval
 android/                      the Android app: Gradle project with core, platform and app modules
+docs/                         Play and F-Droid runbooks, privacy policy, store listing, the GitHub Pages join page
+fastlane/metadata/android/    store texts and graphics for F-Droid, generated from docs/store-listing/
+wiki/                         sources of the GitHub wiki (the user manual)
+scripts/                      design consistency check, fuzzing, store metadata, F-Droid container build
+memory/                       working memory for AI coding agents (index, gotcha log, session records)
 CLAUDE.md                     orientation file for AI coding agents
 ```
 
@@ -47,36 +59,40 @@ CLAUDE.md                     orientation file for AI coding agents
 |---|---|
 | [design/functional-requirements.md](design/functional-requirements.md) | You want to know what is required, in which phase, and what is still open. Requirements are numbered (`FR-AREA-nn`) and never renumbered. |
 | [design/ble-protocol.md](design/ble-protocol.md) | You work on anything that goes over the air: beacon, broadcast carousel, GATT service, payloads, security. |
-| [design/song-format.md](design/song-format.md) | You write or maintain a song library, or touch the content hash the protocol matches songs by. |
-| [design/architecture.md](design/architecture.md) | You are about to write app code: toolkit, modules, run-time structure, storage, dependencies, build and tests. |
+| [design/song-format.md](design/song-format.md) | You write or maintain a song library or a setlist, or touch the content hash the protocol matches songs by. |
+| [design/guiDesign.md](design/guiDesign.md) | You change a screen, a control, a theme or what a leader or singer sees. Decisions are numbered `D-nn`. |
+| [design/architecture.md](design/architecture.md) | You write app code: toolkit, modules, storage, dependencies, build and tests. |
 | [design/test-plan.md](design/test-plan.md) | You write tests, prepare a release, or want to help with a field test: what is tested, how, and what counts as a pass. |
-| [changelog.md](changelog.md) | You want to know what changed and when. |
+| [design/security-privacy-assessment.md](design/security-privacy-assessment.md) | You touch personal data, a permission, the network or bytes received over the air. The users are under 18. |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md), [docs/FDROID-RUNBOOK.md](docs/FDROID-RUNBOOK.md) | You release the app on Google Play or F-Droid. |
 
-Dependency order: requirements → protocol → song format. Change upstream first.
+Dependency order: requirements → protocol → song format → GUI design. Change upstream first.
 
 ## Getting started
 
-To build the app you need JDK 17 and an Android SDK with platform 36; see `android/README.md` for the commands (`./gradlew check`, `./gradlew assembleDebug`). To work on the specifications:
+To build the app you need JDK 17 and an Android SDK with platform 36; the app runs on Android 8.0 (API 26) and later. From `android/`:
 
-1. Clone the repository.
-2. Read `design/functional-requirements.md` first; the other two documents state which version of it they depend on.
-3. After editing a design document, run the consistency check:
+```bash
+./gradlew check
+```
 
-   ```bash
-   bash scripts/check-design.sh
-   ```
+runs the unit tests of every module and lint, and `./gradlew assembleDebug` builds a debug APK; `android/README.md` has the rest. Other checks, from the repository root:
 
-   It verifies that requirement IDs are unique, that every cited ID is defined, that section references in the protocol resolve, and that dependency versions match.
+```bash
+bash scripts/check-design.sh
+```
+
+verifies the design documents: requirement IDs unique, every cited ID defined, section references resolved, dependency versions in step. `bash scripts/fuzz.sh` fuzzes the parsers, and `bash scripts/fdroid-container-test.sh` builds the app as F-Droid does (Docker needed).
 
 If you use an AI coding agent, `CLAUDE.md` is its entry point; it follows the [agent-ready-projects](https://github.com/ducroq/agent-ready-projects) layout.
 
 ## Song libraries
 
-This repository contains no lyrics and will not accept any. Songs live in separate library repositories in the format defined by `design/song-format.md`, each with its own licence metadata, which the app shows to users. If you want to contribute songs, contribute to a library, not here.
+This repository contains no lyrics and will not accept any. Songs live in separate library repositories in the format defined by `design/song-format.md`, each with its own licence metadata, which the app shows to users. If you want to contribute songs, contribute to a library, such as [Zangbundel-bibliotheek](https://github.com/pe1mew/Zangbundel-bibliotheek), not here.
 
 ## Contributing
 
-See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct.md). The most useful contributions right now are reviews of the open questions listed at the end of each design document.
+See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct.md). The most useful help right now is testing: adults with an Android phone who join the closed test or a field test, and reports of problems through [GitHub issues](https://github.com/pe1mew/Zangbundel/issues) or zangbundel@rfsee.nl.
 
 ## License
 
