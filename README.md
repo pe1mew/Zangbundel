@@ -4,27 +4,37 @@ Zangbundel ("songbook" in Dutch) is a mobile songbook app for singing together a
 
 ## Status (28 October 2026)
 
-**Phase 1 is built for Android and in testing; the app is not public yet.**
+**Phase 1 is built for Android and in a closed test on Google Play; the app is not public yet.**
 
-- Version 0.1.1 runs on Google Play's internal-testing track. The closed test, which Play requires before a public release, has been submitted for review.
-- The release checks for permissions, backups, network use, logs, dependencies, reproducible builds, signing and the security and privacy assessment passed in a run before release; they are repeated on the release commit. Every parser of library or over-the-air input has been fuzzed for an hour without a finding.
-- F-Droid's build container produces the same APK, byte for byte, as the project's CI and the owner's PC. The app goes to F-Droid together with the first public release.
+- Version 0.2.0 (28 October 2026) is on Google Play's internal and closed-testing tracks. Adults can join the closed test through a Google group: see [Join the test](#join-the-test).
+- The release checks G-01 to G-10 all pass for 0.2.0. They cover permissions, backups, network use, logs, dependencies, reproducible builds, signing, fuzzing and the security and privacy assessment. Every parser of library or over-the-air input has been fuzzed for an hour without a finding.
+- The signed APK of 0.2.0 is also on [GitHub Releases](https://github.com/pe1mew/Zangbundel/releases/tag/v0.2.0). F-Droid's build reproduces it byte for byte. F-Droid accepts an app after three months of development, so the app is submitted there again from January 2027.
 - Still to do before the public release: field tests on real phones around a real fire (range, group size, battery, recovery), and the 14-day closed test with at least 12 testers.
 - An iOS version is planned for later and must interoperate over BLE.
 
 The [changelog](changelog.md) lists what changed and when.
 
+## Join the test
+
+Before Google Play publishes the app for everyone, at least 12 testers must test it for 14 days. Adults (18+) with an Android phone (Android 8 or later) can help:
+
+1. Join the Google group [Zangbundel testers](https://groups.google.com/g/zangbundel-testers) with your phone's Google account.
+2. With the same account, open the test link <https://play.google.com/apps/testing/nl.pe1mew.zangbundel.app> and tap **Become a tester**.
+3. Install Zangbundel from the Play Store and keep it installed for 14 days.
+
+The wiki page [Testing](https://github.com/pe1mew/Zangbundel/wiki/Testing) ([Testen](https://github.com/pe1mew/Zangbundel/wiki/Testen) in Dutch) explains what to test and how to report what you find. A campfire needs a second phone, your own or another tester's. The group's manager sees your e-mail address and uses it only for the test.
+
 ## What the app does
 
 Phase 1, the songbook over BLE:
 
-- **Libraries.** Install song libraries from their release archives when online, update them by hand or with a daily check on Wi-Fi, and browse and search them offline. The default library is [Zangbundel-bibliotheek](https://github.com/pe1mew/Zangbundel-bibliotheek).
+- **Libraries.** Install song libraries from their release archives when online, update them by hand or with a daily check on Wi-Fi, and browse and search them offline, swiping from song to song. The default library is [Zangbundel-bibliotheek](https://github.com/pe1mew/Zangbundel-bibliotheek).
 - **Setlists.** Prepare a setlist from the songbook or import one; change it during the campfire.
 - **Leading.** Start a campfire that is open to everyone nearby, needs a four-digit join code, or can only be joined through its QR code. Push a song and every singer sees it; the songs of the setlist are broadcast ahead, so a push usually only switches the song.
 - **Singing.** Join from the list of campfires nearby, with a join code, or by scanning the leader's QR code with the camera app. Read in night or day theme, at five text sizes, fitted to the screen width if wanted, and follow the leader from song to song.
 - **Trust.** Every campfire shows two words made from its key; leader and singers compare them aloud.
 - **Afterwards.** Received lyrics are deleted when the campfire ends; the list of titles sung stays as a memory. A leader can opt in to anonymous campfire statistics that never leave the phone unless shared by hand.
-- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, Dutch and English.
+- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, Dutch and English (German in review).
 
 Phase 2 adds song requests, likes, delegates and karaoke (timed lyric highlighting). Phase 3 adds chords and notation for instrument players.
 
@@ -92,7 +102,7 @@ This repository contains no lyrics and will not accept any. Songs live in separa
 
 ## Contributing
 
-See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct.md). Translators and reviewers of the Dutch, English and German texts start with [docs/TRANSLATING.md](docs/TRANSLATING.md). The most useful help right now is testing: adults with an Android phone who join the closed test or a field test, and reports of problems through [GitHub issues](https://github.com/pe1mew/Zangbundel/issues) or zangbundel@rfsee.nl.
+See [contributing.md](contributing.md) and the [Code of Conduct](code_of_conduct.md). Translators and reviewers of the Dutch, English and German texts start with [docs/TRANSLATING.md](docs/TRANSLATING.md). The most useful help right now is testing: adults with an Android phone who [join the closed test](#join-the-test) or a field test, and reports of problems through [GitHub issues](https://github.com/pe1mew/Zangbundel/issues) or zangbundel@rfsee.nl.
 
 ## License
 
