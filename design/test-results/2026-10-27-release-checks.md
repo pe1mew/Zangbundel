@@ -18,4 +18,4 @@ Test plan section 6 on the release configuration of the working tree (versionNam
 
 **The leader's notification question (after G-10).** On the A52 (Android 14), fieldtest build, permission not granted and never asked: *Starten* showed *Een melding zolang het kampvuur loopt* with *Verder*; *Verder* opened Android's *Toestaan dat Zangbundel je meldingen stuurt?*; the owner answered (`granted=true`, `USER_SET`); the campfire started at once and its notification was posted. Ended, then *Starten* again: straight into a new campfire, no question. **Not tested on a phone:** the path after *Niet toestaan* (the campfire starts the same way in code; the question is not asked again because the flag is set before it is shown), and a singer, who never reaches this code.
 
-**Not run:** G-08 (needs the owner's key), G-09's hour per target, G-04 for an archive download, G-07 on a second machine.
+**Not run:** G-08 (needs the owner's key), G-09's hour per target (run the next day: `2026-10-28-fuzz-release-budget.md`), G-04 for an archive download, G-07 on a second machine.
