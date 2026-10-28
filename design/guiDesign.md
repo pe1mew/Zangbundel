@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.57 (draft) |
+| Document version | 0.58 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.20, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.21, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -69,6 +69,7 @@
 | 0.55 | 2026-10-27 | D-25: the leader's one notification question before the first campfire (architecture A-06, assessment SP-18). |
 | 0.56 | 2026-10-27 | At the owner's request: D-36, a tap on the two words in the singer's strip explains what they are; section 7, *Over* links the repository from the version tile and the manual in the app's language (assessment SP-32). No FRD or protocol change. |
 | 0.57 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
+| 0.58 | 2026-10-28 | Depends on FRD v0.21 (Q9 closed, Q10 and Q12 deferred to phase 2, section 19 names this GUI document). The owner's decisions on open questions: Q3, Q4, Q5, Q7, Q12, Q16 and Q23 closed as the design has them; Q6 kept as built until F-05; Q11, Q13, Q17 and Q20 deferred to their phase. |
 
 ---
 
@@ -547,24 +548,24 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 |---|---|---|
 | Q1 | *Resolved 2026-10-19:* a photograph, taken by the owner at a campfire on 3 April 2026; files in `design/gui/`. Rights and the people in it are tracked under Q8. | Resolved |
 | Q2 | *Resolved 2026-10-22:* no tablet layout in phase 1. Tablets get the phone layouts with more room, and no 2560 × 1600 export is made (`design/architecture.md` A-02, FRD Q7). | Resolved |
-| Q3 | Is 1.5 seconds the right maximum for the welcome screen, or should it be shown only until the app is ready, with no minimum? | D-05 |
-| Q4 | Should the day theme also be allowed on configuration screens with a *light* scrim and dark text, for use in bright daylight, or is the white-on-dark-scrim design enough? | D-03, D-14 |
-| Q5 | Should the FRD's section 19 row `design/ui-flows.md` be renamed to this document, or should screen flows get a separate document after all? | FRD section 19 |
-| Q6 | Should the home screen keep scanning indefinitely while shown (simplest, costs battery while the phone lies on the table) or stop after a few minutes and offer a "search again" tap? | D-22, NFR-PERF-02 |
-| Q7 | When a gathering in range needs a join code, should the card say so before the tap (lock icon, as D-22) or only ask after the tap, so children are not drawn to locked gatherings? | D-22, D-26 |
+| Q3 | *Closed 2026-10-28, by the owner:* kept as D-05 decides: at most 1.5 s after the app is ready, or until a tap. | D-05 |
+| Q4 | *Closed 2026-10-28, by the owner:* kept: configuration screens keep white text on the dark scrim in both themes (D-03, D-14). Reopen if testers ask for a light variant. | D-03, D-14 |
+| Q5 | *Closed 2026-10-28, by the owner:* this document is the GUI document; FRD v0.21 names it in section 19 instead of `design/ui-flows.md`, and there is no separate screen-flow document. | FRD section 19 |
+| Q6 | *Kept as built 2026-10-28, by the owner:* the home screen scans while it is shown; decided again with F-05's battery measurement. Should the home screen keep scanning indefinitely while shown (simplest, costs battery while the phone lies on the table) or stop after a few minutes and offer a "search again" tap? | D-22, NFR-PERF-02 |
+| Q7 | *Closed 2026-10-28, by the owner:* the card shows the lock before the tap (D-22), as Q23 keeps it. | D-22, D-26 |
 | Q8 | *Resolved 2026-10-20:* the photograph was taken by the owner in April 2026, who holds the copyright; the children are seen from behind and cannot be recognised, so no consent is needed (D-09 as amended in v0.9). Recorded in `design/gui/README.md`. The licence under which the photograph ships in the app is decided in `license.md`. | Resolved |
 | Q10 | Fit-to-width (D-28): is "off in portrait, on in landscape" the right default, or should the setting be one switch regardless of orientation? To be answered with real songs on a real phone. | D-28 |
-| Q11 | Likes (D-32) need a place in the BLE protocol: a Request with a "like" flag, or a message of its own? Should the leader ever see who liked, or only the count? The protocol document decides; the privacy assessment reviews it. | D-32, `design/ble-protocol.md`, assessment |
-| Q12 | Should the round-button column mirror to the left for left-handed singers (a setting), or stay at the right for everyone? | D-30 |
-| Q13 | Magnifier mode (section 6.1, "To investigate"): do we want a zoom-and-pan way of reading the lyrics and the setlist, with the text laid out at a size tuned for zooming, in addition to or instead of scrolling at one size? To be prototyped and tried at a fire: gesture reliability in the dark and with one hand (FR-SING-11), compatibility with the no-horizontal-scrolling rule (FR-DISP-06), follow-the-leader and the current-line mark under the glass, interaction with text-size steps (FR-DISP-05) and system font scaling (NFR-ACC-02). | D-28, D-29, lyric view prototype |
+| Q11 | *Deferred 2026-10-28 to phase 2, where likes are:* Likes (D-32) need a place in the BLE protocol: a Request with a "like" flag, or a message of its own? Should the leader ever see who liked, or only the count? The protocol document decides; the privacy assessment reviews it. | D-32, `design/ble-protocol.md`, assessment |
+| Q12 | *Closed 2026-10-28, by the owner:* no mirroring; the round-button column stays at the right for everyone (D-30). Reopen if testers ask. | D-30 |
+| Q13 | *Deferred 2026-10-28 to after phase 1, to be prototyped then:* Magnifier mode (section 6.1, "To investigate"): do we want a zoom-and-pan way of reading the lyrics and the setlist, with the text laid out at a size tuned for zooming, in addition to or instead of scrolling at one size? To be prototyped and tried at a fire: gesture reliability in the dark and with one hand (FR-SING-11), compatibility with the no-horizontal-scrolling rule (FR-DISP-06), follow-the-leader and the current-line mark under the glass, interaction with text-size steps (FR-DISP-05) and system font scaling (NFR-ACC-02). | D-28, D-29, lyric view prototype |
 | Q14 | *Resolved 2026-10-19 (section 6.3, D-50 to D-73):* leader mode is described. The last three points were decided the same day: the join code and QR-only are fixed per gathering (D-71), hand-over is not in phase 1 (D-72, FRD Q5 closed), and there is no singer list; delegates are appointed with a helper code (D-73, FR-LEAD-40 amended in FRD v0.9). | Resolved |
 | Q22 | *Resolved 2026-10-19:* BLE protocol v0.11 specifies the helper code as Control op 9 with key `hc` (9.8, 10.12): four digits, 120 s, one code at a time, locked after three wrong tries, error `0x8E`; and adds Control op 10, an explicit leave, so the leader's count drops at once when a singer leaves on purpose (D-34). | Resolved |
-| Q23 | Should the beacon carry a QR-only flag, so QR-only gatherings stay out of the home list as D-22 designed? Today they are listed with the lock (D-22 as amended in v0.25), which keeps FR-GATH-21 but tells children nearby that a locked campfire exists. A flag is a protocol change (BLE protocol 6, the flags byte). | D-22, FR-GATH-21 |
-| Q20 | D-70 leaves FR-LEAD-05 (SHOULD: the leader indicates the current verse or line) unmet in phase 1; follow-the-leader follows song starts only. Accept for phase 1 and revisit with karaoke (phase 2), where the gathering clock gives the position for free? | D-70, FR-LEAD-05, FR-SING-12 |
+| Q23 | *Closed 2026-10-28, by the owner:* no flag. QR-only campfires stay in the list with the lock (D-22 as amended in v0.25): the lock shows only that a campfire exists, which anyone nearby can see anyway, and the protocol does not change before the release. | D-22, FR-GATH-21 |
+| Q20 | *Accepted for phase 1 and deferred to phase 2, 2026-10-28, by the owner:* D-70 leaves FR-LEAD-05 (SHOULD: the leader indicates the current verse or line) unmet in phase 1; follow-the-leader follows song starts only. Accept for phase 1 and revisit with karaoke (phase 2), where the gathering clock gives the position for free? | D-70, FR-LEAD-05, FR-SING-12 |
 | Q21 | *Resolved 2026-10-19:* the owner chose to keep D-66. FRD v0.9 withdraws FR-LEAD-30 and FR-LEAD-31, rewords FR-LEAD-32, and drops the instruction from FR-LIB-12, FR-BLE-06 and FR-LEAD-44; BLE v0.10 keeps the `download` document and the `libs` fields reserved and unused; song-format v0.3 marks 12.1 and 12.7 accordingly. | Resolved |
 | Q15 | *Resolved 2026-10-20:* the Dutch term for the delegate role is *assistent*, and the helper code is the *assistentcode* (D-46, D-61, D-73, glossary D-79). | Resolved |
-| Q16 | Is the library better as the third tab of the songlist sheet (D-40, one place for everything that is not the lyrics) or as a full screen of its own, given the search keyboard and the filter chips? To be judged on a phone with the first prototype. | D-40 |
+| Q16 | *Closed 2026-10-28, by the owner:* kept as D-40 has it: during a campfire the songbook is a tab of the songlist sheet. | D-40 |
 | Q19 | *Resolved 2026-10-19:* export only, no server; field tests with known groups under the test plan; a local statistics screen for the leader (D-62). FR-GEN-08, NFR-PRIV-01, the privacy policy and the Play declaration stay as they are; the assessment (SP-16) records the local records and the export file. Still open within D-60: whether the export includes the phone model and Android version, and whether the date is rounded to the week. | D-60, D-62, assessment |
 | Q18 | *Resolved 2026-10-19:* the setlist file is specified in `design/song-format.md` section 13 (format 1.1): `.zbs`, ChordPro-like `{title}` and `{meta: id}` directives, one `<library id>/<song id>` per line with an optional `# title`, `? <title>` for a song by title only, `#` comments, canonical form as for songs, the `setlists/` directory in repositories and archives, the `setlists` manifest field, validation codes SL001–SL104. D-59 follows it. | Resolved |
-| Q17 | D-47 leaves FR-SING-03's optional sharing of upcoming songs unused in phase 1. If a later phase wants it, it would be titles only, never texts, and it needs a leader-side switch; the FRD wording ("if the leader shares it") already allows the omission. | D-47, FRD section 20 |
+| Q17 | *Deferred 2026-10-28 to a later phase:* D-47 leaves FR-SING-03's optional sharing of upcoming songs unused in phase 1. If a later phase wants it, it would be titles only, never texts, and it needs a leader-side switch; the FRD wording ("if the leader shares it") already allows the omission. | D-47, FRD section 20 |
 | Q9 | *Resolved 2026-10-19:* the landscape export exists, `design/gui/backdrop-3200x1440.webp` from master `Backdrop_001-land.png`: the full-width band of the source photograph with the two children, scaled to 1920 × 1440 and placed at the right of a black 3200 × 1440 canvas. Same people as the portrait image, so Q8's consent covers both. Measurements in `design/gui/README.md`. | Resolved |

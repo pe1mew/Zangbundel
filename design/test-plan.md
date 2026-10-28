@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.14 (draft) |
+| Document version | 0.15 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.20, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.21, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -26,6 +26,7 @@
 | 0.12 | 2026-10-27 | 3.4 built: the Jazzer targets, `scripts/fuzz.sh`; release checks G-01, G-02, G-05, G-06 and G-09 at the CI budget run (`design/test-results/2026-10-27-release-checks.md`). |
 | 0.13 | 2026-10-27 | Release checks G-03, G-04, G-07 and G-10 run (`design/test-results/2026-10-27-release-checks.md`); G-03 and G-04 measured with the app's own network counters and sockets instead of a packet-capture app. |
 | 0.14 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
+| 0.15 | 2026-10-28 | Depends on FRD v0.21; no other change from it. The owner's decisions: F-03 runs with as many phones as can be gathered, no fixed count, before and after the release (Q1; 5.4 and the release gate say so; FR-BLE-10's 25 is verified only from a run with 25 or more); screens are filmed (Q3). |
 
 ---
 
@@ -226,7 +227,7 @@ Only screens are filmed: no faces, no hands that identify a person, no voices. D
 ### 5.4 Participants, phones and consent
 
 - **Adult testers** run the `fieldtest` build on their own phones or on project phones. Each adult tester signs the consent of section 5.5 first. The build is never installed on a child's phone (assessment SP-22).
-- **Before release**, singer phones in field tests are adult testers' phones and project-owned phones. If fewer than 25 or 50 phones can be gathered, F-03 is run at the count reached and that count is recorded. The requirement stays open until a run at 25 passes.
+- **Before release**, singer phones in field tests are adult testers' phones and project-owned phones. F-03 runs with as many phones as can be gathered, and the count is recorded (Q1, decided by the owner 2026-10-28). FR-BLE-10's 25 counts as verified only from a run with 25 or more, which may be a later run with a group's own phones and the store build.
 - **Scouts** take part only after the app is public, with the store build on their own phones, at a normal campfire led by their own leader (F-10). The group's leadership agrees beforehand, and parents are informed through the group's usual channel. Nothing is recorded on a scout's phone and nobody is filmed.
 - The project records the device model only on the session sheet, with the phone owner's consent, never in the app's file (assessment SP-16).
 
@@ -317,7 +318,7 @@ A production release (RUNBOOK Step 9) needs all of these:
 1. Every automated layer of section 2 green on the release commit.
 2. D-01 to D-08 passed on the internal-testing build of that commit.
 3. G-01 to G-10 passed.
-4. For the first release: F-02, F-03 at 25 phones, F-04 and F-06 passed, with result files. For a later release: the F-scenarios rerun whenever the protocol or `platform/ble` changed since the last pass.
+4. For the first release: F-02, F-03 with as many phones as could be gathered (5.4), F-04 and F-06 passed, with result files. For a later release: the F-scenarios rerun whenever the protocol or `platform/ble` changed since the last pass.
 5. For the first release: the 14-day closed test completed.
 
 ---
@@ -361,6 +362,6 @@ A production release (RUNBOOK Step 9) needs all of these:
 
 | # | Question | Affects |
 |---|---|---|
-| Q1 | Can 50 phones be gathered for F-03 before release, or does the 50-singer aim (FR-BLE-10 SHOULD) wait for a field run after release with a group's own phones? | F-03, FRD Q1 |
+| Q1 | *Closed 2026-10-28, by the owner:* as many phones as can be gathered before the release and more after it, with no fixed count: this is a volunteer project by scouts. The count reached is recorded (5.4, section 9). | F-03, FRD Q1 |
 | Q2 | Which group or groups host the field tests and F-10, and when (season, weather)? | Section 5 |
-| Q3 | Is filming screens (5.3) acceptable to the participating groups, or is a manual stopwatch method needed as an alternative? | F-02, F-03 |
+| Q3 | *Closed 2026-10-28, by the owner:* screens are filmed as 5.3 describes. | F-02, F-03 |

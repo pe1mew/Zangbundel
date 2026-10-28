@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.44 (draft) |
+| Document version | 0.45 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.20 |
+| Depends on | `design/functional-requirements.md` v0.21 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -57,6 +57,7 @@
 | 0.42 | 2026-10-27 | 10.1 step 6 as built: the leader's app shows another gathering for as long as it is heard (`design/guiDesign.md` D-68) instead of warning once; no change on the air. |
 | 0.43 | 2026-10-27 | Option B of `design/proposals/2026-10-26-state-after-push.md`, approved by the owner 2026-10-27: the beacon gets `cdv` (6.1–6.3), the `dv` of the current song, and a singer that keeps that song ahead from the signed setlist shows it at once, provisionally, until the verified state confirms or withdraws it (7.5, 10.3, 10.5; section 13; assessment SP-31). The gathering name in the beacon shrinks to 15 bytes on Android and 6 on iOS. Incompatible with earlier versions at the same `ver`; no release has gone out, so every phone must run this version. Built and tested the same day: on the phones every push was on screen from the beacon within 0.07–1.66 s (`design/test-results/2026-10-27-beacon-hint.md`). |
 | 0.44 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
+| 0.45 | 2026-10-28 | Depends on FRD v0.21 (Q9 closed, Q10 and Q12 deferred to phase 2); no change to the protocol. Open questions after the owner's decisions: Q1 decided (apply for a SIG company identifier before the public release), Q12 closed (answered by songs ahead), Q4, Q6, Q8, Q10 and Q15 deferred. |
 
 ---
 
@@ -995,21 +996,21 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 
 | # | Question | Impact |
 |---|---|---|
-| Q1 | Company identifier `0xFFFF` is for testing only. Register a Bluetooth SIG company identifier before public release, or use a Service Data AD type with a 16-bit UUID? | Beacon and frame encoding |
+| Q1 | *Decided 2026-10-28, by the owner:* apply for a Bluetooth SIG company identifier before the public release and put it in place of `0xFFFF`; the format stays. Open until the identifier is assigned. Company identifier `0xFFFF` is for testing only. Register a Bluetooth SIG company identifier before public release, or use a Service Data AD type with a 16-bit UUID? | Beacon and frame encoding |
 | Q2 | How many advertising sets, and what advertising-data update rate, do the Android phones scouting groups actually own support? This decides whether the legacy carrier alone meets the 5-second target for singers without the library. First sample 2026-10-25 (`design/test-results/2026-10-25-F-01.md`): 16 sets on a Samsung A52 (Android 14), one on a Huawei Mate 20 Lite (Android 10, degraded mode); advertising-data updates 6–17 ms. Open until the survey of scout phones. | 7.1, 7.7, 12.1 |
 | Q3 | Battery cost of continuous foreground scanning on singers and of 3–5 advertising sets at 100 ms on the leader, against NFR-PERF-02. | 12.3 |
-| Q4 | Use a 6-byte `gid` (2^48 forgery work) and move `pos` to a broadcast tick document, or keep 5 bytes + `pos` in the beacon? | Beacon layout, security margin |
+| Q4 | *Deferred 2026-10-28 to a later protocol version:* Use a 6-byte `gid` (2^48 forgery work) and move `pos` to a broadcast tick document, or keep 5 bytes + `pos` in the beacon? | Beacon layout, security margin |
 | Q5 | *Resolved 2026-10-22:* CBOR stays; the app encodes and decodes it with its own bounded codec for the subset section 9 uses (`design/architecture.md` A-08). | Resolved |
-| Q6 | Should the leader's display name travel in Info so the gathering memory can record it (FR-DATA-03)? | Info payload, privacy |
+| Q6 | *Deferred 2026-10-28 to a later protocol version:* Should the leader's display name travel in Info so the gathering memory can record it (FR-DATA-03)? | Info payload, privacy |
 | Q7 | *Resolved in v0.11:* yes. Control op 10 (9.8) is the explicit leave, one best-effort attempt when the singer leaves (10.11); the inactivity rule of 10.9 stays for singers that vanish without it. | Resolved |
-| Q8 | A shared static DEFLATE dictionary of common Dutch/English lyric words could cut song frames by 20–30 %. Worth the versioning cost? | 7.3 |
+| Q8 | *Deferred 2026-10-28 to a later protocol version:* A shared static DEFLATE dictionary of common Dutch/English lyric words could cut song frames by 20–30 %. Worth the versioning cost? | 7.3 |
 | Q9 | Resume window (10 min) and inactivity rule (10 min) are guesses; confirm with field use. | 10.9 |
-| Q10 | Is the delegate upload (Control op 8) worth implementing in 1.0? | 9.8, FR-LEAD-42 |
+| Q10 | *Deferred 2026-10-28 to phase 2, where delegates are (FRD v0.18):* Is the delegate upload (Control op 8) worth implementing in 1.0? | 9.8, FR-LEAD-42 |
 | Q11 | Pre-start scan: is 5 s enough, and should a faint gathering (low RSSI) far away block a start? | 10.1, FR-GATH-16 |
-| Q12 | Should the carousel also pre-broadcast the *next* upcoming setlist song (document type 9) so singers without the library have it before it is pushed? Cheap on the extended carrier, costly on legacy. | 7.3, 7.4 |
+| Q12 | *Answered by v0.32, closed 2026-10-28:* songs ahead (FR-BLE-18) broadcast every setlist song as document 9 from the start of the gathering, not only the next one. | 7.3, 7.4 |
 | Q13 | Should the leader lower its scan-response usage when many singers are present, since 50 scan requests per advertising event may stress some controllers? | 7.1 |
 | Q14 | *Adopted 2026-10-18 as section 8.4 and FR-BLE-17.* A separate X25519 key published in the signed state was chosen over deriving it from the Ed25519 key, because iOS CryptoKit has no Ed25519-to-X25519 conversion. | Resolved |
-| Q15 | libsodium sealed box (chosen, one library on both platforms) versus HPKE (RFC 9180, native in CryptoKit on iOS 17+ and in Tink on Android). Revisit if libsodium becomes a problem on either platform. | 8.4, 15 |
+| Q15 | *Deferred 2026-10-28 to a later protocol version:* libsodium sealed box (chosen, one library on both platforms) versus HPKE (RFC 9180, native in CryptoKit on iOS 17+ and in Tink on Android). Revisit if libsodium becomes a problem on either platform. | 8.4, 15 |
 | Q16 | *Resolved 2026-10-18 with FRD Q13:* GitHub Pages hosts the page in this repository; App Links verification is prepared for a `pe1mew.github.io` repository (`docs/RUNBOOK.md` Step 5b, 5c). | Resolved |
 | Q17 | *Resolved 2026-10-25 (owner):* a body over 440 bytes loses `title`, then `rev` of `cur`, then `pt`, as far as needed; the largest body without them is 405 bytes (9.4). | 9.4 |
 | Q18 | *Resolved 2026-10-25 (owner):* both sides. Singers end the last range at the manifest `len`; the leader clamps every range and answers `0x8C` only for a range starting at or past the end (9.7, 8.3). | 9.7, 8.3 |

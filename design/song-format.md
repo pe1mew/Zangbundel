@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.14 (draft) |
+| Document version | 0.15 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.20, `design/ble-protocol.md` v0.13 |
+| Depends on | `design/functional-requirements.md` v0.21, `design/ble-protocol.md` v0.13 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -27,6 +27,7 @@
 | 0.12 | 2026-10-26 | Depends on FRD v0.18 (requests, likes and the delegate role moved to phase 2); no other change. |
 | 0.13 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09: the opt-in campfire statistics on the leader's device, export by hand only); no other change. |
 | 0.14 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
+| 0.15 | 2026-10-28 | Depends on FRD v0.21; no format change. Q12 (signed archives) deferred to after 1.0 by the owner; Q2 and Q6 deferred to phase 2, Q9 to phase 3. |
 
 ---
 
@@ -1083,17 +1084,17 @@ Notes on this file:
 
 | # | Question | Impact |
 |---|---|---|
-| Q12 | Should release archives be signed (a detached signature over the manifest, public key in the repository), so that a compromised host cannot serve altered songs? HTTPS alone protects the transport, not the host. | 12.9, NFR-SEC-01, release tooling |
+| Q12 | *Deferred 2026-10-28 to after 1.0, by the owner; HTTPS only until then, and the app treats library content as untrusted and bounded:* Should release archives be signed (a detached signature over the manifest, public key in the repository), so that a compromised host cannot serve altered songs? HTTPS alone protects the transport, not the host. | 12.9, NFR-SEC-01, release tooling |
 | Q13 | *Resolved 2026-10-22:* release archives and snapshots only; the app has no git client. FR-LIB-17 is met by the manifest's `revision` and `source` (`design/architecture.md` A-11). | Resolved |
 | Q14 | The release index convention (12.6) is written with GitHub Releases in mind. Which other hosts must the tooling support out of the box (GitLab, Codeberg, a plain web server)? | Release tooling |
 | Q1 | Is JSON acceptable for `zangbundel.json`, or do maintainers want YAML for its comments and multi-line strings despite the coercion risk (section 4.1)? | Library file, parser dependency |
-| Q2 | Timing is keyed by canonical line number (10.2). Inserting a lyric line shifts every later number, so timed songs need a renumbering tool or an inline alternative such as a timing directive immediately before each line. Which do maintainers prefer? | P2 format, maintainer tooling |
+| Q2 | *Deferred 2026-10-28 to phase 2:* Timing is keyed by canonical line number (10.2). Inserting a lyric line shifts every later number, so timed songs need a renumbering tool or an inline alternative such as a timing directive immediately before each line. Which do maintainers prefer? | P2 format, maintainer tooling |
 | Q3 | Variant groups link songs within one library only. Should a group id be allowed to span libraries (`<library id>/<group>`), given that translations often come from different maintainers? | FR-LANG-06, library governance (FRD Q3) |
 | Q4 | Should the project define a fixed tag vocabulary (with the NL/EN labels in a shared file) so filters work across libraries, or is a per-library `tags` map enough? | FR-LIB-30 across libraries |
 | Q5 | *Resolved 2026-10-20:* generated section labels follow the app (UI) language, as 7.1 says; a Dutch song in an English app shows "Chorus". A label written in the song file is shown as written (`design/guiDesign.md` D-77). | Resolved |
-| Q6 | Per-syllable timing anchors syllables by code point offset (10.2). Is that robust enough for maintainers, or are explicit syllable markers in the lyrics (which P1 would have to strip) preferable? | P2 format |
+| Q6 | *Deferred 2026-10-28 to phase 2:* Per-syllable timing anchors syllables by code point offset (10.2). Is that robust enough for maintainers, or are explicit syllable markers in the lyrics (which P1 would have to strip) preferable? | P2 format |
 | Q7 | Should the hash cover only the parsed content (metadata values plus canonical lines) instead of the whole file, so comment-only edits do not invalidate singers' cached copies? Whole-file hashing is simpler and matches the BLE document; the cost is one extra transfer after such an edit. | BLE section 5; section 8.2 here |
 | Q8 | *Resolved 2026-10-20:* no. `name` and `description` stay plain strings in the maintainer's language and are shown as written; only tag labels are localisable (`design/guiDesign.md` D-77). | Resolved |
-| Q9 | Chord-only lines are not canonical lines (9.1). Should a P3 musician view be able to follow the leader to an instrumental line, which would require numbering them? | Line list stability between P1 and P3 |
+| Q9 | *Deferred 2026-10-28 to phase 3:* Chord-only lines are not canonical lines (9.1). Should a P3 musician view be able to follow the leader to an instrumental line, which would require numbering them? | Line list stability between P1 and P3 |
 | Q10 | *Resolved 2026-10-26 (FRD Q3):* a separate repository, `github.com/pe1mew/Zangbundel-bibliotheek`; its maintainer checks licences on contributions with its validator and contribution rules. | FRD Q3, release planning |
 | Q11 | *Resolved 2026-10-22:* a separate tool. `validate.py` and `release.py` live in the library repository `github.com/pe1mew/Zangbundel-bibliotheek`; the app has its own implementation of the same rules, and both run a shared conformance corpus (`design/architecture.md` A-21, A-22). | Resolved |
