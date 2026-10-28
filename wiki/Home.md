@@ -6,6 +6,7 @@ A songbook app for the campfire: one phone leads and sends the lyrics over Bluet
 
 - **[Handleiding](Handleiding)** (Nederlands)
 - **[Manual](Manual)** (English)
+- **[Testen](Testen)** / **[Testing](Testing)**: meedoen met de test vóór de publicatie / joining the test before publication
 
 De app opent de handleiding in zijn eigen taal via **Over → Handleiding**. The app opens the manual in its own language from **About → Manual**.
 

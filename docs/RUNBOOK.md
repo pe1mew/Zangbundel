@@ -193,6 +193,30 @@ The account is personal and was created after 13 November 2023, so Play requires
 
 Both test tracks still require the dashboard tasks of Step 3 to be complete.
 
+### The Google group for the closed test (prepared 2026-10-28)
+
+Testers come in through a Google group instead of a mailing list: they add themselves, and Play Console needs no change per tester. The owner creates it at groups.google.com with the Google account of the developer account (Play Console only accepts the group's full address, so note it):
+
+| Setting | Value | Why |
+|---|---|---|
+| Name | *Zangbundel testers* | |
+| Group e-mail | `zangbundel-testers@googlegroups.com`, or the nearest free address | Entered under the closed track → *Testers* → *Google Groepen* |
+| Description | *Testers van de Zangbundel-app vóór de publicatie in Google Play. Testers of the Zangbundel app before its release on Google Play.* | |
+| Group type | E-mail list | Announcements from the owner only |
+| Who can search for group | Anyone on the web | So the link can be passed on |
+| Who can join group | Anyone can ask | The owner approves each adult tester (test plan 5.4, 7.2) |
+| Who can view conversations | Group members | |
+| Who can post | Group managers | No chatter, no spam |
+| Who can view members | Group managers | Testers do not see each other's addresses (wiki *Testen*, *Je gegevens*) |
+
+**Welcome message** (group settings → *General* → *Welcome message*), shown on the group's page:
+
+> **Welkom bij de test van Zangbundel!** Je bent er bijna: open met hetzelfde Google-account de testlink https://play.google.com/apps/testing/nl.pe1mew.zangbundel.app, word tester en installeer de app uit de Play Store. Houd hem 14 dagen geïnstalleerd en houd minstens twee kampvuren met een andere tester. Wat je test en hoe je meldt: https://github.com/pe1mew/Zangbundel/wiki/Testen
+>
+> **Welcome to the Zangbundel test!** Almost there: with the same Google account, open the test link https://play.google.com/apps/testing/nl.pe1mew.zangbundel.app, become a tester and install the app from the Play Store. Keep it installed for 14 days and hold at least two campfires with another tester. What to test and how to report: https://github.com/pe1mew/Zangbundel/wiki/Testing
+
+Then, in Play Console, the closed track *Gesloten test – Alpha* → *Testers* → **Google Groepen** → the group's address → save; the opt-in link on that tab is the one above. Invite testers by sending the group's page (`https://groups.google.com/g/<name>`) with the wiki page *Testen* or *Testing*. Only testers who opted in through the link count towards the 12; check the count on the track's *Testers* tab during the 14 days.
+
 ### Step 8 — Store listing
 
 Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.md` (app name, short and full description, release-notes template); the nl-NL texts are entered in Play Console as a draft (2026-10-18). To add English: Store listing → language selector → add en-US and paste from the en-US file. Graphics go in a non-committed folder or in Git LFS. Required assets:
