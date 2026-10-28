@@ -31,3 +31,6 @@ Thumbs.db
 
 # Jazzer working corpus (scripts/fuzz.sh); findings live in src/fuzz/resources and are committed.
 .cifuzz-corpus/
+
+# Python bytecode of the scripts (scripts/test-check-translation.py imports check-translation.py).
+__pycache__/

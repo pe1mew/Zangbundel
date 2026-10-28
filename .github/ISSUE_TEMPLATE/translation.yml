@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: Apache-2.0
+# Feedback on the app's texts by issue, for reviewers who do not send a pull request (docs/TRANSLATING.md section 8).
+name: Translation feedback
+description: A text of the app in Dutch, English or German that is wrong, unclear, does not fit, or uses the wrong term.
+title: "[Translation] "
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reviewing. The rules are in [docs/TRANSLATING.md](https://github.com/pe1mew/Zangbundel/blob/main/docs/TRANSLATING.md). One issue may list several texts; a pull request is welcome instead if you can make one. Do not include names, photos of people or anything personal.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Deutsch (German, under review)
+        - Nederlands (Dutch)
+        - English
+        - Another language (say which below)
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem
+      multiple: true
+      options:
+        - Wrong or unclear wording
+        - Wrong meaning (says something else than the Dutch)
+        - Term differs from the glossary, or a better term is needed
+        - Gender forms (for example Leiter / Leiterin)
+        - Does not fit (cut off, wraps badly)
+        - Still in English or Dutch
+        - The app shows the wrong language
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: texts
+    attributes:
+      label: Texts and proposals
+      description: For each text, where it appears (screen, button), what it says now, and what you propose. The string's name from the file helps, if you know it.
+      placeholder: |
+        Screen: Einstellungen, under the name field
+        Now: Freiwillig. Nur der Leiter sieht ihn.
+        Proposal: …
+        String: settings_name_note
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Optional. What a reader would misunderstand, or which rule of docs/TRANSLATING.md applies.
+  - type: input
+    id: build
+    attributes:
+      label: Build and phone
+      description: The review build from GitHub Actions or the store app, and the Android version.
+      placeholder: "Review build of 28 October, Android 14"
+  - type: checkboxes
+    id: approval
+    attributes:
+      label: For a language under review
+      options:
+        - label: I have reviewed this language in full and approve it for release once these points are fixed.

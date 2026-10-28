@@ -96,8 +96,6 @@ def load(lang, report):
             name = el.get("name")
             if el.tag not in ("string", "plurals", "string-array") or not name:
                 continue
-            if el.tag == "string-array":
-                continue
             if name in entries:
                 report.error(rel, f"'{name}' occurs twice")
             if el.get("translatable") == "false":
@@ -109,6 +107,8 @@ def load(lang, report):
                 report.warn(rel, f"'{name}' contains markup; translations keep exactly the same tags")
             if el.tag == "string":
                 entries[name] = ("string", raw_text(el), rel)
+            elif el.tag == "string-array":
+                entries[name] = ("array", [raw_text(i) for i in el.findall("item")], rel)
             else:
                 entries[name] = ("plurals", {i.get("quantity"): raw_text(i) for i in el.findall("item")}, rel)
     return entries, untranslatable
@@ -199,8 +199,9 @@ def check_language(lang, base, base_untranslatable, terms):
     entries, _ = (base, base_untranslatable) if lang == "en" else load(lang, report)
     if lang == "en":
         for name, (kind, value, rel) in base.items():
-            for q, t in (value.items() if kind == "plurals" else [(None, value)]):
-                check_text(f"{rel} '{name}'" + (f" [{q}]" if q else ""), t, report)
+            for q, t in (value.items() if kind == "plurals" else enumerate(value) if kind == "array" else [(None, value)]):
+                check_text(f"{rel} '{name}'" + (f" [{q}]" if q is not None else ""), t, report)
+        check_words(lang, base, report)
         return report
     needed = PLURALS.get(lang, {"other"})
     for name, (kind, value, rel) in base.items():
@@ -214,6 +215,11 @@ def check_language(lang, base, base_untranslatable, terms):
             continue
         if kind == "string":
             check_one(where, value, tvalue, lang, terms, report)
+        elif kind == "array":
+            if len(tvalue) != len(value):
+                report.error(where, f"{len(tvalue)} items, English has {len(value)}: never add, remove or reorder items")
+            for i, t in enumerate(tvalue):
+                check_text(f"{where} [{i}]", t, report)
         else:
             missing = needed - set(tvalue)
             if missing:
@@ -223,6 +229,7 @@ def check_language(lang, base, base_untranslatable, terms):
                 report.error(where, f"unknown plural forms {sorted(extra)}")
             for q, t in tvalue.items():
                 check_one(f"{where} [{q}]", value.get("other", ""), t, lang, terms, report, plural=True)
+    check_words(lang, entries, report)
     for name, (_, _, trel) in entries.items():
         if name not in base:
             report.error(f"{trel} '{name}'", "not in English: remove it, or add it to English first")
@@ -250,6 +257,56 @@ def check_one(where, base, target, lang, terms, report, plural=False):
         en_hit = any(re.search(r"\b" + re.escape(t.lower()) + r"(?:s|'s)?\b", base.lower()) for t in row["en"])
         if en_hit and row.get(lang) and not any(stem(t) in target.lower() for t in row[lang]):
             report.warn(where, f"English uses '{'/'.join(row['en'])}'; the glossary term is '{'/'.join(row[lang])}' (guiDesign D-79)")
+
+
+WORD_LISTS = ("fingerprint_words_1", "fingerprint_words_2")
+BLE = ROOT / "design" / "ble-protocol.md"
+
+
+def check_words(lang, entries, report):
+    """The two words of a campfire (ble-protocol 6.6, appendix A): two lists of 256 words, index-aligned with the
+    Dutch, each word 3 to 10 letters (Dutch 3 to 8), none twice in a list, none in both; the Dutch ones are appendix A."""
+    lists = [entries.get(n) for n in WORD_LISTS]
+    if not all(lists):
+        return
+    where = lists[0][2]
+    longest = 8 if lang == "nl" else 10
+    for name, (_, words, rel) in zip(WORD_LISTS, lists):
+        if len(words) != 256:
+            report.error(f"{rel} '{name}'", f"{len(words)} words; the list has exactly 256")
+        seen = set()
+        for i, w in enumerate(words):
+            if not (w.isalpha() and 3 <= len(w) <= longest):
+                report.error(f"{rel} '{name}' [{i}]", f"'{w}': one word of 3 to {longest} letters, no spaces, hyphens or digits")
+            if w.lower() in seen:
+                report.error(f"{rel} '{name}' [{i}]", f"'{w}' occurs twice in the list")
+            seen.add(w.lower())
+    both = {w.lower() for w in lists[0][1]} & {w.lower() for w in lists[1][1]}
+    if both:
+        report.error(where, f"in both word lists: {sorted(both)}; the two words of a campfire must never be the same word")
+    if lang == "nl":
+        appendix = appendix_lists()
+        if appendix is None:
+            report.error(where, "appendix A of design/ble-protocol.md not found, so the Dutch word lists cannot be compared with it")
+        else:
+            for name, (_, words, rel), ref in zip(WORD_LISTS, lists, appendix):
+                if words != ref:
+                    diff = next((i for i, (a, b) in enumerate(zip(words, ref)) if a != b), min(len(words), len(ref)))
+                    report.error(f"{rel} '{name}'", f"differs from ble-protocol appendix A from word {diff} on; the two change together")
+
+
+def appendix_lists():
+    try:
+        text = BLE.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    start = text.find("## Appendix A.")
+    if start < 0:
+        return None
+    parts = re.split(r"^List [12], indexed by `gid\[[01]\]` from 0:$", text[start:], flags=re.M)
+    if len(parts) < 3:
+        return None
+    return [re.findall(r"[a-z]+", re.split(r"^(?:#|---)", p, flags=re.M)[0]) for p in parts[1:3]]
 
 
 def short(text, n=60):

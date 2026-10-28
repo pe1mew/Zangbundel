@@ -70,9 +70,10 @@ import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.KeepTopLine
 import nl.pe1mew.zangbundel.app.ui.LineKeeper
 import nl.pe1mew.zangbundel.app.ui.LyricBody
+import nl.pe1mew.zangbundel.app.ui.LyricColors
+import nl.pe1mew.zangbundel.app.ui.fingerprintText
 import nl.pe1mew.zangbundel.app.ui.settings.StatisticsPreview
 import nl.pe1mew.zangbundel.app.ui.settings.exportJson
-import nl.pe1mew.zangbundel.app.ui.LyricColors
 import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.core.songformat.Song
@@ -258,7 +259,7 @@ private fun LeaderBar(m: Gathering.Mode.Leading, now: Long, warning: Boolean, on
     ) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = if (warning) 36.dp else 16.dp).align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
             Text(m.name, color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-            Text(" · " + m.fingerprint + " · " + pluralStringResource(R.plurals.leader_singers, m.singers, m.singers) + " · " + time,
+            Text(" · " + fingerprintText(m.fingerprint) + " · " + pluralStringResource(R.plurals.leader_singers, m.singers, m.singers) + " · " + time,
                 color = LyricColors.Night.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
         }
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).size(width = 32.dp, height = 3.dp).background(LyricColors.Night.secondary.copy(alpha = 0.6f), CircleShape))

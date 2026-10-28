@@ -5,7 +5,7 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.47 (draft) |
+| Document version | 0.48 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -60,6 +60,7 @@
 | 0.45 | 2026-10-28 | Depends on FRD v0.21 (Q9 closed, Q10 and Q12 deferred to phase 2); no change to the protocol. Open questions after the owner's decisions: Q1 decided (apply for a SIG company identifier before the public release), Q12 closed (answered by songs ahead), Q4, Q6, Q8, Q10 and Q15 deferred. |
 | 0.46 | 2026-10-28 | Q1 closed by the owner: the beacon and frames keep company identifier `0xFFFF`, since a SIG identifier or 16-bit UUID is out of reach and a 128-bit UUID would not fit the legacy frame; 6.2 says so (assessment SP-33). No change to the protocol. |
 | 0.47 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08: further UI languages after review); no change: nothing language-dependent travels over the air (guiDesign D-75). |
+| 0.48 | 2026-10-28 | 6.6 and appendix A: the two words come from the lists of each phone's app language, index-aligned translations of the Dutch lists, which stay the reference (the owner's decision); nothing on the air changes. Words of other languages may have 3 to 10 letters. Assessment SP-34. |
 
 ---
 
@@ -299,7 +300,7 @@ Size, as the encoder produces it: 45 bytes of payload without `code` and `name` 
 
 ### 6.6 Gathering fingerprint [FR-GATH-18]
 
-Two Dutch words from the gathering ID: the first from list 1 of appendix A at index `gid[0]`, the second from list 2 at index `gid[1]`, joined by a hyphen (`appel-vuur`). The words are the same on every phone whatever its UI language, so the leader can say them aloud and every singer sees the same pair (decided by the owner, 2026-10-26). Both lists have 256 words of 3 to 8 letters a–z, concrete and known to children, none rude or slang in Dutch, no word in both lists and no two words in one list that sound alike. The fingerprint is a reading aid, not a security measure: 65 536 pairs can be matched by a forger with a few thousand key generations, which is why the QR code (6.5) carries the key itself.
+Two words from the gathering ID: the first from list 1 at index `gid[0]`, the second from list 2 at index `gid[1]`, joined by a hyphen (`appel-vuur`). Each phone takes them from the lists of **its own app language**; the lists of every language are translations of the Dutch lists of appendix A, word *n* meaning what Dutch word *n* means as far as the language allows, so a Dutch leader's `appel-vuur` is `apple-fire` on an English phone and `Apfel-Feuer` on a German one (decided by the owner 2026-10-28; until then the Dutch words on every phone, decided 2026-10-26). Nothing about the words goes over the air, so phones of any version and language agree on the index. The lists of a language live with its app texts and are reviewed with them (FR-LANG-08). Both lists have 256 words, concrete and known to children, none rude or slang, no word in both lists and no two words in one list that sound alike; Dutch words have 3 to 8 letters a–z, words of other languages 3 to 10 letters of that language. A translation that would break these rules takes another word of the same kind instead. The fingerprint is a reading aid, not a security measure: 65 536 pairs can be matched by a forger with a few thousand key generations, which is why the QR code (6.5) carries the key itself.
 
 ---
 
@@ -1026,6 +1027,8 @@ The protocol layer is implemented against four primitives: *advertise(setId, byt
 | Q26 | *Resolved 2026-10-25 (owner):* the 7.6 limit is counted from the group's start and is 5 s on both carriers. | 7.6, NFR-PERF-01 |
 
 ## Appendix A. Fingerprint word lists (6.6)
+
+The Dutch lists, the reference every language's lists translate index by index. The app holds them as the string arrays `fingerprint_words_1` and `fingerprint_words_2` of each language; `scripts/check-translation.py` checks that the Dutch arrays equal these lists.
 
 List 1, indexed by `gid[0]` from 0:
 

@@ -40,6 +40,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.gathering.Gathering
+import nl.pe1mew.zangbundel.app.ui.fingerprintText
 
 /**
  * The join panel (guiDesign D-57 as amended in v0.26 and v0.34, FR-GATH-18, FR-GATH-19, FR-DIST-02), opened
@@ -65,7 +66,7 @@ fun JoinPanel(m: Gathering.Mode.Leading, startWithQr: Boolean, onClose: () -> Un
             Text(m.name, color = Color.Black, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             when {
                 qr -> {
-                    Text(m.fingerprint, color = Color.Black, fontSize = 18.sp)
+                    Text(fingerprintText(m.fingerprint), color = Color.Black, fontSize = 18.sp)
                     if (code != null) {
                         Spacer(Modifier.height(4.dp))
                         Text(stringResource(R.string.qr_code_text, code), color = Color.Black, fontSize = 28.sp, fontWeight = FontWeight.Bold)
@@ -75,13 +76,14 @@ fun JoinPanel(m: Gathering.Mode.Leading, startWithQr: Boolean, onClose: () -> Un
                 code != null -> {
                     Text(stringResource(R.string.panel_code_title), color = Grey, fontSize = 18.sp)
                     Text(code, color = Color.Black, fontSize = 96.sp, fontWeight = FontWeight.Bold, letterSpacing = 8.sp, maxLines = 1, softWrap = false)
-                    Text(m.fingerprint, color = Color.Black, fontSize = 24.sp)
+                    Text(fingerprintText(m.fingerprint), color = Color.Black, fontSize = 24.sp)
                     Text(stringResource(R.string.panel_code_hint), color = Grey, fontSize = 14.sp, textAlign = TextAlign.Center)
                     TextButton(onClick = { qr = true }) { Text(stringResource(R.string.panel_show_qr), color = LinkOrange, fontSize = 16.sp) }
                 }
                 else -> {
                     Text(stringResource(R.string.panel_words_title), color = Grey, fontSize = 18.sp)
-                    m.fingerprint.split('-').forEach { Text(it, color = Color.Black, fontSize = 56.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false) }
+                    // A word longer than the 8 letters of the Dutch lists is set smaller, so it is never cut off (ble-protocol 6.6).
+                    fingerprintText(m.fingerprint).split('-').forEach { Text(it, color = Color.Black, fontSize = (56f * minOf(1f, 8f / it.length)).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false) }
                     Text(stringResource(R.string.panel_words_hint), color = Grey, fontSize = 14.sp, textAlign = TextAlign.Center)
                     TextButton(onClick = { qr = true }) { Text(stringResource(R.string.panel_show_qr), color = LinkOrange, fontSize = 16.sp) }
                 }

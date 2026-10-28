@@ -2,7 +2,10 @@
 package nl.pe1mew.zangbundel.app.gathering
 
 import android.content.Context
+import android.content.res.Configuration
+import android.os.LocaleList
 import android.os.SystemClock
+import androidx.appcompat.app.AppCompatDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,6 +22,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.app.Log
+import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.diagnostics.FieldLog
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.core.model.GatheringId
@@ -27,19 +31,19 @@ import nl.pe1mew.zangbundel.core.model.SingerState
 import nl.pe1mew.zangbundel.core.model.SongId
 import nl.pe1mew.zangbundel.core.model.SongRef
 import nl.pe1mew.zangbundel.core.protocol.Crypto
+import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.core.protocol.beacon.BeaconCodec
 import nl.pe1mew.zangbundel.core.protocol.beacon.Fingerprint
 import nl.pe1mew.zangbundel.core.protocol.beacon.JoinLink
-import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.protocol.engine.LeaderSession
 import nl.pe1mew.zangbundel.core.protocol.engine.ResumeRecord
-import nl.pe1mew.zangbundel.core.protocol.payload.gatheringIdOf
 import nl.pe1mew.zangbundel.core.protocol.engine.SingerEngine
 import nl.pe1mew.zangbundel.core.protocol.frame.Reassembler
 import nl.pe1mew.zangbundel.core.protocol.payload.DocumentType
+import nl.pe1mew.zangbundel.core.protocol.payload.JoinResponse
 import nl.pe1mew.zangbundel.core.protocol.payload.SongDocument
-import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
+import nl.pe1mew.zangbundel.core.protocol.payload.gatheringIdOf
 import nl.pe1mew.zangbundel.core.songformat.ArchiveImport
 import nl.pe1mew.zangbundel.core.songformat.LibraryFileParser
 import nl.pe1mew.zangbundel.core.songformat.SetlistResolver
@@ -51,9 +55,9 @@ import nl.pe1mew.zangbundel.platform.storage.Memories
 import nl.pe1mew.zangbundel.platform.storage.MemorySong
 import nl.pe1mew.zangbundel.platform.storage.PreparedEntry
 import nl.pe1mew.zangbundel.platform.storage.ResumeStore
-import nl.pe1mew.zangbundel.platform.storage.Statistics
 import nl.pe1mew.zangbundel.platform.storage.Songbook
 import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
+import nl.pe1mew.zangbundel.platform.storage.Statistics
 
 /**
  * The one gathering on this phone (architecture A-06, FR-GEN-02): scanning for gatherings nearby
@@ -89,8 +93,8 @@ class Gathering(
 
     /** A gathering heard nearby (D-22): its name and how strongly it is heard [FR-GATH-04]. */
     data class Nearby(val gid: GatheringId, val name: String, val rssi: Int, val codeRequired: Boolean, val seenAt: Long) {
-        /** FR-GATH-18, ble-protocol 6.6: the two words the leader can say aloud. */
-        val fingerprint: String get() = Fingerprint.of(gid)
+        /** FR-GATH-18, ble-protocol 6.6: where the two words the leader can say aloud stand in the lists. */
+        val fingerprint: Fingerprint.Key get() = Fingerprint.keyOf(gid)
     }
 
     /**
@@ -141,8 +145,8 @@ class Gathering(
             val progress: LeaderSession.PushProgress? = null,
             /** D-56 (v0.21): the share of singers helped over GATT in the last 5 s, 0 to 1. */
             val help: Float = 0f,
-            /** FR-GATH-18: the two words (D-36, D-61). */
-            val fingerprint: String = "",
+            /** FR-GATH-18: the two words (D-36, D-61), looked up in the app's language when shown. */
+            val fingerprint: Fingerprint.Key? = null,
             val protection: Protection = Protection.Open,
             /** FR-GATH-19, ble-protocol 6.5: the join link the QR code shows (D-57). */
             val joinLink: String = "",
@@ -164,8 +168,8 @@ class Gathering(
             val collecting: List<Reassembler.Block>? = null,
             /** D-81: the reception grid's rows, kept current; the page shows them only after a long press (v0.30). */
             val reception: List<SingerEngine.Reception> = emptyList(),
-            /** FR-GATH-18 (D-36). */
-            val fingerprint: String = "",
+            /** FR-GATH-18 (D-36), looked up in the app's language when shown. */
+            val fingerprint: Fingerprint.Key? = null,
             /** Joined from a QR code: the joining screen of D-35 shows until registered. */
             val viaQr: Boolean = false,
             /** The beacon of the chosen gathering was heard (D-35: *Gevonden, controleren…*). */
@@ -304,7 +308,7 @@ class Gathering(
         peakSingers = 0
         lastPushAt = null
         startStatistics()
-        _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.of(l.gid), protection = protection,
+        _mode.value = Mode.Leading(name, clock(), 0, songs, null, emptySet(), fingerprint = Fingerprint.keyOf(l.gid), protection = protection,
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, name).httpsUrl(testBuild()))
         running(l, s, t)
     }
@@ -335,7 +339,7 @@ class Gathering(
         // FR-GATH-17, ble-protocol 10.1 step 6: listen 2 s every 30 s for another gathering (two scan starts per
         // 30 s, under Android's limit of five); D-68 shows it quietly while it is heard. A resumed gathering's own beacons are ignored.
         othersJob = s.launch {
-            val others = OtherCampfires(l.gid, OTHER_TIMEOUT_MS)
+            val others = OtherCampfires(l.gid, OTHER_TIMEOUT_MS, ::wordsOf)
             var listening = false
             try {
                 launch {
@@ -510,10 +514,23 @@ class Gathering(
         return p
     }
 
+    /**
+     * The two words of [gid] in the app's language, for text that is kept rather than drawn: a campfire's name when
+     * its QR code carries none, and another campfire with this one's name in the drawer (D-36, D-68). AppCompat's
+     * choice in *Taal* wins over the phone's language, also on Android 8 to 12 (A-16).
+     */
+    private fun wordsOf(gid: GatheringId): String {
+        val chosen = AppCompatDelegate.getApplicationLocales()
+        val res = if (chosen.isEmpty) context.resources else context.createConfigurationContext(
+            Configuration(context.resources.configuration).apply { setLocales(LocaleList.forLanguageTags(chosen.toLanguageTags())) },
+        ).resources
+        return Fingerprint.words(Fingerprint.keyOf(gid), res.getStringArray(R.array.fingerprint_words_1).asList(), res.getStringArray(R.array.fingerprint_words_2).asList())
+    }
+
     // ---- resume after the app died (FR-GATH-13, ble-protocol 10.9, guiDesign D-67) ----
 
     /** What the resume screen shows: the gathering's name and two words, and when its record was last written. */
-    data class ResumeOffer(val name: String, val fingerprint: String, val stoppedWall: Long)
+    data class ResumeOffer(val name: String, val fingerprint: Fingerprint.Key, val stoppedWall: Long)
 
     private var pendingResume: ResumeRecord? = null
 
@@ -533,7 +550,7 @@ class Gathering(
                 return@withLock null
             }
             pendingResume = record
-            ResumeOffer(record.name, Fingerprint.of(gatheringIdOf(record.session.signing.publicKey, crypto)), record.writtenWall)
+            ResumeOffer(record.name, Fingerprint.keyOf(gatheringIdOf(record.session.signing.publicKey, crypto)), record.writtenWall)
         }
     }
 
@@ -596,7 +613,7 @@ class Gathering(
         Log.d("leader resumed singers=${l.singers} current=$current pushed=${r.pushed} stoppedAgoMs=${wallClock() - r.writtenWall}")
         _mode.value = Mode.Leading(
             r.name, clock() - (wallClock() - r.startedWall).coerceAtLeast(0), l.singers, songs, current, r.pushed.toSet() - setOfNotNull(current),
-            fingerprint = Fingerprint.of(l.gid), protection = protection,
+            fingerprint = Fingerprint.keyOf(l.gid), protection = protection,
             joinLink = JoinLink(l.gid, l.publicKey, protection.code, r.name).httpsUrl(testBuild()),
             peak = r.peak, songsSung = r.pushed.size,
         )
@@ -729,7 +746,7 @@ class Gathering(
     fun join(link: JoinLink) {
         if (_mode.value is Mode.Singing && singer != null) return
         if (_mode.value != Mode.Idle) return
-        sing(link.gid, link.name ?: Fingerprint.of(link.gid), pinnedKey = link.pk, code = link.code, viaQr = true)
+        sing(link.gid, link.name ?: wordsOf(link.gid), pinnedKey = link.pk, code = link.code, viaQr = true)
     }
 
     /** After a wrong join code: tries again with [code]. */
@@ -747,7 +764,7 @@ class Gathering(
         session = s
         currentRef = null
         startedWall = wallClock()
-        _mode.value = Mode.Singing(name, Connection.CONNECTING, emptyList(), null, fingerprint = Fingerprint.of(gid), viaQr = viaQr, joiningSince = clock())
+        _mode.value = Mode.Singing(name, Connection.CONNECTING, emptyList(), null, fingerprint = Fingerprint.keyOf(gid), viaQr = viaQr, joiningSince = clock())
         s.launch {
             // The discovery scan stops before the engine starts its own; a stop that came later would silence the singer.
             runCatching { t.stopScan() }

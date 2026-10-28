@@ -9,8 +9,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -31,6 +29,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -70,11 +70,12 @@ import kotlinx.coroutines.launch
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.gathering.Gathering
-import nl.pe1mew.zangbundel.app.ui.LYRIC_SIZES_SP
 import nl.pe1mew.zangbundel.app.ui.KeepTopLine
+import nl.pe1mew.zangbundel.app.ui.LYRIC_SIZES_SP
 import nl.pe1mew.zangbundel.app.ui.LineKeeper
 import nl.pe1mew.zangbundel.app.ui.LyricBody
 import nl.pe1mew.zangbundel.app.ui.LyricColors
+import nl.pe1mew.zangbundel.app.ui.fingerprintText
 import nl.pe1mew.zangbundel.app.ui.lyricLineHeight
 import nl.pe1mew.zangbundel.app.ui.singer.Blocks
 import nl.pe1mew.zangbundel.app.ui.singer.ReceptionIsland
@@ -246,7 +247,7 @@ fun SingerScreen() {
                 Text(m.name, color = colors.secondary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 Text(" · ", color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
                 // D-36 (v0.56): a tap on the words explains them; elsewhere the strip keeps its tap and long press.
-                Text(m.fingerprint, color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false,
+                Text(fingerprintText(m.fingerprint), color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false,
                     textDecoration = TextDecoration.Underline, modifier = Modifier.clickable { explainWords = true })
                 Text(" · " + state, color = colors.secondary, fontSize = 13.sp, maxLines = 1, softWrap = false)
             }

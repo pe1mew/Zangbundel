@@ -2,14 +2,18 @@
 package nl.pe1mew.zangbundel.app.gathering
 
 import nl.pe1mew.zangbundel.core.model.GatheringId
-import nl.pe1mew.zangbundel.core.protocol.beacon.Fingerprint
 
 /**
  * Other gatherings heard while leading (FR-GATH-17, ble-protocol 10.1 step 6, guiDesign D-68): beacons of
  * ended gatherings, relays and this gathering's own `gid` are ignored; one heard within [timeoutMs] is
  * near, and the one heard last is named. Thread-safe: the scan callback adds, the scan loop reads.
  */
-internal class OtherCampfires(private val own: GatheringId, private val timeoutMs: Long) {
+internal class OtherCampfires(
+    private val own: GatheringId,
+    private val timeoutMs: Long,
+    /** The two words of a gathering in the app's language (FR-GATH-18, guiDesign D-36). */
+    private val wordsOf: (GatheringId) -> String,
+) {
     private val heard = HashMap<GatheringId, Pair<String, Long>>()
 
     @Synchronized
@@ -27,6 +31,6 @@ internal class OtherCampfires(private val own: GatheringId, private val timeoutM
     fun near(now: Long, ownName: String): String? {
         heard.entries.removeAll { now - it.value.second > timeoutMs }
         val (gid, name) = heard.maxByOrNull { it.value.second }?.let { it.key to it.value.first } ?: return null
-        return if (name.trim().equals(ownName.trim(), ignoreCase = true)) Fingerprint.of(gid) else name
+        return if (name.trim().equals(ownName.trim(), ignoreCase = true)) wordsOf(gid) else name
     }
 }

@@ -26,6 +26,7 @@ import nl.pe1mew.zangbundel.app.Log
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
+import nl.pe1mew.zangbundel.app.ui.fingerprintText
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 
@@ -46,7 +47,7 @@ fun ResumeScreen(offer: Gathering.ResumeOffer, now: () -> Long, onResume: suspen
             Spacer(Modifier.height(16.dp))
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) {
                 Text(offer.name, style = MaterialTheme.typography.titleLarge)
-                Text(offer.fingerprint, color = Palette.OffWhite)
+                Text(fingerprintText(offer.fingerprint), color = Palette.OffWhite)
                 Spacer(Modifier.height(8.dp))
                 Text(if (minutes < 1) stringResource(R.string.resume_stopped_now) else stringResource(R.string.resume_stopped, minutes))
                 Spacer(Modifier.height(8.dp))

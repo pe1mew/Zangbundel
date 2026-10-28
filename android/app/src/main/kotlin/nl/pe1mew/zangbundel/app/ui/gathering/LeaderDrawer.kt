@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.LyricColors
+import nl.pe1mew.zangbundel.app.ui.fingerprintText
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 
 /**
@@ -83,7 +84,7 @@ internal fun LeaderDrawer(
         // D-57 as amended in v0.34: how singers join, in this gathering's mode; each row opens its full-screen panel.
         HorizontalDivider(color = LyricColors.Night.divider)
         when (val p = m.protection) {
-            Gathering.Protection.Open -> JoinRow(stringResource(R.string.panel_words_title), m.fingerprint, big = false) { onJoin(false) }
+            Gathering.Protection.Open -> JoinRow(stringResource(R.string.panel_words_title), fingerprintText(m.fingerprint), big = false) { onJoin(false) }
             is Gathering.Protection.Code -> JoinRow(stringResource(R.string.panel_code_title), p.code, big = true) { onJoin(false) }
             is Gathering.Protection.QrOnly -> Unit
         }

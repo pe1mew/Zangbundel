@@ -20,6 +20,8 @@ jobs:
         run: bash scripts/store-metadata.sh --check
       - name: Translations (docs/TRANSLATING.md)
         run: python3 scripts/check-translation.py all
+      - name: Translation check catches its mistakes
+        run: python3 scripts/test-check-translation.py
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -37,3 +39,13 @@ jobs:
         with:
           name: app-release-unsigned
           path: android/app/build/outputs/apk/release/*.apk
+      # The review build (docs/TRANSLATING.md section 6): the debug build, with the languages under review,
+      # signed with a throwaway debug key; it installs next to the store app. Never published as a release.
+      - name: Review build with the languages under review
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zangbundel-review-build
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30

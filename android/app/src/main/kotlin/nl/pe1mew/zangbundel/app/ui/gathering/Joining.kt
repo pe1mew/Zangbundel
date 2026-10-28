@@ -36,6 +36,7 @@ import kotlinx.coroutines.delay
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
+import nl.pe1mew.zangbundel.app.ui.fingerprintText
 import nl.pe1mew.zangbundel.app.ui.textPanel
 import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.core.protocol.beacon.JoinLink
@@ -83,7 +84,7 @@ internal fun JoiningScreen(m: Gathering.Mode.Singing, now: () -> Long, onHome: (
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.joining_title), style = MaterialTheme.typography.titleMedium)
                 Text(m.name, style = MaterialTheme.typography.headlineSmall)
-                Text(m.fingerprint, color = Palette.OffWhite)
+                Text(fingerprintText(m.fingerprint), color = Palette.OffWhite)
                 Spacer(Modifier.height(8.dp))
                 if (m.notTheCampfire) {
                     Text("⚠ " + stringResource(R.string.joining_not_this), color = Palette.FireOrangeLight)

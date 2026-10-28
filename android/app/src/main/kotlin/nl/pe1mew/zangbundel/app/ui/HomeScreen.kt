@@ -217,7 +217,7 @@ private fun NearbyCard(g: Gathering.Nearby, onJoin: () -> Unit) {
     ) {
         Column(Modifier.weight(1f)) {
             Text(g.name, style = MaterialTheme.typography.titleMedium)
-            Text(g.fingerprint + " · " + stringResource(signal), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
+            Text(fingerprintText(g.fingerprint) + " · " + stringResource(signal), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
         }
         if (g.codeRequired) Text("🔒", modifier = Modifier.padding(start = 8.dp))
     }
