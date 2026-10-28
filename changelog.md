@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- F-Droid: 0.2.0 was submitted as fdroiddata !54679. A maintainer closed it on the inclusion policy's Quality point 6, which asks for 3 months of development; the repository began on 2026-10-18. Resubmission from 2027-01-18. Its pipeline built the app and accepted the owner-signed GitHub APK (FDROID-RUNBOOK Step 9, `design/test-results/2026-10-28-fdroid-0.2.0.md`).
+
 ## [0.2.0] - 2026-10-28
 
 Prepared for Google Play (versionCode 2026102801); it goes to internal testing and then the closed test.

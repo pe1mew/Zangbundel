@@ -4,6 +4,8 @@
      project file's "Before You Start" table. Sibling of docs/RUNBOOK.md (Google Play);
      the two share one app, one application ID and, if Step 3 goes that way, one signing key. -->
 
+Status 2026-10-28 (evening): **the owner decided to submit with 0.2.0**, while the closed test on Play runs, instead of with the production release; the steps below run for the tag `v0.2.0` on `27d03a4`. Done the same evening: the tag, the signed APK and the GitHub release v0.2.0, and the container test with that APK, whose signature F-Droid's build copies (`design/test-results/2026-10-28-fdroid-0.2.0.md`). The merge request fdroiddata !54679 was closed by a maintainer the same evening: *not yet ready, see Policy Quality point 6*, which asks for at least 3 months of active development, and this repository began on 2026-10-18. **Resubmit from 2027-01-18** with the latest release then (Step 9). Its pipeline had built the app and accepted the GitHub APK's signature.
+
 Status 2026-10-28: the build-container test passes (Step 8): `fdroid lint`, `build` and `scanner` succeed and F-Droid's build of `8400515` is byte-identical to CI's and the PC's (SHA-256 `1a54e632…`), after the metadata gained a `sudo:` block for JDK 17. Open: the merge request (Step 9), with the production release.
 
 Status 2026-10-27: prepared, not submitted; the owner submits with the first production release on Play. Done: the store metadata in `fastlane/metadata/android/`, generated from `docs/store-listing/` (Step 5); the metadata file `docs/fdroid/nl.pe1mew.zangbundel.app.yml` (Step 8); the release steps for the owner-signed GitHub APK (Step 6); a build on this PC byte-identical to CI's Linux build, and apksigner 34 adding nothing but the signature (Step 7). Open: the build-container test (Step 8, Docker), the merge request (Step 9).
@@ -215,6 +217,8 @@ Fix the YAML or the app until all of them pass. `checkupdates` reports *No match
 
 ### Step 9 — Merge request and review
 
+**Not before 2027-01-18.** The inclusion policy's Quality point 6 asks for at least 3 months of active development, unless the app has proven users, its author maintains other apps on F-Droid, or it is made for an event; !54679 was closed on it on 2026-10-28. Then open a new merge request with `docs/fdroid/merge-request.md`, its version, commit and screenshot tag updated to the latest release. Add the metadata file with GitLab's *Upload file*, never by pasting into the web editor: pasting from Windows gave CRLF line endings, which fail both `fdroid rewritemeta` and the `fdroid build` job.
+
 1. Commit the metadata file on a branch named after the application ID, with the message `New App: nl.pe1mew.zangbundel.app`, and push it to your fork.
 2. Open a merge request against `fdroiddata`; watch its CI pipeline and answer reviewers promptly. Expect questions about the licence history (the Commons Clause before 2026-10-20), the libsodium native libraries, and any anti-feature.
 3. After the merge, the build server builds and publishes in batches; the app appears in the main repository roughly 24 to 48 hours later.
@@ -235,6 +239,9 @@ Fix the YAML or the app until all of them pass. `checkupdates` reports *No match
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| Merge request closed: "not yet ready, see Policy Quality point 6" | Less than 3 months of active development (the repository began 2026-10-18) | Resubmit from 2027-01-18 (Step 9). |
+| Reviewer: "no Fastlane" | Overlooked: the texts and graphics are in `fastlane/metadata/android/` at the repository root, where fdroidserver looks | Link `fastlane/metadata/android/` at the release tag in the merge request. |
+| Pipeline: `fdroid rewritemeta` shows every line changed, and `fdroid build` fails after *1 build succeeded* | The metadata file has CRLF line endings; the build job's last step greps `^    versionCode: …$` | Upload the LF file, or switch CRLF to LF in the Web IDE and commit to the same branch. |
 | Reviewer: "licence is not free" | An old tag or file still carries the Commons Clause | Releases start after 2026-10-20; point to `license.md`'s history paragraph. |
 | `fdroid scanner` reports a non-free or binary dependency | A Google proprietary artifact, often pulled in transitively | `./gradlew :app:dependencies`; exclude or replace it (Step 2). |
 | Build on F-Droid differs from the GitHub APK (option B) | Unpinned versions, timestamps, version-control info, different JDK | `diffoscope` on both unsigned APKs; pin and remove the difference (Step 7). |
