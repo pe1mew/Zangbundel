@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - `scripts/fdroid-container-test.sh` builds the app in F-Droid's build container and runs its lint and scanner (FDROID-RUNBOOK Step 8). F-Droid's build of `8400515` is byte-identical to CI's and the PC's; the F-Droid metadata installs JDK 17, which F-Droid's Debian 13 build server lacks (`design/test-results/2026-10-28-fdroid-container.md`).
 
 ### Changed
+- FRD v0.20 records open questions the design had already answered: Q2 closed (singers see only what has been sent, guiDesign D-47), Q4 closed (the ChordPro profile of the song format), Q11 and architecture Q1 partly answered from the internal tests (one APK from Play; a shared copy installs as an update); whether Play updates a shared copy stays open. The dependent documents follow (BLE protocol v0.44, song format v0.14, GUI design v0.57, architecture v0.23, test plan v0.14).
 - Native libraries keep their debug symbols, so the release APK is the same whether or not an NDK is installed; a build on the owner's PC is now byte-identical to CI's (architecture v0.22, G-07 on two machines). The APK grows by about 240 KB.
 - Release notes in the store listings are headed `### <versionName> (<versionCode>)`.
 

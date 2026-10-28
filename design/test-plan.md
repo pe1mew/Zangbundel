@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.13 (draft) |
-| Date | 2026-10-27 |
+| Document version | 0.14 (draft) |
+| Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.19, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.20, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -25,6 +25,7 @@
 | 0.11 | 2026-10-27 | 5.1 and 5.5 built in the `fieldtest` build (architecture A-20 as of v0.18): the consent screen on first start and the local log, shared from the radio check. |
 | 0.12 | 2026-10-27 | 3.4 built: the Jazzer targets, `scripts/fuzz.sh`; release checks G-01, G-02, G-05, G-06 and G-09 at the CI budget run (`design/test-results/2026-10-27-release-checks.md`). |
 | 0.13 | 2026-10-27 | Release checks G-03, G-04, G-07 and G-10 run (`design/test-results/2026-10-27-release-checks.md`); G-03 and G-04 measured with the app's own network counters and sockets instead of a packet-capture app. |
+| 0.14 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
 
 ---
 

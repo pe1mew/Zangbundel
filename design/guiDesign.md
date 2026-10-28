@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.56 (draft) |
-| Date | 2026-10-27 |
+| Document version | 0.57 (draft) |
+| Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.19, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.20, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -68,6 +68,7 @@
 | 0.54 | 2026-10-27 | D-81: the long press opens the reception grid also before anything is sent, with empty bars. |
 | 0.55 | 2026-10-27 | D-25: the leader's one notification question before the first campfire (architecture A-06, assessment SP-18). |
 | 0.56 | 2026-10-27 | At the owner's request: D-36, a tap on the two words in the singer's strip explains what they are; section 7, *Over* links the repository from the version tile and the manual in the app's language (assessment SP-32). No FRD or protocol change. |
+| 0.57 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
 
 ---
 

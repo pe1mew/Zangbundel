@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.22 (draft) |
-| Date | 2026-10-27 |
+| Document version | 0.23 (draft) |
+| Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.19, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.20, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -34,6 +34,7 @@
 | 0.20 | 2026-10-27 | A-06: the leader's one notification question built. |
 | 0.21 | 2026-10-27 | A-19: R8 9.1.57 pinned for Kotlin 2.4; the fieldtest build's signature follows `keystore.properties`. |
 | 0.22 | 2026-10-27 | A-19 section 9, reproducibility: native libraries keep their debug symbols, since stripping depended on an installed NDK; VCS info is on and records no repository (it said off); the GitHub APK is signed with apksigner 34, v2 and v3 only. CI checks the F-Droid store metadata. |
+| 0.23 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered). Q1 partly answered from the internal tests: one APK from Play, a shared copy installs as an update; Play updating a shared copy is still open. |
 
 ---
 
@@ -327,7 +328,7 @@ Inconsistencies found in other documents while writing v0.1. All five were fixed
 
 | # | Question | Affects |
 |---|---|---|
-| Q1 | With splits disabled (A-18), confirm on the first internal-test install that a Play install has no split APKs, that the shared copy installs on a second phone, and whether Play later updates a copy that was installed by sharing (Android's update ownership may keep Play from updating an app it did not install). | A-18, FR-DIST-05, FRD Q11 |
+| Q1 | With splits disabled (A-18), confirm on the first internal-test install that a Play install has no split APKs, that the shared copy installs on a second phone, and whether Play later updates a copy that was installed by sharing (Android's update ownership may keep Play from updating an app it did not install). *Partly answered 2026-10-28 (v0.23):* the Play install of 0.1.0 is one `base.apk` (G-08, `design/test-results/2026-10-27-internal-test-0.1.0.md`), and a shared copy installed on the S23 as an update (`design/test-results/2026-10-27-share-apk.md`). Open: whether Play updates a copy installed by sharing. | A-18, FR-DIST-05, FRD Q11 |
 | Q2 | Does `fdroid scanner` accept the prebuilt libsodium and JNA native libraries from Maven Central, or does F-Droid want them built from source? If the latter, the fallback is a srclib build of libsodium. | A-09, FDROID-RUNBOOK |
 | Q3 | Do singers need the foreground service (A-06), or does the screen-on lyric view keep scanning reliable enough? Measure in the field tests. | A-06, NFR-PERF-02 |
 | Q4 | FTS4 search with the unicode61 tokenizer on 2,000 songs on a low-end phone: within 300 ms? | A-12, NFR-PERF-03 |
