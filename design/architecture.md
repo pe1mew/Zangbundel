@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.24 (draft) |
+| Document version | 0.25 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.21, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.22, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -36,6 +36,7 @@
 | 0.22 | 2026-10-27 | A-19 section 9, reproducibility: native libraries keep their debug symbols, since stripping depended on an installed NDK; VCS info is on and records no repository (it said off); the GitHub APK is signed with apksigner 34, v2 and v3 only. CI checks the F-Droid store metadata. |
 | 0.23 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered). Q1 partly answered from the internal tests: one APK from Play, a shared copy installs as an update; Play updating a shared copy is still open. |
 | 0.24 | 2026-10-28 | Depends on FRD v0.21; no other change to the design. Q2 closed (fdroid scanner accepts the prebuilt native libraries), Q5 deferred to the iOS phase. |
+| 0.25 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08). A-16 amended: the language setting through AppCompat's per-app locale with `autoStoreLocales` for Android 8 to 12, the `app_languages` list, and a language under review in the debug source set only (guiDesign D-80). |
 
 ---
 
@@ -110,7 +111,7 @@ Every decision is numbered **A-nn** and carries a status. **Fixed** means it was
 
 ### 3.4 Language, sharing and dependencies
 
-**A-16 — Android string resources, English default, Dutch in `values-nl`.** *Fixed (guiDesign D-76 to D-78).* Implemented with `values/strings.xml` (English, the fallback) and `values-nl/strings.xml` (Dutch, primary), `locales_config.xml`, and AppCompat's per-app locale API so the in-app language setting works from API 26 up (FR-LANG-03). Lint's `MissingTranslation` and `ExtraTranslation` are errors in every build, and the pseudo-locales are enabled in debug builds (D-78). Generated song labels come from the same resources (song-format section 7, guiDesign D-77). Sorting uses `java.text.Collator` for the app locale with the leading-article rule of FR-LANG-07.
+**A-16 — Android string resources, English default, Dutch in `values-nl`.** *Fixed (guiDesign D-76 to D-78).* Implemented with `values/strings.xml` (English, the fallback) and `values-nl/strings.xml` (Dutch, primary), `locales_config.xml`, and AppCompat's per-app locale API so the in-app language setting works from API 26 up (FR-LANG-03). Lint's `MissingTranslation` and `ExtraTranslation` are errors in every build, and the pseudo-locales are enabled in debug builds (D-78). Generated song labels come from the same resources (song-format section 7, guiDesign D-77). Sorting uses `java.text.Collator` for the app locale with the leading-article rule of FR-LANG-07. *(Amended 2026-10-28, v0.25:)* the choice in *Taal* (guiDesign D-76) is set with `AppCompatDelegate.setApplicationLocales`; the manifest declares AppCompat's `AppLocalesMetadataHolderService` with `autoStoreLocales`, so Android 8 to 12 keep the choice across starts (13 and later keep it in the platform). The languages a build offers are one list, the `app_languages` array, next to `locales_config.xml`. A language under review (FR-LANG-08, guiDesign D-80) has its strings, its `locales_config.xml` and its `app_languages` in `app/src/debug/res`, which override the main ones in debug builds only; lint's missing-translation check covers it there.
 
 **A-17 — Few dependencies, all listed, manual dependency injection.** *Decided 2026-10-22 (owner).* Section 8 lists every allowed dependency with its purpose. Objects are wired by hand in one `AppContainer` created by the `Application` class; there is no Hilt or Dagger. Adding a dependency means adding a row to section 8 in the same change, with its licence and whether it can open a network connection (NFR-SEC-03). *Why:* every dependency is reviewed per release (NFR-SEC-05) and must pass the F-Droid rules; a short list keeps that review real.
 

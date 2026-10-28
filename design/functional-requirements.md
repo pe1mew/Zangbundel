@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.21 (draft) |
+| Version | 0.22 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -31,6 +31,7 @@
 | 0.19 | 2026-10-27 | FR-DATA-09 added (MAY, P1): opt-in, anonymous campfire statistics on the leader's device, leaving it only as a file the leader shares by hand after seeing its content; the requirement `design/security-privacy-assessment.md` SP-16 asked for when the feature was designed in (`design/guiDesign.md` D-60 to D-62). No other requirement changed. |
 | 0.20 | 2026-10-28 | Open questions answered by the design and the build recorded: Q2 closed (singers see only what has been sent, `design/guiDesign.md` D-47), Q4 closed (the ChordPro profile of `design/song-format.md`), Q11 further resolved (one APK from Play, a shared copy installs as an update; Play updating a shared copy still open). FR-LIB-03's note says the format is a ChordPro profile instead of naming it a candidate. No requirement changed in substance. |
 | 0.21 | 2026-10-28 | The owner's decisions on open questions: Q9 closed (no override of FR-GATH-16 for an abandoned campfire), Q10 and Q12 deferred to phase 2. Section 19 names `design/guiDesign.md` instead of the planned `design/ui-flows.md` (guiDesign Q5). No requirement changed. |
+| 0.22 | 2026-10-28 | FR-LANG-08 added (MAY, P1): further UI languages, each only after review by a fluent speaker; German is the first, under review. Q8 amended accordingly. The owner also confirmed the selection of FR-LANG-03 as `design/guiDesign.md` D-76 designs it and English as the fallback. No other requirement changed. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -160,6 +161,8 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 **FR-LANG-06** (SHOULD, P1) — The library format SHOULD allow a song to have translations or variants (e.g. a Dutch and an English version of the same melody) that are linked to each other, so the app can offer "show this song in …" where available.
 
 **FR-LANG-07** (SHOULD, P1) — Dates, numbers and sorting (e.g. ignoring "De", "Het", "The" at the start of a title) SHOULD follow the selected UI locale.
+
+**FR-LANG-08** (MAY, P1) — The app MAY offer further UI languages beyond Dutch and English. A further language MUST NOT appear in a published build before a fluent speaker has reviewed its translation, the privacy screen of FR-GEN-08 included; until then it MAY exist in development builds. German is the first (under review since 2026-10-28).
 
 ---
 
@@ -604,7 +607,7 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 | Q5 | *Closed 2026-10-19 (v0.9):* not in P1. A leader who has to stop ends the gathering and another adult starts a new one from the same setlist (exported file or library setlist); singers rejoin. FR-GATH-14 stays a MAY for a later phase (`design/guiDesign.md` D-72). | Resolved |
 | Q6 | *Closed 2026-10-18 (assessment SP-02):* the gathering memory holds no names on either side; titles, date and count only (FR-DATA-03 v0.6). | Resolved |
 | Q7 | *Resolved 2026-10-22 (v0.11):* minimum SDK 26 (Android 8.0), as `docs/RUNBOOK.md` already fixed; tablets get the phone layouts with more room in P1, no tablet-only screens (`design/architecture.md` A-01, A-02). | Resolved |
-| Q8 | *Closed 2026-10-20 (v0.10):* none beyond Dutch and English for now, and no right-to-left support. Dutch is primary, English the fallback for unsupported phone languages; layouts use start and end so either can be added later without layout work (`design/guiDesign.md` D-76, D-78, D-80). | Resolved |
+| Q8 | *Closed 2026-10-20 (v0.10):* none beyond Dutch and English for now, and no right-to-left support. Dutch is primary, English the fallback for unsupported phone languages; layouts use start and end so either can be added later without layout work (`design/guiDesign.md` D-76, D-78, D-80). *Amended 2026-10-28 (v0.22), by the owner:* German becomes the third language once reviewed (FR-LANG-08); still no right-to-left. | Resolved |
 | Q9 | *Closed 2026-10-28 (v0.21), by the owner:* no override. A leader who finds another campfire in range ends that phone or moves away, so two campfires never talk over each other. Revisit if the field tests show forgotten phones blocking starts. | Resolved |
 | Q10 | *Deferred 2026-10-28 to phase 2, where requests and delegates are (v0.18):* Should singers see who pushed a song or handled their request (leader or which delegate), or is this detail only for the leader? | FR-LEAD-45, setlist display |
 | Q11 | How is the shareable Android package produced: bundle the installed splits at share time, or ship a universal APK (larger install) so that what is on the phone is what gets shared? Does the Play signing setup allow a shared copy to receive store updates? *Partly resolved 2026-10-22 (v0.11):* the App Bundle disables splits, so every install is one APK signed with the owner's key and the app shares its own installed APK (`design/architecture.md` A-18). Whether Play updates a copy installed by sharing stays open as architecture Q1, to check on the first internal test. *Further resolved 2026-10-28 (v0.20):* the Play install of 0.1.0 is one file, `base.apk`, with no splits (`design/test-results/2026-10-27-internal-test-0.1.0.md`, G-08), and a copy shared over Quick Share installed on a second phone as an update (`design/test-results/2026-10-27-share-apk.md`). Still open: whether Play updates a copy that was installed by sharing; to check when a newer version reaches a phone that has such a copy. | FR-DIST-05, constraint 12, architecture Q1 |

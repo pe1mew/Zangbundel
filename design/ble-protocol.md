@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.46 (draft) |
+| Document version | 0.47 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.21 |
+| Depends on | `design/functional-requirements.md` v0.22 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -59,6 +59,7 @@
 | 0.44 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
 | 0.45 | 2026-10-28 | Depends on FRD v0.21 (Q9 closed, Q10 and Q12 deferred to phase 2); no change to the protocol. Open questions after the owner's decisions: Q1 decided (apply for a SIG company identifier before the public release), Q12 closed (answered by songs ahead), Q4, Q6, Q8, Q10 and Q15 deferred. |
 | 0.46 | 2026-10-28 | Q1 closed by the owner: the beacon and frames keep company identifier `0xFFFF`, since a SIG identifier or 16-bit UUID is out of reach and a 128-bit UUID would not fit the legacy frame; 6.2 says so (assessment SP-33). No change to the protocol. |
+| 0.47 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08: further UI languages after review); no change: nothing language-dependent travels over the air (guiDesign D-75). |
 
 ---
 

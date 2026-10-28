@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Debug builds: the languages of src/main plus those under review (FR-LANG-08, guiDesign D-80). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="nl" />
+    <locale android:name="en" />
+    <locale android:name="de" />
+</locale-config>

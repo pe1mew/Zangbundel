@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.15 (draft) |
+| Document version | 0.16 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.21, `design/ble-protocol.md` v0.13 |
+| Depends on | `design/functional-requirements.md` v0.22, `design/ble-protocol.md` v0.13 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -28,6 +28,7 @@
 | 0.13 | 2026-10-27 | Depends on FRD v0.19 (FR-DATA-09: the opt-in campfire statistics on the leader's device, export by hand only); no other change. |
 | 0.14 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
 | 0.15 | 2026-10-28 | Depends on FRD v0.21; no format change. Q12 (signed archives) deferred to after 1.0 by the owner; Q2 and Q6 deferred to phase 2, Q9 to phase 3. |
+| 0.16 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08: further UI languages after review); no format change: song language and app language stay separate. |
 
 ---
 

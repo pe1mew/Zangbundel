@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Debug builds also offer the languages under review (FR-LANG-08, guiDesign D-80): German. Overrides
+     src/main/res/values/languages.xml; keep it in step with xml/locales_config.xml next to it. -->
+<resources>
+    <string-array name="app_languages" translatable="false">
+        <item>nl</item>
+        <item>en</item>
+        <item>de</item>
+    </string-array>
+</resources>

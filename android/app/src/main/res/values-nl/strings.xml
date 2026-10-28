@@ -322,12 +322,13 @@
     <string name="settings_name">Naam voor de leider</string>
     <string name="settings_name_hint">Alleen je voornaam of bijnaam</string>
     <string name="settings_name_note">Niet verplicht. Alleen de leider ziet hem. Zonder naam ben je een zanger met een nummer. Een wijziging geldt vanaf de volgende keer dat je meezingt.</string>
-    <string name="settings_data">Gegevens</string>
     <string name="settings_privacy">Wat gebeurt er met mijn gegevens?</string>
     <string name="settings_remove_all">Alle gegevens verwijderen</string>
     <string name="settings_remove_all_title">Alle gegevens verwijderen?</string>
     <string name="settings_remove_all_text">Bibliotheken, setlists, herinneringen en instellingen worden van deze telefoon gewist. De app begint opnieuw zoals op de eerste dag.</string>
     <string name="settings_remove_all_confirm">Alles verwijderen</string>
+    <string name="settings_language">Taal</string>
+    <string name="settings_language_auto">Automatisch (taal van de telefoon)</string>
     <string name="about_title">Over</string>
     <string name="about_version">Versie %1$s (%2$d)</string>
     <string name="about_formats">Liedformaat %1$s · archief %2$s · Bluetooth-protocol %3$s</string>

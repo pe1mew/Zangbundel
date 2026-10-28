@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- The app languages this build offers under Taal (guiDesign D-76), in this order after Automatisch; the same
+     languages as xml/locales_config.xml. A language under review is added in src/debug only (D-80). -->
+<resources>
+    <string-array name="app_languages" translatable="false">
+        <item>nl</item>
+        <item>en</item>
+    </string-array>
+</resources>

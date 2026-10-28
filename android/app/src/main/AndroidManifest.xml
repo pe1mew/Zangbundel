@@ -67,5 +67,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Keeps the language chosen in settings across starts on Android 8 to 12; 13 and later keep it
+             themselves (FR-LANG-03, guiDesign D-76, architecture A-16). -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
     </application>
 </manifest>

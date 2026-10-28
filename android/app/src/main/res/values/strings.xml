@@ -323,12 +323,14 @@
     <string name="settings_name">Name for the leader</string>
     <string name="settings_name_hint">Only your first name or a nickname</string>
     <string name="settings_name_note">Optional. Only the leader sees it. Without one you are a numbered singer. A change applies the next time you join.</string>
-    <string name="settings_data">Data</string>
     <string name="settings_privacy">What happens to my data?</string>
     <string name="settings_remove_all">Remove all data</string>
     <string name="settings_remove_all_title">Remove all data?</string>
     <string name="settings_remove_all_text">Libraries, setlists, memories and settings are deleted from this phone. The app starts again as on the first day.</string>
     <string name="settings_remove_all_confirm">Remove all</string>
+    <!-- guiDesign D-76: Automatic, then each language of the build in its own name (FR-LANG-03). -->
+    <string name="settings_language">Language</string>
+    <string name="settings_language_auto">Automatic (phone language)</string>
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s (%2$d)</string>
     <string name="about_formats">Song format %1$s · archive %2$s · Bluetooth protocol %3$s</string>
