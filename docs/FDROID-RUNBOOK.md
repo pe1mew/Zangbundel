@@ -4,6 +4,8 @@
      project file's "Before You Start" table. Sibling of docs/RUNBOOK.md (Google Play);
      the two share one app, one application ID and, if Step 3 goes that way, one signing key. -->
 
+Status 2026-10-28: the build-container test passes (Step 8): `fdroid lint`, `build` and `scanner` succeed and F-Droid's build of `8400515` is byte-identical to CI's and the PC's (SHA-256 `1a54e632…`), after the metadata gained a `sudo:` block for JDK 17. Open: the merge request (Step 9), with the production release.
+
 Status 2026-10-27: prepared, not submitted; the owner submits with the first production release on Play. Done: the store metadata in `fastlane/metadata/android/`, generated from `docs/store-listing/` (Step 5); the metadata file `docs/fdroid/nl.pe1mew.zangbundel.app.yml` (Step 8); the release steps for the owner-signed GitHub APK (Step 6); a build on this PC byte-identical to CI's Linux build, and apksigner 34 adding nothing but the signature (Step 7). Open: the build-container test (Step 8, Docker), the merge request (Step 9).
 
 Status 2026-10-20: requirements investigated; code licence changed to plain Apache 2.0 and the app artwork to CC BY-SA 4.0, so the app qualifies with no anti-feature label; the background photograph is the owner's, needs no consent and is CC BY-SA 4.0 like the other app graphics; store texts and graphics exist for Play (`docs/store-listing/`). No app code exists yet, so nothing can be built or submitted; the steps below are what to do from the first release on. The signing decision (Step 3) is made: the owner's own app signing key in every channel, keystore created 2026-10-20.
@@ -183,7 +185,8 @@ The GitHub Release makes the APK public at once; publish it with the Play produc
 - Remove sources of difference: no build timestamps or machine paths in `BuildConfig`; no baseline-profile or resource steps that differ per machine. The Android Gradle Plugin's version-control info is on but finds no repository at `android/`, so every build records the same `generate_error_reason: NO_SUPPORTED_VCS_FOUND`.
 - **Native libraries keep their debug symbols** (`jniLibs.keepDebugSymbols += "**/*.so"` in `android/app/build.gradle.kts`, 2026-10-27). The Android Gradle Plugin strips the prebuilt libraries (libsodium, JNA, DataStore) only where an NDK is installed: a build on the owner's PC, which has one, was 240 KB smaller than CI's of the same commit. With the line, the PC's build of `fb6fea5` from a clean clone was byte-identical to CI's (SHA-256 `1a54e632…`; `design/test-results/2026-10-27-fdroid-preparation.md`).
 - **Sign with apksigner from build-tools 34.0.0, `--v1-signing-enabled false`.** F-Droid copies the signature onto its own build with `apksigcopier`, which works with apksigner 34 and fails with newer versions. Tested 2026-10-27 with a throwaway key: apksigner 34 adds only zero padding and the 4096-byte signing block, the APK's entries and central directory unchanged; apksigner 36 re-aligns the entries; v1 signing adds three files to the APK.
-- Check: the release steps of Step 6 compare the PC's build with CI's for every release; the fdroidserver container (Step 8) is the third build.
+- **JDK 17 on F-Droid's build server.** Every module sets `jvmToolchain(17)`. The buildserver image is Debian 13, which ships only JDK 21, so the metadata installs JDK 17 from Debian 12 in a `sudo:` block, as other recipes do; Gradle finds it by toolchain detection.
+- Check: the release steps of Step 6 compare the PC's build with CI's for every release; the fdroidserver container (Step 8) is the third build. All three gave SHA-256 `1a54e632…` for `8400515` on 2026-10-28 (`design/test-results/2026-10-28-fdroid-container.md`).
 
 ### Step 8 — The metadata file and a local test
 
@@ -194,33 +197,21 @@ The file is `docs/fdroid/nl.pe1mew.zangbundel.app.yml` (prepared 2026-10-27 agai
 - `Binaries` and `AllowedAPKSigningKeys` stay: option B is decided (Step 3).
 - `UpdateCheckMode: Tags ^v[0-9]{1,3}\.[0-9]+\.[0-9]+$` (Decisions).
 
-Test in the fdroidserver build container, which the F-Droid Quick Start Guide describes how to start (Git, Docker and fdroidserver needed). From `/build` in the container:
+Test in the fdroidserver build container (Docker Desktop running; the image `registry.gitlab.com/fdroid/fdroidserver:buildserver` is about 2.4 GB on the first pull). `scripts/fdroid-container-test.sh` does what the F-Droid Quick Start Guide describes: it clones fdroiddata and fdroidserver inside the container, puts in the metadata file and runs `fdroid readmeta`, `lint`, `rewritemeta`, `checkupdates --allow-dirty`, `build --on-server --no-tarball` and `scanner`, then reports the unsigned APK's SHA-256. About seven minutes.
+
+At the production release, after Step 6 (tag pushed, signed APK attached), with CI's unsigned APK of the tag commit:
 
 ```bash
-fdroid readmeta
+bash scripts/fdroid-container-test.sh --compare ci/app-release-unsigned.apk
 ```
+
+Before a release exists, for a pushed commit:
 
 ```bash
-fdroid rewritemeta nl.pe1mew.zangbundel.app
+bash scripts/fdroid-container-test.sh --commit HEAD --no-binaries
 ```
 
-```bash
-fdroid lint nl.pe1mew.zangbundel.app
-```
-
-```bash
-fdroid checkupdates --allow-dirty nl.pe1mew.zangbundel.app
-```
-
-```bash
-fdroid build nl.pe1mew.zangbundel.app
-```
-
-```bash
-fdroid scanner nl.pe1mew.zangbundel.app
-```
-
-Fix the YAML or the app until all of them pass.
+Fix the YAML or the app until all of them pass. `checkupdates` reports *No matching tags found* until the first `v` tag exists; that is expected. `rewritemeta` only drops the file's comments.
 
 ### Step 9 — Merge request and review
 
@@ -251,6 +242,9 @@ Fix the YAML or the app until all of them pass.
 | New version not picked up | Tag does not match `^v[0-9]{1,3}\.[0-9]+\.[0-9]+$`, or the version is not readable in the Gradle file | Tag `v<versionName>`; keep `versionName`/`versionCode` literal in the Gradle file. |
 | The PC's build differs from CI's in `lib/*/*.so` only | The Android Gradle Plugin strips native libraries where an NDK is installed | Keep `jniLibs.keepDebugSymbols += "**/*.so"` (Step 7). |
 | F-Droid cannot copy the signature although the unsigned builds match | Signed with apksigner newer than 34, or with v1 signing on | Re-sign the unsigned APK with build-tools 34.0.0 and `--v1-signing-enabled false` (Step 6). |
+| `fdroid build` in the container: *Cannot find a Java installation … languageVersion=17* | Debian 13 buildserver has only JDK 21, or the `sudo:` lines were skipped (*not running on a dedicated build server*) | Keep the metadata's `sudo:` block; build with `--on-server`, as the script does (Step 8). |
+| `fdroid readmeta` in the container: *could not parse 'srclibs/…yml'*, or git refuses the folder | fdroiddata checked out on Windows and mounted: its symlinks became text files, and the folder's owner differs | Clone fdroiddata inside the container, as the script does. |
+| `fdroid build` prints a Gradle failure but exits 0 | fdroid reports a failed build in its output, not its exit status | Read the output for *build failed*; the script does. |
 | CI fails on *Store metadata* | `fastlane/` edited by hand, or a listing text changed without regenerating | `bash scripts/store-metadata.sh`, stage `fastlane/` with the listing. |
 
 ## Sources (2026-10-20; Reproducible Builds, Build Metadata Reference and the category list re-read 2026-10-27)

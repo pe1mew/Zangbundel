@@ -230,6 +230,11 @@
 **Root cause**: the Android Gradle Plugin strips prebuilt native libraries only when an NDK is installed; the PC has one, CI and F-Droid's build server need not.
 **Fix**: `jniLibs.keepDebugSymbols += "**/*.so"`; compare a build with CI's artifact (`gh run download … -n app-release-unsigned`), not with another build on the same machine. Sign for F-Droid with apksigner 34 and `--v1-signing-enabled false`; 36 re-aligns entries.
 
+### F-Droid's container: no JDK 17, skipped sudo, a failed build that exits 0 (2026-10-28)
+**Problem**: `fdroid build` failed on `jvmToolchain(17)`; the recipe's `sudo:` lines did nothing; a failed build still returned 0; fdroiddata cloned on Windows broke `readmeta`.
+**Root cause**: the buildserver image is Debian 13 (JDK 21 only); fdroid runs `sudo:` only with `--on-server`; it reports failure in its output; Windows Git writes symlinks as text files.
+**Fix**: JDK 17 from Debian 12 (`-t bookworm`) in the recipe, `fdroid build --on-server --no-tarball`, grep the output for *build failed*, clone fdroiddata inside the container. All in `scripts/fdroid-container-test.sh`.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

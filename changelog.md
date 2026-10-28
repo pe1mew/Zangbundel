@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The user manual for the GitHub wiki, in Dutch (`Handleiding`) and English (`Manual`), with a bilingual `Home`, written against version 0.1.1; sources in `wiki/`, the pages *Over* opens.
 - F-Droid prepared for submission with the production release: store metadata in `fastlane/metadata/android/` generated from `docs/store-listing/` by `scripts/store-metadata.sh` (CI checks it is in step), the build metadata `docs/fdroid/nl.pe1mew.zangbundel.app.yml` with a tag pattern that leaves out library-style tags, and the steps for the owner-signed GitHub APK (FDROID-RUNBOOK Steps 5 to 8).
 - Release check G-09 at the release budget: all 14 Jazzer targets fuzzed for an hour each, no finding (`design/test-results/2026-10-28-fuzz-release-budget.md`).
+- `scripts/fdroid-container-test.sh` builds the app in F-Droid's build container and runs its lint and scanner (FDROID-RUNBOOK Step 8). F-Droid's build of `8400515` is byte-identical to CI's and the PC's; the F-Droid metadata installs JDK 17, which F-Droid's Debian 13 build server lacks (`design/test-results/2026-10-28-fdroid-container.md`).
 
 ### Changed
 - Native libraries keep their debug symbols, so the release APK is the same whether or not an NDK is installed; a build on the owner's PC is now byte-identical to CI's (architecture v0.22, G-07 on two machines). The APK grows by about 240 KB.

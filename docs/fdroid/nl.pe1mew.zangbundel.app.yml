@@ -27,6 +27,13 @@ Builds:
     versionCode: 2026102701
     commit: 6faaf6fdf920c267a8616e846f1c627b9aded402
     subdir: android/app
+    # The build asks Gradle for a JDK 17 toolchain, as CI uses; the buildserver is Debian 13, which has only
+    # JDK 21, so JDK 17 comes from Debian 12 as in other recipes.
+    sudo:
+      - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
+      - apt-get update
+      - apt-get install -y -t bookworm openjdk-17-jdk-headless
+      - update-java-alternatives -s java-1.17.0-openjdk-amd64
     gradle:
       - yes
 

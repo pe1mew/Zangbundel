@@ -83,7 +83,7 @@ Zangbundel/
 │   ├── ble/                      ← BLE sequence diagrams per scenario (.puml/.svg/.png)
 │   ├── icon/                     ← app icon master, launcher layers, feature graphic
 │   └── icon-proposals/           ← the six icon proposals and their contact sheet
-├── scripts/check-design.sh       ← cross-document consistency check; store-metadata.sh writes fastlane/ from docs/store-listing/
+├── scripts/check-design.sh       ← cross-document consistency check; store-metadata.sh writes fastlane/ from docs/store-listing/; fdroid-container-test.sh builds as F-Droid does
 ├── fastlane/metadata/android/    ← F-Droid's store texts and graphics, generated; never edit by hand
 ├── docs/
 │   ├── RUNBOOK.md                ← Google Play setup, signing, tracks, release flow
