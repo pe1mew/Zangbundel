@@ -231,6 +231,7 @@ The photos in `raw/` (untracked, 2–5 MB each) can serve the feature graphic af
 |---|---|---|
 | Upload refused: "version code already used" | `versionCode` not higher than a previous upload on any track, including deleted releases | Bump `versionCode`; never reuse |
 | Warning: "versiecode … aanzienlijk hoger dan je vorige versiecode" | The `YYYYMMDDnn` scheme (Decisions) looks large to Play | *Toch doorgaan*: the scheme's highest code, 2099123199, stays under Play's limit of 2 100 000 000 |
+| Warning: "App Bundle bevat native code en je hebt geen foutopsporingssymbolen geüpload" | The only native code is the prebuilt libsodium, JNA and DataStore libraries from Maven Central, which ship without symbol files; the app compiles no native code itself | Ignore and continue: there is nothing to upload, and crashes in the app's own Kotlin code are readable without it (first seen 2026-10-28, 0.2.0) |
 | Upload refused: target API too low | `targetSdk` below the current requirement (36 from 31 August 2026) | Raise `targetSdk`, rebuild |
 | Upload refused: wrong signing key | Bundle signed with a key other than the registered upload key | Use the registered keystore; if lost, request an upload key reset |
 | Release blocked by a red task on the dashboard | Data safety, content rating, foreground service declaration or privacy policy incomplete | Complete Step 3 and Step 5 items |
