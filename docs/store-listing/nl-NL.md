@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.3.0 (2026110301)
+
+Nieuw: Zangbundel spreekt Duits. Kies Deutsch onder Instellingen → Taal, of laat de app de telefoon volgen. Duidelijkere woorden: de knop voor de leider op het startscherm heet nu Kampvuur leiden, en het naamveld in Instellingen heet Je naam.
+
 ### 0.2.0 (2026102801)
 
 Nieuw: kies de taal van de app onder Instellingen → Taal, of laat hem de telefoon volgen. De twee woorden van een kampvuur staan in de taal van je telefoon. In de zangbundel veeg je naar het volgende of vorige lied, of gebruik je de ronde knoppen onderaan; de middelste toont de liedinfo. Instellingen is overzichtelijker.

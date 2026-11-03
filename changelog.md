@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-03
+
+Prepared for Google Play (versionCode 2026110301), with German as the third language; it goes to internal testing and then the closed test. Release checks: `design/test-results/2026-11-03-release-checks-0.3.0.md`.
+
 - A review release for Play's internal-testing track, for the German reviewer in Switzerland (FRD v0.23 FR-LANG-08, architecture v0.26 A-23, assessment v0.27 SP-36). The languages under review moved from `app/src/debug/res` to `app/src/review/res`; debug builds always include it. The release build includes it only with `-PreviewVersionCode=YYYYMMDD9n`, which also sets the versionCode and the version name `<versionName>-review`. Without that property the release is byte-identical to 0.2.0 apart from the signature. The first is `zangbundel-0.2.0-review-2026102890.aab` (RUNBOOK Step 7). `check-translation.py` reads the new folder. GUI design v0.63 amends D-80; BLE protocol v0.49, song format v0.17 and test plan v0.17 follow the FRD with no change.
 - German review: the home screen's search line `home_listening` changes from *Hört zu…* to *Horche…*. The reviewer pointed out that a program does not "hear"; the change uses their proposal 1A (pe1mew/Zangbundel#1).
 - The home screen's button for the leader reads *Lead a campfire* / *Kampvuur leiden* / *Lagerfeuer leiten* instead of *Start a campfire*. Under a nearby campfire the line reads *Lead a campfire yourself*. A child read *starten* as "let's start singing" (pe1mew/Zangbundel#2, GUI design v0.64 D-21). The manual and the tester pages follow; the start screen keeps its title.

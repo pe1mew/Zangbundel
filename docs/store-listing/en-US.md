@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.3.0 (2026110301)
+
+New: Zangbundel speaks German. Choose Deutsch under Settings → Language, or let the app follow the phone. Clearer words: the leader's button on the home screen is now called Lead a campfire, and the name field in Settings is called Your name.
+
 ### 0.2.0 (2026102801)
 
 New: choose the app's language under Settings → Language, or let it follow the phone. The two words of a campfire appear in your phone's language. In the songbook, swipe to the next or previous song, or use the round buttons at the bottom; the middle one shows the song info. Settings is tidier.

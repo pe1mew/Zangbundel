@@ -1,0 +1,1 @@
+New: Zangbundel speaks German. Choose Deutsch under Settings → Language, or let the app follow the phone. Clearer words: the leader's button on the home screen is now called Lead a campfire, and the name field in Settings is called Your name.
