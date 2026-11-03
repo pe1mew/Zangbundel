@@ -6,7 +6,7 @@ Zangbundel is een zangbundel voor bij het kampvuur. Eén telefoon is de **kampvu
 
 De app bevat zelf geen liedteksten. Liederen komen uit **bibliotheken** die de leider toevoegt; elke bibliotheek heeft een eigen licentie. Om mee te zingen heb je geen bibliotheek nodig: de leider stuurt elk lied.
 
-Deze handleiding hoort bij versie 0.2.0.
+De app toont zijn schermen in het Nederlands, Engels of Duits. Deze handleiding hoort bij versie 0.3.0.
 
 ---
 
@@ -164,7 +164,7 @@ Druk op terug (of kies **Kampvuur verlaten** onderaan de lijst) en bevestig met 
 
 ## 9. Instellingen
 
-- **Taal**: **Automatisch** volgt de taal van de telefoon; of kies **Nederlands** of **English**. Staat de telefoon in een taal die de app niet heeft, dan toont de app Engels. Op Android 13 en nieuwer kan het ook in de instellingen van de telefoon, bij de app.
+- **Taal**: **Automatisch** volgt de taal van de telefoon; of kies **Nederlands**, **English** of **Deutsch**. Staat de telefoon in een taal die de app niet heeft, dan toont de app Engels. Op Android 13 en nieuwer kan het ook in de instellingen van de telefoon, bij de app.
 - **Je naam**: niet verplicht; alleen je voornaam of bijnaam. Alleen de leider kan hem lezen; zonder naam ben je een zanger met een nummer.
 - **Statistieken van kampvuren** (voor leiders, standaard uit): de telefoon bewaart per kampvuur zonder namen welke liederen er gestuurd werden, hoeveel zangers er waren en hoe goed Bluetooth hen bereikte. Het scherm zegt precies wat wel en niet. Er wordt niets verstuurd; het gaat alleen van je telefoon af als je zelf op **Delen** tikt.
 - **Alle gegevens verwijderen**: bibliotheken, setlists, herinneringen en instellingen gaan van de telefoon; de app begint opnieuw zoals op de eerste dag.

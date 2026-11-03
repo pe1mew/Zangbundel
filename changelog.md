@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- The wiki manual (*Manual*, *Handleiding*) is for 0.3.0 and names *Deutsch* under the language setting.
+
 ## [0.3.0] - 2026-11-03
 
 Prepared for Google Play (versionCode 2026110301), with German as the third language; it goes to internal testing and then the closed test. Release checks: `design/test-results/2026-11-03-release-checks-0.3.0.md`.
