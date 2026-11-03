@@ -240,6 +240,31 @@
 **Root cause**: the helper wrote with `open(p, "w").write(fn(t))`: `open(…, "w")` truncates the file before `fn(t)` runs, so an exception in `fn` leaves it empty.
 **Fix**: compute first, write after (`new = fn(t)`, then open and write); check `git diff --cached --stat` before staging a file an edit script touched. Restore an emptied tracked file with `git restore <file>` (the owner's step).
 
+### A resource folder added to the release brings every file in it (2026-11-03)
+**Problem**: adding `src/debug/res` to the review release failed lint with ExtraTranslation: the German `strings_radiocheck.xml` came along, and the release has no radiocheck base strings.
+**Root cause**: a source set is all or nothing; `src/debug/res` held more than the language under review.
+**Fix**: a folder of its own for the languages under review (`src/review/res`), holding nothing else; debug includes it, the release only with `-PreviewVersionCode`.
+
+### An escaped star in a Markdown table cell reaches the script that reads it (2026-11-03)
+**Problem**: `check-translation.py` warned that the glossary's *Leiter\*in* was missing from the German strings, which contain *Leiter*in*.
+**Root cause**: the glossary is Markdown, where `*` is escaped as `\*`; the script compared the raw cell.
+**Fix**: strip the backslash (and compare without the star) when reading a glossary cell.
+
+### R8 renames resource files in the release APK (2026-11-03)
+**Problem**: `res/xml/locales_config.xml` was not in the release APK; aapt2 showed `res/Br.xml` and similar instead.
+**Root cause**: resource shrinking with name obfuscation shortens file paths in release builds.
+**Fix**: find a resource by id, not path: `aapt2 dump resources` gives the id and file of `xml/locales_config`, then `aapt2 dump xmltree --file <that file>`.
+
+### `gh issue close --comment` posts nothing on a closed issue (2026-11-03)
+**Problem**: the solution comments for #1 to #4 did not appear, with no error worth noticing.
+**Root cause**: the owner's commit with "fixes #1 to #4" had closed them on push; `gh issue close` on a closed issue stops before commenting.
+**Fix**: check `gh issue list --state all` first; on a closed issue use `gh issue comment`.
+
+### A runbook command relies on a variable set in an earlier block (2026-11-03)
+**Problem**: the owner's apksigner command failed: `'\build-tools\34.0.0\apksigner.bat' is not recognized`.
+**Root cause**: `$env:ANDROID_HOME` was set only in the build block; the owner signed in a new PowerShell window, where it is empty.
+**Fix**: each runbook command block sets what it uses (FDROID-RUNBOOK Step 6 now does); give the owner full paths.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
@@ -264,7 +289,7 @@
 
 | Date | Gotcha | Occurrences | Promoted to |
 |------|--------|-------------|-------------|
-| 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **3** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08) | `memory/MEMORY.md` Recently Promoted |
+| 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **4** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08); 2026-11-03 after promotion, caught by the rule: an update check on About against FR-NET-01/03, written into issue #6 as a point to settle | `memory/MEMORY.md` Recently Promoted |
 | 2026-10-25 | A size limit stated with its reason is false when computed | **6** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19); 2026-10-25 after promotion: GATT DATA chunk over 512 bytes and HEADER over MTU 23 (v0.22, v0.23); 2026-10-26 after promotion: a proposal's 1.3 s that summed to 3 s | `memory/MEMORY.md` Recently Promoted |
 | 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **7** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions); 2026-10-26 report strings (parse error) and a `python -c` whose backticks were substituted silently; 2026-10-26 after promotion: a heredoc edit of `SingerScreen.kt` and a `sed` that dropped a backslash | `memory/MEMORY.md` Recently Promoted; 2026-10-26 also Claude Code's auto-loaded user memory, since the index is not read every session |
 | 2026-10-26 | JVM test names cannot carry ':', ';' or '.' | **4** - 2026-10-25 ';' and ':'; 2026-10-26 ':' (`LibraryRepositoryTest`); 2026-10-26 '.' | Claude Code's auto-loaded user memory |

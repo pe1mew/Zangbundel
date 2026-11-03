@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [Unreleased]
 
 - The wiki manual (*Manual*, *Handleiding*) is for 0.3.0 and names *Deutsch* under the language setting.
+- `docs/FDROID-RUNBOOK.md`: the status line names the closed merge request and the resubmission from 2027-01-18; the signing command sets `ANDROID_HOME` itself, since a new PowerShell window lacks it.
 
 ## [0.3.0] - 2026-11-03
 

@@ -8,7 +8,7 @@ Status 2026-10-28 (evening): **the owner decided to submit with 0.2.0**, while t
 
 Status 2026-10-28: the build-container test passes (Step 8): `fdroid lint`, `build` and `scanner` succeed and F-Droid's build of `8400515` is byte-identical to CI's and the PC's (SHA-256 `1a54e632…`), after the metadata gained a `sudo:` block for JDK 17. Open: the merge request (Step 9), with the production release.
 
-Status 2026-10-27: prepared, not submitted; the owner submits with the first production release on Play. Done: the store metadata in `fastlane/metadata/android/`, generated from `docs/store-listing/` (Step 5); the metadata file `docs/fdroid/nl.pe1mew.zangbundel.app.yml` (Step 8); the release steps for the owner-signed GitHub APK (Step 6); a build on this PC byte-identical to CI's Linux build, and apksigner 34 adding nothing but the signature (Step 7). Open: the build-container test (Step 8, Docker), the merge request (Step 9).
+Status 2026-11-03: the merge request !54679 for 0.2.0 was closed by a maintainer on 2026-10-28 on Quality point 6 (3 months of development); resubmit from 2027-01-18 (Step 9). Done: the store metadata in `fastlane/metadata/android/`, generated from `docs/store-listing/` (Step 5); the metadata file `docs/fdroid/nl.pe1mew.zangbundel.app.yml` (Step 8); the release steps for the owner-signed GitHub APK (Step 6); a build on this PC byte-identical to CI's Linux build, and apksigner 34 adding nothing but the signature (Step 7); the build-container test (Step 8, Docker). Open: the new merge request (Step 9).
 
 Status 2026-10-20: requirements investigated; code licence changed to plain Apache 2.0 and the app artwork to CC BY-SA 4.0, so the app qualifies with no anti-feature label; the background photograph is the owner's, needs no consent and is CC BY-SA 4.0 like the other app graphics; store texts and graphics exist for Play (`docs/store-listing/`). No app code exists yet, so nothing can be built or submitted; the steps below are what to do from the first release on. The signing decision (Step 3) is made: the owner's own app signing key in every channel, keystore created 2026-10-20.
 
@@ -163,10 +163,10 @@ Get-FileHash app\build\outputs\apk\release\app-release-unsigned.apk
 gh run download (gh run list -c (git rev-parse HEAD) -w android -L 1 --json databaseId -q ".[0].databaseId") -n app-release-unsigned -D ci; Get-FileHash ci\app-release-unsigned.apk
 ```
 
-Sign with **apksigner 34.0.0** and the **app signing key** (not the upload key), v2 and v3 only; apksigner asks for the passwords:
+Sign with **apksigner 34.0.0** and the **app signing key** (not the upload key), v2 and v3 only; apksigner asks for the passwords. `ANDROID_HOME` is set only in the window that ran the build above, so the sign command sets it again:
 
 ```powershell
-& "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" sign --ks "<path>\zangbundel-appsigning.jks" --ks-key-alias zangbundel --v1-signing-enabled false --out "zangbundel-$v.apk" app\build\outputs\apk\release\app-release-unsigned.apk
+$env:ANDROID_HOME = "C:\Users\drasv\AppData\Local\Android\Sdk"; & "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" sign --ks "<path>\zangbundel-appsigning.jks" --ks-key-alias zangbundel --v1-signing-enabled false --out "zangbundel-$v.apk" app\build\outputs\apk\release\app-release-unsigned.apk
 ```
 
 ```powershell
