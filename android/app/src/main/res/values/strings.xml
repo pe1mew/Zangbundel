@@ -14,7 +14,7 @@
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
     <!-- Home screen (guiDesign D-21). -->
-    <string name="home_start">Start a campfire</string>
+    <string name="home_start">Lead a campfire</string>
     <!-- Songbook and reading a song (guiDesign D-52, D-53). -->
     <string name="home_songbook">Songbook</string>
     <string name="songbook_title">Songbook</string>
@@ -194,7 +194,7 @@
     <string name="home_searching">Looking for campfires…</string>
     <string name="home_qr_help">Or scan the leader\'s QR code with your camera app.</string>
     <string name="home_nearby">Campfires nearby</string>
-    <string name="home_start_self">Start a campfire yourself</string>
+    <string name="home_start_self">Lead a campfire yourself</string>
     <string name="home_listening">Listening… %d s</string>
     <string name="home_cannot_lead">This phone can join a campfire, but cannot start one.</string>
     <string name="home_refused_title">A campfire is already running</string>
@@ -320,7 +320,7 @@
     <string name="privacy_location">It is never read. On Android 11 and older the app asks for that permission only because looking for Bluetooth devices needs it there.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_singing">Singing</string>
-    <string name="settings_name">Name for the leader</string>
+    <string name="settings_name">Your name</string>
     <string name="settings_name_hint">Only your first name or a nickname</string>
     <string name="settings_name_note">Optional. Only the leader sees it. Without one you are a numbered singer. A change applies the next time you join.</string>
     <string name="settings_privacy">What happens to my data?</string>

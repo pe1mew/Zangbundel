@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.16 (draft) |
+| Document version | 0.17 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.22, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.23, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -28,6 +28,7 @@
 | 0.14 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered); no other change. |
 | 0.15 | 2026-10-28 | Depends on FRD v0.21; no other change from it. The owner's decisions: F-03 runs with as many phones as can be gathered, no fixed count, before and after the release (Q1; 5.4 and the release gate say so; FR-BLE-10's 25 is verified only from a run with 25 or more); screens are filmed (Q3). |
 | 0.16 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08); no other change. |
+| 0.17 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08); no other change. |
 
 ---
 

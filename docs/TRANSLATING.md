@@ -8,7 +8,7 @@ For people who review or improve the app's texts in Dutch, English or German, an
 |---|---|---|---|
 | Dutch (*Nederlands*) | `nl` | Primary: every text is written in Dutch first. In every build. | `android/app/src/main/res/values-nl/` |
 | English | `en` | The fallback: a phone in a language the app lacks shows English. In every build. | `android/app/src/main/res/values/` |
-| German (*Deutsch*) | `de` | **Under review.** A draft, in the review build only (section 6), not in the Play or F-Droid build. It ships after a fluent speaker has approved it. The draft was translated mainly from the English: compare it with the Dutch, which is the source. | `android/app/src/debug/res/values-de/` |
+| German (*Deutsch*) | `de` | **Approved 2026-11-03** by a fluent reviewer; in every build from the next release. Improvements are welcome as for the other languages: compare with the Dutch, which is the source. | `android/app/src/main/res/values-de/` |
 
 Each language has three files: `strings.xml` with the app's texts, `strings_words.xml` with the two word lists of a campfire's two words (rule 10 of section 4), and `strings_radiocheck.xml` with the texts of the radio check and the field-test consent, which exist only in development and field-test builds. For Dutch and English the last file is in `android/app/src/radiocheck/res/`.
 
@@ -19,7 +19,7 @@ The rules behind this are requirements FR-LANG-01 to FR-LANG-08 in `design/funct
 **In scope:**
 
 - Every text in the files of your language: buttons, titles, messages, the import report, the privacy screen, the explanation of the two words, the consent of the field test, and the 512 words of the two word lists.
-- The fixed terms of your language in the glossary, the table of D-79 in `design/guiDesign.md`. For German that column is a draft and part of the review.
+- The fixed terms of your language in the glossary, the table of D-79 in `design/guiDesign.md`. For a language under review that column is a draft and part of the review.
 - Whether each text reads well **in the app**, on a phone (section 6), not only in the file.
 
 **Out of scope:**
@@ -63,7 +63,7 @@ These are not style preferences: breaking one makes the build fail, the app misb
 2. **Keep every placeholder.** The same placeholders as in English, each exactly once. Numbered ones may move within the sentence, but `%1$d` must stay next to the word it belongs to: in `Importiert: %1$d · Übersprungen: %2$d` the first number is the imported songs in every language. Unnumbered ones (`%s`, `%d`) must stay in the same order; if your language needs them in another order, open an issue so the maintainer numbers them.
 3. **Give every plural form** your language needs, each with the same placeholder as in English.
 4. **Escape** apostrophes (`\'`), straight double quotes (`\"`) and percent signs (`%%`). Typographic quotes („…“, “…”, ‘…’) need no escape and are preferred in German and Dutch.
-5. **Use the glossary.** The fixed terms of D-79 (*kampvuur* / campfire / *Lagerfeuer*, *leider* / leader / *Leiter*, and so on) are used for that thing everywhere, in the app, the store listing and the privacy texts, so a child never wonders whether *Lagerfeuer* and *Feuer* are two different things. If your language needs another term, propose it in your pull request or issue for the table; a new term goes into the table before it is used in a text. **Gender forms in German** (*Leiter* or *Leiterin/Leiter*, *Sänger* or *Sänger\*innen*, or a neutral word such as *Leitung*) are not decided yet: the draft uses the masculine forms as placeholders, and the reviewers decide, in a pull request or an issue. The choice then goes into the German column of the table and is used everywhere.
+5. **Use the glossary.** The fixed terms of D-79 (*kampvuur* / campfire / *Lagerfeuer*, *leider* / leader / *Leiter\*in*, and so on) are used for that thing everywhere, in the app, the store listing and the privacy texts, so a child never wonders whether *Lagerfeuer* and *Feuer* are two different things. If your language needs another term, propose it in your pull request or issue for the table; a new term goes into the table before it is used in a text. **Gender forms in German** (*Leiter* or *Leiterin/Leiter*, *Sänger* or *Sänger\*innen*, or a neutral word such as *Leitung*) are not decided yet: the draft uses the masculine forms as placeholders, and the reviewers decide, in a pull request or an issue. The choice then goes into the German column of the table and is used everywhere.
 6. **Privacy texts say exactly what the Dutch says, no more and no less.** The users are under 18, and these texts are a promise: what the app sends, what it keeps, what it never does. The strings beginning with `privacy_`, `statistics_`, `words_` and `fieldtest_consent_`, and `home_bluetooth_why`, must be checked sentence by sentence against the Dutch. They must be readable by a 12-year-old (FR-GEN-08). The explanation of the two words (`words_text`) must not promise more protection than there is: the words are a help, not a lock.
 7. **The notification text stays neutral.** `notification_gathering_running` (*Kampvuur actief*, *Lagerfeuer läuft*) shows on the lock screen; it never names the campfire or a person (assessment SP-17).
 8. **Links stay on the project's GitHub.** The one translatable link, `about_manual_url`, points to the manual in your language on `https://github.com/pe1mew/Zangbundel/wiki/…`, or to the English manual while yours does not exist. Never to another site (assessment SP-32).
@@ -78,7 +78,7 @@ These are not style preferences: breaking one makes the build fail, the app misb
 - **Dates and numbers** are formatted by the phone's language; you do not write them.
 - **The app's name stays *Zangbundel*** in every language, and the names of the languages in the *Taal* menu (*Nederlands*, *English*, *Deutsch*) come from the phone, each in its own language.
 - **Generated section labels** (*Couplet* / *Verse* / *Strophe*, *Refrein* / *Chorus* / *Refrain*) follow the app's language, also above a song in another language (D-77).
-- **German is in the review build only** until it is approved. Its manual button opens the English manual, labelled *Anleitung (Englisch)*, until a German manual exists.
+- **German has no manual of its own yet.** Its manual button opens the English manual, labelled *Anleitung (Englisch)*, until a German manual exists.
 
 ## 6. Reviewing on a phone
 
@@ -98,6 +98,8 @@ A text is only right when it fits its screen. You need an Android phone (Android
 7. Note each change with the string's `name` if you know it, or the screen and the text you saw, and send it as in section 8.
 
 Building it yourself also works, with the Android SDK: `./gradlew assembleDebug` in `android/` (see `android/README.md`).
+
+**Through Google Play, for a reviewer far away.** The maintainer can also put a review release on Play's internal-testing track (`docs/RUNBOOK.md`, Step 7). You send the maintainer the Google address you use in the Play Store, open the link you get back, become a tester, and install *Zangbundel* from the Play Store. It has the real signature and replaces the store app if you have it, keeping its settings and libraries, so there is only one icon. It has no radio check. Tell the maintainer when you are done, so your address can be removed from the list (assessment SP-36).
 
 Screens that need two phones or a campfire are the hardest to reach; the strings for them are all in the file, with a comment that names the screen.
 
@@ -167,10 +169,10 @@ You need a GitHub account for both. The commands use Git on the command line; Gi
 
 The maintainer reviews the pull request, may ask questions, and merges it. Keep your branch up to date with `main` until then. Small pull requests (one screen group, or the privacy texts) are easier to review than one large one; several are welcome.
 
-**When a language under review is approved,** the maintainer moves its files from `src/debug` to `src/main`, adds it to the language lists of the main build, and adds the privacy policy in that language (D-80). From the next release on it is in the Play and F-Droid builds. You do not need to do this yourself.
+**When a language under review is approved,** the maintainer moves its files from `src/review` to `src/main`, and its radio-check strings from `src/debug` to `src/radiocheck`, adds it to the language lists of the main build, and adds the privacy policy in that language (D-80). From the next release on it is in the Play and F-Droid builds. You do not need to do this yourself.
 
 ## 9. Proposing a new language
 
-Open an issue first: a new language is the owner's decision (FR-LANG-08). Once agreed, it starts as German did: the two files in `android/app/src/debug/res/values-<code>/`, the code added to `android/app/src/debug/res/values/languages.xml` and `…/xml/locales_config.xml`, a column in the glossary of D-79, and, if the language counts differently, its plural forms in `PLURALS` at the top of `scripts/check-translation.py`. Right-to-left languages need a decision first (FRD Q8).
+Open an issue first: a new language is the owner's decision (FR-LANG-08). Once agreed, it starts as German did: its strings and word lists in `android/app/src/review/res/values-<code>/`, the radio check's strings in `android/app/src/debug/res/values-<code>/`, the code added to `android/app/src/review/res/values/languages.xml` and `…/xml/locales_config.xml`, a column in the glossary of D-79, and, if the language counts differently, its plural forms in `PLURALS` at the top of `scripts/check-translation.py`. Right-to-left languages need a decision first (FRD Q8).
 
 Questions: open an issue, or write to zangbundel@rfsee.nl. Discussion in Dutch, English or German is welcome.

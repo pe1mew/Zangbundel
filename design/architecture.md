@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.25 (draft) |
+| Document version | 0.26 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.22, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.23, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -37,6 +37,7 @@
 | 0.23 | 2026-10-28 | Depends on FRD v0.20 (Q2 and Q4 closed, Q11 further resolved: open questions the design had already answered). Q1 partly answered from the internal tests: one APK from Play, a shared copy installs as an update; Play updating a shared copy is still open. |
 | 0.24 | 2026-10-28 | Depends on FRD v0.21; no other change to the design. Q2 closed (fdroid scanner accepts the prebuilt native libraries), Q5 deferred to the iOS phase. |
 | 0.25 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08). A-16 amended: the language setting through AppCompat's per-app locale with `autoStoreLocales` for Android 8 to 12, the `app_languages` list, and a language under review in the debug source set only (guiDesign D-80). |
+| 0.26 | 2026-10-28 | Depends on FRD v0.23. A-23 added: the review release with the languages under review, for Play's internal-testing track only. |
 
 ---
 
@@ -126,6 +127,8 @@ Every decision is numbered **A-nn** and carries a status. **Fixed** means it was
 **A-21 — Five test layers, with a conformance corpus shared across implementations.** *Decided 2026-10-22 (owner).* Section 10: JVM unit tests of the core; a conformance corpus of song, setlist, archive and protocol test vectors with expected canonical bytes, hashes, line lists and error codes, which the app's tests and the library repository's validator both run; protocol simulation over the simulated transport with 50 virtual singers; fuzzing of every parser of untrusted input; and instrumented and field tests on real phones.
 
 **A-22 — The command-line validator and release tool live in the library repository.** *Fixed (existing).* `validate.py` and `release.py` in `github.com/pe1mew/Zangbundel-bibliotheek` implement song-format sections 11 to 13 for maintainers and CI. The app has its own Kotlin implementation of the same rules in `core/songformat`; the two are kept in step by the conformance corpus (A-21), not by sharing code (the library's scripts carry a different licence). Answers song-format Q11.
+
+**A-23 — A review release with the languages under review, for Play's internal track only.** *Decided 2026-10-28 (owner).* The languages under review (FR-LANG-08) have a resource folder of their own, `app/src/review/res/`: the strings, the word lists, the language list and `locales_config.xml`. Debug builds always include it. The release build includes it only with `-PreviewVersionCode=YYYYMMDD9n`, which also sets that versionCode and appends `-review` to the version name (`app/build.gradle.kts`). That bundle is signed with the upload key and goes to the internal-testing track only: it is never tagged, never promoted to another track, and never put on GitHub or F-Droid. Without the property the release build is unchanged, byte for byte: on 2026-10-28 it was identical to the 0.2.0 build apart from the signature. A review versionCode ends in 90 to 99, so every regular release of a later day is higher; internal testers keep the review release until then. German texts of the radio check stay in `src/debug`, because the release build has no radio check. *Why:* the German reviewer lives in Switzerland. The CI review build needs a downloaded APK and is debuggable (assessment SP-35); the internal track reaches named testers through Play, with release settings.
 
 ---
 

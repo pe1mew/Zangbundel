@@ -91,7 +91,7 @@ Zet de **batterijbespaarstand uit** en neem een **powerbank** mee: een kampvuur 
 
 ### Starten
 
-1. Tik op het startscherm op **Kampvuur starten**. De app luistert eerst 5 seconden (*Even luisteren…*) of er al een kampvuur in de buurt is. Is dat zo, dan zegt de app *Er brandt al een kampvuur*: zing daar mee, of ga buiten bereik.
+1. Tik op het startscherm op **Kampvuur leiden**. De app luistert eerst 5 seconden (*Even luisteren…*) of er al een kampvuur in de buurt is. Is dat zo, dan zegt de app *Er brandt al een kampvuur*: zing daar mee, of ga buiten bereik.
 2. Kies op **Kampvuur starten**:
    - **Naam van het kampvuur** (voorgesteld: *Kampvuur* met de datum);
    - **Wie mag meedoen**:
@@ -165,7 +165,7 @@ Druk op terug (of kies **Kampvuur verlaten** onderaan de lijst) en bevestig met 
 ## 9. Instellingen
 
 - **Taal**: **Automatisch** volgt de taal van de telefoon; of kies **Nederlands** of **English**. Staat de telefoon in een taal die de app niet heeft, dan toont de app Engels. Op Android 13 en nieuwer kan het ook in de instellingen van de telefoon, bij de app.
-- **Naam voor de leider**: niet verplicht; alleen je voornaam of bijnaam. Alleen de leider kan hem lezen; zonder naam ben je een zanger met een nummer.
+- **Je naam**: niet verplicht; alleen je voornaam of bijnaam. Alleen de leider kan hem lezen; zonder naam ben je een zanger met een nummer.
 - **Statistieken van kampvuren** (voor leiders, standaard uit): de telefoon bewaart per kampvuur zonder namen welke liederen er gestuurd werden, hoeveel zangers er waren en hoe goed Bluetooth hen bereikte. Het scherm zegt precies wat wel en niet. Er wordt niets verstuurd; het gaat alleen van je telefoon af als je zelf op **Delen** tikt.
 - **Alle gegevens verwijderen**: bibliotheken, setlists, herinneringen en instellingen gaan van de telefoon; de app begint opnieuw zoals op de eerste dag.
 

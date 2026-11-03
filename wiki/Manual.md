@@ -91,7 +91,7 @@ Switch **battery saver off** and bring a **power bank**: a campfire lasts hours,
 
 ### Starting
 
-1. On the home screen tap **Start a campfire**. The app first listens for 5 seconds for a campfire nearby. If there is one, the app says *A campfire is already running*: sing along there, or move out of range.
+1. On the home screen tap **Lead a campfire**. The app first listens for 5 seconds for a campfire nearby. If there is one, the app says *A campfire is already running*: sing along there, or move out of range.
 2. On the start screen choose:
    - **Name of the campfire** (proposed: *Campfire* with the date);
    - **Who may join**:
@@ -165,7 +165,7 @@ Press back (or choose **Leave the campfire** at the bottom of the list) and conf
 ## 9. Settings
 
 - **Language**: **Automatic** follows the phone's language; or choose **Nederlands** or **English**. A phone set to a language the app does not have shows English. On Android 13 and later this can also be set in the phone's settings, under the app.
-- **Name for the leader**: optional; just your first name or a nickname. Only the leader can read it; without a name you are a singer with a number.
+- **Your name**: optional; just your first name or a nickname. Only the leader can read it; without a name you are a singer with a number.
 - **Campfire statistics** (for leaders, off by default): for each campfire, without names, the phone keeps which songs were sent, how many singers there were and how well Bluetooth reached them. The screen says exactly what is and is not kept. Nothing is sent; it leaves your phone only when you tap **Share** yourself.
 - **Remove all data**: libraries, setlists, memories and settings are removed from the phone; the app starts again as on the first day.
 

@@ -217,6 +217,17 @@ Testers come in through a Google group instead of a mailing list: they add thems
 
 Then, in Play Console, the closed track *Gesloten test – Alpha* → *Testers* → **Google Groepen** → the group's address → save; the opt-in link on that tab is the one above. Invite testers by sending the group's page (`https://groups.google.com/g/<name>`) with the wiki page *Testen* or *Testing*. Only testers who opted in through the link count towards the 12; check the count on the track's *Testers* tab during the 14 days.
 
+### A review release on the internal track (2026-10-28)
+
+This release is for a translation reviewer who installs through Play, such as the German reviewer abroad (architecture A-23, FR-LANG-08). It is the release with the languages under review, on the internal-testing track only.
+
+1. Build it in `android/`, with `keystore.properties` in place: `./gradlew -PreviewVersionCode=YYYYMMDD9n bundleRelease`. The versionCode is the day's date followed by 90 to 99, so it is higher than every regular release of that day; the version name becomes `<versionName>-review`. Copy `app/build/outputs/bundle/release/app-release.aab` out under a clear name, for example `zangbundel-0.2.0-review-2026102890.aab`.
+2. In Play Console, open *Interne test* (Internal testing) → *Testers*, add the reviewer's Google address to the e-mail list, and save. Then *Nieuwe release maken* (Create new release): upload the bundle, and write release notes for `en-US` and `nl-NL`, such as *Review version with German, not yet reviewed.* Then roll it out to internal testing.
+3. Send the reviewer the opt-in link from the *Testers* tab, together with `docs/TRANSLATING.md` section 6. On a phone that has the store app, the review release replaces it, and its settings and libraries stay.
+4. **Never promote this release** to the closed or production track, never tag it, and never attach it to a GitHub release. Remove the reviewer from the list when the review is done. Internal testers keep the review release until a regular release of a later day, which has a higher versionCode.
+
+The first one, made 2026-10-28, is `zangbundel-0.2.0-review-2026102890.aab`: versionCode 2026102890, version name `0.2.0-review`, signed with the upload key (`C0:A3:…`), SHA-256 `c0d1dc24…13d10e47`, with the German texts and word lists checked inside.
+
 ### Step 8 — Store listing
 
 Texts are ready in `docs/store-listing/nl-NL.md` and `docs/store-listing/en-US.md` (app name, short and full description, release-notes template); the nl-NL texts are entered in Play Console as a draft (2026-10-18). To add English: Store listing → language selector → add en-US and paste from the en-US file. Graphics go in a non-committed folder or in Git LFS. Required assets:

@@ -28,7 +28,7 @@ Doe het in je eigen tempo, en schrijf op wat je opvalt. De [handleiding](Handlei
 
 1. **De eerste keer**: open de app, lees *Zo werkt het* en *Wat gebeurt er met mijn gegevens?*.
 2. **Liederen**: voeg onder **Zangbundel → Bibliotheken** de *Zangbundel bibliotheek* toe (zie [Liederen](#liederen)), en je eigen bibliotheek als je die hebt gemaakt. Lees een paar liederen; veeg naar links en rechts, of gebruik de ronde knoppen onderaan.
-3. **Een kampvuur**, met twee telefoons: de ene tikt op **Kampvuur starten**, de andere doet mee **uit de lijst**. Probeer het ook **met de QR-code**: scan die met de camera-app van de tweede telefoon.
+3. **Een kampvuur**, met twee telefoons: de ene tikt op **Kampvuur leiden**, de andere doet mee **uit de lijst**. Probeer het ook **met de QR-code**: scan die met de camera-app van de tweede telefoon.
 4. **Liederen sturen**: de leider tikt bij een paar liederen op **Nu**. Komen ze bij de zanger aan, en hoe snel?
 5. **Scherm uit**: zet het scherm van de leider 5 minuten uit en stuur daarna een lied. Werkt het nog?
 6. **Verlaten en beëindigen**: verlaat het kampvuur als zanger, en beëindig het als leider.

@@ -34,7 +34,7 @@ Phase 1, the songbook over BLE:
 - **Singing.** Join from the list of campfires nearby, with a join code, or by scanning the leader's QR code with the camera app. Read in night or day theme, at five text sizes, fitted to the screen width if wanted, and follow the leader from song to song.
 - **Trust.** Every campfire shows two words made from its key; leader and singers compare them aloud.
 - **Afterwards.** Received lyrics are deleted when the campfire ends; the list of titles sung stays as a memory. A leader can opt in to anonymous campfire statistics that never leave the phone unless shared by hand.
-- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, Dutch and English (German in review).
+- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, Dutch, English and German.
 
 Phase 2 adds song requests, likes, delegates and karaoke (timed lyric highlighting). Phase 3 adds chords and notation for instrument players.
 

@@ -24,6 +24,6 @@ Permissions
 
 The app can be passed on without internet too: a nearby Android phone receives it over Quick Share or Bluetooth.
 
-Languages: Dutch and English; song libraries can be in any language.
+Languages: Dutch, English and German; song libraries can be in any language.
 
 Zangbundel is open source: https://github.com/pe1mew/Zangbundel

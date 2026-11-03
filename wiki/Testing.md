@@ -28,7 +28,7 @@ At your own pace; note what strikes you. The [manual](Manual) explains everythin
 
 1. **First use**: open the app, read *How it works* and *What happens to my data?*.
 2. **Songs**: under **Songbook → Libraries**, add the *Zangbundel bibliotheek* (see [Songs](#songs)), and your own library if you made one. Read a few songs; swipe left and right, or use the round buttons at the bottom.
-3. **A campfire**, with two phones: one taps **Start a campfire**, the other joins **from the list**. Also try **with the QR code**: scan it with the second phone's camera app.
+3. **A campfire**, with two phones: one taps **Lead a campfire**, the other joins **from the list**. Also try **with the QR code**: scan it with the second phone's camera app.
 4. **Sending songs**: the leader taps **Now** on a few songs. Do they reach the singer, and how fast?
 5. **Screen off**: turn the leader's screen off for 5 minutes, then send a song. Does it still work?
 6. **Leaving and ending**: leave the campfire as a singer, and end it as the leader.

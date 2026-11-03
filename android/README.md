@@ -15,6 +15,7 @@ cd android
 bash ../scripts/fuzz.sh 60      # fuzz each Jazzer target for 60 s (3600 before a release; test plan 3.4)
 ./gradlew assembleRelease      # unsigned when keystore.properties is absent
 ./gradlew bundleRelease        # refuses without keystore.properties (docs/RUNBOOK.md Step 6)
+./gradlew -PreviewVersionCode=YYYYMMDD9n bundleRelease   # with the languages under review, internal track only (architecture A-23)
 ```
 
 `keystore.properties` lives next to this file and is ignored by git:

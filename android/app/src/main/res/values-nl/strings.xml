@@ -13,7 +13,7 @@
     <string name="cancel">Annuleren</string>
     <string name="done">Klaar</string>
     <!-- Startscherm (guiDesign D-21). -->
-    <string name="home_start">Kampvuur starten</string>
+    <string name="home_start">Kampvuur leiden</string>
     <!-- Zangbundel en een lied lezen (guiDesign D-52, D-53). -->
     <string name="home_songbook">Zangbundel</string>
     <string name="songbook_title">Zangbundel</string>
@@ -193,7 +193,7 @@
     <string name="home_searching">Zoeken naar kampvuren…</string>
     <string name="home_qr_help">Of scan de QR-code van de leider met je camera-app.</string>
     <string name="home_nearby">Kampvuren in de buurt</string>
-    <string name="home_start_self">Zelf een kampvuur starten</string>
+    <string name="home_start_self">Zelf een kampvuur leiden</string>
     <string name="home_listening">Even luisteren… %d s</string>
     <string name="home_cannot_lead">Dit toestel kan meezingen, maar geen kampvuur starten</string>
     <string name="home_refused_title">Er brandt al een kampvuur</string>
@@ -319,7 +319,7 @@
     <string name="privacy_location">Die wordt nooit uitgelezen. Op Android 11 en ouder vraagt de app die toestemming alleen omdat zoeken naar Bluetooth-apparaten daar die toestemming nodig heeft.</string>
     <string name="settings_title">Instellingen</string>
     <string name="settings_singing">Zingen</string>
-    <string name="settings_name">Naam voor de leider</string>
+    <string name="settings_name">Je naam</string>
     <string name="settings_name_hint">Alleen je voornaam of bijnaam</string>
     <string name="settings_name_note">Niet verplicht. Alleen de leider ziet hem. Zonder naam ben je een zanger met een nummer. Een wijziging geldt vanaf de volgende keer dat je meezingt.</string>
     <string name="settings_privacy">Wat gebeurt er met mijn gegevens?</string>

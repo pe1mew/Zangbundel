@@ -44,7 +44,7 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.platform.storage.AppSettings
 
 /**
- * Settings (guiDesign D-44, D-76; FR-LANG-03, FR-SING-01, FR-DATA-07): the group *Taal*, the group *Zingen* with *Naam voor de leider*,
+ * Settings (guiDesign D-44, D-76; FR-LANG-03, FR-SING-01, FR-DATA-07): the group *Taal*, the group *Zingen* with *Je naam*,
  * then, as buttons on the backdrop like those on About, *Statistieken van kampvuren* (D-60, D-62) and
  * *Alle gegevens verwijderen*. The
  * lyric view's theme, text size and keep-screen-on are set from the singer's toolbar (D-17); vibration,

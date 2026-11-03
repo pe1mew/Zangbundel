@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.map
  */
 class AppSettings private constructor(private val store: DataStore<Preferences>) {
 
-    /** *Naam voor de leider* (FR-SING-01, guiDesign D-44): empty unless the singer typed one; never prefilled. */
+    /** *Je naam* (FR-SING-01, guiDesign D-44): empty unless the singer typed one; never prefilled. */
     val displayName: Flow<String> = store.data.map { it[DISPLAY_NAME].orEmpty() }
 
     /** Whether the first-use introduction was finished (guiDesign D-07). */

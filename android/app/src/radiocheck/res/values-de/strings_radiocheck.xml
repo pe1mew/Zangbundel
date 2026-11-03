@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Radio check and field-test consent in German, under review with values-de/strings.xml (FR-LANG-08,
-     guiDesign D-80). Debug builds only: the fieldtest build has no German. -->
+<!-- Radio check and field-test consent in German, approved with src/main/res/values-de/strings.xml on 2026-11-03
+     (FR-LANG-08, guiDesign D-80). Debug and fieldtest builds, like the radio check itself. -->
 <resources>
     <string name="radiocheck_title">Funkprüfung</string>
     <string name="radiocheck_explanation">Misst, was das Bluetooth dieses Telefons senden kann: wie viele Sendekanäle gleichzeitig öffnen, wie schnell sich ihre Daten ändern können und ob erweitertes Senden funktioniert. Für ein paar Sekunden sendet es Testsignale ohne Namen, und es speichert nichts.</string>
@@ -13,7 +13,7 @@
     <string name="radiocheck_permission_denied">Ohne die Berechtigung, Bluetooth-Signale zu senden, kann die Prüfung nicht laufen.</string>
     <!-- Test plan 5.5: the consent on the fieldtest build's first start; architecture A-20: the field-test log. -->
     <string name="fieldtest_consent_title">Einwilligung für die Testversion von Zangbundel</string>
-    <string name="fieldtest_consent_keeps">Diese Testversion von Zangbundel führt auf diesem Telefon eine Protokolldatei darüber, wie die Bluetooth-Verbindung funktioniert: wie viele Sendekanäle öffnen, wie viele Nachrichten wiederholt oder erneut angefordert werden, wie viele Verbindungen gelingen oder scheitern, die Signalstärke in groben Stufen, die Zahl der Teilnehmer, die Android-Version, die Bluetooth-Fähigkeiten des Telefons und der Akkustand.</string>
+    <string name="fieldtest_consent_keeps">Diese Testversion von Zangbundel führt auf diesem Telefon eine Protokolldatei darüber, wie die Bluetooth-Verbindung funktioniert: wie viele Sendekanäle öffnen, wie viele Nachrichten wiederholt oder erneut angefordert werden, wie viele Verbindungen gelingen oder scheitern, die Signalstärke in groben Stufen, die Zahl der Teilnehmer*innen, die Android-Version, die Bluetooth-Fähigkeiten des Telefons und der Akkustand.</string>
     <string name="fieldtest_consent_never">Die Datei enthält keine Namen, keinen Namen des Lagerfeuers, keine Liedtexte, keine Schlüssel oder Codes und keine Adressen von Telefonen.</string>
     <string name="fieldtest_consent_leaves">Sie verlässt das Telefon nur, wenn du sie selbst über das Teilen-Menü teilst.</string>
     <string name="fieldtest_consent_stop">Du kannst jederzeit aufhören: Deinstalliere die Testversion, dann ist die Datei weg. Die Teilnahme ist freiwillig. Fragen: zangbundel@rfsee.nl.</string>

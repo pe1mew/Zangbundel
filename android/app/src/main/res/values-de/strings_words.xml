@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- The two words of a campfire (FR-GATH-18, ble-protocol 6.6, guiDesign D-36) in German, under review with the other German texts (FR-LANG-08, guiDesign D-80).
+<!-- The two words of a campfire (FR-GATH-18, ble-protocol 6.6, guiDesign D-36) in German, approved with the other German texts on 2026-11-03 (FR-LANG-08, guiDesign D-80).
      Word n of each list means what word n of the Dutch lists means, so phones in different languages show
      the same pair translated. 256 words each, 3 to 10 letters (Dutch 3 to 8), no word twice and none in both
      lists; never reorder, add or remove words (docs/TRANSLATING.md). scripts/check-translation.py checks them. -->

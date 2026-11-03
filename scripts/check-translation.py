@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-RES_SETS = ["main", "radiocheck", "debug", "fieldtest", "release"]
+RES_SETS = ["main", "radiocheck", "review", "debug", "fieldtest", "release"]
 SRC = ROOT / "android" / "app" / "src"
 GUI = ROOT / "design" / "guiDesign.md"
 
@@ -179,7 +179,8 @@ def glossary():
         for col, cell in zip(cols, cells):
             lang = COLUMN_LANGUAGE.get(col)
             if lang:
-                cell = re.sub(r"\([^)]*\)", "", cell).replace("*", "")
+                # Italics and the escaped gender star (Leiter\*in) both go: the stem of the term is what is matched.
+                cell = re.sub(r"\([^)]*\)", "", cell).replace("\\", "").replace("*", "")
                 row[lang] = [t.strip() for t in cell.split(",") if t.strip()]
         if row.get("en") and not any(len(t) <= 5 for t in row["en"]):
             rows.append(row)
@@ -324,8 +325,8 @@ def check_lists(langs):
     """The languages a build offers (languages.xml, locales_config.xml) match the strings files of that build."""
     report = Report("language lists")
     shipped = {"en"} | {l for l in langs if any(s in ("main", "radiocheck") for s, _ in files_of(l))}
-    review = {l for l in langs if any(s == "debug" for s, _ in files_of(l))} - shipped
-    for build, expected in (("main", shipped), ("debug", shipped | review)):
+    review = {l for l in langs if any(s in ("review", "debug") for s, _ in files_of(l))} - shipped
+    for build, expected in (("main", shipped), ("review", shipped | review)):
         res = SRC / build / "res"
         for rel, pattern in (("values/languages.xml", r"<item>([^<]+)</item>"),
                              ("xml/locales_config.xml", r'<locale android:name="([^"]+)"')):

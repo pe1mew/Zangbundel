@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- German, under review (FR-LANG-08, guiDesign D-80): in debug builds only until a fluent speaker has
-     approved it; then it moves to src/main. A draft, translated from the English and Dutch; terms as D-79. -->
+<!-- German (FR-LANG-08, guiDesign D-80): approved by a fluent speaker on 2026-11-03, after review in src/review
+     (architecture A-23). Translated from the English and Dutch; terms as D-79, persons with the gender star. -->
 <resources>
     <string name="app_name">Zangbundel</string>
     <string name="notification_channel_gathering">Lagerfeuer</string>
@@ -15,7 +15,7 @@
     <string name="cancel">Abbrechen</string>
     <string name="done">Fertig</string>
     <!-- Home screen (guiDesign D-21). -->
-    <string name="home_start">Lagerfeuer starten</string>
+    <string name="home_start">Lagerfeuer leiten</string>
     <!-- Songbook and reading a song (guiDesign D-52, D-53). -->
     <string name="home_songbook">Liederbuch</string>
     <string name="songbook_title">Liederbuch</string>
@@ -114,7 +114,7 @@
     <string name="report_s011">Eine Anweisungszeile ist fehlerhaft.</string>
     <string name="report_s012">Ein Metadatenwert ist ungültig.</string>
     <string name="report_w001">Die Datei wurde aufgeräumt; das Lied ist unverändert.</string>
-    <string name="report_w002">Empfohlene Angaben wie Autor oder Lizenz fehlen.</string>
+    <string name="report_w002">Empfohlene Angaben wie Autor*in oder Lizenz fehlen.</string>
     <string name="report_w003">Der Titel ist sehr lang.</string>
     <string name="report_w004">Das Lied ist sehr lang.</string>
     <string name="report_w005">Eine Zeile des Liedtexts ist sehr lang.</string>
@@ -193,10 +193,10 @@
     <string name="home_bluetooth_allow">Bluetooth erlauben</string>
     <string name="home_bluetooth_on">Bluetooth einschalten</string>
     <string name="home_searching">Suche nach Lagerfeuern…</string>
-    <string name="home_qr_help">Oder scanne den QR-Code des Leiters mit deiner Kamera-App.</string>
+    <string name="home_qr_help">Oder scanne den QR-Code der*des Leiter*in mit deiner Kamera-App.</string>
     <string name="home_nearby">Lagerfeuer in der Nähe</string>
-    <string name="home_start_self">Selbst ein Lagerfeuer starten</string>
-    <string name="home_listening">Hört zu… %d s</string>
+    <string name="home_start_self">Selbst ein Lagerfeuer leiten</string>
+    <string name="home_listening">Horche… %d s</string>
     <string name="home_cannot_lead">Dieses Telefon kann an einem Lagerfeuer teilnehmen, aber keins starten.</string>
     <string name="home_refused_title">Es läuft schon ein Lagerfeuer</string>
     <string name="home_refused_text">%s ist in der Nähe. Mach mit, oder geh außer Reichweite, um dein eigenes zu starten.</string>
@@ -216,36 +216,36 @@
     <string name="start_code">Mit einem Teilnahmecode</string>
     <string name="start_code_detail">Vier Ziffern, die du laut sagst, angezeigt beim QR-Code</string>
     <string name="start_qr_only">Nur mit dem QR-Code</string>
-    <string name="start_qr_only_detail">Sänger scannen den QR-Code; es gibt keinen Code zum Eintippen</string>
+    <string name="start_qr_only_detail">Sänger*innen scannen den QR-Code; es gibt keinen Code zum Eintippen</string>
     <string name="panel_words_title">Die zwei Wörter dieses Lagerfeuers</string>
-    <string name="panel_words_hint">Sag sie laut: Sänger sehen sie neben dem Namen des Lagerfeuers. Tippen zum Schließen.</string>
+    <string name="panel_words_hint">Sag sie laut: Sänger*innen sehen sie neben dem Namen des Lagerfeuers. Tippen zum Schließen.</string>
     <string name="panel_code_title">Teilnahmecode</string>
-    <string name="panel_code_hint">Sänger tippen diesen Code ein, nachdem sie auf das Lagerfeuer getippt haben. Tippen zum Schließen.</string>
+    <string name="panel_code_hint">Sänger*innen tippen diesen Code ein, nachdem sie auf das Lagerfeuer getippt haben. Tippen zum Schließen.</string>
     <string name="panel_show_qr">QR-Code zeigen</string>
     <string name="qr_code_text">Teilnahmecode: %1$s</string>
     <string name="qr_hint">Mit der Kamera-App scannen. Tippen zum Schließen.</string>
     <string name="code_title">%1$s beitreten</string>
-    <string name="code_text">Dieses Lagerfeuer braucht einen Teilnahmecode. Frag den Leiter danach oder scanne seinen QR-Code.</string>
-    <string name="code_wrong">Der Leiter hat den Code nicht angenommen. Frag noch einmal danach oder scanne seinen QR-Code.</string>
+    <string name="code_text">Dieses Lagerfeuer braucht einen Teilnahmecode. Frag die*den Leiter*in danach oder scanne ihren*seinen QR-Code.</string>
+    <string name="code_wrong">Die*Der Leiter*in hat den Code nicht angenommen. Frag noch einmal danach oder scanne ihren*seinen QR-Code.</string>
     <string name="code_label">Teilnahmecode</string>
     <string name="code_join">Beitreten</string>
     <string name="joining_title">Beitreten</string>
     <string name="joining_searching">Suche das Lagerfeuer…</string>
     <string name="joining_found">Gefunden, wird geprüft…</string>
-    <string name="joining_closer">Stell dich näher zum Leiter.</string>
+    <string name="joining_closer">Stell dich näher zur*zum Leiter*in.</string>
     <string name="joining_not_this">Das ist nicht das Lagerfeuer des QR-Codes.</string>
     <string name="joining_again">Noch einmal suchen</string>
     <string name="joining_home">Zurück zum Start</string>
-    <string name="home_similar_names">Zwei Lagerfeuer mit fast demselben Namen: Frag den Leiter nach den zwei Wörtern.</string>
+    <string name="home_similar_names">Zwei Lagerfeuer mit fast demselben Namen: Frag die*den Leiter*in nach den zwei Wörtern.</string>
     <string name="join_link_invalid">Dieser QR-Code ist kein Zangbundel-Lagerfeuer.</string>
     <string name="start_start">Starten</string>
     <string name="start_failed">Das Lagerfeuer konnte nicht starten: Bluetooth hat das Senden verweigert. Versuche es noch einmal oder starte Bluetooth neu.</string>
     <string name="leader_now">Jetzt</string>
     <string name="leader_state_current">wird gesungen</string>
     <string name="leader_state_sung">gesungen</string>
-    <string name="leader_help_description">Sänger, denen in den letzten 5 Sekunden über Bluetooth geholfen wurde: %1$d%%</string>
+    <string name="leader_help_description">Sänger*innen, denen in den letzten 5 Sekunden über Bluetooth geholfen wurde: %1$d%%</string>
     <string name="leader_end">Beenden</string>
-    <string name="drawer_open">Die Leiterleiste öffnen</string>
+    <string name="drawer_open">Die Leitungsleiste öffnen</string>
     <string name="drawer_time">Zeit</string>
     <string name="drawer_songs">Lieder</string>
     <string name="drawer_singers">Angemeldet</string>
@@ -260,10 +260,10 @@
     <string name="summary_title">Das Lagerfeuer ist zu Ende</string>
     <string name="summary_time">Gesungene Zeit</string>
     <string name="summary_songs">Gesungene Lieder</string>
-    <string name="summary_singers">Die meisten Sänger gleichzeitig</string>
+    <string name="summary_singers">Die meisten Sänger*innen gleichzeitig</string>
     <string name="summary_home">Zurück zum Start</string>
     <string name="leader_end_title">Das Lagerfeuer für alle beenden?</string>
-    <string name="leader_end_text">Die Sänger sehen, dass das Lagerfeuer zu Ende ist, und die Liedtexte verschwinden von ihren Telefonen.</string>
+    <string name="leader_end_text">Die Sänger*innen sehen, dass das Lagerfeuer zu Ende ist, und die Liedtexte verschwinden von ihren Telefonen.</string>
     <string name="singer_connecting">verbinde…</string>
     <string name="singer_connected">verbunden</string>
     <string name="singer_cleared">geleert</string>
@@ -283,11 +283,11 @@
     <string name="singer_stay">Bleiben</string>
     <!-- D-36 (v0.56): what the two words are, on a tap on them in the singer's strip. -->
     <string name="words_title">Die zwei Wörter</string>
-    <string name="words_text">Die zwei Wörter gehören zu genau diesem Lagerfeuer. Sie entstehen aus dem Schlüssel, den das Telefon des Leiters für dieses Lagerfeuer erzeugt hat; das nächste Lagerfeuer bekommt einen neuen Schlüssel und andere Wörter.\n\nBitte den Leiter, die Wörter laut zu sagen. Siehst du dieselben Wörter, bist du am richtigen Lagerfeuer. Ist dein Telefon auf eine andere Sprache eingestellt als das des Leiters, siehst du dieselben Wörter übersetzt.\n\nMit diesem Schlüssel unterschreibt der Leiter jedes Lied. Dein Telefon zeigt nur Lieder mit dieser Unterschrift, also kann niemand sonst Lieder in dieses Lagerfeuer bringen. Dein Name ist verschlüsselt: Nur der Leiter kann ihn lesen. Die Liedtexte selbst sind nicht geheim.\n\nDie Wörter sind eine Hilfe, kein Schloss: Zwei Lagerfeuer können dieselben Wörter haben, zufällig oder mit Absicht. Wenn du den QR-Code des Leiters scannst, bist du immer am richtigen Lagerfeuer.</string>
+    <string name="words_text">Die zwei Wörter gehören zu genau diesem Lagerfeuer. Sie entstehen aus dem Schlüssel, den das Telefon der*des Leiter*in für dieses Lagerfeuer erzeugt hat; das nächste Lagerfeuer bekommt einen neuen Schlüssel und andere Wörter.\n\nBitte die*den Leiter*in, die Wörter laut zu sagen. Siehst du dieselben Wörter, bist du am richtigen Lagerfeuer. Ist dein Telefon auf eine andere Sprache eingestellt als das der*des Leiter*in, siehst du dieselben Wörter übersetzt.\n\nMit diesem Schlüssel unterschreibt die*der Leiter*in jedes Lied. Dein Telefon zeigt nur Lieder mit dieser Unterschrift, also kann niemand sonst Lieder in dieses Lagerfeuer bringen. Dein Name ist verschlüsselt: Nur die*der Leiter*in kann ihn lesen. Die Liedtexte selbst sind nicht geheim.\n\nDie Wörter sind eine Hilfe, kein Schloss: Zwei Lagerfeuer können dieselben Wörter haben, zufällig oder mit Absicht. Wenn du den QR-Code der*des Leiter*in scannst, bist du immer am richtigen Lagerfeuer.</string>
     <string name="words_close">Schließen</string>
     <plurals name="leader_singers">
-        <item quantity="one">%d Sänger</item>
-        <item quantity="other">%d Sänger</item>
+        <item quantity="one">%d Sänger*in</item>
+        <item quantity="other">%d Sänger*innen</item>
     </plurals>
     <!-- Memories (guiDesign D-49). -->
     <string name="memories_title">Erinnerungen</string>
@@ -298,32 +298,32 @@
     <string name="memories_delete_title">Diese Erinnerung löschen?</string>
     <string name="memories_delete_text">Nur die Liste der Lieder verschwindet; deine Bibliotheken bleiben.</string>
     <string name="memories_share">Liste teilen</string>
-    <string name="memories_from_leader">Die Texte kamen an diesem Abend vom Leiter</string>
+    <string name="memories_from_leader">Die Texte kamen an diesem Abend von der*vom Leiter*in</string>
     <string name="memories_led">geleitet, %s</string>
     <!-- First use, privacy, settings, About (guiDesign D-04 to D-07, D-44; FR-GEN-05 to 08, FR-DATA-07). -->
     <string name="welcome_version">Version %s</string>
     <string name="intro_title">So funktioniert es</string>
-    <string name="intro_leader">Ein Telefon ist der Leiter des Lagerfeuers. Der Leiter wählt die Lieder aus und schickt die Liedtexte über Bluetooth an jedes Telefon in der Nähe. Dafür braucht es kein Internet.</string>
-    <string name="intro_singer">Alle anderen singen mit: Öffne die App und tippe auf das Lagerfeuer in der Liste, oder scanne den QR-Code des Leiters mit deiner Kamera. Die Liedtexte erscheinen von selbst.</string>
-    <string name="intro_songs">Lieder kommen aus Bibliotheken, die du im Liederbuch hinzufügst. Zum Mitsingen brauchst du keine: Der Leiter schickt jedes Lied.</string>
+    <string name="intro_leader">Ein Telefon leitet das Lagerfeuer. Die*Der Leiter*in wählt die Lieder aus und schickt die Liedtexte über Bluetooth an jedes Telefon in der Nähe. Dafür braucht es kein Internet.</string>
+    <string name="intro_singer">Alle anderen singen mit: Öffne die App und tippe auf das Lagerfeuer in der Liste, oder scanne den QR-Code der*des Leiter*in mit deiner Kamera. Die Liedtexte erscheinen von selbst.</string>
+    <string name="intro_songs">Lieder kommen aus Bibliotheken, die du im Liederbuch hinzufügst. Zum Mitsingen brauchst du keine: Die*Der Leiter*in schickt jedes Lied.</string>
     <string name="intro_privacy">Was passiert mit meinen Daten?</string>
     <string name="intro_start">Los geht\'s</string>
     <string name="privacy_title">Deine Daten</string>
     <string name="privacy_sends_title">Was die App sendet</string>
-    <string name="privacy_sends">Nur während eines Lagerfeuers, über Bluetooth: das Lagerfeuer und die Liedtexte. Einen Namen oder einen Wunsch kann nur der Leiter des Lagerfeuers lesen. Nichts geht an die Macher oder an sonst jemanden: keine Kontodaten und keine Werbung. Du wirst auch nicht verfolgt.</string>
+    <string name="privacy_sends">Nur während eines Lagerfeuers, über Bluetooth: das Lagerfeuer und die Liedtexte. Einen Namen oder einen Wunsch kann nur die*der Leiter*in des Lagerfeuers lesen. Nichts geht an die Macher*innen oder an sonst jemanden: keine Kontodaten und keine Werbung. Du wirst auch nicht verfolgt.</string>
     <string name="privacy_internet_title">Verbindung zum Internet</string>
     <string name="privacy_internet">Nur um eine Bibliothek oder Setlist von der Adresse herunterzuladen, die du eingibst oder auswählst. Diese Website sieht deinen Download und die Internetadresse des WLANs oder des Anbieters, über den du online bist.</string>
     <string name="privacy_keeps_title">Was auf deinem Telefon bleibt</string>
-    <string name="privacy_keeps">Bibliotheken, Setlists, Einstellungen und die Erinnerungen. Die Liedtexte, die der Leiter geschickt hat, werden nach dem Lagerfeuer gelöscht. Wenn du leitest und Statistiken einschaltest, auch eine Zusammenfassung jedes Lagerfeuers ohne Namen; sie verlässt dein Telefon nur, wenn du sie selbst teilst.</string>
+    <string name="privacy_keeps">Bibliotheken, Setlists, Einstellungen und die Erinnerungen. Die Liedtexte, die die*der Leiter*in geschickt hat, werden nach dem Lagerfeuer gelöscht. Wenn du leitest und Statistiken einschaltest, auch eine Zusammenfassung jedes Lagerfeuers ohne Namen; sie verlässt dein Telefon nur, wenn du sie selbst teilst.</string>
     <string name="privacy_delete_title">So löschst du, was auf deinem Telefon bleibt</string>
     <string name="privacy_delete">Alle Daten entfernen in den Einstellungen löscht alles. Du kannst auch einzelne Dinge löschen oder die App entfernen.</string>
     <string name="privacy_location_title">Standort</string>
     <string name="privacy_location">Er wird nie gelesen. Auf Android 11 und älter fragt die App nur nach dieser Berechtigung, weil die Suche nach Bluetooth-Geräten sie dort braucht.</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_singing">Singen</string>
-    <string name="settings_name">Name für den Leiter</string>
+    <string name="settings_name">Dein Name</string>
     <string name="settings_name_hint">Nur dein Vorname oder ein Spitzname</string>
-    <string name="settings_name_note">Freiwillig. Nur der Leiter sieht ihn. Ohne Namen bist du ein Sänger mit einer Nummer. Eine Änderung gilt ab dem nächsten Mitmachen.</string>
+    <string name="settings_name_note">Freiwillig. Nur die*der Leiter*in sieht ihn. Ohne Namen bist du ein*e Sänger*in mit einer Nummer. Eine Änderung gilt ab dem nächsten Mitmachen.</string>
     <string name="settings_privacy">Was passiert mit meinen Daten?</string>
     <string name="settings_remove_all">Alle Daten entfernen</string>
     <string name="settings_remove_all_title">Alle Daten entfernen?</string>
@@ -349,7 +349,7 @@
     <string name="toolbar_info">Liedinfo</string>
     <string name="toolbar_fit">Breite anpassen</string>
     <string name="toolbar_keep_on">Bildschirm anlassen</string>
-    <string name="toolbar_follow">Dem Leiter folgen</string>
+    <string name="toolbar_follow">Der*Dem Leiter*in folgen</string>
     <string name="info_lyricist">Text</string>
     <string name="info_composer">Musik</string>
     <string name="info_melody">Nach der Melodie von</string>
@@ -360,12 +360,12 @@
     <string name="info_source">Quelle</string>
     <string name="info_tags">Schlagwörter</string>
     <string name="info_library">Bibliothek</string>
-    <string name="info_from_leader">Vom Leiter erhalten</string>
+    <string name="info_from_leader">Von der*vom Leiter*in erhalten</string>
     <!-- Resume after the app died while leading (guiDesign D-67). -->
     <string name="resume_title">Das Lagerfeuer wurde unterbrochen</string>
     <string name="resume_stopped_now">Vor weniger als einer Minute unterbrochen</string>
     <string name="resume_stopped">Vor %1$d Min. unterbrochen</string>
-    <string name="resume_text">Die App wurde geschlossen, während du geleitet hast. Setze fort, um mit denselben Sängern und Liedern weiterzumachen.</string>
+    <string name="resume_text">Die App wurde geschlossen, während du geleitet hast. Setze fort, um mit denselben Sänger*innen und Liedern weiterzumachen.</string>
     <string name="resume_resume">Fortsetzen</string>
     <string name="resume_restart">Neu beginnen</string>
     <string name="resume_failed">Fortsetzen nicht möglich. Schalte Bluetooth ein und versuche es noch einmal.</string>
@@ -404,10 +404,10 @@
     <string name="statistics_title">Statistiken</string>
     <string name="settings_statistics">Lagerfeuer-Statistiken</string>
     <string name="statistics_kept_title">Was gespeichert wird, nur auf diesem Telefon</string>
-    <string name="statistics_kept">Wenn du ein Lagerfeuer leitest, während dies eingeschaltet ist, speichert das Telefon: das Datum; welche Lieder du geschickt hast, wann (ab dem Start gezählt) und wie lange jedes dauerte; die Lieder der Setlist, die du nicht gesungen hast; wie viele Sänger beigetreten waren, einmal pro Minute; wie gut das Bluetooth deines Telefons sie erreicht hat; und die Version der App.</string>
+    <string name="statistics_kept">Wenn du ein Lagerfeuer leitest, während dies eingeschaltet ist, speichert das Telefon: das Datum; welche Lieder du geschickt hast, wann (ab dem Start gezählt) und wie lange jedes dauerte; die Lieder der Setlist, die du nicht gesungen hast; wie viele Sänger*innen beigetreten waren, einmal pro Minute; wie gut das Bluetooth deines Telefons sie erreicht hat; und die Version der App.</string>
     <string name="statistics_never_title">Was nie gespeichert wird</string>
-    <string name="statistics_never">Namen, der Name des Lagerfeuers, irgendetwas über einen einzelnen Sänger, welche Telefone dabei waren, die Uhrzeit oder wo du warst.</string>
-    <string name="statistics_leaves">Nichts wird irgendwohin gesendet. Es verlässt dieses Telefon nur, wenn du auf Teilen tippst und selbst eine App wählst, zum Beispiel um es an die Macher von Zangbundel zu schicken.</string>
+    <string name="statistics_never">Namen, der Name des Lagerfeuers, irgendetwas über einzelne Sänger*innen, welche Telefone dabei waren, die Uhrzeit oder wo du warst.</string>
+    <string name="statistics_leaves">Nichts wird irgendwohin gesendet. Es verlässt dieses Telefon nur, wenn du auf Teilen tippst und selbst eine App wählst, zum Beispiel um es an die Macher*innen von Zangbundel zu schicken.</string>
     <string name="statistics_switch">Statistiken speichern</string>
     <string name="statistics_season">Diese Saison</string>
     <string name="statistics_none">Noch nichts gespeichert.</string>
@@ -420,12 +420,12 @@
         <item quantity="other">%d Lieder</item>
     </plurals>
     <plurals name="statistics_average_singers">
-        <item quantity="one">im Durchschnitt %d Sänger</item>
-        <item quantity="other">im Durchschnitt %d Sänger</item>
+        <item quantity="one">im Durchschnitt %d Sänger*in</item>
+        <item quantity="other">im Durchschnitt %d Sänger*innen</item>
     </plurals>
     <plurals name="statistics_singers">
-        <item quantity="one">%d Sänger</item>
-        <item quantity="other">%d Sänger</item>
+        <item quantity="one">%d Sänger*in</item>
+        <item quantity="other">%d Sänger*innen</item>
     </plurals>
     <string name="statistics_most">Am meisten gesungen</string>
     <string name="statistics_least">Am wenigsten gesungen</string>

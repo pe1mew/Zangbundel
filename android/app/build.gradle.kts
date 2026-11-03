@@ -71,6 +71,8 @@ android {
                 res.srcDir("src/radiocheck/res")
             }
         }
+        // The languages under review (FR-LANG-08): always in debug, in release only for the review release below.
+        getByName("debug").res.srcDir("src/review/res")
     }
 
     buildFeatures {
@@ -113,6 +115,21 @@ android {
 
 kotlin {
     jvmToolchain(17)
+}
+
+// A release with the languages under review, for Play's internal-testing track only (FR-LANG-08, architecture A-23):
+// ./gradlew -PreviewVersionCode=YYYYMMDD9n bundleRelease. Never tagged, never promoted to another track.
+val reviewVersionCode = providers.gradleProperty("reviewVersionCode").orNull?.toInt()
+val reviewVersionName = "${android.defaultConfig.versionName}-review"
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        if (reviewVersionCode == null) return@onVariants
+        variant.sources.res?.addStaticSourceDirectory("src/review/res")
+        variant.outputs.forEach {
+            it.versionCode.set(reviewVersionCode)
+            it.versionName.set(reviewVersionName)
+        }
+    }
 }
 
 // bundleRelease is the Play upload path: it must not run unsigned (A-19). Decided while configuring, so the

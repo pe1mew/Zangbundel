@@ -4,7 +4,7 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.22 (draft) |
+| Version | 0.23 (draft) |
 | Date | 2026-10-28 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -32,6 +32,7 @@
 | 0.20 | 2026-10-28 | Open questions answered by the design and the build recorded: Q2 closed (singers see only what has been sent, `design/guiDesign.md` D-47), Q4 closed (the ChordPro profile of `design/song-format.md`), Q11 further resolved (one APK from Play, a shared copy installs as an update; Play updating a shared copy still open). FR-LIB-03's note says the format is a ChordPro profile instead of naming it a candidate. No requirement changed in substance. |
 | 0.21 | 2026-10-28 | The owner's decisions on open questions: Q9 closed (no override of FR-GATH-16 for an abandoned campfire), Q10 and Q12 deferred to phase 2. Section 19 names `design/guiDesign.md` instead of the planned `design/ui-flows.md` (guiDesign Q5). No requirement changed. |
 | 0.22 | 2026-10-28 | FR-LANG-08 added (MAY, P1): further UI languages, each only after review by a fluent speaker; German is the first, under review. Q8 amended accordingly. The owner also confirmed the selection of FR-LANG-03 as `design/guiDesign.md` D-76 designs it and English as the fallback. No other requirement changed. |
+| 0.23 | 2026-10-28 | FR-LANG-08 amended by the owner: a language under review MAY also be in a review release on Google Play's internal-testing track, which reaches only the testers named there, so that a reviewer abroad gets it through Play. It is never on another track, on GitHub Releases or on F-Droid. No other requirement changed. On 2026-11-03 the owner recorded the reviewer's approval of German, so German is in every build from the next release. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -162,7 +163,7 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 
 **FR-LANG-07** (SHOULD, P1) — Dates, numbers and sorting (e.g. ignoring "De", "Het", "The" at the start of a title) SHOULD follow the selected UI locale.
 
-**FR-LANG-08** (MAY, P1) — The app MAY offer further UI languages beyond Dutch and English. A further language MUST NOT appear in a published build before a fluent speaker has reviewed its translation, the privacy screen of FR-GEN-08 included; until then it MAY exist in development builds. German is the first (under review since 2026-10-28).
+**FR-LANG-08** (MAY, P1) — The app MAY offer further UI languages beyond Dutch and English. A further language MUST NOT appear in a published build before a fluent speaker has reviewed its translation, the privacy screen of FR-GEN-08 included; until then it MAY exist in development builds, and in a review release on Google Play's internal-testing track, which reaches only the testers named on that track and is never promoted to another track (`design/architecture.md` A-23). German is the first: under review from 2026-10-28, approved by a fluent speaker on 2026-11-03.
 
 ---
 

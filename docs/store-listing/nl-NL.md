@@ -38,7 +38,7 @@ Machtigingen
 
 De app doorgeven kan ook zonder internet: een Android-telefoon in de buurt krijgt hem via Quick Share of Bluetooth.
 
-Talen: Nederlands en Engels; liedbundels kunnen in elke taal zijn.
+Talen: Nederlands, Engels en Duits; liedbundels kunnen in elke taal zijn.
 
 Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
