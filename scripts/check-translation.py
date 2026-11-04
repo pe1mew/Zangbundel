@@ -31,7 +31,7 @@ PLURALS = {
     "da": {"one", "other"}, "sv": {"one", "other"}, "nb": {"one", "other"}, "fy": {"one", "other"},
 }
 # Header names of the glossary columns in guiDesign D-79, mapped to language codes.
-COLUMN_LANGUAGE = {"dutch": "nl", "english": "en", "german": "de", "french": "fr", "frisian": "fy"}
+COLUMN_LANGUAGE = {"dutch": "nl", "english": "en", "german": "de", "french": "fr", "italian": "it", "frisian": "fy"}
 # Texts that are the same in every language and need no warning when left as in English.
 SAME_EVERYWHERE = {"Zangbundel", "A–Z", "Z–A", "Setlist", "Setlists", "Online", "Version %s", "Version %1$s, %2$s",
                    "Revision %1$s, %2$s", "Version %1$s (%2$d)", "max %1$d", "Bridge", "Radio check", "Name", "Start",

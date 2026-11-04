@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- The debug build and the review release also offer the languages under review (FR-LANG-08, guiDesign D-80,
+     architecture A-23): French and Italian. Overrides src/main/res/values/languages.xml; keep it in step with
+     xml/locales_config.xml next to it, and with the main list. -->
+<resources>
+    <string-array name="app_languages" translatable="false">
+        <item>nl</item>
+        <item>en</item>
+        <item>de</item>
+        <item>fr</item>
+        <item>it</item>
+    </string-array>
+</resources>

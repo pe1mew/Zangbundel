@@ -4,8 +4,8 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.64 (draft) |
-| Date | 2026-10-28 |
+| Document version | 0.65 (draft) |
+| Date | 2026-11-04 |
 | Author | Remko Welling |
 | Status | Draft for review |
 | Depends on | `design/functional-requirements.md` v0.23, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
@@ -76,6 +76,7 @@
 | 0.62 | 2026-10-28 | D-85: the reading view gets three of D-30's round buttons in a row at the bottom, previous, song info and next; the middle one replaces the ⓘ beside the title (the owner's request). |
 | 0.63 | 2026-10-28 | Depends on FRD v0.23. D-80 amended: the languages under review live in `app/src/review/res/`, which debug builds always include and the review release for Play's internal track includes too (architecture A-23). |
 | 0.64 | 2026-11-03 | D-21 amended: the home screen's button that opens the start screen reads *Kampvuur leiden* (*Lead a campfire*, *Lagerfeuer leiten*), and the line under a nearby campfire reads *Zelf een kampvuur leiden*. A German reviewer pointed out that a child reads *starten* as "let's start singing" (issue pe1mew/Zangbundel#2). D-44 amended: the name field in settings is labelled *Je naam* (*Your name*, *Dein Name*) instead of *Naam voor de leider*, which read as "the leader's name" (issue pe1mew/Zangbundel#3). D-79 amended: German names persons with the gender star (*Leiter\*in*, *Sänger\*in*), as Swiss and German Scout associations do (issue pe1mew/Zangbundel#4). D-80: German approved by its reviewer on 2026-11-03 and moved to `src/main`, with the German privacy policy; the D-79 column is no longer a draft. |
+| 0.65 | 2026-11-04 | D-80 amended: French and Italian are under review (the owner's decision), as drafts in `app/src/review/res/`, so debug builds and the review release offer them. D-79 gets a French and an Italian column, both drafts for their reviewers. |
 
 ---
 
@@ -442,27 +443,27 @@ The app speaks Dutch and English. This section fixes how its own texts are trans
 
 **D-79 — One translation per fixed term.** These terms are used everywhere they apply, in the app, the store listing and the privacy texts; the spec term is what the design documents call the thing. *(Amended in v0.64, the owner's decision 2026-11-03, on the German reviewer's proposal, issue pe1mew/Zangbundel#4:)* German names persons with the gender star, as the Swiss Scout Movement (PBS) and the VCP do: *Leiter\*in*, plural *Sänger\*innen*, articles and pronouns in pairs with the feminine first (*die\*der*, *ihren\*seinen*), and *ein\*e*. Compounds use the neutral *Leitung* (*Leitungsleiste*). Screen readers read the star aloud; that is accepted, as these associations accept it. Dutch and English need no such form; French, when it comes, uses the middle dot as the Swiss Scout Movement does (issue pe1mew/Zangbundel#5).
 
-| Dutch (app) | English (app) | German (app) | Spec term |
-|---|---|---|---|
-| *kampvuur* | campfire | Lagerfeuer | gathering |
-| *kampvuurleider*, *leider* | leader | Leiter\*in, Leitung (in compounds) | leader |
-| *zanger* | singer | Sänger\*in | singer |
-| *assistent* | assistant | Assistent\*in | delegate |
-| *assistentcode* | assistant code | Assistentencode | helper code |
-| *deelnamecode* | join code | Teilnahmecode | join code |
-| *verzoek* (*verzoeknummer*) | request | Wunsch (Liedwunsch) | request |
-| *vind ik leuk* (hartje) | like | Gefällt mir | like |
-| *setlist* | setlist | Setlist | setlist |
-| *zangbundel* | songbook | Liederbuch | combined songbook (was *liedboek* until v0.27) |
-| *bibliotheek* | library | Bibliothek | library |
-| *standaardbibliotheek* | default library | Standardbibliothek | default library (FR-LIB-02) |
-| *couplet*, *refrein*, *brug* | verse, chorus, bridge | Strophe, Refrain, Bridge | verse, chorus, bridge environments |
-| *herinnering* | memory | Erinnerung | gathering memory |
-| *Nu*, *Wis*, *Afsluiten* | Now, Clear, Close | Jetzt, Leeren, Beenden | push, clear current song, end gathering |
+| Dutch (app) | English (app) | German (app) | French (app, draft) | Italian (app, draft) | Spec term |
+|---|---|---|---|---|---|
+| *kampvuur* | campfire | Lagerfeuer | feu de camp, feux de camp | falò | gathering |
+| *kampvuurleider*, *leider* | leader | Leiter\*in, Leitung (in compounds) | animateur·rice | capo | leader |
+| *zanger* | singer | Sänger\*in | chanteur·euse | cantante, cantanti | singer |
+| *assistent* | assistant | Assistent\*in | assistant·e | assistente | delegate |
+| *assistentcode* | assistant code | Assistentencode | code d’assistant·e | codice assistente | helper code |
+| *deelnamecode* | join code | Teilnahmecode | code d’accès | codice di accesso | join code |
+| *verzoek* (*verzoeknummer*) | request | Wunsch (Liedwunsch) | demande | richiesta | request |
+| *vind ik leuk* (hartje) | like | Gefällt mir | J’aime | Mi piace | like |
+| *setlist* | setlist | Setlist | liste de chants, listes de chants | scaletta, scalette | setlist |
+| *zangbundel* | songbook | Liederbuch | carnet de chants | canzoniere | combined songbook (was *liedboek* until v0.27) |
+| *bibliotheek* | library | Bibliothek | bibliothèque | biblioteca | library |
+| *standaardbibliotheek* | default library | Standardbibliothek | bibliothèque par défaut | biblioteca predefinita | default library (FR-LIB-02) |
+| *couplet*, *refrein*, *brug* | verse, chorus, bridge | Strophe, Refrain, Bridge | couplet, refrain, pont | strofa, ritornello, ponte | verse, chorus, bridge environments |
+| *herinnering* | memory | Erinnerung | souvenir | ricordo | gathering memory |
+| *Nu*, *Wis*, *Afsluiten* | Now, Clear, Close | Jetzt, Leeren, Beenden | Maintenant, Effacer, Terminer | Ora, Svuota, Termina | push, clear current song, end gathering |
 
-The Dutch term for the delegate role is *assistent* (Q15, resolved 2026-10-20). A new fixed term is added to this table before it appears in a string. The German column was reviewed with the German texts and approved on 2026-11-03 (D-80).
+The Dutch term for the delegate role is *assistent* (Q15, resolved 2026-10-20). A new fixed term is added to this table before it appears in a string. The German column was reviewed with the German texts and approved on 2026-11-03 (D-80). The French and Italian columns are drafts of 2026-11-04, for their reviewers: French uses the middle dot for persons (issue pe1mew/Zangbundel#5) and the scouts' *carnet de chants*; Italian uses the scouts' *canzoniere* and *capo*, and *cantante* has one form for everyone. Both address the singer as *tu*.
 
-**D-80 — Adding a language, and for now no other languages.** A new app language is: the strings file translated in full, the language added to `locales_config.xml`, the privacy texts (the in-app privacy screen of FR-GEN-08 is part of the strings; `docs/privacy-policy.md` gets the language too), the store listing (`docs/store-listing/<locale>.md`), and the join page (`docs/j/index.html`). Translations come as a pull request on one file per language and are reviewed by someone who speaks the language. Decided 2026-10-20: no languages beyond Dutch and English for now, and no right-to-left support (FRD Q8 closed); the start-and-end rule of D-78 keeps the door open at no cost. *Why:* the owner's decision; one file per language is what FR-LANG-02 promises, and the texts outside the app are where a new language is most easily forgotten. *(Amended in v0.59, the owner's decision 2026-10-28:)* German is the third language [FR-LANG-08]. A language under review lives in the debug build only: its strings in `app/src/debug/res/values-<lang>/`, and the debug build's own `locales_config.xml` and language list name it, so a reviewer sees it on a debug install and the Play and F-Droid builds do not have it. The reviewer, a fluent speaker, checks every string, the privacy screen against the Dutch, and the terms of D-79. After approval the strings move to `src/main` in one change, with `docs/privacy-policy.md` in that language; the store listing, the join page and the wiki manual follow when someone writes them. *(Amended in v0.63, the owner's decision 2026-10-28:)* the German reviewer lives abroad, so the files of a language under review moved to `app/src/review/res/`: its strings in `values-<lang>/`, with its own `locales_config.xml` and language list. Debug builds always include that folder, and so does the review release for Play's internal-testing track (architecture A-23); the Play releases of the other tracks and F-Droid's build do not. *(Amended 2026-11-03, the owner's decision:)* the reviewer approved German in full, the privacy screen included, after issues pe1mew/Zangbundel#1 to #4. Its strings and word lists moved to `src/main/res/values-de/`, its radio-check strings to `src/radiocheck/res/values-de/`, and the language lists of `src/main` name it. `docs/privacy-policy.md` has a German section. The store listing, the join page and the German manual are still to come; the manual button opens the English manual (*Anleitung (Englisch)*).
+**D-80 — Adding a language, and for now no other languages.** A new app language is: the strings file translated in full, the language added to `locales_config.xml`, the privacy texts (the in-app privacy screen of FR-GEN-08 is part of the strings; `docs/privacy-policy.md` gets the language too), the store listing (`docs/store-listing/<locale>.md`), and the join page (`docs/j/index.html`). Translations come as a pull request on one file per language and are reviewed by someone who speaks the language. Decided 2026-10-20: no languages beyond Dutch and English for now, and no right-to-left support (FRD Q8 closed); the start-and-end rule of D-78 keeps the door open at no cost. *Why:* the owner's decision; one file per language is what FR-LANG-02 promises, and the texts outside the app are where a new language is most easily forgotten. *(Amended in v0.59, the owner's decision 2026-10-28:)* German is the third language [FR-LANG-08]. A language under review lives in the debug build only: its strings in `app/src/debug/res/values-<lang>/`, and the debug build's own `locales_config.xml` and language list name it, so a reviewer sees it on a debug install and the Play and F-Droid builds do not have it. The reviewer, a fluent speaker, checks every string, the privacy screen against the Dutch, and the terms of D-79. After approval the strings move to `src/main` in one change, with `docs/privacy-policy.md` in that language; the store listing, the join page and the wiki manual follow when someone writes them. *(Amended in v0.63, the owner's decision 2026-10-28:)* the German reviewer lives abroad, so the files of a language under review moved to `app/src/review/res/`: its strings in `values-<lang>/`, with its own `locales_config.xml` and language list. Debug builds always include that folder, and so does the review release for Play's internal-testing track (architecture A-23); the Play releases of the other tracks and F-Droid's build do not. *(Amended 2026-11-03, the owner's decision:)* the reviewer approved German in full, the privacy screen included, after issues pe1mew/Zangbundel#1 to #4. Its strings and word lists moved to `src/main/res/values-de/`, its radio-check strings to `src/radiocheck/res/values-de/`, and the language lists of `src/main` name it. `docs/privacy-policy.md` has a German section. The store listing, the join page and the German manual are still to come; the manual button opens the English manual (*Anleitung (Englisch)*). *(Amended in v0.65, the owner's decision 2026-11-04:)* French and Italian are under review, so that versions for review can be made. Their drafts are in `app/src/review/res/values-fr/` and `values-it/`, their radio-check strings in `src/debug/res/`, and the language lists of `src/review` name them; the Play releases of the other tracks and F-Droid's build do not have them. Each waits for a fluent reviewer, the privacy screen and its D-79 column included; the manual button opens the English manual.
 
 ---
 

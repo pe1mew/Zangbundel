@@ -1,6 +1,6 @@
 # Translating and reviewing Zangbundel
 
-For people who review or improve the app's texts in Dutch, English or German, and later in another language. It says what to review, which rules are mandatory and why, how to check your work before you send it, and how to send it as a pull request. Read it once in full before your first review; afterwards sections 4 and 7 are the checklist.
+For people who review or improve the app's texts in Dutch, English or German, in French or Italian while they are under review, and later in another language. It says what to review, which rules are mandatory and why, how to check your work before you send it, and how to send it as a pull request. Read it once in full before your first review; afterwards sections 4 and 7 are the checklist.
 
 ## 1. The languages today
 
@@ -9,6 +9,8 @@ For people who review or improve the app's texts in Dutch, English or German, an
 | Dutch (*Nederlands*) | `nl` | Primary: every text is written in Dutch first. In every build. | `android/app/src/main/res/values-nl/` |
 | English | `en` | The fallback: a phone in a language the app lacks shows English. In every build. | `android/app/src/main/res/values/` |
 | German (*Deutsch*) | `de` | **Approved 2026-11-03** by a fluent reviewer; in every build from the next release. Improvements are welcome as for the other languages: compare with the Dutch, which is the source. | `android/app/src/main/res/values-de/` |
+| French (*Français*) | `fr` | **Under review since 2026-11-04:** a complete draft, in debug builds and the review release only, waiting for a fluent reviewer. Persons with the middle dot (*animateur·rice*, issue pe1mew/Zangbundel#5). | `android/app/src/review/res/values-fr/`; radio check in `android/app/src/debug/res/values-fr/` |
+| Italian (*Italiano*) | `it` | **Under review since 2026-11-04:** a complete draft, in debug builds and the review release only, waiting for a fluent reviewer. How to gender *capo* is part of the review. | `android/app/src/review/res/values-it/`; radio check in `android/app/src/debug/res/values-it/` |
 
 Each language has three files: `strings.xml` with the app's texts, `strings_words.xml` with the two word lists of a campfire's two words (rule 10 of section 4), and `strings_radiocheck.xml` with the texts of the radio check and the field-test consent, which exist only in development and field-test builds. For Dutch and English the last file is in `android/app/src/radiocheck/res/`.
 

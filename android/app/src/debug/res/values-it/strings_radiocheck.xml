@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Radio check and field-test consent in Italian, a draft under review (FR-LANG-08, guiDesign D-80). In src/debug,
+     not src/review: the release build has no radio check (architecture A-23). -->
+<resources>
+    <string name="radiocheck_title">Verifica radio</string>
+    <string name="radiocheck_explanation">Misura cosa può trasmettere il Bluetooth di questo telefono: quanti set di annunci si aprono insieme, quanto velocemente possono cambiare i loro dati e se gli annunci estesi funzionano. Per qualche secondo trasmette segnali di prova senza alcun nome, e non conserva nulla.</string>
+    <string name="radiocheck_run">Avvia la verifica</string>
+    <string name="radiocheck_running">Misurazione…</string>
+    <string name="radiocheck_share">Condividi i risultati</string>
+    <string name="radiocheck_no_bluetooth">Questo telefono non ha il Bluetooth.</string>
+    <string name="radiocheck_bluetooth_off">Il Bluetooth è disattivato. Attivalo e avvia di nuovo la verifica.</string>
+    <string name="radiocheck_permission_denied">Senza il permesso di trasmettere segnali Bluetooth la verifica non può essere eseguita.</string>
+    <string name="fieldtest_consent_title">Consenso per la versione di prova di Zangbundel</string>
+    <string name="fieldtest_consent_keeps">Questa versione di prova di Zangbundel conserva su questo telefono un file di registro su come funziona la connessione Bluetooth: quanti canali di trasmissione si aprono, quanti messaggi vengono ripetuti o richiesti di nuovo, quante connessioni riescono o falliscono, l’intensità del segnale a grandi linee, il numero di partecipanti, la versione di Android, le capacità Bluetooth del telefono e il livello della batteria.</string>
+    <string name="fieldtest_consent_never">Il file non contiene nomi, nessun nome del falò, nessun testo, nessuna chiave o codice e nessun indirizzo di telefono.</string>
+    <string name="fieldtest_consent_leaves">Lascia il telefono solo se lo condividi tu, tramite il menu di condivisione.</string>
+    <string name="fieldtest_consent_stop">Puoi smettere in qualsiasi momento: disinstalla la versione di prova e il file sparisce. La partecipazione è volontaria. Domande: zangbundel@rfsee.nl.</string>
+    <string name="fieldtest_consent_statement">Ho 18 anni o più, ho letto queste informazioni e partecipo.</string>
+    <string name="fieldtest_consent_accept">Partecipo</string>
+    <string name="fieldtest_consent_decline">Non partecipo</string>
+    <string name="fieldtest_log_title">Registro della prova sul campo</string>
+    <string name="fieldtest_log_empty">Ancora niente registrato.</string>
+    <plurals name="fieldtest_log_lines">
+        <item quantity="one">%d riga registrata</item>
+        <item quantity="many">%d righe registrate</item>
+        <item quantity="other">%d righe registrate</item>
+    </plurals>
+    <string name="fieldtest_log_share">Condividi il registro</string>
+    <string name="fieldtest_log_preview">Ecco cosa condividi</string>
+    <string name="fieldtest_log_clear">Elimina il registro</string>
+    <string name="fieldtest_log_clear_title">Eliminare il registro della prova sul campo?</string>
+    <string name="fieldtest_cancel">Annulla</string>
+</resources>

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - The wiki manual (*Manual*, *Handleiding*) is for 0.3.0 and names *Deutsch* under the language setting.
 - `docs/FDROID-RUNBOOK.md`: the status line names the closed merge request and the resubmission from 2027-01-18; the signing command sets `ANDROID_HOME` itself, since a new PowerShell window lacks it.
+- French and Italian under review (FR-LANG-08, GUI design v0.65 D-79 and D-80): complete drafts of the app's texts and word lists in `app/src/review/res/values-fr` and `values-it`, the radio check's in `src/debug/res`, and both in the review build's language lists. Debug builds and a review release (`-PreviewVersionCode`) offer them; the regular release does not change. `check-translation.py` reads the glossary's Italian column.
 
 ## [0.3.0] - 2026-11-03
 
