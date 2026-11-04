@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.17 (draft) |
-| Date | 2026-10-28 |
+| Document version | 0.18 (draft) |
+| Date | 2026-11-04 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.23, `design/architecture.md` v0.4, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.24, `design/architecture.md` v0.27, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.28, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -29,6 +29,7 @@
 | 0.15 | 2026-10-28 | Depends on FRD v0.21; no other change from it. The owner's decisions: F-03 runs with as many phones as can be gathered, no fixed count, before and after the release (Q1; 5.4 and the release gate say so; FR-BLE-10's 25 is verified only from a run with 25 or more); screens are filmed (Q3). |
 | 0.16 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08); no other change. |
 | 0.17 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08); no other change. |
+| 0.18 | 2026-11-04 | Depends on FRD v0.24 (FR-LIB-08, FR-LIB-09, FR-LIB-18), architecture v0.27 (A-24), song format v0.18 and assessment v0.28 (SP-37). D-02 extended with Share and a library package; D-09 added: opening a library from other apps, per channel. Traceability rows for the three new requirements. |
 
 ---
 
@@ -181,13 +182,14 @@ Run by hand on two phones, one of them the oldest Android version in the matrix,
 | ID | Test | Pass |
 |---|---|---|
 | D-01 | Fresh install, first use | Welcome, introduction, privacy screen before any permission (FR-GEN-08) |
-| D-02 | Import a library from its release URL, then from a `.zbl` file | Songs listed; report shown for bad songs (FR-LIB-07); file import works (FR-LIB-16) |
+| D-02 | Import a library from its release URL, then from a `.zbl` file, then the same file through *Delen → Zangbundel* from the file manager; then a library package (`.zbl` with `manifest.json`), valid and with one damaged song | Songs listed; report shown for bad songs of the archive (FR-LIB-07); file import works (FR-LIB-16); the shared file gives the same report and installs only after the user confirms (FR-LIB-18); the package installs whole, the damaged one is refused whole with the reason (FR-LIB-07, FR-LIB-08) |
 | D-03 | Start a gathering, join from the list | Pre-start scan of at least 5 s (FR-GATH-16); join within one dialog |
 | D-04 | Join with the camera app from the QR code | App opens on the join screen (FR-GATH-20, FR-GATH-23) |
 | D-05 | Push three songs, one not held by the singer | All arrive; the third over the air |
 | D-06 | Leader screen off for 5 minutes | Beacon keeps running (FR-GATH-15); notification text is the neutral one, also on the lock screen (assessment SP-17) |
 | D-07 | Leave, end | Count drops; singer holds a memory and no lyrics |
 | D-08 | Share the app from the About screen | Share sheet offers Quick Share; About shows the fingerprint `57:86:7B:…:9B:10` (assessment SP-20) |
+| D-09 | Open a library from other apps (architecture A-24). Send a release archive and a library package, the second with a dot in its name before `.zbl`, through WhatsApp, Signal, Telegram, Discord, Gmail, a GitHub release download and Quick Share, to two phones: one on API 30 or lower, one on 31 or higher. Per channel, record whether *Delen* offers Zangbundel, whether tapping the file opens it, the intent's type and URI authority (debug log only), and the import result. Also: a VIEW of a `file:` URI and of the app's own FileProvider URI sent with `adb`. | *Delen → Zangbundel* imports from every channel that offers Share; nothing installs without the user's tap; the `file:` and own-provider URIs are refused (assessment SP-37); every channel's result is in `design/test-results/` before any document or listing says a tap opens the app |
 
 ---
 
@@ -345,6 +347,8 @@ A production release (RUNBOOK Step 9) needs all of these:
 | FR-REQ-02, FR-REQ-03, FR-REQ-06 | S-07, F-08 |
 | FR-LEAD-40, FR-LEAD-45 | S-07, F-08 |
 | FR-LIB-07, FR-LIB-15, FR-LIB-16 | D-02, unit tests of staging |
+| FR-LIB-08, FR-LIB-09 | D-02; conformance cases of the library manager's test libraries (FDS O-04); unit tests of the package reader and of L006's UUID rule; fuzz targets of the manifest parsers (assessment SP-09) |
+| FR-LIB-18 | D-02, D-09; unit tests of the intent dispatch and URI checks (assessment SP-37) |
 | FR-DIST-05, FR-DIST-09 | D-08, F-11 |
 | FR-GEN-05, FR-GEN-06, FR-GEN-08 | 3.5, D-01 |
 | FR-DISP-04, FR-DISP-05, FR-DISP-10, NFR-ACC-01, NFR-ACC-02 | 3.5 |

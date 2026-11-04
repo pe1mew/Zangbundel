@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.17 (draft) |
-| Date | 2026-10-28 |
+| Document version | 0.18 (draft) |
+| Date | 2026-11-04 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.23, `design/ble-protocol.md` v0.13 |
+| Depends on | `design/functional-requirements.md` v0.24, `design/ble-protocol.md` v0.50 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -30,6 +30,7 @@
 | 0.15 | 2026-10-28 | Depends on FRD v0.21; no format change. Q12 (signed archives) deferred to after 1.0 by the owner; Q2 and Q6 deferred to phase 2, Q9 to phase 3. |
 | 0.16 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08: further UI languages after review); no format change: song language and app language stay separate. |
 | 0.17 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08: the review release on Play's internal track); no format change. |
+| 0.18 | 2026-11-04 | Depends on FRD v0.24 and BLE protocol v0.50. Library packages from the library manager, approved by the owner (`design/proposals/2026-11-04-library-package-id-and-file-type.md`; FDS draft 0.4): new 12.11 (formats told apart by content, strict validation, `libraryId` as the library id, same id means same library, title check over every format, content hash after canonicalising, licence and maintainer from the manifest, what is recorded, `rev` as the decimal version, sharing and opening from other apps). 4.2 and L006: the UUID form is reserved for packages and refused in `zangbundel.json`. 4.3: the URL rule is for `zangbundel.json` libraries. 12.2: extension and MIME type shared with packages. 13.3: a package entry. 13.5: manifest sets as read-only shipped setlists. Format version unchanged: no existing valid library is affected unless its id has the UUID form. |
 
 ---
 
@@ -177,7 +178,7 @@ The library file is edited rarely and is small. JSON parses identically on Andro
 |---|---|---|---|
 | `format` | string | MUST | Fixed value `"zangbundel-library"`. Marks the repository as a Zangbundel library. |
 | `format_version` | string | MUST | `"<major>.<minor>"` of this specification the library is written to. `"1.0"` for this document. Section 10.4 gives the rules. [FR-LIB-05, NFR-MAINT-01] |
-| `id` | string | MUST | Library id, same syntax as a song id (section 3.2), at most 64 characters. Globally unique by convention; choose something specific, e.g. `scouting-regio-noord-kampvuur`, not `songs`. [FRD constraint 7] |
+| `id` | string | MUST | Library id, same syntax as a song id (section 3.2), at most 64 characters. Globally unique by convention; choose something specific, e.g. `scouting-regio-noord-kampvuur`, not `songs`. The form of a UUID, `^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$`, is reserved for library packages (section 12.11) and is refused here (L006). [FRD constraint 7, FR-LIB-09] |
 | `name` | string | MUST | Display name, at most 80 characters. [FR-LIB-05] |
 | `description` | string | MUST | One to a few sentences; shown on the library screen. [FR-LIB-05] |
 | `maintainer` | object | MUST | `{ "name": string, "email": string, "url": string }`; `name` plus at least one of `email` or `url`. [FR-LIB-05] |
@@ -193,7 +194,7 @@ Unknown fields MUST be ignored by the app, so a library can carry extra fields f
 ### 4.3 Rules
 
 - The app MUST refuse to import a library whose `zangbundel.json` is missing, is not valid JSON, lacks a MUST field, has a `format_version` major it does not implement, or has a `min_app_version` newer than the app. The message names the reason and, for the last two, tells the user to update the app [FR-BLE-07 by analogy, NFR-SEC-01].
-- The app MUST refuse to add a library whose `id` equals that of an already configured library with a different repository URL, and MUST say which library owns the id. Two URLs for the same library (a mirror) are a user decision; the app does not detect mirrors.
+- The app MUST refuse to add a library whose `id` equals that of an already configured library with a different repository URL, and MUST say which library owns the id. Two URLs for the same library (a mirror) are a user decision; the app does not detect mirrors. This rule is for libraries with a `zangbundel.json` (repositories, release archives, snapshots); a library package has no URL and is identified by its `libraryId` (section 12.11). Because the UUID form is reserved for packages (4.2), an id never belongs to both kinds.
 - `min_app_version` is for maintainers who deliberately rely on a newer feature in every song, e.g. a karaoke-only library. Raising it locks out older apps, so it SHOULD stay as low as the content allows.
 - When a song carries no `license` of its own (section 6), the library `license.id` applies to it, and the song's licence display [FR-LIB-20] says so.
 
@@ -581,7 +582,7 @@ The "what changed" view after an update [FR-LIB-11] is computed from song ids an
 | L003 | `format` is not `zangbundel-library` |
 | L004 | `format_version` major is not supported by this app ("update the app") |
 | L005 | `min_app_version` is newer than this app ("update the app") |
-| L006 | `id` is invalid, or clashes with an installed library from a different URL |
+| L006 | `id` is invalid (the UUID form reserved for library packages included, 4.2), or clashes with an installed library from a different URL |
 | L007 | Licence file named in `license.file` is missing |
 | L008 | `songs/` directory missing or contains no `.cho` file (warning, not error, when the user confirms an empty library) |
 
@@ -656,8 +657,8 @@ Importing from the git repository directly (clone or pull) remains allowed; whet
 | Property | Rule |
 |---|---|
 | Format | ZIP (PKWARE APPNOTE), as produced by `zip`, Python `zipfile`, `java.util.zip` and the like. ZIP64 MAY be used; archives stay far below its need. |
-| File name | `<library id>-<version>.zbl`, e.g. `zangbundel-voorbeeld-2026.10.0.zbl`. The extension `.zbl` ("Zangbundel library") lets the app register as the handler for the file type; a plain `.zip` opened through the file picker is accepted too. |
-| MIME type | `application/vnd.zangbundel.library+zip`. Hosting that serves `application/zip` or `application/octet-stream` is accepted. |
+| File name | `<library id>-<version>.zbl`, e.g. `zangbundel-voorbeeld-2026.10.0.zbl`. The extension `.zbl` ("Zangbundel library") lets the app register as the handler for the file type (architecture A-24); a plain `.zip` opened through the file picker is accepted too. A library package (12.11) has the same extension; the app tells the two apart by content, never by name. |
+| MIME type | `application/vnd.zangbundel.library+zip`, shared with library packages (FDS PF-04). Hosting that serves `application/zip` or `application/octet-stream` is accepted. |
 | Entry names | UTF-8 (general-purpose flag bit 11 set), forward slashes, relative to the archive root, no leading `/`, no `.` or `..` components, no drive letters, no backslashes. ≤ 255 bytes per name. Names compared case-sensitively; two entries that differ only in case are an error (A006). |
 | Entry types | Regular files only. Directory entries are ignored; symbolic links and other special entries are an error (A005). |
 | Compression | *stored* (0) or *deflate* (8) only. Encryption of any kind is an error (A004). |
@@ -817,6 +818,27 @@ Warnings (archive imported):
 
 `archive_version` follows the same rule as `format_version` (10.4): a **minor** bump adds fields or optional entries; a **major** bump changes the container rules, the manifest's MUST fields or the verification procedure. An app that implements major 1 reads any `1.x` archive and ignores what it does not know. This document defines **1.0** and **1.1**, which adds the optional `setlists` manifest field and the `setlists/` entries (section 13.7).
 
+### 12.11 Library packages (`.zbl` with `manifest.json`)
+
+The library manager defines a second library format, the **library package** [FR-LIB-08]: a ZIP with one top-level folder holding `manifest.json`, an optional `manifest.sig` (Ed25519) and one folder per song. Its container, manifest, signature, validation rules and import decisions are specified in `Zangbundel-bibliotheek-manager/design/FDS.md` (draft 0.4), not here. This section says how the app fits a package into the rest of this document. Approved by the owner 2026-11-04 (`design/proposals/2026-11-04-library-package-id-and-file-type.md`; FDS D-29 to D-33).
+
+| Topic | Rule |
+|---|---|
+| Telling the formats apart | By content, never by file name (FDS APP-02): `manifest.json` in the single top-level folder is a package; `zangbundel-archive.json` at the root is a release archive (12.4); `zangbundel.json` without it is a snapshot (12.5); anything else is A001. The container bounds of 12.2 and 12.7 step 1 apply to all three (FDS 3.5 uses the same limits). |
+| Validation | FDS section 6. A package is accepted whole or not at all: any Error or Fatal rule refuses it, with the rule's message [FR-LIB-07]. Songs are not skipped one by one as in an archive. |
+| Library id | The manifest's `libraryId`, unchanged, wherever this document uses a library id [FR-LIB-09]. It MUST match `^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`; anything else fails MAN-02, with no normalising. The form fits the id syntax of 3.2 (36 characters). The UUID form is reserved for packages (4.2, L006), so a package and a `zangbundel.json` library never share an id. |
+| Same id, same library | A package whose `libraryId` is installed, or is in the device memory of FDS 8.2, is the same library and is never refused for its id. The FDS decision table (8.3) decides: update, replace, or ask, at most one question. The URL rule of 4.3 does not apply. |
+| Same title | The FDS title check (M-73) compares, case-insensitively, with every installed library: packages by `title`, other libraries by their `zangbundel.json` `name`. *Replace* removes the installed library whatever its format; setlist entries that named it show as *niet gevonden* (13.5) until a library with that id returns. |
+| Song files | `<song id>/<song id>.cho` under the library folder, in the profile of sections 5 to 7; `{meta: id}` equals the folder name (FDS PF-14). The manifest's `sha256` checks the stored bytes. The content hash (8.2) is computed after canonicalising (8.1), as for a snapshot (8.3), because a package's files MAY carry a BOM or CRLF (FDS SNG-01). A library the library manager converted from a release archive (FDS EDT-26) therefore has the same content hashes as the original, but a new library id (FDS limitation 8). |
+| Licence | The manifest's `license` takes the place of `license` and its file in `zangbundel.json`: `id`, `summary` (at most 200 characters, shown first) and an optional full `text` (at most 32,000 characters), shown on first import and on request [FR-LIB-21]. It applies to every song without a licence of its own, as in 4.3. `summary` is what the song document's `lic` carries (BLE protocol 9.5, at most 200 characters). |
+| Maintainer, minimum app version | `maintainer` is optional and shown when present. `formatVersion` serves as the minimum app version: a higher one than the app reads is refused (FDS MAN-03) [FR-LIB-05]. |
+| What the app records | `libraryId`, `version`, `modified`, the signing status and fingerprint (FDS SG-20), the source file name and the SHA-256 of the file [FR-LIB-17]. The library screen shows the version where an archive shows its revision. |
+| `rev` on the air | The decimal `version`, e.g. `"4"` (BLE protocol section 5). Informational: leader and singer match by content hash [FR-BLE-12]. |
+| Sets | Read-only shipped setlists of the library (13.5). |
+| Updates | A package has no release index; a newer version arrives as a file and is opened like the first. The Wi-Fi update check (12.7, FR-LIB-13) does not apply to it. |
+| Sharing | When the app hands a library file to another app (12.7 *Export*), it sets the type `application/vnd.zangbundel.library+zip` and a file name ending in `.zbl`. |
+| From other apps | A file handed over through Share, or opened from another app, goes through the same steps as a picked file and is never installed without the user's confirmation [FR-LIB-18; architecture A-24; assessment SP-37]. |
+
 ---
 
 ## 13. Setlists (`.zbs`)
@@ -848,7 +870,7 @@ A **setlist** (*setlist*) is the ordered list of songs a leader prepares for an 
 ? <title>
 ```
 
-- A **song entry** names a song by its library id and song id, both in id syntax, separated by one `/`. Everything after the first run of whitespace followed by `#` is a comment, conventionally the title, and is ignored by the app: the title shown is always the one from the song file.
+- A **song entry** names a song by its library id and song id, both in id syntax, separated by one `/`. For a library package the library id is its `libraryId` (12.11): `3f6c2a1e-8b4d-4c1a-9e2f-7d5b0a6c9e11/vader-jacob   # Vader Jacob`. Everything after the first run of whitespace followed by `#` is a comment, conventionally the title, and is ignored by the app: the title shown is always the one from the song file.
 - A **title-only entry** starts with `?` and a space and gives a title in free text, for a song the author knows but whose library they do not have, or that is in no library. The app keeps it as an unresolved entry and tries to match it by title against the installed libraries on import and whenever a library is added (section 13.5).
 - Order is sung order. The same song MAY appear more than once.
 - Anything else is a malformed entry (SL004).
@@ -872,6 +894,7 @@ zangbundel-voorbeeld/vuur-in-de-nacht             # Vuur in de nacht
 ### 13.5 Behaviour in the app
 
 - **Shipped with a library** [FR-LEAD-02]: every valid `setlists/*.zbs` of an installed library appears on the leader's *Setlists* screen under the library's name and colour, read-only; *Dupliceren* makes an editable copy owned by the device. When the library is updated, the shipped setlists follow the library; copies are untouched.
+- **Sets of a library package** [FR-LEAD-02, FDS APP-23]: each entry of the manifest's `sets` is a shipped setlist of that package, read-only like the above, listed in manifest order. Its title is `sets[].name` (at most 60 characters, as `{title}`); its entries are `<libraryId>/<song id>` for each of `sets[].songs`, in order; its id on the device is `set-<n>`, `n` its 1-based position in `sets` of the installed version, used only to address it on the device, never on the air or in a file. FDS SET-01 guarantees that every song exists. A set above 200 songs gets SL103 in the import report (FDS SET-05 warns too). An update replaces the sets with the new version's; a copy made with *Dupliceren* is untouched. Exporting one writes an ordinary setlist file.
 - **Import from a file or URL**: the same parser; the setlist becomes a device-owned setlist. The report lists malformed lines and unresolved entries by line number.
 - **Resolution**: a song entry whose library is installed and holds the song is resolved; one whose library is not installed, or whose song id is unknown in that library, is kept as *niet gevonden* with its identifiers, and resolves itself when the library arrives. A title-only entry is matched case- and accent-insensitively against titles and sort titles of installed songs; a single match resolves it, several matches leave it unresolved with the candidates offered to the leader. Unresolved entries are shown in the setlist with the reason (library not installed, song id unknown in that library, no single title match) and are skipped at the fire; the skip is never silent: the leader's page shows the entry's bar with the reason under it, and the leader is told the count before starting (`design/guiDesign.md` D-74).
 - **Export**: the app writes the setlist in this format, canonical, with the title as comment on each song entry and `? <title>` for entries that were never resolved, so a file survives a round trip unchanged in meaning.
@@ -1053,14 +1076,17 @@ Notes on this file:
 | FR-LIB-01 | Library is a git repository (3) |
 | FR-LIB-03 | Plain-text ChordPro profile (2, 5) |
 | FR-LIB-04 | Song metadata table (6.1): id, title, language, lyrics MUST; the rest SHOULD/MAY |
-| FR-LIB-05 | `zangbundel.json` fields (4.2) |
+| FR-LIB-05 | `zangbundel.json` fields (4.2); a package's manifest (12.11) |
+| FR-LIB-08 | Library packages told apart by content and imported (12.11) |
+| FR-LIB-09 | `libraryId` as the library id; the UUID form reserved (4.2, 4.3, 12.11, 13.3, L006) |
+| FR-LIB-18 | Library files from other apps (12.11) |
 | FR-LIB-06 | Ignore rules (10.1), P2 and P3 extensions (10.2, 10.3) |
 | FR-LEAD-02 | Setlist file, `setlists/` in repositories and archives, import, export and resolution (13) |
-| FR-LIB-07 | Validation levels, report and codes (11) |
+| FR-LIB-07 | Validation levels, report and codes (11); a package accepted whole or not at all (12.11) |
 | FR-LIB-11 | "What changed" from ids and hashes (11.2) |
-| FR-LIB-17 | Revision in the import report (11.2) |
+| FR-LIB-17 | Revision in the import report (11.2); a package's library id and version (12.11) |
 | FR-LIB-20, FR-SING-15 | Attribution fields and licence summary (6.2) |
-| FR-LIB-21 | `license.file` and `license.summary` in `zangbundel.json` (4.2) |
+| FR-LIB-21 | `license.file` and `license.summary` in `zangbundel.json` (4.2); the manifest's `license` in a package (12.11) |
 | FR-LIB-22 | `{meta: redistribute no}` (6.1) |
 | FR-LIB-23 | App never alters metadata or text; canonicalisation changes only encoding and whitespace (6.2, 8) |
 | FR-LIB-30 | Tags and localised tag labels (4.2, 6.1) |

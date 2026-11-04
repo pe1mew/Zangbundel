@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.26 (draft) |
-| Date | 2026-10-28 |
+| Document version | 0.27 (draft) |
+| Date | 2026-11-04 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.23, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.5, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.24, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -38,6 +38,7 @@
 | 0.24 | 2026-10-28 | Depends on FRD v0.21; no other change to the design. Q2 closed (fdroid scanner accepts the prebuilt native libraries), Q5 deferred to the iOS phase. |
 | 0.25 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08). A-16 amended: the language setting through AppCompat's per-app locale with `autoStoreLocales` for Android 8 to 12, the `app_languages` list, and a language under review in the debug source set only (guiDesign D-80). |
 | 0.26 | 2026-10-28 | Depends on FRD v0.23. A-23 added: the review release with the languages under review, for Play's internal-testing track only. |
+| 0.27 | 2026-11-04 | Depends on FRD v0.24 and song format v0.18. A-24 added: library packages read in `core/songformat`, their `libraryId` stored unchanged, the device memory in the database, and the Share and Open intent filters with strict dispatch in `MainActivity` (assessment SP-37). No new permission. |
 
 ---
 
@@ -129,6 +130,18 @@ Every decision is numbered **A-nn** and carries a status. **Fixed** means it was
 **A-22 — The command-line validator and release tool live in the library repository.** *Fixed (existing).* `validate.py` and `release.py` in `github.com/pe1mew/Zangbundel-bibliotheek` implement song-format sections 11 to 13 for maintainers and CI. The app has its own Kotlin implementation of the same rules in `core/songformat`; the two are kept in step by the conformance corpus (A-21), not by sharing code (the library's scripts carry a different licence). Answers song-format Q11.
 
 **A-23 — A review release with the languages under review, for Play's internal track only.** *Decided 2026-10-28 (owner).* The languages under review (FR-LANG-08) have a resource folder of their own, `app/src/review/res/`: the strings, the word lists, the language list and `locales_config.xml`. Debug builds always include it. The release build includes it only with `-PreviewVersionCode=YYYYMMDD9n`, which also sets that versionCode and appends `-review` to the version name (`app/build.gradle.kts`). That bundle is signed with the upload key and goes to the internal-testing track only: it is never tagged, never promoted to another track, and never put on GitHub or F-Droid. Without the property the release build is unchanged, byte for byte: on 2026-10-28 it was identical to the 0.2.0 build apart from the signature. A review versionCode ends in 90 to 99, so every regular release of a later day is higher; internal testers keep the review release until then. German texts of the radio check stay in `src/debug`, because the release build has no radio check. *Why:* the German reviewer lives in Switzerland. The CI review build needs a downloaded APK and is debuggable (assessment SP-35); the internal track reaches named testers through Play, with release settings.
+
+**A-24 — Libraries also arrive as library packages, and from other apps.** *Decided 2026-11-04 (owner), approving `design/proposals/2026-11-04-library-package-id-and-file-type.md`.* Extends A-11, which stays in force; supersedes nothing.
+
+- **Reader.** A library package (FR-LIB-08, `song-format.md` 12.11, the library manager's FDS) is read in `core/songformat` beside the archive reader. It uses the same ZIP reader and bounds (A-08, A-10) and adds parsers for `manifest.json` and `manifest.sig`. The format is told apart by content, and the package is validated whole: any error refuses it (FR-LIB-07).
+- **Library id.** `libraryId` is stored unchanged as the library id. `LibraryId` and the database need no change, since a UUID fits `isValidId`. The archive and snapshot path refuses an id of the UUID form (L006). The library manager's device memory (key or "unsigned", and version, per `libraryId`) is a table in the Room database of A-12, kept when a library is removed. The data-extraction rules of A-13 exclude it like everything else.
+- **Intent filters on `MainActivity`.** SEND for `application/vnd.zangbundel.library+zip`, `application/zip`, `application/x-zip-compressed` and `application/octet-stream`. VIEW for `content:` URIs of the library type. VIEW for `content:` URIs whose path ends in `.zbl`, with any of the generic ZIP types: `pathSuffix` from API 31, three `pathPattern`s for 26 to 30. The filter XML is in the approved proposal, section 3.2.
+- **Not registered:** VIEW for every ZIP or `octet-stream` file, the `file:` scheme, or `SEND_MULTIPLE` (FR-LIB-18).
+- **Dispatch.** `MainActivity` sorts what arrives by action and scheme: join links (`https` on the join path, `zangbundel://j`) go to the join; a `content:` library goes to the library screen's import flow; anything else is ignored. The checks of assessment SP-37 come first.
+- **Reading.** The bytes come from `readPicked` with the cap of 12.7, so the picker and an intent share one path.
+- **No new permission.**
+
+*Why:* libraries are passed around by messaging apps and e-mail (FDS D-21). Share is the one route that does not depend on what the sending app tells Android about a `.zbl`, which Android itself does not know. A file picker stays the documented route until device test D-09 shows which channels open the app with a tap.
 
 ---
 

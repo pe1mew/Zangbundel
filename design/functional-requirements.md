@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.23 (draft) |
-| Date | 2026-10-28 |
+| Version | 0.24 (draft) |
+| Date | 2026-11-04 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -33,6 +33,7 @@
 | 0.21 | 2026-10-28 | The owner's decisions on open questions: Q9 closed (no override of FR-GATH-16 for an abandoned campfire), Q10 and Q12 deferred to phase 2. Section 19 names `design/guiDesign.md` instead of the planned `design/ui-flows.md` (guiDesign Q5). No requirement changed. |
 | 0.22 | 2026-10-28 | FR-LANG-08 added (MAY, P1): further UI languages, each only after review by a fluent speaker; German is the first, under review. Q8 amended accordingly. The owner also confirmed the selection of FR-LANG-03 as `design/guiDesign.md` D-76 designs it and English as the fallback. No other requirement changed. |
 | 0.23 | 2026-10-28 | FR-LANG-08 amended by the owner: a language under review MAY also be in a review release on Google Play's internal-testing track, which reaches only the testers named there, so that a reviewer abroad gets it through Play. It is never on another track, on GitHub Releases or on F-Droid. No other requirement changed. On 2026-11-03 the owner recorded the reviewer's approval of German, so German is in every build from the next release. |
+| 0.24 | 2026-11-04 | Library packages from the library manager, approved by the owner (`design/proposals/2026-11-04-library-package-id-and-file-type.md`; the manager's FDS draft 0.4, D-29 to D-33). Added: FR-LIB-08 (import the package format, told apart by content), FR-LIB-09 (the package's `libraryId` is its library id; the UUID form is reserved for packages), FR-LIB-18 (SHOULD: a library handed over by another app, installed only after the user confirms). Amended: FR-LIB-05 (for a package the maintainer contact is optional and the format version serves as the minimum app version), FR-LIB-07 (reporting bad songs applies to release archives and snapshots; a package is accepted whole or not at all), FR-LIB-17 (a package records its library id and version). |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -179,11 +180,15 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 
 **FR-LIB-04** (MUST, P1) — Each song MUST have at least the following metadata: a stable unique identifier, title, language, lyrics text. Each song SHOULD have: author(s)/composer, copyright holder, licence identifier (e.g. SPDX or "public domain"), source/attribution, tags (e.g. *kampvuur*, *welpen*, *kerst*), and an optional melody reference ("sung to the tune of …").
 
-**FR-LIB-05** (MUST, P1) — A library MUST contain a library-level metadata file with at least: library name, description, maintainer contact, licence terms of the collection, format version and the minimum app version that can read it.
+**FR-LIB-05** (MUST, P1) — A library MUST contain a library-level metadata file with at least: library name, description, maintainer contact, licence terms of the collection, format version and the minimum app version that can read it. For a library package (FR-LIB-08) the maintainer contact is optional, and the format version serves as the minimum app version. (Amended in v0.24, the owner's decision 2026-11-04, FDS D-32.)
 
 **FR-LIB-06** (MUST, P1) — The library format MUST be extensible so that P2 (timing data) and P3 (chords, notation) can be added to a song file without breaking P1 apps. P1 apps MUST ignore song content they do not understand.
 
-**FR-LIB-07** (MUST, P1) — The app MUST validate a library on import and MUST report songs it cannot parse (by file name and reason) without refusing the rest of the library.
+**FR-LIB-07** (MUST, P1) — The app MUST validate a library on import. For a release archive or a repository snapshot it MUST report songs it cannot parse (by file name and reason) without refusing the rest of the library. A library package (FR-LIB-08) is accepted whole or not at all: any error refuses it, with the reason. (Amended in v0.24, the owner's decision 2026-11-04, FDS D-33.)
+
+**FR-LIB-08** (MUST, P1) — The app MUST import a library in the library package format of the library manager's specification (`Zangbundel-bibliotheek-manager/design/FDS.md`): a `.zbl` ZIP with `manifest.json`, an optional signature and one folder per song. It MUST tell a library package, a release archive and a repository snapshot apart by their content, not by the file name. (Added in v0.24.)
+
+**FR-LIB-09** (MUST, P1) — A library package's `libraryId`, a lower-case version 4 UUID, MUST be its library id, unchanged, wherever the app uses one: setlists, the BLE song reference, the resume record and memories. The UUID form is reserved for library packages: the app MUST refuse a `zangbundel.json` library whose id has that form. A package whose `libraryId` is already installed is the same library; the app MUST NOT refuse it for its id, and updates or replaces it as the library manager's specification decides. (Added in v0.24.)
 
 ### 5.2 Import and update
 
@@ -201,7 +206,9 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 
 **FR-LIB-16** (SHOULD, P1) — The app SHOULD support importing a library from a local file (e.g. a zip exported from the repository) for devices that never have internet.
 
-**FR-LIB-17** (MUST, P1) — The app MUST record, per library, the repository URL, branch/tag and the exact revision (commit hash) that is installed, so that leader and singers can determine whether they have the same version of a song (see FR-BLE-12).
+**FR-LIB-17** (MUST, P1) — The app MUST record, per library, the repository URL, branch/tag and the exact revision (commit hash) that is installed, so that leader and singers can determine whether they have the same version of a song (see FR-BLE-12). For a library package (FR-LIB-08) it records the library id and the version instead. (Amended in v0.24.)
+
+**FR-LIB-18** (SHOULD, P1) — The app SHOULD accept a library file that another app hands to it: through the share sheet, and through opening the file where the sending app makes that possible. A library that arrives this way MUST go through the same import steps as a file the user picks, and MUST NOT be installed without the user's confirmation. (Added in v0.24.)
 
 ### 5.3 Copyright and licensing
 

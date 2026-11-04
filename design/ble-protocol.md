@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.49 (draft) |
-| Date | 2026-10-28 |
+| Document version | 0.50 (draft) |
+| Date | 2026-11-04 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.23 |
+| Depends on | `design/functional-requirements.md` v0.24 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -62,6 +62,7 @@
 | 0.47 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08: further UI languages after review); no change: nothing language-dependent travels over the air (guiDesign D-75). |
 | 0.48 | 2026-10-28 | 6.6 and appendix A: the two words come from the lists of each phone's app language, index-aligned translations of the Dutch lists, which stay the reference (the owner's decision); nothing on the air changes. Words of other languages may have 3 to 10 letters. Assessment SP-34. |
 | 0.49 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08: the review release on Play's internal track); no change: nothing language-dependent travels over the air. |
+| 0.50 | 2026-11-04 | Depends on FRD v0.24 (FR-LIB-08, FR-LIB-09: library packages, whose `libraryId` is the library id). Section 5, song reference: `lib` may be a package's UUID (36 characters); a package's `rev` is its version in decimal. 9.4: the 405-byte figure assumes a 64-character library id; with a UUID the largest body is 377 bytes. Computed in `design/proposals/2026-11-04-library-package-id-and-file-type.md` (approved by the owner 2026-11-04). No wire change; protocol 1.0 unchanged. |
 
 ---
 
@@ -222,7 +223,7 @@ Multicast *semantics* (only the singers of this gathering act on the data) are p
 | **Song content hash** `hash` | 16 bytes | First 16 bytes of SHA-256 over the song file bytes exactly as stored in the library (canonicalised as defined by the song-format spec). |
 | **Document hash** `dh` | 8 bytes | First 8 bytes of SHA-256 over the *framed bytes* of a document (the CBOR encoding, after optional DEFLATE). Listed in the signed state. |
 | **Document version** `dv` | u16 | The first 2 bytes of `dh` for ordinary documents; `seq` for the state record. Carried in every frame so singers can group frames of the same document version. |
-| **Song reference** `ref` | CBOR map | `{1: lib (tstr library id), 2: song (tstr song id), 3: hash (bstr 16), 4: rev (tstr, optional library revision, informational)}`. Matching between leader and singer is by `hash` alone [FR-LIB-17]. |
+| **Song reference** `ref` | CBOR map | `{1: lib (tstr library id), 2: song (tstr song id), 3: hash (bstr 16), 4: rev (tstr, optional library revision, informational)}`. Matching between leader and singer is by `hash` alone [FR-LIB-17]. For a library package (song-format 12.11) `lib` is its `libraryId`, a lower-case UUID of 36 characters [FR-LIB-09], and `rev` is its version in decimal (`"4"`); for a release archive `rev` stays the git revision (v0.50). |
 
 Hashing by content rather than by library revision is a deliberate reading of FR-BLE-12 ("exact song version"): two library revisions that did not touch a song still match, so fewer transfers are needed and the FRD's intent is met more often.
 
@@ -593,7 +594,7 @@ The value is a CBOR array `[body (bstr), sig (bstr 64)]`. `sig` is the Ed25519 s
 | 15 | `cpos` | uint | no | v0.35: the setlist position of the current song, 1-based (9.5 key 2); absent when there is none or the current song is not on the setlist. v0.40: a position in the setlist this state's manifest names (key 10, document 4). |
 | 16 | `sung` | bstr ≤ 32 | no | v0.35: the setlist positions pushed in this gathering so far, current included, as a bitmap: bit *i* of byte *i* / 8 (least significant first) for position *i* + 1. v0.40: positions in the setlist this state's manifest names; when the setlist changes, the leader renumbers `cpos` and `sung` in the same state. |
 
-The signed body MUST stay ≤ 440 bytes so the whole record fits a 512-byte characteristic and 30 legacy frames. When a body would be larger, the leader leaves out, in this order and each only if still needed: `title` (7), the library revision `rev` inside `cur` (6), then `pt` (13). Without those three the largest body the other limits allow is 405 bytes, so every state fits. Singers MUST verify `sig` with the pinned `pk`, MUST verify `gid`, and MUST discard a state whose `ts` is not greater than the last accepted one unless `status` is 1.
+The signed body MUST stay ≤ 440 bytes so the whole record fits a 512-byte characteristic and 30 legacy frames. When a body would be larger, the leader leaves out, in this order and each only if still needed: `title` (7), the library revision `rev` inside `cur` (6), then `pt` (13). Without those three the largest body the other limits allow is 405 bytes, so every state fits. That figure assumes a library id of 64 characters; a library package's UUID (36 characters) makes it 377 (v0.50). Singers MUST verify `sig` with the pinned `pk`, MUST verify `gid`, and MUST discard a state whose `ts` is not greater than the last accepted one unless `status` is 1.
 
 ### 9.5 Documents 3–7
 

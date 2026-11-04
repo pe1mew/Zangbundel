@@ -9,6 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The wiki manual (*Manual*, *Handleiding*) is for 0.3.0 and names *Deutsch* under the language setting.
 - `docs/FDROID-RUNBOOK.md`: the status line names the closed merge request and the resubmission from 2027-01-18; the signing command sets `ANDROID_HOME` itself, since a new PowerShell window lacks it.
 - French and Italian under review (FR-LANG-08, GUI design v0.65 D-79 and D-80): complete drafts of the app's texts and word lists in `app/src/review/res/values-fr` and `values-it`, the radio check's in `src/debug/res`, and both in the review build's language lists. Debug builds and a review release (`-PreviewVersionCode`) offer them; the regular release does not change. `check-translation.py` reads the glossary's Italian column.
+- Library packages from the library manager (the `Zangbundel-bibliotheek-manager` FDS, draft 0.4), specified; code not yet changed. Approved by the owner 2026-11-04: `design/proposals/2026-11-04-library-package-id-and-file-type.md`, with `2026-11-04-uuid-cost.py` for its byte counts.
+  - **FRD v0.24.** FR-LIB-08 adds import of the package format, told apart by content. FR-LIB-09 makes the package's UUID `libraryId` the library id everywhere and reserves the UUID form for packages. FR-LIB-18 (SHOULD) covers a library handed over by another app, installed only after the user confirms. Amended: FR-LIB-05 (for a package the maintainer is optional and the format version serves as the minimum app version), FR-LIB-07 (a package is accepted whole or not at all) and FR-LIB-17 (a package records its id and version).
+  - **Song format v0.18.** New section 12.11. The UUID form is refused in `zangbundel.json` (L006). Manifest sets become read-only shipped setlists (13.5).
+  - **BLE protocol v0.50, text only.** A package's `rev` is its decimal version. A UUID keeps the largest state body at 377 of 440 bytes.
+  - **GUI design v0.66.** D-50 covers a package and a file from another app.
+  - **Architecture v0.27.** A-24 adds the reader and the Share and Open intent filters.
+  - **Assessment v0.28.** SP-37 covers files arriving by intent; SP-09 is extended to the new parsers.
+  - **Test plan v0.18.** D-02 is extended and D-09 added.
+  - **RUNBOOK Step 5.** No new permission.
 
 ## [0.3.0] - 2026-11-03
 
