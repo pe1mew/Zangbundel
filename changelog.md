@@ -40,6 +40,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
   - **Privacy texts.** The privacy policy (effective 6 November 2026, in English, Dutch and German), the in-app privacy screen in five languages, the store listing and the RUNBOOK's Data safety table name the check. The Data safety declaration stays "no data collected".
   - **Code.** `AppUpdateCheck` in `platform/net`, with unit tests. `HttpsFetcher` takes optional timeouts.
 - *Je naam* in Settings has an end ([#7](https://github.com/pe1mew/Zangbundel/issues/7), GUI design v0.68, D-44). While you type, a check mark stands at the right of the field. It and the keyboard's *Klaar* key close the keyboard, and *Opgeslagen.* (*Saved.*) confirms the name. As before, the name is saved as you type, so leaving the screen keeps it. Texts in five languages.
+- Library packages that older apps can read, carried into the remaining specifications after the owner's decision (`design/proposals/2026-11-06-backward-compatible-packages.md`, section 8; song format v0.20; FDS draft 0.5). Code not yet changed.
+  - **FRD v0.26.**
+    - FR-LIB-05: the maintainer is required for packages too.
+    - FR-LIB-08: a package carries a format 1.1 view, checked against the manifest by new apps, and every unsigned library imports with one warning.
+    - FR-LIB-09: the UUID form is no longer reserved.
+  - **Architecture v0.29.** A-26 covers the view check, raw Ed25519 keys through an injected verifier, and W013. It supersedes A-24's refusal of UUID-form ids.
+  - **Assessment v0.30.** SP-39 covers the view as an unprotected copy for older apps, which is accepted. The owner also decided that a `zangbundel.json` library carrying a package's id is an unsigned copy of it: the app asks M-71, or M-72 when the package is unsigned, and never replaces it silently (song format v0.21, 4.3 and 12.11).
+  - **Test plan v0.20.** Section 3.2 lists the `libraries/` vectors and new `packages/` vectors.
+  - **GUI design v0.69.** D-87 (the library row's version, signing status, maintainer and change note) and D-88 (a package import's question, refusals and W013) are approved by the owner. Three glossary terms are added.
+  - **No change for the decision.** BLE protocol v0.52 and song format v0.21 only follow the FRD's version.
 
 ## [0.3.0] - 2026-11-03
 

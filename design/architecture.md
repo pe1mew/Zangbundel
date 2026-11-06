@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.28 (draft) |
+| Document version | 0.29 (draft) |
 | Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.25, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.26, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.21, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -40,6 +40,7 @@
 | 0.26 | 2026-10-28 | Depends on FRD v0.23. A-23 added: the review release with the languages under review, for Play's internal-testing track only. |
 | 0.27 | 2026-11-04 | Depends on FRD v0.24 and song format v0.18. A-24 added: library packages read in `core/songformat`, their `libraryId` stored unchanged, the device memory in the database, and the Share and Open intent filters with strict dispatch in `MainActivity` (assessment SP-37). No new permission. |
 | 0.28 | 2026-11-06 | Depends on FRD v0.25. A-25 added: the app update check reads GitHub's latest release through `HttpsFetcher` on a tap, compares the version and opens the installing store (FR-GEN-09, guiDesign D-86, assessment SP-38). No new permission. |
+| 0.29 | 2026-11-06 | Depends on FRD v0.26 and song format v0.21. A-26 added: library packages carry a format 1.1 view, which the package reader checks against the manifest (VIEW-01 to VIEW-03); signatures with raw Ed25519 keys through an injected verifier; W013 for every unsigned library. A-26 supersedes A-24's refusal of UUID-form ids on the archive path. |
 
 ---
 
@@ -161,6 +162,22 @@ Every decision is numbered **A-nn** and carries a status. **Fixed** means it was
 - **No new permission:** `INTERNET` is already declared (RUNBOOK Step 5).
 
 *Why:* the GitHub release is the one source of truth the owner wanted. It is written by the release process already, so there is no second file to keep up to date. The documented API is preferred over reading the redirect of `releases/latest`, which relies on GitHub's web pages. Play's in-app update API is excluded: it belongs to Play Core (CLAUDE.md, free software).
+
+**A-26 — Library packages carry a format 1.1 view; every unsigned library gets W013.** *Decided 2026-11-06 (owner), approving `design/proposals/2026-11-06-backward-compatible-packages.md` (section 8); FRD v0.26, song format v0.20, the library manager's FDS draft 0.5.* Supersedes the sentence of A-24 that the archive and snapshot path refuses a UUID-form id: the reservation is withdrawn, and L006 accepts such an id again. The rest of A-24 stays in force.
+
+- **Telling the formats apart.** `manifest.json` in the single top-level folder decides first: the file is a package, even though its view also holds a `zangbundel.json` there (FDS APP-02). Only without a manifest does the archive and snapshot path of A-11 take the file.
+- **Reader.** The package reader in `core/songformat` reads the songs from `songs/<id>/<id>.cho` (FDS PF-12, STR-11). It reads the library from the manifest, never from the view.
+- **View check.** It checks the view against the manifest (VIEW-01 to VIEW-03):
+  - it builds the expected `zangbundel.json`, `LICENSE` and `setlists/set-<n>.zbs` from the manifest, as FDS PF-41 to PF-43 define them;
+  - it compares them as parsed values for `zangbundel.json` and as bytes for the other two;
+  - it runs the existing `zangbundel.json` checks (L002 to L006) over the view.
+
+  Any difference refuses the package whole (FR-LIB-07).
+- **Signature.** Ed25519 over the exact bytes of `manifest.json`, with the raw 32-byte key of FDS SG-05; a wrapped key is refused. `core/songformat` takes the verifier as a function argument, so it stays free of crypto code. The app passes libsodium's verify from `platform/crypto` (A-08), the same one the gathering's state record uses. The fingerprint (SG-20) is SHA-256 over the raw 32 bytes.
+- **W013.** Added once, as a library-level warning, to the import report of every release archive, snapshot, `zangbundel.json` library and package without `manifest.sig`. It never changes whether the import goes ahead.
+- **Shared library id.** A package and its view share one library id. A device that first imported the view as a snapshot, then the package, sees the same library: the package replaces the snapshot through the FDS decision table (8.3), and the URL rule of song-format 4.3 does not apply between them. The other way round, a release archive or snapshot carrying the id of an installed or remembered package is an unsigned copy of it. The import asks M-71 when the package was signed, and M-72 when not (song-format 4.3, assessment SP-39, the owner's decision).
+
+*Why:* the owner wants older apps to keep working with new libraries, without the new integrity features, and new apps to read old libraries with only a small warning. The view is the one way an older app can read a package without an update. Checking it in new apps keeps it from becoming a way around the signature.
 
 ---
 

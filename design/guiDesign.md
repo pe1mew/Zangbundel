@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.68 (draft) |
+| Document version | 0.69 (draft) |
 | Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.25, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.26, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -80,6 +80,7 @@
 | 0.66 | 2026-11-04 | Depends on FRD v0.24. D-50 amended (approved proposal `design/proposals/2026-11-04-library-package-id-and-file-type.md`): a library package opens through the same routes, and a library handed over by another app opens the same import flow at its first step, installed only after the user confirms (FR-LIB-08, FR-LIB-18, assessment SP-37). The package's own display and questions (the library manager's FDS APP-20 to APP-26, M-70 to M-74) still need their decisions. |
 | 0.67 | 2026-11-06 | Depends on FRD v0.25. D-86 added, the owner's decision on issue #6: *Over* checks GitHub for a newer version on a tap, says which version the user has and which was released, and with a newer one opens the place the app was installed from (FR-GEN-09, architecture A-25, assessment SP-38). |
 | 0.68 | 2026-11-06 | D-44 amended, the owner's request on issue #7: the name field gets a check-mark button while it has the focus; it and the keyboard's *Klaar* key close the keyboard, and *Opgeslagen.* confirms. The name is still saved as it is typed. No FRD change (FR-SING-01). |
+| 0.69 | 2026-11-06 | Depends on FRD v0.26. D-87 and D-88 added, approved by the owner the same day: the library row's version, signing status (fingerprint, or *Niet ondertekend* for every unsigned library, W013), maintainer as plain text and change note; and a package import's one question (FDS M-70 to M-74), refusals (M-36 to M-38, and the app's wording for MAN-08) and W013, with Dutch texts. D-79 gets *ondertekend door*, *niet ondertekend* and *vingerafdruk*, with drafts in the other languages. |
 
 ---
 
@@ -320,6 +321,55 @@ The leader prepares at home, with light and time, and leads at the fire, in the 
 
 **D-51 — Each library has a colour; the combined songbook shows it as a small square.** When a library is installed it is assigned the next colour from a fixed list of eight distinct, colour-blind-safe colours (orange `#FF8A3D`, sky blue `#4FC3F7`, green `#6CC24A`, yellow `#FFD166`, purple `#B388FF`, pink `#FF7EB6`, teal `#2EC4B6`, grey `#BDBDBD`); the ninth library starts over with a distinguishing dot. The colour is shown in the library list as a legend and as a **12 dp square before the title** of every song in the combined songbook [FR-LIB-30], in the setlist editor and on the leader's page; it is never shown to singers (D-48). The leader can change a library's colour from the library row. *Why:* a scouting group typically has its own library next to a shared one, and the leader wants to see at a glance where a song comes from without a second line of text.
 
+**D-87 — A library row says who signed it, or that nobody did.** *(Added in v0.69, approved by the owner 2026-11-06.)* [FR-LIB-08, FR-LIB-17, FR-LIB-21; the library manager's FDS APP-20 to APP-26; song-format 12.11, W013] The rows of D-50 keep their colour square, name and song count, and gain the following.
+
+- **Version line.**
+  - A library package shows *Versie 4, 2026-11-04*: its `version` and its `modified` date, in the existing `library_version` text and date form.
+  - Release archives and snapshots keep their revision or *Geen versie* line.
+- **Signing line,** under the version line, for every library:
+  - signed: *Ondertekend door Remko · 21FE-31DF-A154-A261* (*Signed by Remko · …*), the author's name and then the fingerprint in monospace (FDS SG-20, SG-21);
+  - not signed: *Niet ondertekend*, in the muted colour of notes, with no icon and no warning colour. It is the same note for a release archive, a snapshot, a `zangbundel.json` library and an unsigned package (W013).
+
+  The name is chosen by the author and not verified (FDS limitation 1). The fingerprint is what a leader compares, so it is always shown in full.
+- **Maintainer line,** for a package: *Beheer: Troop 12 leiding · troop12.example.org*, as plain text and **not a link**. The app never follows an address found inside a library (song-format 12.9). A leader who wants to write to the maintainer copies it.
+- **Change note.** After an update, the note is shown once at the top of *Wat is er veranderd* (D-50), under the heading *Bij versie 4*. Until the next version it also stays under the row in small text, at most three lines, with *Meer* opening the rest (FDS APP-24; at most 500 characters).
+- **No *Bijwerken* for a package.** A package has no release index: a newer version arrives as a file and is opened like the first (D-50, *uit een bestand* or from another app). The Wi-Fi check (FR-LIB-13) skips packages.
+- **Licence on request.** A tap on the row's licence line, *Licentie: CC-BY-NC-4.0*, shows the summary and the full text (FR-LIB-21, FDS APP-25). For a package they come from the manifest's `license`; for other formats, from `zangbundel.json` and its licence file, as today.
+- **Untrusted text.** Title, author name, maintainer and change note come from the library. They are cut to the FDS lengths, with control characters and bidirectional overrides removed, before they are shown (as in assessment SP-37).
+
+*Why:* the signature only helps if a leader can see it. The plain *Niet ondertekend* says the truth about every older library without alarming anyone, which is what the owner asked for: old libraries work, with a small note.
+
+**D-88 — A package import asks at most one question, in the app's words.** *(Added in v0.69, approved by the owner 2026-11-06.)* [FR-LIB-07, FR-LIB-08, FR-LIB-09; FDS §8.3, APP-01, APP-04, APP-05]
+
+- **Where the question comes.** A package goes through the steps of D-50: checking, then the question when the FDS decision table (§8.3) calls for one, then the licence, then the report.
+- **The question.** It is one dialog with the FDS message in the app's language and these buttons:
+
+| FDS | Dutch text (English source in the FDS) | Buttons |
+|---|---|---|
+| M-70 | *Deze update is ondertekend door een andere maker dan de versie die je hebt. Nu: {naam} ({vingerafdruk}). Nieuw: {naam} ({vingerafdruk}). {versienotitie} Toch importeren?* | *Toch importeren*, *Annuleren* |
+| M-71 | *De versie die je hebt is ondertekend door {naam} ({vingerafdruk}), maar deze update is niet ondertekend. {versienotitie} Toch importeren?* | *Toch importeren*, *Annuleren* |
+| `{versienotitie}` | *Dit is versie {nieuw}; jij hebt versie {huidig}.*, or nothing when the new version is higher | — |
+| M-72 | *Je hebt versie {huidig} van deze bibliotheek al. Vervangen door deze kopie?* | *Vervangen*, *Annuleren* |
+| M-73 | *Je hebt al een bibliotheek die "{titel}" heet, maar dit is een andere bibliotheek. Apart toevoegen, of de bibliotheek die je hebt vervangen?* | *Apart toevoegen*, *Vervangen*, *Annuleren* |
+| M-74 | *Dit is een oudere versie van de bibliotheek dan die je hebt: versie {nieuw} in plaats van {huidig}. Toch vervangen?* | *Toch vervangen*, *Annuleren* |
+
+  *Annuleren* leaves everything as it was. The fingerprints in M-70 and M-71 are set in monospace.
+- **Refusals.** A refused package shows the FDS message under *Waarom het werd geweigerd* (D-50), in the app's language. The messages new in FDS draft 0.5 read in Dutch:
+  - M-36: *Bestanden voor oudere Zangbundel-apps ontbreken: {namen}. Sla de bibliotheek opnieuw op in de editor.*
+  - M-37: *Het bestand "{pad}" past niet bij de bibliotheek. Sla de bibliotheek opnieuw op in de editor.*
+  - M-38: *Oudere Zangbundel-apps kunnen de gegevens van deze bibliotheek niet lezen: {reden}. Sla de bibliotheek opnieuw op in de editor.*
+  - for MAN-08, where the FDS's M-39 is worded for the Editor: *Deze bibliotheek noemt niemand die haar beheert (naam en e-mailadres of website). Sla haar opnieuw op in de editor.*
+
+  The other refusal messages (M-01 to M-29) are translated the same way when the package code is built. Warnings and Info from the FDS rules are not shown (APP-01).
+- **W013.** It is the one warning a package import can add. It appears once under *Waarschuwingen* in the report: *Deze bibliotheek is niet ondertekend: de app kan niet laten zien wie hem gemaakt heeft of controleren dat er niets aan veranderd is.* The same line appears for release archives and snapshots, which keep their song-by-song report as today.
+- **An unsigned copy of a package** (assessment SP-39 part 2, the owner's decision 2026-11-06; song-format 4.3). A release archive or snapshot that carries an installed package's id gets the same dialog:
+  - M-71 when the package was signed, without the version sentence;
+  - M-72 when it was not.
+
+  It never replaces the package without that question.
+
+*Why:* the FDS fixes what is asked and when (one question at most, APP-05). This decision fixes how it looks, so the app shows the library manager's warnings in its own calm style, in five languages.
+
 **D-52 — One songbook, sorted and filtered, with a reset that is always visible.** The *Zangbundel* screen is the combined list of all enabled libraries [FR-LIB-30]: colour square, title, and in the secondary colour the language code and, when known, the usage (*3× · laatst 12 okt*). When two or more visible rows carry the same title, each of them also shows its library's name in the secondary text (*Advocaatje · Kampvuurliederen · nl*), so the choice never rests on the colour square alone; rows with a unique title stay as short as before. The same rule applies wherever songs are listed with their colour square: the setlist editor (D-54), the setlist block and separators (D-55, D-56) and the leader's songlist sheet (D-58). *(Amended in v0.7.)* The toolbar above the list holds: a **search field** that filters on a word in the title and, with the switch *ook in de tekst*, on a fragment of the lyrics [FR-LIB-31]; the **sort** toggle *A–Z* / *Z–A*, with two more orders in its menu, *vaakst gezongen* and *laatst gezongen*; and **filter chips** in two groups: metadata from the library (library, language, tag [FR-LIB-30]) and metadata from use (*nog nooit gezongen*, *dit jaar gezongen*, *meer dan 5×*). A **reset** button (*Wis filters*) is shown whenever any search, sort or filter differs from the default and clears them all at once. The usage metadata (number of times a song was pushed by this device and the date of the last time) is recorded on the leader's device from its gathering memories, stored locally, never sent [NFR-PRIV-01], and removed with the memories [FR-DATA-07]. *Why:* a leader with 400 songs over three libraries needs to find "that one about the mole" and to avoid singing the same twelve songs every evening; both are answered by the list itself, not by a separate statistics screen.
 
 **D-53 — Reading a song in preparation adds it to the setlist being edited.** Tapping a song opens it in the lyric view (gathering-family styling, day theme by default outside a gathering, the song-info sheet of D-45 available). In preparation the view carries one primary button, *Toevoegen aan "<setlist>"*, naming the setlist currently being edited (D-54); when no setlist is being edited the button reads *Toevoegen aan setlist…* and asks which one, offering to create a new one. A song already in that setlist shows *Staat in de setlist* instead. *Why:* reading the words is how a leader decides; the decision should be one tap away from the text. *(v0.46:)* the song's metadata and licence open from an ⓘ beside the title, and from a long press on the title (D-33), in the sheet of D-45 [FR-LIB-20]. The reading view has no toolbar, so the ⓘ is its visible way in (*since v0.62 the middle round button of D-85*). The sheet is the dark one of the gathering screens, also over this day-theme view; no line keeping on rotation here yet (D-42). *(Amended in v0.48, the owner's request:)* the reading view follows the lyric theme of the toolbar (D-17, D-15), which is night unless the singer chose day, instead of the day theme outside a gathering; the system bars keep their black bands.
@@ -481,6 +531,8 @@ The app speaks Dutch and English. This section fixes how its own texts are trans
 | *couplet*, *refrein*, *brug* | verse, chorus, bridge | Strophe, Refrain, Bridge | couplet, refrain, pont | strofa, ritornello, ponte | verse, chorus, bridge environments |
 | *herinnering* | memory | Erinnerung | souvenir | ricordo | gathering memory |
 | *Nu*, *Wis*, *Afsluiten* | Now, Clear, Close | Jetzt, Leeren, Beenden | Maintenant, Effacer, Terminer | Ora, Svuota, Termina | push, clear current song, end gathering |
+| *ondertekend door*, *niet ondertekend* | signed by, not signed | signiert von, nicht signiert | signée par, non signée | firmata da, non firmata | signed, unsigned (library manager's FDS EDT-83, D-87; added in v0.69, drafts for the reviewers) |
+| *vingerafdruk* | fingerprint | Fingerabdruck | empreinte | impronta | fingerprint (FDS SG-20; the word *Over* already uses) |
 
 The Dutch term for the delegate role is *assistent* (Q15, resolved 2026-10-20). A new fixed term is added to this table before it appears in a string. The German column was reviewed with the German texts and approved on 2026-11-03 (D-80). The French and Italian columns are drafts of 2026-11-04, for their reviewers: French uses the middle dot for persons (issue pe1mew/Zangbundel#5) and the scouts' *carnet de chants*; Italian uses the scouts' *canzoniere* and *capo*, and *cantante* has one form for everyone. Both address the singer as *tu*.
 
@@ -550,7 +602,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | FR-LIB-20, FR-LIB-23, FR-SING-15 | Song-info sheet (D-45) |
 | FR-LEAD-40, FR-LEAD-41, FR-LEAD-42, FR-LEAD-43, FR-LEAD-44, FR-LEAD-45, FR-LEAD-46 | Delegate tab in singer mode (D-46) |
 | FR-KAR-03, FR-KAR-09 | Room reserved for karaoke (6.2, "Room for phase 2") |
-| FR-LIB-02, FR-LIB-07, FR-LIB-08, FR-LIB-10, FR-LIB-11, FR-LIB-12, FR-LIB-13, FR-LIB-14, FR-LIB-15, FR-LIB-16, FR-LIB-17, FR-LIB-18, FR-LIB-21 | Library screen: add online or from a file, a package or a file from another app, licence, import report, update with changes, revision (D-50) |
+| FR-LIB-02, FR-LIB-07, FR-LIB-08, FR-LIB-10, FR-LIB-11, FR-LIB-12, FR-LIB-13, FR-LIB-14, FR-LIB-15, FR-LIB-16, FR-LIB-17, FR-LIB-18, FR-LIB-21 | Library screen: add online or from a file, a package or a file from another app, licence, import report, update with changes, revision (D-50); a package's version, signing status, maintainer and change note (D-87); its one question and refusals (D-88) |
 | FR-LIB-30, FR-LIB-31, NFR-PRIV-01, FR-DATA-07 | Combined songbook with colour squares, sort, title and lyrics search, metadata and usage filters, reset (D-51, D-52) |
 | FR-LEAD-02, FR-DATA-06 | Setlists managed and edited in preparation, imported and exported as files, copied at the start (D-53, D-54, D-55, D-59); unresolved entries shown with their reason (D-74) |
 | FR-LEAD-01, FR-LEAD-03, FR-LEAD-04, FR-LEAD-06 | Leader's page with setlist block, separators and the *Nu* button; control sheet (D-55, D-56, D-58) |
