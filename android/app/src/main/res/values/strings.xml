@@ -311,7 +311,7 @@
     <string name="privacy_sends_title">What the app sends</string>
     <string name="privacy_sends">Only during a campfire, over Bluetooth: the campfire and the lyrics. A name or a request can only be read by the campfire leader. Nothing is sent to the makers or anyone else: no account details and no adverts. You are not tracked either.</string>
     <string name="privacy_internet_title">Connection to the internet</string>
-    <string name="privacy_internet">Only to download a library or setlist from the address you enter or choose. That website sees your download and the internet address of the Wi-Fi or the provider you are online through.</string>
+    <string name="privacy_internet">Only to download a library or setlist from the address you enter or choose, or, when you tap Check for a new version in About, to ask GitHub which version is the latest. That website sees what you ask for and the internet address of the Wi-Fi or the provider you are online through.</string>
     <string name="privacy_keeps_title">What stays on your phone</string>
     <string name="privacy_keeps">Libraries, setlists, settings and the memories. The lyrics the leader sent are deleted after the campfire. If you lead and switch on statistics, also a summary of each campfire without any names; it only leaves your phone if you share it yourself.</string>
     <string name="privacy_delete_title">How to delete what stays on your phone</string>
@@ -391,6 +391,18 @@
     <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Manual</string>
     <string name="about_source_url" translatable="false">https://github.com/pe1mew/Zangbundel</string>
     <string name="about_links_note">Opens in your browser, on GitHub.</string>
+    <!-- guiDesign D-86, FR-GEN-09: the update check on About. -->
+    <string name="about_update_check">Check for a new version</string>
+    <string name="about_update_checking">Checking…</string>
+    <string name="about_update_note">Needs an internet connection.</string>
+    <string name="about_update_not_now">Not during a campfire.</string>
+    <string name="about_update_newer">Version %1$s has been released. You have %2$s.</string>
+    <string name="about_update_current">You have the latest version, %s.</string>
+    <string name="about_update_ahead">You have %1$s; the latest release is %2$s.</string>
+    <string name="about_update_unreachable">GitHub could not be reached. Check the internet connection and try again.</string>
+    <string name="about_update_open_play">Open in Google Play</string>
+    <string name="about_update_open_fdroid">Open in F-Droid</string>
+    <string name="about_update_open_github">Open the download page</string>
     <string name="drawer_install">Install the app</string>
     <!-- Browsing during a campfire (guiDesign D-29, D-40). -->
     <string name="singer_browsing">browsing</string>

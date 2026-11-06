@@ -4,11 +4,11 @@
 |---|---|
 | Document | App architecture: technology choices, module boundaries, runtime structure, storage, build, testing, Android/iOS strategy |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.27 (draft) |
-| Date | 2026-11-04 |
+| Document version | 0.28 (draft) |
+| Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Decisions taken; open questions Q1–Q5 wait for the first builds and field tests |
-| Depends on | `design/functional-requirements.md` v0.24, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
+| Depends on | `design/functional-requirements.md` v0.25, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.4, `docs/RUNBOOK.md` Decisions, `docs/FDROID-RUNBOOK.md` |
 
 | Version | Date | Change |
 |---|---|---|
@@ -39,6 +39,7 @@
 | 0.25 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08). A-16 amended: the language setting through AppCompat's per-app locale with `autoStoreLocales` for Android 8 to 12, the `app_languages` list, and a language under review in the debug source set only (guiDesign D-80). |
 | 0.26 | 2026-10-28 | Depends on FRD v0.23. A-23 added: the review release with the languages under review, for Play's internal-testing track only. |
 | 0.27 | 2026-11-04 | Depends on FRD v0.24 and song format v0.18. A-24 added: library packages read in `core/songformat`, their `libraryId` stored unchanged, the device memory in the database, and the Share and Open intent filters with strict dispatch in `MainActivity` (assessment SP-37). No new permission. |
+| 0.28 | 2026-11-06 | Depends on FRD v0.25. A-25 added: the app update check reads GitHub's latest release through `HttpsFetcher` on a tap, compares the version and opens the installing store (FR-GEN-09, guiDesign D-86, assessment SP-38). No new permission. |
 
 ---
 
@@ -142,6 +143,24 @@ Every decision is numbered **A-nn** and carries a status. **Fixed** means it was
 - **No new permission.**
 
 *Why:* libraries are passed around by messaging apps and e-mail (FDS D-21). Share is the one route that does not depend on what the sending app tells Android about a `.zbl`, which Android itself does not know. A file picker stays the documented route until device test D-09 shows which channels open the app with a tap.
+
+**A-25 — The app update check reads GitHub's latest release.** *Decided 2026-11-06 (owner), issue #6.* Extends A-14, which stays in force; supersedes nothing. FR-GEN-09, guiDesign D-86.
+
+- **Request.** `AppUpdateCheck` in `platform/net` makes one GET to `https://api.github.com/repos/pe1mew/Zangbundel/releases/latest`, through `HttpsFetcher`: HTTPS only, fixed user agent, no cookies, no token, no other header. The call is started only from the button on *Over* and never retried. That endpoint never returns a draft or a pre-release, so a release being prepared, or a review release (A-23, Play's internal track only), never shows.
+- **Answer.** The body is untrusted (assessment SP-09) and read with a cap of 256 KiB:
+  - `tag_name` MUST match `v?<major>.<minor>.<patch>`;
+  - `html_url` is used only when it starts with `https://github.com/pe1mew/Zangbundel/releases/`, and otherwise falls back to `https://github.com/pe1mew/Zangbundel/releases/latest`;
+  - nothing else in the answer is used or shown.
+- **Comparison.** The installed `versionName`, with any suffix such as `-review` cut off, against the tag, by the three numbers.
+- **Where the app came from.** `PackageManager.getInstallSourceInfo` (API 30 and later) or `getInstallerPackageName` (earlier) names the installer. This is a question about the app itself and needs no permission or `<queries>` entry.
+  - `com.android.vending` → `https://play.google.com/store/apps/details?id=<package>`;
+  - the F-Droid client and its known alternatives (`org.fdroid.fdroid`, `org.fdroid.basic`, `com.looker.droidify`, `com.machiav3lli.fdroid`) → `https://f-droid.org/packages/<package>/`;
+  - anything else, or none → the release page from the answer.
+
+  The link opens with `ACTION_VIEW`, so the store app takes it when installed and the browser otherwise.
+- **No new permission:** `INTERNET` is already declared (RUNBOOK Step 5).
+
+*Why:* the GitHub release is the one source of truth the owner wanted. It is written by the release process already, so there is no second file to keep up to date. The documented API is preferred over reading the redirect of `releases/latest`, which relies on GitHub's web pages. Play's in-app update API is excluded: it belongs to Play Core (CLAUDE.md, free software).
 
 ---
 

@@ -4,11 +4,11 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.18 (draft) |
-| Date | 2026-11-04 |
+| Document version | 0.19 (draft) |
+| Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
-| Depends on | `design/functional-requirements.md` v0.24, `design/architecture.md` v0.27, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.28, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
+| Depends on | `design/functional-requirements.md` v0.25, `design/architecture.md` v0.28, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.18, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.29, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -30,6 +30,7 @@
 | 0.16 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08); no other change. |
 | 0.17 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08); no other change. |
 | 0.18 | 2026-11-04 | Depends on FRD v0.24 (FR-LIB-08, FR-LIB-09, FR-LIB-18), architecture v0.27 (A-24), song format v0.18 and assessment v0.28 (SP-37). D-02 extended with Share and a library package; D-09 added: opening a library from other apps, per channel. Traceability rows for the three new requirements. |
+| 0.19 | 2026-11-06 | Depends on FRD v0.25 (FR-GEN-09), architecture v0.28 (A-25) and assessment v0.29 (SP-38). D-10 added: the update check on *Over*. Traceability row for FR-GEN-09. |
 
 ---
 
@@ -190,6 +191,7 @@ Run by hand on two phones, one of them the oldest Android version in the matrix,
 | D-07 | Leave, end | Count drops; singer holds a memory and no lyrics |
 | D-08 | Share the app from the About screen | Share sheet offers Quick Share; About shows the fingerprint `57:86:7B:…:9B:10` (assessment SP-20) |
 | D-09 | Open a library from other apps (architecture A-24). Send a release archive and a library package, the second with a dot in its name before `.zbl`, through WhatsApp, Signal, Telegram, Discord, Gmail, a GitHub release download and Quick Share, to two phones: one on API 30 or lower, one on 31 or higher. Per channel, record whether *Delen* offers Zangbundel, whether tapping the file opens it, the intent's type and URI authority (debug log only), and the import result. Also: a VIEW of a `file:` URI and of the app's own FileProvider URI sent with `adb`. | *Delen → Zangbundel* imports from every channel that offers Share; nothing installs without the user's tap; the `file:` and own-provider URIs are refused (assessment SP-37); every channel's result is in `design/test-results/` before any document or listing says a tap opens the app |
+| D-10 | *Over → Zoeken naar een nieuwe versie* (guiDesign D-86), on a phone with a build older than, equal to and newer than the latest GitHub release, and once in flight mode; a packet capture as G-03 during the tap | The answer names both versions correctly in each case; with flight mode it says GitHub is not reachable, within 15 s; the store button appears only for an older build and opens Play, F-Droid or the GitHub release page as the installer says; the capture shows one connection, to `api.github.com`, and none before the tap (FR-GEN-09, assessment SP-38) |
 
 ---
 
@@ -349,6 +351,7 @@ A production release (RUNBOOK Step 9) needs all of these:
 | FR-LIB-07, FR-LIB-15, FR-LIB-16 | D-02, unit tests of staging |
 | FR-LIB-08, FR-LIB-09 | D-02; conformance cases of the library manager's test libraries (FDS O-04); unit tests of the package reader and of L006's UUID rule; fuzz targets of the manifest parsers (assessment SP-09) |
 | FR-LIB-18 | D-02, D-09; unit tests of the intent dispatch and URI checks (assessment SP-37) |
+| FR-GEN-09 | D-10; unit tests of `AppUpdateCheck` (the answer's parser, the version comparison, the store choice) |
 | FR-DIST-05, FR-DIST-09 | D-08, F-11 |
 | FR-GEN-05, FR-GEN-06, FR-GEN-08 | 3.5, D-01 |
 | FR-DISP-04, FR-DISP-05, FR-DISP-10, NFR-ACC-01, NFR-ACC-02 | 3.5 |

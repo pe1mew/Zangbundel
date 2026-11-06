@@ -304,7 +304,7 @@
     <string name="privacy_sends_title">Cosa invia l’app</string>
     <string name="privacy_sends">Solo durante un falò, via Bluetooth: il falò e i testi. Un nome o una richiesta può essere letto solo dal capo del falò. Nulla viene inviato a chi ha creato l’app o a chiunque altro: nessun dato dell’account e nessuna pubblicità. E nessuno ti traccia.</string>
     <string name="privacy_internet_title">Connessione a internet</string>
-    <string name="privacy_internet">Solo per scaricare una biblioteca o una scaletta dall’indirizzo che inserisci o scegli. Quel sito vede il tuo download e l’indirizzo internet del Wi-Fi o del fornitore con cui sei online.</string>
+    <string name="privacy_internet">Solo per scaricare una biblioteca o una scaletta dall’indirizzo che inserisci o scegli, o per chiedere a GitHub qual è l’ultima versione quando tocchi Cerca una nuova versione in Informazioni. Quel sito vede cosa chiedi e l’indirizzo internet del Wi-Fi o del fornitore con cui sei online.</string>
     <string name="privacy_keeps_title">Cosa resta sul tuo telefono</string>
     <string name="privacy_keeps">Biblioteche, scalette, impostazioni e ricordi. I testi inviati dal capo vengono eliminati dopo il falò. Se guidi un falò e attivi le statistiche, anche un riepilogo di ogni falò senza alcun nome; lascia il tuo telefono solo se lo condividi tu.</string>
     <string name="privacy_delete_title">Come eliminare ciò che resta sul tuo telefono</string>
@@ -377,6 +377,18 @@
     <string name="about_manual">Manuale (in inglese)</string>
     <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Manual</string>
     <string name="about_links_note">Si apre nel browser, su GitHub.</string>
+    <!-- guiDesign D-86, FR-GEN-09: the update check on About. -->
+    <string name="about_update_check">Cerca una nuova versione</string>
+    <string name="about_update_checking">Ricerca…</string>
+    <string name="about_update_note">Serve una connessione a internet.</string>
+    <string name="about_update_not_now">Non durante un falò.</string>
+    <string name="about_update_newer">È uscita la versione %1$s. Tu hai la %2$s.</string>
+    <string name="about_update_current">Hai l’ultima versione, %s.</string>
+    <string name="about_update_ahead">Hai la %1$s, l’ultima versione pubblicata è la %2$s.</string>
+    <string name="about_update_unreachable">GitHub non è raggiungibile. Controlla la connessione a internet e riprova.</string>
+    <string name="about_update_open_play">Apri in Google Play</string>
+    <string name="about_update_open_fdroid">Apri in F-Droid</string>
+    <string name="about_update_open_github">Apri la pagina di download</string>
     <string name="drawer_install">Installa l’app</string>
     <string name="singer_browsing">navigazione</string>
     <string name="singer_back_to_current">Torna alla canzone attuale</string>

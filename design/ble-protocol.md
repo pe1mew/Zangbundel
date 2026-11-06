@@ -5,11 +5,11 @@
 | Document | BLE protocol design |
 | Project | Zangbundel – campfire songbook app |
 | Protocol version | 1.0 (draft) |
-| Document version | 0.50 (draft) |
-| Date | 2026-11-04 |
+| Document version | 0.51 (draft) |
+| Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.24 |
+| Depends on | `design/functional-requirements.md` v0.25 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -63,6 +63,7 @@
 | 0.48 | 2026-10-28 | 6.6 and appendix A: the two words come from the lists of each phone's app language, index-aligned translations of the Dutch lists, which stay the reference (the owner's decision); nothing on the air changes. Words of other languages may have 3 to 10 letters. Assessment SP-34. |
 | 0.49 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08: the review release on Play's internal track); no change: nothing language-dependent travels over the air. |
 | 0.50 | 2026-11-04 | Depends on FRD v0.24 (FR-LIB-08, FR-LIB-09: library packages, whose `libraryId` is the library id). Section 5, song reference: `lib` may be a package's UUID (36 characters); a package's `rev` is its version in decimal. 9.4: the 405-byte figure assumes a 64-character library id; with a UUID the largest body is 377 bytes. Computed in `design/proposals/2026-11-04-library-package-id-and-file-type.md` (approved by the owner 2026-11-04). No wire change; protocol 1.0 unchanged. |
+| 0.51 | 2026-11-06 | Depends on FRD v0.25 (FR-GEN-09: the app update check on About; FR-NET-01, FR-NET-03 amended for it); no change: nothing of it goes over the air. |
 
 ---
 

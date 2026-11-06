@@ -22,9 +22,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,8 +34,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import nl.pe1mew.zangbundel.app.AppContainer
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.ZangbundelApp
+import nl.pe1mew.zangbundel.app.gathering.Gathering
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
 import nl.pe1mew.zangbundel.app.ui.gathering.InstallPanel
 import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
@@ -42,6 +47,7 @@ import nl.pe1mew.zangbundel.app.ui.theme.Palette
 import nl.pe1mew.zangbundel.core.protocol.ProtocolConstants
 import nl.pe1mew.zangbundel.core.songformat.ArchiveImport
 import nl.pe1mew.zangbundel.core.songformat.LibraryFileParser
+import nl.pe1mew.zangbundel.platform.net.AppUpdateCheck
 import nl.pe1mew.zangbundel.platform.storage.LibraryRow
 import java.security.MessageDigest
 
@@ -83,6 +89,7 @@ fun AboutScreen(onPrivacy: () -> Unit) {
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier.padding(top = 4.dp).clickable { open(context, source) }.padding(vertical = 8.dp))
             }
+            UpdateCheck(container)
             Text(stringResource(R.string.about_libraries), style = MaterialTheme.typography.titleMedium)
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (libraries.isEmpty()) Text(stringResource(R.string.about_no_libraries))
@@ -116,6 +123,55 @@ fun AboutScreen(onPrivacy: () -> Unit) {
         }
     }
 }
+
+/**
+ * D-86 [FR-GEN-09]: on a tap, ask GitHub for the latest release, say which version the user has and which
+ * was released, and with a newer one open the place the app came from. Nothing runs before the tap, nothing
+ * is retried, and the answer lives only as long as this screen (FR-NET-02, assessment SP-38).
+ */
+@Composable
+private fun UpdateCheck(container: AppContainer) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val mode by container.gathering.mode.collectAsState()
+    val campfire = mode !is Gathering.Mode.Idle
+    var checking by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<AppUpdateCheck.Result?>(null) }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedButton(
+            onClick = {
+                checking = true
+                result = null
+                scope.launch { result = container.updateCheck.check(container.versionName); checking = false }
+            },
+            enabled = !checking && !campfire,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(stringResource(if (checking) R.string.about_update_checking else R.string.about_update_check)) }
+        Text(stringResource(if (campfire) R.string.about_update_not_now else R.string.about_update_note), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
+        when (val r = result) {
+            is AppUpdateCheck.Result.Newer -> {
+                Text(stringResource(R.string.about_update_newer, r.latest, r.installed), modifier = Modifier.padding(top = 4.dp))
+                val store = AppUpdateCheck.storeFor(installer(context))
+                val label = when (store) {
+                    AppUpdateCheck.Store.PLAY -> R.string.about_update_open_play
+                    AppUpdateCheck.Store.FDROID -> R.string.about_update_open_fdroid
+                    AppUpdateCheck.Store.GITHUB -> R.string.about_update_open_github
+                }
+                OutlinedButton(onClick = { open(context, AppUpdateCheck.pageFor(store, context.packageName, r.page)) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(label)) }
+            }
+            is AppUpdateCheck.Result.Current -> Text(stringResource(R.string.about_update_current, r.latest), modifier = Modifier.padding(top = 4.dp))
+            is AppUpdateCheck.Result.Ahead -> Text(stringResource(R.string.about_update_ahead, r.installed, r.latest), modifier = Modifier.padding(top = 4.dp))
+            AppUpdateCheck.Result.Unreachable -> Text(stringResource(R.string.about_update_unreachable), modifier = Modifier.padding(top = 4.dp))
+            null -> Unit
+        }
+    }
+}
+
+/** The package that installed this app, as Android records it; a question about the app itself, so no permission (A-25). */
+private fun installer(context: Context): String? = runCatching {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+    else @Suppress("DEPRECATION") context.packageManager.getInstallerPackageName(context.packageName)
+}.getOrNull()
 
 /** Hands [url] to the browser; a phone without one keeps the About screen as it is. */
 private fun open(context: Context, url: String) {

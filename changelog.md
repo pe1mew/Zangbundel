@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- Conformance corpus: library-file vectors, so `zangbundel.json` is part of the contract between the app and the library tools. Twelve vectors were added under `android/core/testing/src/main/resources/conformance/libraries/`: the example, a newer minor version with an unknown field, and each refusal L002 to L006. Their cases are taken from `LibraryTest`, and `ConformanceLibrariesTest` runs them. The corpus README says the library repository runs the vectors with its `scripts/conformance.py`, at a pinned commit of this repository. That script agrees with all 58 vectors (songs, setlists, library files, archives).
 - The wiki manual (*Manual*, *Handleiding*) is for 0.3.0 and names *Deutsch* under the language setting.
 - `docs/FDROID-RUNBOOK.md`: the status line names the closed merge request and the resubmission from 2027-01-18; the signing command sets `ANDROID_HOME` itself, since a new PowerShell window lacks it.
 - French and Italian under review (FR-LANG-08, GUI design v0.65 D-79 and D-80): complete drafts of the app's texts and word lists in `app/src/review/res/values-fr` and `values-it`, the radio check's in `src/debug/res`, and both in the review build's language lists. Debug builds and a review release (`-PreviewVersionCode`) offer them; the regular release does not change. `check-translation.py` reads the glossary's Italian column.
@@ -18,6 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
   - **Assessment v0.28.** SP-37 covers files arriving by intent; SP-09 is extended to the new parsers.
   - **Test plan v0.18.** D-02 is extended and D-09 added.
   - **RUNBOOK Step 5.** No new permission.
+- *Over* checks for a new version ([#6](https://github.com/pe1mew/Zangbundel/issues/6)). A tap on *Zoeken naar een nieuwe versie* (*Check for a new version*) asks GitHub for the app's latest release, the single source of truth for versions, and says which version you have and which was released. With a newer one, a button opens the place the app was installed from: Google Play, F-Droid, or the release page on GitHub.
+  - It runs only on that tap: never automatically, never during a campfire, no retry, nothing remembered. The answer is capped and parsed as untrusted input.
+  - **Specifications.** FRD v0.25 adds FR-GEN-09 and widens FR-NET-01 and FR-NET-03 for this check only. GUI design v0.67 adds D-86, architecture v0.28 A-25, assessment v0.29 SP-38, test plan v0.19 D-10. BLE protocol v0.51 and song format v0.19 do not change.
+  - **Privacy texts.** The privacy policy (effective 6 November 2026, in English, Dutch and German), the in-app privacy screen in five languages, the store listing and the RUNBOOK's Data safety table name the check. The Data safety declaration stays "no data collected".
+  - **Code.** `AppUpdateCheck` in `platform/net`, with unit tests. `HttpsFetcher` takes optional timeouts.
 
 ## [0.3.0] - 2026-11-03
 

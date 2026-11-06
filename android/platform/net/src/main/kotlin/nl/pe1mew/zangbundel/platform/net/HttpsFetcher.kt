@@ -15,14 +15,14 @@ class HttpsFetcher(versionName: String) {
     private val userAgent = "Zangbundel/$versionName"
 
     /** Opens [url] and streams at most [maxBytes]; throws [TooLargeException] beyond that. */
-    fun open(url: String, ifNoneMatch: String? = null, maxBytes: Long): Response {
+    fun open(url: String, ifNoneMatch: String? = null, maxBytes: Long, connectTimeoutMs: Int = 15_000, readTimeoutMs: Int = 30_000): Response {
         val parsed = URL(url)
         require(parsed.protocol == "https") { "only https is allowed" }
         val connection = parsed.openConnection() as HttpsURLConnection
         connection.instanceFollowRedirects = false
         connection.setRequestProperty("User-Agent", userAgent)
-        connection.connectTimeout = 15_000
-        connection.readTimeout = 30_000
+        connection.connectTimeout = connectTimeoutMs
+        connection.readTimeout = readTimeoutMs
         if (ifNoneMatch != null) connection.setRequestProperty("If-None-Match", ifNoneMatch)
         connection.connect()
         val code = connection.responseCode
@@ -34,7 +34,7 @@ class HttpsFetcher(versionName: String) {
             val location = connection.getHeaderField("Location") ?: ""
             connection.disconnect()
             require(location.startsWith("https://")) { "redirect to a non-https location refused" }
-            return open(location, ifNoneMatch, maxBytes)
+            return open(location, ifNoneMatch, maxBytes, connectTimeoutMs, readTimeoutMs)
         }
         return Response(code, connection.getHeaderField("ETag"), connection.contentLengthLong, CappedStream(connection.inputStream, maxBytes), connection)
     }

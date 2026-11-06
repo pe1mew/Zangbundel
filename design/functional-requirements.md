@@ -4,8 +4,8 @@
 |---|---|
 | Document | Functional Requirements Document (FRD) |
 | Project | Zangbundel – campfire songbook app |
-| Version | 0.24 (draft) |
-| Date | 2026-11-04 |
+| Version | 0.25 (draft) |
+| Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
 
@@ -34,6 +34,7 @@
 | 0.22 | 2026-10-28 | FR-LANG-08 added (MAY, P1): further UI languages, each only after review by a fluent speaker; German is the first, under review. Q8 amended accordingly. The owner also confirmed the selection of FR-LANG-03 as `design/guiDesign.md` D-76 designs it and English as the fallback. No other requirement changed. |
 | 0.23 | 2026-10-28 | FR-LANG-08 amended by the owner: a language under review MAY also be in a review release on Google Play's internal-testing track, which reaches only the testers named there, so that a reviewer abroad gets it through Play. It is never on another track, on GitHub Releases or on F-Droid. No other requirement changed. On 2026-11-03 the owner recorded the reviewer's approval of German, so German is in every build from the next release. |
 | 0.24 | 2026-11-04 | Library packages from the library manager, approved by the owner (`design/proposals/2026-11-04-library-package-id-and-file-type.md`; the manager's FDS draft 0.4, D-29 to D-33). Added: FR-LIB-08 (import the package format, told apart by content), FR-LIB-09 (the package's `libraryId` is its library id; the UUID form is reserved for packages), FR-LIB-18 (SHOULD: a library handed over by another app, installed only after the user confirms). Amended: FR-LIB-05 (for a package the maintainer contact is optional and the format version serves as the minimum app version), FR-LIB-07 (reporting bad songs applies to release archives and snapshots; a package is accepted whole or not at all), FR-LIB-17 (a package records its library id and version). |
+| 0.25 | 2026-11-06 | The app update check, decided by the owner on issue #6. Added: FR-GEN-09 (SHOULD: on a tap on About, the app reads its latest release from GitHub, the single source of truth, says which version it has and which was released, and offers the place it was installed from). Amended: FR-NET-01 (network also for that check) and FR-NET-03 (GitHub's API for that check only). Assessment SP-38. |
 | 0.10 | 2026-10-20 | Q8 closed: no UI languages beyond Dutch and English for now, no right-to-left support; Dutch is primary and English the fallback (`design/guiDesign.md` D-76, D-80). FR-LEAD-40 names the helper code *assistentcode* (guiDesign Q15). No requirement changed in substance. |
 
 ---
@@ -145,6 +146,8 @@ Many users are **under 18**. The app must be safe to hand to a child without any
 **FR-GEN-07** (MUST, P1) — The app MUST show the version of the app and the version (commit/tag) of each imported library in an "About" screen.
 
 **FR-GEN-08** (MUST, P1) — The app MUST contain a privacy screen in plain language, in the UI language, readable by a 12-year-old, that says what the app sends (to nearby phones during a gathering: gathering state, lyrics, and, encrypted to the leader, the display name and requests), what it never sends (anything to the developer), what it keeps on the phone and how to delete it. It MUST be reachable from the first-use introduction (FR-GEN-06) before any permission is requested, and from the About screen. (Assessment SP-07.)
+
+**FR-GEN-09** (SHOULD, P1) — The About screen SHOULD let the user check whether a newer version of the app has been released, with the note that this needs an internet connection. The check MUST run only when the user taps it: never automatically, never in the background, never while a gathering runs, with no retry. It MUST read the app's latest release from the project's GitHub releases, which are the single source of truth for versions, and MUST send nothing but that request. The app MUST say which version it has and which version was released. When a newer version exists, it MUST offer to open the place the app was installed from (Google Play, F-Droid, or the GitHub release page), because that place decides when the update arrives there. (Added in v0.25, issue #6; assessment SP-38.)
 
 ---
 
@@ -478,11 +481,11 @@ On iOS there is no way to install an app without internet; FR-DIST-01, 03 and 04
 
 ## 12. Connectivity and offline behaviour
 
-**FR-NET-01** (MUST, P1) — The app MUST never block a gathering function on network availability. Network is used only for library import/update (section 5.2) and for importing a setlist from an address the user enters (FR-LEAD-02, `design/guiDesign.md` D-59), and nothing else. *(Amended in v0.15.)*
+**FR-NET-01** (MUST, P1) — The app MUST never block a gathering function on network availability. Network is used only for library import/update (section 5.2) and for importing a setlist from an address the user enters (FR-LEAD-02, `design/guiDesign.md` D-59), and for the app update check the user taps on the About screen (FR-GEN-09), and nothing else. *(Amended in v0.15; v0.25: the update check.)*
 
 **FR-NET-02** (MUST, P1) — The app MUST indicate clearly when a library action requires internet and internet is not available, and MUST NOT retry in the background without the user's consent.
 
-**FR-NET-03** (MUST, P1) — The app MUST NOT contact any server other than the ones the user enters or chooses for libraries or setlists (the default library of FR-LIB-02 included), and the download servers those hosts use. No analytics, telemetry or crash reporting is sent without explicit opt-in. *(Amended in v0.15: setlist addresses, assessment SP-25.)*
+**FR-NET-03** (MUST, P1) — The app MUST NOT contact any server other than the ones the user enters or chooses for libraries or setlists (the default library of FR-LIB-02 included), and the download servers those hosts use, except GitHub's API at `api.github.com` for the app update check of FR-GEN-09. No analytics, telemetry or crash reporting is sent without explicit opt-in. *(Amended in v0.15: setlist addresses, assessment SP-25; v0.25: the update check, assessment SP-38.)*
 
 **FR-NET-04** (SHOULD, P1) — Library downloads SHOULD be possible over mobile data only after a confirmation that shows the expected download size.
 

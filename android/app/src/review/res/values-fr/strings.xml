@@ -304,7 +304,7 @@
     <string name="privacy_sends_title">Ce que l’app envoie</string>
     <string name="privacy_sends">Seulement pendant un feu de camp, par Bluetooth : le feu de camp et les paroles. Un nom ou une demande ne peut être lu que par l’animateur·rice du feu de camp. Rien n’est envoyé aux créateur·rice·s de l’app ni à personne d’autre : aucune donnée de compte et aucune publicité. Tu n’es pas non plus suivi·e.</string>
     <string name="privacy_internet_title">Connexion à internet</string>
-    <string name="privacy_internet">Seulement pour télécharger une bibliothèque ou une liste de chants depuis l’adresse que tu saisis ou choisis. Ce site voit ton téléchargement et l’adresse internet du Wi-Fi ou du fournisseur par lequel tu es en ligne.</string>
+    <string name="privacy_internet">Seulement pour télécharger une bibliothèque ou une liste de chants depuis l’adresse que tu saisis ou choisis, ou pour demander à GitHub quelle est la dernière version quand tu touches Rechercher une nouvelle version dans À propos. Ce site voit ce que tu demandes et l’adresse internet du Wi-Fi ou du fournisseur par lequel tu es en ligne.</string>
     <string name="privacy_keeps_title">Ce qui reste sur ton téléphone</string>
     <string name="privacy_keeps">Les bibliothèques, les listes de chants, les réglages et les souvenirs. Les paroles envoyées par l’animateur·rice sont supprimées après le feu de camp. Si tu animes et que tu actives les statistiques, aussi un résumé de chaque feu de camp, sans aucun nom ; il ne quitte ton téléphone que si tu le partages toi-même.</string>
     <string name="privacy_delete_title">Comment supprimer ce qui reste sur ton téléphone</string>
@@ -377,6 +377,18 @@
     <string name="about_manual">Mode d’emploi (anglais)</string>
     <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Manual</string>
     <string name="about_links_note">S’ouvre dans ton navigateur, sur GitHub.</string>
+    <!-- guiDesign D-86, FR-GEN-09: the update check on About. -->
+    <string name="about_update_check">Rechercher une nouvelle version</string>
+    <string name="about_update_checking">Recherche…</string>
+    <string name="about_update_note">Il faut une connexion internet.</string>
+    <string name="about_update_not_now">Pas pendant un feu de camp.</string>
+    <string name="about_update_newer">La version %1$s est sortie. Tu as la %2$s.</string>
+    <string name="about_update_current">Tu as la dernière version, %s.</string>
+    <string name="about_update_ahead">Tu as la %1$s, la dernière version publiée est la %2$s.</string>
+    <string name="about_update_unreachable">GitHub est injoignable. Vérifie la connexion internet et réessaie.</string>
+    <string name="about_update_open_play">Ouvrir dans Google Play</string>
+    <string name="about_update_open_fdroid">Ouvrir dans F-Droid</string>
+    <string name="about_update_open_github">Ouvrir la page de téléchargement</string>
     <string name="drawer_install">Installer l’app</string>
     <string name="singer_browsing">navigation</string>
     <string name="singer_back_to_current">Retour au chant en cours</string>

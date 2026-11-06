@@ -5,11 +5,11 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.18 (draft) |
-| Date | 2026-11-04 |
+| Document version | 0.19 (draft) |
+| Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.24, `design/ble-protocol.md` v0.50 |
+| Depends on | `design/functional-requirements.md` v0.25, `design/ble-protocol.md` v0.51 |
 
 | Version | Date | Change |
 |---|---|---|
@@ -31,6 +31,7 @@
 | 0.16 | 2026-10-28 | Depends on FRD v0.22 (FR-LANG-08: further UI languages after review); no format change: song language and app language stay separate. |
 | 0.17 | 2026-10-28 | Depends on FRD v0.23 (FR-LANG-08: the review release on Play's internal track); no format change. |
 | 0.18 | 2026-11-04 | Depends on FRD v0.24 and BLE protocol v0.50. Library packages from the library manager, approved by the owner (`design/proposals/2026-11-04-library-package-id-and-file-type.md`; FDS draft 0.4): new 12.11 (formats told apart by content, strict validation, `libraryId` as the library id, same id means same library, title check over every format, content hash after canonicalising, licence and maintainer from the manifest, what is recorded, `rev` as the decimal version, sharing and opening from other apps). 4.2 and L006: the UUID form is reserved for packages and refused in `zangbundel.json`. 4.3: the URL rule is for `zangbundel.json` libraries. 12.2: extension and MIME type shared with packages. 13.3: a package entry. 13.5: manifest sets as read-only shipped setlists. Format version unchanged: no existing valid library is affected unless its id has the UUID form. |
+| 0.19 | 2026-11-06 | Depends on FRD v0.25 (FR-GEN-09: the app update check) and BLE protocol v0.51; no format change. |
 
 ---
 

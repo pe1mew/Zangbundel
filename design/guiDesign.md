@@ -4,11 +4,11 @@
 |---|---|
 | Document | GUI design: screen families, welcome screen, backgrounds, themes, typography |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.66 (draft) |
-| Date | 2026-11-04 |
+| Document version | 0.67 (draft) |
+| Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
-| Depends on | `design/functional-requirements.md` v0.24, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
+| Depends on | `design/functional-requirements.md` v0.25, `design/icon/` (app icon decided 2026-10-18, replaced 2026-10-22) |
 
 | Version | Date | Change |
 |---|---|---|
@@ -78,6 +78,7 @@
 | 0.64 | 2026-11-03 | D-21 amended: the home screen's button that opens the start screen reads *Kampvuur leiden* (*Lead a campfire*, *Lagerfeuer leiten*), and the line under a nearby campfire reads *Zelf een kampvuur leiden*. A German reviewer pointed out that a child reads *starten* as "let's start singing" (issue pe1mew/Zangbundel#2). D-44 amended: the name field in settings is labelled *Je naam* (*Your name*, *Dein Name*) instead of *Naam voor de leider*, which read as "the leader's name" (issue pe1mew/Zangbundel#3). D-79 amended: German names persons with the gender star (*Leiter\*in*, *Sänger\*in*), as Swiss and German Scout associations do (issue pe1mew/Zangbundel#4). D-80: German approved by its reviewer on 2026-11-03 and moved to `src/main`, with the German privacy policy; the D-79 column is no longer a draft. |
 | 0.65 | 2026-11-04 | D-80 amended: French and Italian are under review (the owner's decision), as drafts in `app/src/review/res/`, so debug builds and the review release offer them. D-79 gets a French and an Italian column, both drafts for their reviewers. |
 | 0.66 | 2026-11-04 | Depends on FRD v0.24. D-50 amended (approved proposal `design/proposals/2026-11-04-library-package-id-and-file-type.md`): a library package opens through the same routes, and a library handed over by another app opens the same import flow at its first step, installed only after the user confirms (FR-LIB-08, FR-LIB-18, assessment SP-37). The package's own display and questions (the library manager's FDS APP-20 to APP-26, M-70 to M-74) still need their decisions. |
+| 0.67 | 2026-11-06 | Depends on FRD v0.25. D-86 added, the owner's decision on issue #6: *Over* checks GitHub for a newer version on a tap, says which version the user has and which was released, and with a newer one opens the place the app was installed from (FR-GEN-09, architecture A-25, assessment SP-38). |
 
 ---
 
@@ -417,6 +418,24 @@ Resolution happens by itself when the missing library is installed (D-59). *Why:
 
 **Version display.** The welcome screen shows `versionName`. The About screen [FR-GEN-07] shows `versionName (versionCode)`, the supported song-format, archive and BLE protocol versions [NFR-MAINT-01], and the version and revision of each installed library with the date of its release archive. It also shows the short fingerprint of the app signing certificate (`57:86:7B:…:9B:10`) under the heading *Ondertekening* / *Signature*. With it, an adult can check that a copy shared from phone to phone is the genuine app, because the README states the same fingerprint (`design/security-privacy-assessment.md` SP-20, `design/architecture.md` A-18). *(Added in v0.56 at the owner's request:)* the version tile ends with the repository's address, `github.com/pe1mew/Zangbundel`, as a link (no button, the owner's choice); below the privacy button a button *Handleiding* / *Manual* opens the manual in the app's language: the wiki page `Handleiding` when the app is in Dutch, `Manual` otherwise (`https://github.com/pe1mew/Zangbundel/wiki/<page>`), with the line *Opent in je browser, op GitHub*. Both open in the browser; the app itself does not go online for them (assessment SP-32). Until the wiki has the page, GitHub shows the repository.
 
+**D-86 — *Over* checks for a newer version on a tap and sends you to where the app came from.** *(Added in v0.67, the owner's decision on issue #6, 2026-11-06.)* [FR-GEN-09]
+
+- **Where.** Directly under the version tile: a button *Zoeken naar een nieuwe versie* / *Check for a new version*, and under it the line *Hiervoor is internet nodig.* / *Needs an internet connection.*
+- **Tap.** The button shows *Zoeken…* / *Checking…* and does nothing more until GitHub answers or 15 seconds pass. The app asks GitHub for the latest release of the app (architecture A-25), only on this tap. The result stays on the screen until the user leaves *Over*; nothing is remembered.
+- **Answers,** on a line under the button:
+  - a newer version: *Versie 0.4.0 is uitgebracht. Jij hebt 0.3.0.*;
+  - the same version: *Je hebt de nieuwste versie, 0.3.0.*;
+  - a build newer than the latest release, as in a test build: *Jij hebt 0.4.0; de laatste uitgave is 0.3.0.*;
+  - GitHub not reached, or an answer that cannot be read: *GitHub is niet bereikbaar. Controleer de internetverbinding en probeer het opnieuw.*
+- **Where the update comes from.** Only with a newer version, a second button opens the place the app was installed from, as Android names it:
+  - *Openen in Google Play* for a Play install;
+  - *Openen in F-Droid* for an install by an F-Droid app;
+  - *Downloadpagina openen* for everything else (a shared or downloaded APK, an install by cable), which opens the release's page on GitHub.
+
+  The store decides when the update arrives: F-Droid builds a few days after the release, and Play may still be reviewing it.
+- **Not during a campfire.** *Over* is reached from the home screen only. Should a campfire be running, the button is disabled with *Niet tijdens een kampvuur.*
+- **Why:** the owner wants one source of truth for versions, the GitHub release, without a second file to keep up to date. The store button covers the gap between that release and the user's own store.
+
 ---
 
 ## 8. Languages
@@ -494,6 +513,7 @@ The values come from `design/icon/zangbundel-icon.svg` and `design/icon/feature-
 | FR-GEN-05 | Permission card on the home screen (D-22); configuration screen family (2) |
 | FR-GEN-06, FR-GEN-08 | First-use sequence (D-07) |
 | FR-GEN-07, NFR-MAINT-01 | Version display (7) |
+| FR-GEN-09 | Update check on *Over* (D-86) |
 | FR-GATH-01, FR-GATH-05, FR-GATH-21, FR-LEAD-02 | Gathering settings screen before leading (D-25) |
 | FR-GATH-03, FR-GATH-04 | Gathering cards on the home screen (D-22) |
 | FR-GATH-06, FR-SING-01 | Join dialog and first song (D-26) |

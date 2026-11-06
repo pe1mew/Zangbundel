@@ -33,7 +33,7 @@ Zangbundel collects nothing and sends nothing to the developer. No account, no a
 Permissions
 • Bluetooth: to find and join gatherings, and to broadcast as leader.
 • On Android 11 and older, Android requires the location permission to scan for Bluetooth devices. Zangbundel never reads your location.
-• Internet: only to download song libraries and setlists when you confirm, or, if you switch it on, to check over Wi-Fi for a new version of a library.
+• Internet: only to download song libraries and setlists when you confirm, or, if you switch it on, to check over Wi-Fi for a new version of a library; and when you tap "Check for a new version" on the About screen, to ask GitHub for the app's latest version.
 • Notifications: only the leader is asked, for a notification while the campfire runs.
 
 The app can be passed on without internet too: a nearby Android phone receives it over Quick Share or Bluetooth.

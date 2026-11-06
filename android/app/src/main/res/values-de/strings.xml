@@ -312,7 +312,7 @@
     <string name="privacy_sends_title">Was die App sendet</string>
     <string name="privacy_sends">Nur während eines Lagerfeuers, über Bluetooth: das Lagerfeuer und die Liedtexte. Einen Namen oder einen Wunsch kann nur die*der Leiter*in des Lagerfeuers lesen. Nichts geht an die Macher*innen oder an sonst jemanden: keine Kontodaten und keine Werbung. Du wirst auch nicht verfolgt.</string>
     <string name="privacy_internet_title">Verbindung zum Internet</string>
-    <string name="privacy_internet">Nur um eine Bibliothek oder Setlist von der Adresse herunterzuladen, die du eingibst oder auswählst. Diese Website sieht deinen Download und die Internetadresse des WLANs oder des Anbieters, über den du online bist.</string>
+    <string name="privacy_internet">Nur um eine Bibliothek oder Setlist von der Adresse herunterzuladen, die du eingibst oder auswählst, oder um GitHub nach der neuesten Version zu fragen, wenn du unter Über auf Nach einer neuen Version suchen tippst. Diese Website sieht, was du abrufst, und die Internetadresse des WLANs oder des Anbieters, über den du online bist.</string>
     <string name="privacy_keeps_title">Was auf deinem Telefon bleibt</string>
     <string name="privacy_keeps">Bibliotheken, Setlists, Einstellungen und die Erinnerungen. Die Liedtexte, die die*der Leiter*in geschickt hat, werden nach dem Lagerfeuer gelöscht. Wenn du leitest und Statistiken einschaltest, auch eine Zusammenfassung jedes Lagerfeuers ohne Namen; sie verlässt dein Telefon nur, wenn du sie selbst teilst.</string>
     <string name="privacy_delete_title">So löschst du, was auf deinem Telefon bleibt</string>
@@ -391,6 +391,18 @@
     <string name="about_manual">Anleitung (Englisch)</string>
     <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Manual</string>
     <string name="about_links_note">Öffnet sich in deinem Browser, auf GitHub.</string>
+    <!-- guiDesign D-86, FR-GEN-09: the update check on About. -->
+    <string name="about_update_check">Nach einer neuen Version suchen</string>
+    <string name="about_update_checking">Suche…</string>
+    <string name="about_update_note">Dafür ist eine Internetverbindung nötig.</string>
+    <string name="about_update_not_now">Nicht während eines Lagerfeuers.</string>
+    <string name="about_update_newer">Version %1$s ist erschienen. Du hast %2$s.</string>
+    <string name="about_update_current">Du hast die neueste Version, %s.</string>
+    <string name="about_update_ahead">Du hast %1$s; die neueste Ausgabe ist %2$s.</string>
+    <string name="about_update_unreachable">GitHub ist nicht erreichbar. Prüfe die Internetverbindung und versuche es noch einmal.</string>
+    <string name="about_update_open_play">In Google Play öffnen</string>
+    <string name="about_update_open_fdroid">In F-Droid öffnen</string>
+    <string name="about_update_open_github">Downloadseite öffnen</string>
     <string name="drawer_install">App installieren</string>
     <!-- Browsing during a campfire (guiDesign D-29, D-40). -->
     <string name="singer_browsing">stöbern</string>

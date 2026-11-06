@@ -19,7 +19,7 @@ Zangbundel verzamelt niets en stuurt niets naar de maker van de app. Geen accoun
 Machtigingen
 • Bluetooth: om kampvuren te vinden, eraan deel te nemen en als leider uit te zenden.
 • Op Android 11 en ouder vraagt Android de locatiemachtiging om naar Bluetooth-apparaten te kunnen zoeken. Zangbundel leest je locatie nooit.
-• Internet: alleen om liedbundels en setlists te downloaden als je dat bevestigt, of, als je dat aanzet, om via wifi te controleren op een nieuwe versie van een bundel.
+• Internet: alleen om liedbundels en setlists te downloaden als je dat bevestigt, of, als je dat aanzet, om via wifi te controleren op een nieuwe versie van een bundel; en als je in Over op "Zoeken naar een nieuwe versie" tikt, om GitHub naar de nieuwste versie van de app te vragen.
 • Meldingen: alleen de leider krijgt de vraag, voor een melding zolang het kampvuur loopt.
 
 De app doorgeven kan ook zonder internet: een Android-telefoon in de buurt krijgt hem via Quick Share of Bluetooth.

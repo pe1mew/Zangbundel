@@ -310,7 +310,7 @@
     <string name="privacy_sends_title">Wat de app verstuurt</string>
     <string name="privacy_sends">Alleen tijdens een kampvuur, via Bluetooth: het kampvuur en de liedteksten. Een naam of een verzoek kan alleen de kampvuurleider lezen. Er wordt niets naar de makers of iemand anders verstuurd: geen accountgegevens en geen reclame. Ook word je niet gevolgd.</string>
     <string name="privacy_internet_title">Verbinding met het internet</string>
-    <string name="privacy_internet">Alleen om een bibliotheek of setlist te downloaden van de url die jij opgeeft of kiest. Die website ziet jouw download en het internetadres van de wifi of de provider waarmee je online bent.</string>
+    <string name="privacy_internet">Alleen om een bibliotheek of setlist te downloaden van de url die jij opgeeft of kiest, of om GitHub te vragen wat de nieuwste versie is als je in Over op Zoeken naar een nieuwe versie tikt. Die website ziet wat je vraagt en het internetadres van de wifi of de provider waarmee je online bent.</string>
     <string name="privacy_keeps_title">Wat op je telefoon blijft</string>
     <string name="privacy_keeps">Bibliotheken, setlists, instellingen en de herinneringen. De liedteksten van de leider worden gewist na het kampvuur. Als je leidt en statistieken aanzet, ook een overzicht van elk kampvuur zonder namen; dat gaat alleen van je telefoon af als je het zelf deelt.</string>
     <string name="privacy_delete_title">Hoe je wist wat op je telefoon blijft</string>
@@ -388,6 +388,18 @@
     <string name="about_manual">Handleiding</string>
     <string name="about_manual_url">https://github.com/pe1mew/Zangbundel/wiki/Handleiding</string>
     <string name="about_links_note">Opent in je browser, op GitHub.</string>
+    <!-- guiDesign D-86, FR-GEN-09: the update check on About. -->
+    <string name="about_update_check">Zoeken naar een nieuwe versie</string>
+    <string name="about_update_checking">Zoeken…</string>
+    <string name="about_update_note">Hiervoor is internet nodig.</string>
+    <string name="about_update_not_now">Niet tijdens een kampvuur.</string>
+    <string name="about_update_newer">Versie %1$s is uitgebracht. Jij hebt %2$s.</string>
+    <string name="about_update_current">Je hebt de nieuwste versie, %s.</string>
+    <string name="about_update_ahead">Jij hebt %1$s; de laatste uitgave is %2$s.</string>
+    <string name="about_update_unreachable">GitHub is niet bereikbaar. Controleer de internetverbinding en probeer het opnieuw.</string>
+    <string name="about_update_open_play">Openen in Google Play</string>
+    <string name="about_update_open_fdroid">Openen in F-Droid</string>
+    <string name="about_update_open_github">Downloadpagina openen</string>
     <string name="drawer_install">App installeren</string>
     <!-- Bladeren tijdens een kampvuur (guiDesign D-29, D-40). -->
     <string name="singer_browsing">bladeren</string>

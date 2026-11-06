@@ -12,6 +12,7 @@ import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
 import nl.pe1mew.zangbundel.platform.crypto.SodiumCrypto
+import nl.pe1mew.zangbundel.platform.net.AppUpdateCheck
 import nl.pe1mew.zangbundel.platform.net.HttpsFetcher
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
 import nl.pe1mew.zangbundel.platform.storage.LibraryStorage
@@ -37,6 +38,9 @@ class AppContainer(private val context: Context) {
     val versionName: String by lazy { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0" }
 
     val fetcher: HttpsFetcher by lazy { HttpsFetcher(versionName) }
+
+    /** The update check on *Over* (FR-GEN-09, architecture A-25), through the same HTTPS path. */
+    val updateCheck: AppUpdateCheck by lazy { AppUpdateCheck(fetcher) }
 
     /** Prepared setlists and the one being edited (guiDesign D-53, D-54), shared by the screens that fill it. */
     val setlists: SetlistBook by lazy { SetlistBook(storage.setlists) }
