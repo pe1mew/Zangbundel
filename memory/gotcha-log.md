@@ -146,10 +146,11 @@
 **Root cause**: The check matches only references written "section N.M"; the protocol mostly cites bare numbers in parentheses.
 **Fix**: Corrected by hand in protocol v0.16. A wider check is proposed in the Mechanized table. If a design document cites "(N.M)", then confirm the heading exists; the script will not.
 
-### Git Bash rewrites paths for adb, or with MSYS_NO_PATHCONV not at all (2026-10-25)
+### Git Bash rewrites paths for adb, or with MSYS_NO_PATHCONV not at all (2026-10-25) [x2]
 **Problem**: `adb shell cat /sdcard/ui.xml` failed with `C:/Program Files/Git/sdcard/ui.xml`; with `MSYS_NO_PATHCONV=1` set to stop that, `adb install /c/Users/...apk` failed with "failed to stat".
 **Root cause**: MSYS converts any argument that looks like a POSIX path for a Windows program: device paths get the Git root prefixed. Switching conversion off also leaves `/c/...` host paths unconverted, which adb.exe cannot open.
 **Fix**: Set `MSYS_NO_PATHCONV=1` for adb commands and give host files as `C:/...` paths.
+**Recurred 2026-11-06**: `adb install` of a `/c/...` APK under `MSYS_NO_PATHCONV=1`, during the package tests.
 
 ### Git converts CRLF in byte-exact test vectors (2026-10-25)
 **Problem**: The song vector `non-canonical.cho` (BOM, CRLF, trailing spaces) was staged with its CRLFs turned into LFs (`git ls-files --eol`: `i/lf w/crlf`); committed like that it would no longer test CRLF, and the test would still pass.
@@ -260,10 +261,31 @@
 **Root cause**: the owner's commit with "fixes #1 to #4" had closed them on push; `gh issue close` on a closed issue stops before commenting.
 **Fix**: check `gh issue list --state all` first; on a closed issue use `gh issue comment`.
 
-### A runbook command relies on a variable set in an earlier block (2026-11-03)
+### A runbook command relies on a variable set in an earlier block (2026-11-03) [x2] [PROMOTED]
 **Problem**: the owner's apksigner command failed: `'\build-tools\34.0.0\apksigner.bat' is not recognized`.
 **Root cause**: `$env:ANDROID_HOME` was set only in the build block; the owner signed in a new PowerShell window, where it is empty.
 **Fix**: each runbook command block sets what it uses (FDROID-RUNBOOK Step 6 now does); give the owner full paths.
+**Recurred 2026-11-06**, twice in one release: the verify block, which still used `$env:ANDROID_HOME` unset, failed in a new window; then `gh release create` with a relative APK path ran in the repository folder ("no matches found"), and the owner reported "done" for a release that did not exist. Each command given to the owner now uses absolute paths and sets its own variables, and FDROID-RUNBOOK Step 6's verify and release blocks do too. After the owner reports an outward step done, check it (`gh release view`) before going on.
+
+### `\u` escapes in an edit became invisible characters in Kotlin source (2026-11-06)
+**Problem**: bidi control characters (U+202A to U+202E, U+2066 to U+2069) meant to be written as `\u` escapes in `PickedFile.kt` and `LibraryScreen.kt` ended up in the file as the raw, invisible characters.
+**Root cause**: the escapes were decoded on the way into the file, so the source held what it was meant to name.
+**Fix**: name such characters by code point in code (a `plain()` helper with integer ranges), never as literals or escapes in the edit text; check with `LC_ALL=C.UTF-8 grep -P '[\x{202A}-\x{202E}\x{2066}-\x{2069}]'`.
+
+### A hardware Enter in a Compose text field moves focus to the next control (2026-11-06)
+**Problem**: Enter on a keyboard in the name field of Settings opened the language menu below it.
+**Root cause**: `imeAction = Done` covers the soft keyboard only; a hardware Enter is a key event, and the default handling moved focus and clicked.
+**Fix**: `onPreviewKeyEvent` on the field: on `Key.Enter` or `Key.NumPadEnter`, finish on key-up and consume both events.
+
+### A glossary term found inside a longer phrase passes the translation check (2026-11-06)
+**Problem**: the glossary term *signed* matched *Signed in*, so `check-translation.py` reported it present where the term itself was missing.
+**Root cause**: the check looks for the term as a substring.
+**Fix**: glossary terms long enough to be unique (*signed by*, *not signed*); if a term is a common word, give it in the phrase the app uses.
+
+### An unreadable `content:` URI throws instead of returning nothing (2026-11-06)
+**Problem**: importing from a URI the app had no grant for crashed with a `SecurityException`.
+**Root cause**: `ContentResolver.openInputStream` throws `SecurityException` (and `FileNotFoundException`) for URIs from other apps; `readPicked` caught neither.
+**Fix**: catch every exception around the read and refuse the import with A001. Treat each URI from another app as untrusted (SP-37).
 
 ## Promoted
 
@@ -292,6 +314,7 @@
 | 2026-10-19 | A GUI wish contradicts a MUST in the FRD | **4** — 2026-10-19 download instruction (FR-LEAD-30); 2026-10-19 singer list (FR-LEAD-40); 2026-10-19 statistics server (FR-GEN-08); 2026-11-03 after promotion, caught by the rule: an update check on About against FR-NET-01/03, written into issue #6 as a point to settle | `memory/MEMORY.md` Recently Promoted |
 | 2026-10-25 | A size limit stated with its reason is false when computed | **6** - 2026-10-25 extended frame (v0.14); 2026-10-25 state body (v0.17); 2026-10-25 op 8 chunk (v0.16); 2026-10-25 after promotion: join-link size and QR version (v0.19); 2026-10-25 after promotion: GATT DATA chunk over 512 bytes and HEADER over MTU 23 (v0.22, v0.23); 2026-10-26 after promotion: a proposal's 1.3 s that summed to 3 s | `memory/MEMORY.md` Recently Promoted |
 | 2026-10-26 | Shell heredocs with mixed quotes fail before anything runs | **7** - 2026-10-25 three inline edit scripts in one session (protocol docs, test screen, decisions); 2026-10-26 report strings (parse error) and a `python -c` whose backticks were substituted silently; 2026-10-26 after promotion: a heredoc edit of `SingerScreen.kt` and a `sed` that dropped a backslash | `memory/MEMORY.md` Recently Promoted; 2026-10-26 also Claude Code's auto-loaded user memory, since the index is not read every session |
+| 2026-11-06 | A command given to the owner relies on a variable or folder from elsewhere | **3** - 2026-11-03 apksigner sign without `ANDROID_HOME`; 2026-11-06 apksigner verify without `ANDROID_HOME`; 2026-11-06 `gh release create` with a relative APK path from the repository folder | `memory/MEMORY.md` Recently Promoted; FDROID-RUNBOOK Step 6 commands made self-contained |
 | 2026-10-26 | JVM test names cannot carry ':', ';' or '.' | **4** - 2026-10-25 ';' and ':'; 2026-10-26 ':' (`LibraryRepositoryTest`); 2026-10-26 '.' | Claude Code's auto-loaded user memory |
 
 ## Mechanized

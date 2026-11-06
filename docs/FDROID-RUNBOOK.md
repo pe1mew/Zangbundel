@@ -163,21 +163,23 @@ Get-FileHash app\build\outputs\apk\release\app-release-unsigned.apk
 gh run download (gh run list -c (git rev-parse HEAD) -w android -L 1 --json databaseId -q ".[0].databaseId") -n app-release-unsigned -D ci; Get-FileHash ci\app-release-unsigned.apk
 ```
 
-Sign with **apksigner 34.0.0** and the **app signing key** (not the upload key), v2 and v3 only; apksigner asks for the passwords. `ANDROID_HOME` is set only in the window that ran the build above, so the sign command sets it again:
+Sign with **apksigner 34.0.0** and the **app signing key** (not the upload key), v2 and v3 only; apksigner asks for the passwords. Each command below sets `ANDROID_HOME` itself and uses full paths, so it works in any window and folder; only `$v` must be set in that window (2026-11-06: a new window and the repository folder made the verify and release commands fail):
 
 ```powershell
-$env:ANDROID_HOME = "C:\Users\drasv\AppData\Local\Android\Sdk"; & "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" sign --ks "<path>\zangbundel-appsigning.jks" --ks-key-alias zangbundel --v1-signing-enabled false --out "zangbundel-$v.apk" app\build\outputs\apk\release\app-release-unsigned.apk
+$env:ANDROID_HOME = "C:\Users\drasv\AppData\Local\Android\Sdk"; $b = "C:\Users\drasv\build\zangbundel-$v"; & "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" sign --ks "<path>\zangbundel-appsigning.jks" --ks-key-alias zangbundel --v1-signing-enabled false --out "$b\android\zangbundel-$v.apk" "$b\android\app\build\outputs\apk\release\app-release-unsigned.apk"
 ```
 
 ```powershell
-& "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" verify --print-certs "zangbundel-$v.apk"
+$env:ANDROID_HOME = "C:\Users\drasv\AppData\Local\Android\Sdk"; & "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" verify --print-certs "C:\Users\drasv\build\zangbundel-$v\android\zangbundel-$v.apk"
 ```
 
 The certificate SHA-256 must be `57867b3f…a2c89b10` (check G-08). Then publish it with the release notes of `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`:
 
 ```powershell
-gh release create "v$v" "zangbundel-$v.apk" --title "Zangbundel $v" --notes-file "..\fastlane\metadata\android\en-US\changelogs\<versionCode>.txt"
+$b = "C:\Users\drasv\build\zangbundel-$v"; gh release create "v$v" "$b\android\zangbundel-$v.apk" -R pe1mew/Zangbundel --title "Zangbundel $v" --notes-file "$b\fastlane\metadata\android\en-US\changelogs\<versionCode>.txt"
 ```
+
+Check that it exists before reporting it done: `gh release view "v$v" -R pe1mew/Zangbundel`.
 
 The GitHub Release makes the APK public at once; publish it with the Play production release, not before.
 

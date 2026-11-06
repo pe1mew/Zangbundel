@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- `docs/FDROID-RUNBOOK.md` Step 6: the sign, verify and release commands set `ANDROID_HOME` and use full paths, so each works in a new PowerShell window and any folder; the release is checked with `gh release view` before it is reported done.
+- Curation 2026-11-06: four new gotchas (invisible characters from `\u` escapes, a hardware Enter in Compose, glossary substrings, unreadable `content:` URIs), two recurrences, the memory index for 0.4.0, and the session record `memory/project_session_2026_11_06.md`.
 - A German store listing, `docs/store-listing/de-DE.md`: name, short and full description, and the release notes of 0.3.0 and 0.4.0. It's translated from the English listing with the glossary of guiDesign D-79 and the app's gender star, and the German reviewer checks it with the app's new texts. `scripts/store-metadata.sh` now also writes F-Droid's `fastlane/metadata/android/de-DE/`.
 
 ## [0.4.0] - 2026-11-06
