@@ -1,0 +1,6 @@
+valid-signed
+valid-unsigned
+view-missing
+view-mismatch
+signature-invalid
+key-wrapped

@@ -32,6 +32,8 @@ class LibraryViewModel(
     private val settings: AppSettings,
     /** Starts or stops the Wi-Fi check (FR-LIB-13): [LibraryUpdateWorker.schedule] in the app. */
     private val scheduleCheck: (Boolean) -> Unit,
+    /** The installed licence text of a library (D-87), read from its files; null when it cannot be read. */
+    private val readLicence: suspend (LibraryRow) -> String? = { null },
 ) : ViewModel() {
 
     sealed interface Step {
@@ -44,7 +46,12 @@ class LibraryViewModel(
         data class UpToDate(val library: LibraryRow) : Step
         data class Failed(val reason: LibraryRepository.Reason, val detail: String?) : Step
         /** The licence, summary and full text, before the import completes (FR-LIB-21). */
-        data class Licence(val checked: LibraryRepository.Checked) : Step
+        /** [replace] is the library M-73's *Vervangen* removes on install (FDS §8.3). */
+        data class Licence(val checked: LibraryRepository.Checked, val replace: String? = null) : Step
+        /** The decision table's one question (guiDesign D-88), before the licence. */
+        data class Question(val checked: LibraryRepository.Checked) : Step
+        /** A tap on a row's licence line (D-87, FR-LIB-21). */
+        data class ShowLicence(val library: LibraryRow, val text: String) : Step
         /** Refused archives come here too, with their report. */
         data class Report(val checked: LibraryRepository.Checked, val outcome: LibraryInstaller.Outcome?) : Step
     }
@@ -142,12 +149,23 @@ class LibraryViewModel(
 
 
     private fun afterCheck(checked: LibraryRepository.Checked) {
-        step(if (checked.refused) Step.Report(checked, null) else Step.Licence(checked))
+        step(when {
+            checked.refused -> Step.Report(checked, null)
+            checked.question != null -> Step.Question(checked)
+            else -> Step.Licence(checked)
+        })
     }
 
-    fun accept(checked: LibraryRepository.Checked) = viewModelScope.launch {
+    /** The leader's answer to the question: on to the licence; [replace] for M-73's *Vervangen*. */
+    fun answer(checked: LibraryRepository.Checked, replace: String?) { step(Step.Licence(checked, replace)) }
+
+    fun showLicence(library: LibraryRow) = viewModelScope.launch {
+        step(Step.ShowLicence(library, readLicence(library).orEmpty()))
+    }
+
+    fun accept(checked: LibraryRepository.Checked, replace: String? = null) = viewModelScope.launch {
         step(Step.Busy)
-        val outcome = repository.install(checked)
+        val outcome = repository.install(checked, replace)
         (outcome as? LibraryInstaller.Outcome.Installed)?.let { clearUpdate(it.library.id) }
         step(Step.Report(checked, outcome))
         refresh()
@@ -166,7 +184,9 @@ class LibraryViewModel(
         val Factory = viewModelFactory {
             initializer {
                 val container = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as ZangbundelApp).container
-                LibraryViewModel(container.libraries, container.storage.index, container.storage.settings, container::scheduleUpdateCheck)
+                LibraryViewModel(container.libraries, container.storage.index, container.storage.settings, container::scheduleUpdateCheck) { l ->
+                    runCatching { container.storage.songbook.read(l.id, l.directory, nl.pe1mew.zangbundel.platform.storage.InstallPlan.LICENSE_FILE).toString(Charsets.UTF_8) }.getOrNull()
+                }
             }
         }
     }

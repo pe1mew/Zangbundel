@@ -34,6 +34,7 @@ class InstallPlan private constructor(
         fun from(result: ArchiveImport.Result, source: String?, now: Long, colour: Int = 0, enabled: Boolean = true, random: SecureRandom = SecureRandom()): InstallPlan {
             require(!result.refused) { "a refused archive is never installed" }
             val checked = result.library!!
+            val pkg = result.pkg
             val library = checked.library!!
             val revision = result.revision!!
             val files = LinkedHashMap<String, ByteArray>()
@@ -60,12 +61,16 @@ class InstallPlan private constructor(
             }
             val row = LibraryRow(
                 id = library.id, name = library.name, description = library.description,
-                revision = revision, directory = revision + "-" + ByteArray(4).also(random::nextBytes).toHex(),
-                version = result.manifest?.version, created = result.manifest?.created, source = source,
+                revision = revision, directory = (if (pkg != null) "v$revision" else revision) + "-" + ByteArray(4).also(random::nextBytes).toHex(),
+                version = pkg?.version?.toString() ?: result.manifest?.version, created = pkg?.modified ?: result.manifest?.created, source = source,
                 repository = result.manifest?.sourceRepository, ref = result.manifest?.sourceRef,
                 archiveSha256 = result.archiveSha256, formatVersion = library.formatVersion,
                 licenseId = library.license.id, licenseSummary = library.license.summary, installedAt = now, colour = colour,
                 songCount = songs.size, enabled = enabled, releaseIndex = library.releaseIndex,
+                // guiDesign D-87: the package's signer, maintainer and change note; a package has no release index (12.11).
+                isPackage = pkg != null, signer = pkg?.author?.name, fingerprint = pkg?.author?.fingerprint,
+                maintainer = pkg?.maintainer?.let { m -> listOfNotNull(m.name, m.url?.removePrefix("https://") ?: m.email).joinToString(" · ") },
+                changes = pkg?.changes,
             )
             val report = result.report.map { ReportRow(it.level.name, it.code, it.path, it.line, it.detail) }
             return InstallPlan(row, files, songs, setlists, report)
@@ -106,7 +111,19 @@ data class LibraryRow(
     val enabled: Boolean = true,
     /** `release_index` from the library file (song-format 4.2): where *Bijwerken* looks first. */
     val releaseIndex: String? = null,
-)
+    /** A library package (song-format 12.11): its version is [version], it has no *Bijwerken* (guiDesign D-87). */
+    val isPackage: Boolean = false,
+    /** The signer's name as the package states it (not verified, FDS limitation 1) and the key's fingerprint (SG-20); null when not signed. */
+    val signer: String? = null,
+    val fingerprint: String? = null,
+    /** The package's maintainer as one line, name and contact, shown as plain text (D-87). */
+    val maintainer: String? = null,
+    /** The package's note on this version (FDS APP-24), at most 500 characters. */
+    val changes: String? = null,
+) {
+    /** W013 (song-format 11): every library without a signature. */
+    val signed: Boolean get() = fingerprint != null
+}
 
 /** A song as the "what changed" list compares it: by id, and by content hash for a change. */
 data class InstalledSong(val songId: String, val title: String, val hash: String)

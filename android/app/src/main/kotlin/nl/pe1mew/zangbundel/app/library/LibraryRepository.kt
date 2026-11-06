@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import nl.pe1mew.zangbundel.core.songformat.ArchiveImport
 import nl.pe1mew.zangbundel.core.songformat.Library
+import nl.pe1mew.zangbundel.core.songformat.LibraryOpen
+import nl.pe1mew.zangbundel.core.songformat.SignatureVerifier
 import nl.pe1mew.zangbundel.core.songformat.Limits
 import nl.pe1mew.zangbundel.core.songformat.ReleaseIndex
 import nl.pe1mew.zangbundel.core.songformat.LibraryUrl
@@ -39,15 +41,38 @@ class LibraryRepository(
     private val installer: LibraryInstaller,
     private val index: LibraryIndex,
     private val appVersion: String,
+    /** Ed25519 for package signatures (architecture A-26): libsodium's, from `platform/crypto`. */
+    private val verifier: SignatureVerifier,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    /** An archive that was opened and checked, waiting for the licence to be shown and the install confirmed. */
-    class Checked(val result: ArchiveImport.Result, val source: String) {
+    /**
+     * An archive or package that was opened and checked, waiting for the leader: first [question] when the
+     * library manager's decision table asks one (guiDesign D-88), then the licence, then the install.
+     */
+    class Checked(val result: ArchiveImport.Result, val source: String, val question: Question? = null) {
         val library: Library? get() = result.library?.library
         /** The licence file's text, shown in full before the import completes (FR-LIB-21). */
         val licenseText: String? get() = library?.let { l -> result.files[l.license.file]?.toString(Charsets.UTF_8) }
         val refused: Boolean get() = result.refused
         val report: List<ReportEntry> get() = result.report
+    }
+
+    /**
+     * The one question an import may ask (FDS §8.3, APP-05, APP-06; guiDesign D-88). [newVersion] and
+     * [currentVersion] give the version sentence of M-70 and M-71, null when the new version is higher or
+     * not comparable.
+     */
+    sealed interface Question {
+        /** M-70: signed by another key than the version on this device. */
+        data class OtherSigner(val currentName: String, val currentFingerprint: String, val newName: String, val newFingerprint: String, val newVersion: Int?, val currentVersion: Int?) : Question
+        /** M-71: the version on this device was signed, this one is not (also an unsigned copy of a package, APP-06). */
+        data class NotSigned(val currentName: String, val currentFingerprint: String, val newVersion: Int?, val currentVersion: Int?) : Question
+        /** M-72: the same version again. */
+        data class SameVersion(val current: Int) : Question
+        /** M-73: another library with this title is installed; [installedId] is replaced on *Vervangen*. */
+        data class SameTitle(val title: String, val installedId: String) : Question
+        /** M-74: an older version than the one on this device. */
+        data class Older(val new: Int, val current: Int) : Question
     }
 
     sealed interface Found {
@@ -58,8 +83,44 @@ class LibraryRepository(
 
     enum class Reason { UNSUPPORTED_URL, NETWORK, NOT_AN_INDEX, NO_RELEASE, TOO_LARGE }
 
-    suspend fun checkFile(bytes: ByteArray, fileName: String): Checked = withContext(Dispatchers.Default) {
-        Checked(withClash(ArchiveImport.open(bytes, appVersion)), fileName)
+    suspend fun checkFile(bytes: ByteArray, fileName: String): Checked = checked(withContext(Dispatchers.Default) { withClash(LibraryOpen.open(bytes, appVersion, verifier)) }, fileName)
+
+    /** Adds the decision table's question to a checked library (FDS §8.3, APP-06). */
+    private suspend fun checked(result: ArchiveImport.Result, source: String): Checked =
+        Checked(result, source, if (result.refused) null else question(result))
+
+    /**
+     * The library manager's decision table (FDS §8.3) and its cross-format rule (APP-06, song-format 4.3,
+     * assessment SP-39); the first row that matches decides, and at most one question is asked (APP-05).
+     */
+    private suspend fun question(result: ArchiveImport.Result): Question? {
+        val id = result.library?.library?.id ?: return null
+        val memory = index.memory(id)
+        val pkg = result.pkg
+        if (pkg == null) {
+            // APP-06: a zangbundel.json library with a package's id is an unsigned copy of it.
+            memory ?: return null
+            return if (memory.publicKey != null) Question.NotSigned(memory.signer.orEmpty(), memory.fingerprint.orEmpty(), null, null)
+            else Question.SameVersion(memory.version)
+        }
+        if (memory == null) {
+            if (index.installed(id) != null) return null   // the package's own 1.1 view, imported earlier: the same library (12.11)
+            val clash = index.all().firstOrNull { it.id != id && it.name.equals(pkg.title, ignoreCase = true) } ?: return null
+            return Question.SameTitle(clash.name, clash.id)
+        }
+        val newKey = pkg.author?.publicKey?.let { java.util.Base64.getEncoder().encodeToString(it) }
+        val higher = pkg.version > memory.version
+        fun note(): Pair<Int?, Int?> = if (higher) null to null else pkg.version to memory.version
+        if (memory.publicKey != null && newKey != memory.publicKey) {
+            val (n, c) = note()
+            return if (newKey == null) Question.NotSigned(memory.signer.orEmpty(), memory.fingerprint.orEmpty(), n, c)
+            else Question.OtherSigner(memory.signer.orEmpty(), memory.fingerprint.orEmpty(), pkg.author!!.name, pkg.author!!.fingerprint, n, c)
+        }
+        return when {
+            higher -> null
+            pkg.version == memory.version -> Question.SameVersion(memory.version)
+            else -> Question.Older(pkg.version, memory.version)
+        }
     }
 
     suspend fun find(input: String): Found = when (val u = LibraryUrl.of(input)) {
@@ -90,11 +151,17 @@ class LibraryRepository(
         }
         if (fetched.code != 200) return Checked(failure("A001", "HTTP ${fetched.code}"), release.url)
         release.sha256?.let { sha -> ArchiveImport.verifyDownload(fetched.bytes, sha)?.let { return Checked(failure(it), release.url) } }
-        return withContext(Dispatchers.Default) { Checked(withClash(ArchiveImport.open(fetched.bytes, appVersion)), release.url) }
+        return checked(withContext(Dispatchers.Default) { withClash(LibraryOpen.open(fetched.bytes, appVersion, verifier)) }, release.url)
     }
 
-    /** Installs an archive the leader confirmed after reading its licence (song-format 12.7 steps 6 and 7). */
-    suspend fun install(checked: Checked): LibraryInstaller.Outcome = installer.install(checked.result, checked.source, clock())
+    /**
+     * Installs a library the leader confirmed after reading its licence (song-format 12.7 steps 6 and 7).
+     * [replace] is the library M-73's *Vervangen* removes first (FDS §8.3); null to add or update.
+     */
+    suspend fun install(checked: Checked, replace: String? = null): LibraryInstaller.Outcome {
+        if (replace != null && replace != checked.library?.id) installer.remove(replace)
+        return installer.install(checked.result, checked.source, clock())
+    }
 
     suspend fun remove(libraryId: String) = installer.remove(libraryId)
 

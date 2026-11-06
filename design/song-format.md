@@ -5,7 +5,7 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.21 (draft) |
+| Document version | 0.22 (draft) |
 | Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -34,6 +34,7 @@
 | 0.19 | 2026-11-06 | Depends on FRD v0.25 (FR-GEN-09: the app update check) and BLE protocol v0.51; no format change. |
 | 0.20 | 2026-11-06 | Library packages that format 1.1 apps can read, as the owner decided on 2026-11-06 (`design/proposals/2026-11-06-backward-compatible-packages.md`, section 8; FDS draft 0.5). 12.11: every package carries a 1.1 view (`zangbundel.json`, `LICENSE`, songs under `songs/`, `setlists/set-<n>.zbs`), listed in its manifest and checked by FDS VIEW-01 to VIEW-03. Songs move to `songs/<song id>/<song id>.cho`. The maintainer becomes required. New row on the signing status. 12.5: an app that reads only format 1.1 imports a package as a snapshot. 4.2, 4.3 and L006: the UUID reservation is withdrawn, so no valid library becomes invalid. 11: new library-level warning W013 (not signed), for old formats and unsigned packages. 13.5: the `set-<n>` ids are shared with the view. Format version unchanged (1.1). FRD FR-LIB-09 still states the reservation and FR-LIB-05 the optional maintainer; the FRD follows in the app session. |
 | 0.21 | 2026-11-06 | Depends on FRD v0.26 (FR-LIB-05, FR-LIB-08, FR-LIB-09 amended for the decision that v0.20 carries out) and BLE protocol v0.52. 4.3 and 12.11, the owner's decision on assessment SP-39: a `zangbundel.json` library carrying the id of an installed or remembered package is an unsigned copy of it. The app asks M-71 when the package was signed and M-72 when not, never replacing it silently. |
+| 0.22 | 2026-11-06 | 4.3: an accepted unsigned copy of a package replaces it, and the device memory records "unsigned" with the version it had, as the library manager's FDS draft 0.6 says in APP-06. Built in the app (`LibraryInstaller`). No format change. |
 
 ---
 
@@ -198,7 +199,7 @@ Unknown fields MUST be ignored by the app, so a library can carry extra fields f
 
 - The app MUST refuse to import a library whose `zangbundel.json` is missing, is not valid JSON, lacks a MUST field, has a `format_version` major it does not implement, or has a `min_app_version` newer than the app. The message names the reason and, for the last two, tells the user to update the app [FR-BLE-07 by analogy, NFR-SEC-01].
 - The app MUST refuse to add a library whose `id` equals that of an already configured library with a different repository URL, and MUST say which library owns the id. Two URLs for the same library (a mirror) are a user decision; the app does not detect mirrors. This rule is for libraries with a `zangbundel.json` (repositories, release archives, snapshots); a library package has no URL and is identified by its `libraryId` (section 12.11). A package and its own 1.1 view are the same library, and this rule never applies between them.
-- A `zangbundel.json` library (a repository, release archive or snapshot) whose `id` equals that of an installed library package, or of one in the device memory of the library manager's FDS (8.2), is treated as an unsigned copy of that package, never as a clash and never silently. When the package was signed, the app asks the FDS question M-71, without its version sentence, since a `zangbundel.json` library has no comparable version. When the package was not signed, it asks M-72. *Annuleren* keeps the package. (Added in v0.21, the owner's decision 2026-11-06; assessment SP-39.)
+- A `zangbundel.json` library (a repository, release archive or snapshot) whose `id` equals that of an installed library package, or of one in the device memory of the library manager's FDS (8.2), is treated as an unsigned copy of that package, never as a clash and never silently. When the package was signed, the app asks the FDS question M-71, without its version sentence, since a `zangbundel.json` library has no comparable version. When the package was not signed, it asks M-72. *Annuleren* keeps the package. On acceptance the copy replaces the package, and the device memory records "unsigned", keeping the version it had (FDS draft 0.6 APP-06; v0.22). (Added in v0.21, the owner's decision 2026-11-06; assessment SP-39.)
 - `min_app_version` is for maintainers who deliberately rely on a newer feature in every song, e.g. a karaoke-only library. Raising it locks out older apps, so it SHOULD stay as low as the content allows.
 - When a song carries no `license` of its own (section 6), the library `license.id` applies to it, and the song's licence display [FR-LIB-20] says so.
 

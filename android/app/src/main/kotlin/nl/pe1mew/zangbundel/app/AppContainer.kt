@@ -12,6 +12,7 @@ import nl.pe1mew.zangbundel.core.protocol.Crypto
 import nl.pe1mew.zangbundel.core.protocol.Transport
 import nl.pe1mew.zangbundel.platform.ble.AndroidTransport
 import nl.pe1mew.zangbundel.platform.crypto.SodiumCrypto
+import nl.pe1mew.zangbundel.core.songformat.SignatureVerifier
 import nl.pe1mew.zangbundel.platform.net.AppUpdateCheck
 import nl.pe1mew.zangbundel.platform.net.HttpsFetcher
 import nl.pe1mew.zangbundel.platform.storage.LibraryInstaller
@@ -54,6 +55,9 @@ class AppContainer(private val context: Context) {
     /** Whether the welcome screen was shown in this process (guiDesign D-05: never a second time while the app stays in memory). */
     var welcomed = false
 
+    /** A library file another app handed over (FR-LIB-18, architecture A-24), waiting for the library screen; a newer one replaces it (assessment SP-37). */
+    val pendingLibrary = kotlinx.coroutines.flow.MutableStateFlow<android.net.Uri?>(null)
+
     /** guiDesign D-85: the songbook's songs as shown when one was opened from it (library id, song id), the order a swipe walks. Memory only. */
     var readingOrder: List<Pair<String, String>> = emptyList()
 
@@ -79,6 +83,7 @@ class AppContainer(private val context: Context) {
 
     /** Adding, updating and removing libraries (guiDesign D-50); files under `filesDir/libraries/` (architecture section 6). */
     val libraries: LibraryRepository by lazy {
-        LibraryRepository(HttpsDownloads(fetcher), LibraryInstaller(storage.files, storage.index), storage.index, versionName)
+        LibraryRepository(HttpsDownloads(fetcher), LibraryInstaller(storage.files, storage.index), storage.index, versionName,
+            SignatureVerifier { publicKey, message, signature -> crypto.verify(message, signature, publicKey) })
     }
 }

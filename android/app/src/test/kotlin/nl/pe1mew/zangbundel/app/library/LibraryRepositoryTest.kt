@@ -2,6 +2,7 @@
 package nl.pe1mew.zangbundel.app.library
 
 import kotlinx.coroutines.test.runTest
+import nl.pe1mew.zangbundel.core.songformat.SignatureVerifier
 import nl.pe1mew.zangbundel.platform.storage.InstallPlan
 import nl.pe1mew.zangbundel.platform.storage.InstalledSong
 import nl.pe1mew.zangbundel.platform.storage.LibraryFiles
@@ -50,7 +51,7 @@ class LibraryRepositoryTest {
     private fun repository(served: Map<String, ByteArray>, index: FakeIndex = FakeIndex()): Pair<LibraryRepository, FakeDownloads> {
         val downloads = FakeDownloads(served)
         val installer = LibraryInstaller(LibraryFiles(Files.createTempDirectory("libraries").toFile()), index)
-        return LibraryRepository(downloads, installer, index, "1.0.0", clock = { 42 }) to downloads
+        return LibraryRepository(downloads, installer, index, "1.0.0", SignatureVerifier { _, _, _ -> false }, clock = { 42 }) to downloads
     }
 
     private fun indexJson(url: String, archive: ByteArray, sha256: String = sha(archive)) =

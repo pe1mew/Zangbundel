@@ -23,6 +23,8 @@ targets=(
   "core:songformat SongFormatFuzz releaseIndex"
   "core:songformat SongFormatFuzz archiveManifest"
   "core:songformat SongFormatFuzz archive"
+  "core:songformat SongFormatFuzz packageManifest"
+  "core:songformat SongFormatFuzz libraryOpen"
   "core:protocol ProtocolFuzz cbor"
   "core:protocol ProtocolFuzz payloads"
   "core:protocol ProtocolFuzz deflate"

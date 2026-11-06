@@ -169,6 +169,12 @@ fun ZangbundelApp() {
                 composable(Diagnostics.ROUTE) { RadioCheckScreen() }
             }
         }
+        // D-50 as of v0.66, FR-LIB-18: a library file from another app opens the library screen's import over whatever
+        // was showing; a running campfire goes on underneath. The screen takes the file from the container.
+        val pendingLibrary by container.pendingLibrary.collectAsState()
+        LaunchedEffect(pendingLibrary) {
+            if (pendingLibrary != null && navController.currentDestination?.route != Routes.LIBRARY) navController.navigate(Routes.LIBRARY)
+        }
     }
 }
 

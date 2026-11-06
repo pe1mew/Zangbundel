@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,11 +48,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import nl.pe1mew.zangbundel.app.R
 import nl.pe1mew.zangbundel.app.library.DefaultLibrary
 import nl.pe1mew.zangbundel.app.library.LibraryRepository
+import nl.pe1mew.zangbundel.app.library.plain
 import nl.pe1mew.zangbundel.app.ui.ConfigurationScreen
 import nl.pe1mew.zangbundel.app.ui.songbook.ColourSquare
 import nl.pe1mew.zangbundel.app.ui.textPanel
@@ -72,13 +77,22 @@ import java.util.Date
 fun LibraryScreen(model: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)) {
     val state by model.state.collectAsState()
     val step = state.step
+    // FR-LIB-18: a file another app handed over starts the import at its first step (D-50 as of v0.66, SP-37 condition 4).
+    val context = LocalContext.current
+    val container = remember { (context.applicationContext as nl.pe1mew.zangbundel.app.ZangbundelApp).container }
+    val pending by container.pendingLibrary.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(pending) {
+        val uri = pending ?: return@LaunchedEffect
+        container.pendingLibrary.value = null
+        model.file(context.contentResolver, uri)
+    }
     BackHandler(enabled = step != null && step !is LibraryViewModel.Step.Busy) { model.cancel() }
     ConfigurationScreen {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             Text(stringResource(R.string.library_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
             if (step == null) Libraries(state.libraries, onAdd = model::add, onAddDefault = model::addDefault, onUpdate = model::update,
-                onEnabled = model::setEnabled, onRemove = model::askRemove,
+                onEnabled = model::setEnabled, onRemove = model::askRemove, onLicence = model::showLicence,
                 autoCheck = state.autoCheck, onAutoCheck = { model.setAutoCheck(it) }, updates = state.updates)
             else Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) { AddStep(step, model, state.offerDefault) }
         }
@@ -102,6 +116,7 @@ private fun ColumnScope.Libraries(
     onUpdate: (LibraryRow) -> Unit,
     onEnabled: (LibraryRow, Boolean) -> Unit,
     onRemove: (LibraryRow) -> Unit,
+    onLicence: (LibraryRow) -> Unit,
     autoCheck: Boolean,
     onAutoCheck: (Boolean) -> Unit,
     updates: Map<String, String>,
@@ -127,7 +142,7 @@ private fun ColumnScope.Libraries(
         Spacer(Modifier.weight(1f))
     } else {
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(libraries, key = { it.id }) { LibraryItem(it, updates[it.id], onUpdate, onEnabled, onRemove) }
+            items(libraries, key = { it.id }) { LibraryItem(it, updates[it.id], onUpdate, onEnabled, onRemove, onLicence) }
         }
     }
     Spacer(Modifier.height(16.dp))
@@ -145,7 +160,7 @@ private fun DefaultOffer(onAddDefault: () -> Unit) {
 }
 
 @Composable
-private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (LibraryRow) -> Unit, onEnabled: (LibraryRow, Boolean) -> Unit, onRemove: (LibraryRow) -> Unit) {
+private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (LibraryRow) -> Unit, onEnabled: (LibraryRow, Boolean) -> Unit, onRemove: (LibraryRow) -> Unit, onLicence: (LibraryRow) -> Unit) {
     Column(Modifier.fillMaxWidth().textPanel().padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // A library that is off stays installed but leaves the songbook (D-50); its row is dimmed.
@@ -156,6 +171,13 @@ private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (Library
                     Text(library.name, fontWeight = FontWeight.Bold)
                     Text(pluralStringResource(R.plurals.library_songs, library.songCount, library.songCount), style = MaterialTheme.typography.bodySmall)
                     Text(revisionLine(library), style = MaterialTheme.typography.bodySmall)
+                    // D-87: who signed it, or plainly that nobody did (W013); the maintainer as text, never a link.
+                    if (library.signed) Text(stringResource(R.string.library_signed_by, plain(library.signer.orEmpty(), 100), library.fingerprint.orEmpty()),
+                        style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
+                    else Text(stringResource(R.string.library_not_signed), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
+                    library.maintainer?.let { Text(stringResource(R.string.library_maintainer, plain(it, 300)), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite) }
+                    Text(stringResource(R.string.library_licence, library.licenseId), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite,
+                        textDecoration = TextDecoration.Underline, modifier = Modifier.clickable { onLicence(library) }.padding(vertical = 4.dp))
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -168,8 +190,17 @@ private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (Library
             if (update.isEmpty()) stringResource(R.string.library_update_available) else stringResource(R.string.library_update_available_version, update),
             color = Palette.FireOrange, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp),
         )
+        // D-87: a package's note on this version, three lines with *Meer* for the rest (FDS APP-24).
+        library.changes?.takeIf { it.isNotBlank() }?.let { note ->
+            var open by remember(library.id, library.version) { mutableStateOf(false) }
+            Text(stringResource(R.string.library_change_note, library.version.orEmpty(), plain(note, 500)), style = MaterialTheme.typography.bodySmall,
+                maxLines = if (open) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+            if (!open && note.length > 120) Text(stringResource(R.string.library_more), color = Palette.FireOrange, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.clickable { open = true }.padding(vertical = 6.dp))
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = { onUpdate(library) }) { Text(stringResource(R.string.library_update)) }
+            // A package has no *Bijwerken*: a newer version arrives as a file (D-87, song-format 12.11).
+            if (!library.isPackage) TextButton(onClick = { onUpdate(library) }) { Text(stringResource(R.string.library_update)) }
             TextButton(onClick = { onRemove(library) }) { Text(stringResource(R.string.library_remove)) }
         }
     }
@@ -180,6 +211,7 @@ private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (Library
 private fun revisionLine(library: LibraryRow): String {
     val date = library.created?.take(10)
     return when {
+        library.isPackage -> stringResource(R.string.library_version, library.version.orEmpty(), date ?: "")
         library.repository == null -> stringResource(R.string.library_snapshot, library.revision.removePrefix("snapshot-").take(8),
             DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(library.installedAt)))
         library.version != null -> stringResource(R.string.library_version, library.version!!, date ?: "")
@@ -220,8 +252,60 @@ private fun ColumnScope.AddStep(step: LibraryViewModel.Step, model: LibraryViewM
             Spacer(Modifier.height(16.dp))
             Button(onClick = model::cancel, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.done)) }
         }
-        is LibraryViewModel.Step.Licence -> Licence(step.checked, model)
+        is LibraryViewModel.Step.Licence -> Licence(step.checked, model) { model.accept(step.checked, step.replace) }
         is LibraryViewModel.Step.Report -> Report(step.checked, step.outcome, model::cancel)
+        is LibraryViewModel.Step.Question -> Question(step.checked, step.checked.question!!, model)
+        is LibraryViewModel.Step.ShowLicence -> {
+            // D-87: a tap on the licence line, the summary and the full text (FR-LIB-21, FDS APP-25).
+            Text(step.library.name, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.library_licence, step.library.licenseId), fontWeight = FontWeight.Bold)
+            Text(step.library.licenseSummary)
+            Spacer(Modifier.height(8.dp))
+            Text(step.text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()))
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = model::cancel, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.done)) }
+        }
+    }
+}
+
+/**
+ * D-88: the one question an import may ask (FDS §8.3, APP-05, APP-06), in the app's words; *Annuleren*
+ * leaves everything as it was. Fingerprints are set in monospace.
+ */
+@Composable
+private fun ColumnScope.Question(checked: LibraryRepository.Checked, question: LibraryRepository.Question, model: LibraryViewModel) {
+    val name = checked.library?.name.orEmpty()
+    val note = @Composable { n: Int?, c: Int? -> if (n != null && c != null) stringResource(R.string.library_q_version_note, n.toString(), c.toString()) else null }
+    val text = when (question) {
+        is LibraryRepository.Question.OtherSigner -> listOfNotNull(
+            stringResource(R.string.library_q_other_signer, plain(question.currentName, 100), question.currentFingerprint, plain(question.newName, 100), question.newFingerprint),
+            note(question.newVersion, question.currentVersion), stringResource(R.string.library_q_import_anyway)).joinToString(" ")
+        is LibraryRepository.Question.NotSigned -> listOfNotNull(
+            stringResource(R.string.library_q_not_signed, plain(question.currentName, 100), question.currentFingerprint),
+            note(question.newVersion, question.currentVersion), stringResource(R.string.library_q_import_anyway)).joinToString(" ")
+        is LibraryRepository.Question.SameVersion -> stringResource(R.string.library_q_same_version, question.current.toString())
+        is LibraryRepository.Question.SameTitle -> stringResource(R.string.library_q_same_title, plain(question.title, 80))
+        is LibraryRepository.Question.Older -> stringResource(R.string.library_q_older, question.new.toString(), question.current.toString())
+    }
+    Text(name, style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+    Text(text)
+    Spacer(Modifier.height(16.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        TextButton(onClick = model::cancel) { Text(stringResource(R.string.cancel)) }
+        when (question) {
+            is LibraryRepository.Question.OtherSigner, is LibraryRepository.Question.NotSigned ->
+                TextButton(onClick = { model.answer(checked, null) }) { Text(stringResource(R.string.library_a_import_anyway)) }
+            is LibraryRepository.Question.SameVersion ->
+                TextButton(onClick = { model.answer(checked, null) }) { Text(stringResource(R.string.library_a_replace)) }
+            is LibraryRepository.Question.Older ->
+                TextButton(onClick = { model.answer(checked, null) }) { Text(stringResource(R.string.library_a_replace_anyway)) }
+            is LibraryRepository.Question.SameTitle -> {
+                TextButton(onClick = { model.answer(checked, null) }) { Text(stringResource(R.string.library_a_add_separately)) }
+                TextButton(onClick = { model.answer(checked, question.installedId) }) { Text(stringResource(R.string.library_a_replace)) }
+            }
+        }
     }
 }
 
@@ -252,7 +336,7 @@ private fun Choose(model: LibraryViewModel, offerDefault: Boolean) {
 
 /** FR-LIB-21: the summary and the full text, before anything is installed. */
 @Composable
-private fun ColumnScope.Licence(checked: LibraryRepository.Checked, model: LibraryViewModel) {
+private fun ColumnScope.Licence(checked: LibraryRepository.Checked, model: LibraryViewModel, onAccept: () -> Unit) {
     val library = checked.library!!
     val songs = checked.result.library?.songs?.size ?: 0
     Text(library.name, style = MaterialTheme.typography.titleMedium)
@@ -263,7 +347,7 @@ private fun ColumnScope.Licence(checked: LibraryRepository.Checked, model: Libra
     Spacer(Modifier.height(8.dp))
     Text(checked.licenseText.orEmpty(), style = MaterialTheme.typography.bodySmall,
         modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()))
-    Buttons(stringResource(R.string.library_accept), { model.accept(checked) }, model::cancel)
+    Buttons(stringResource(R.string.library_accept), onAccept, model::cancel)
 }
 
 /** FR-LIB-07: imported, skipped by file and reason, and warnings; a refused archive shows why. */

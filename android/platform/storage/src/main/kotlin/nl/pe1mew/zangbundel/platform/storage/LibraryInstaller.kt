@@ -13,7 +13,13 @@ interface LibraryIndex {
     /** The installed songs of one library, for the "what changed" list [FR-LIB-11]. */
     suspend fun songs(libraryId: String): List<InstalledSong>
     suspend fun setEnabled(libraryId: String, enabled: Boolean)
+    /** The library manager's device memory for [libraryId] (FDS §8.2), or null when this device never imported it as a package. */
+    suspend fun memory(libraryId: String): LibraryMemory? = null
+    suspend fun remember(memory: LibraryMemory) {}
 }
+
+/** FDS §8.2: the key a library was last imported with ([publicKey] base64, null for "unsigned") and its version; kept after removal (APP-12). */
+data class LibraryMemory(val libraryId: String, val publicKey: String?, val signer: String?, val fingerprint: String?, val version: Int)
 
 /**
  * Installs a checked archive (song-format 12.7 steps 6 and 7, FR-LIB-15): write the files to staging,
@@ -50,6 +56,14 @@ class LibraryInstaller(private val files: LibraryFiles, private val index: Libra
             throw e
         }
         files.prune(plan.libraryId, keep = plan.library.directory)
+        // FDS APP-10: a package's key (or "unsigned") and version. APP-06: an unsigned copy of a known package leaves "unsigned".
+        val pkg = result.pkg
+        if (pkg != null) {
+            val key = pkg.author?.publicKey?.let { java.util.Base64.getEncoder().encodeToString(it) }
+            index.remember(LibraryMemory(id, key, pkg.author?.name, pkg.author?.fingerprint, pkg.version))
+        } else {
+            index.memory(id)?.let { index.remember(it.copy(publicKey = null, signer = null, fingerprint = null)) }
+        }
         val changes = before?.let { Changes.between(it, plan.songs.map { s -> InstalledSong(s.songId, s.title, s.hash) }) }
         return Outcome.Installed(plan.library, previous, plan.songs.size, plan.setlists.size, changes)
     }

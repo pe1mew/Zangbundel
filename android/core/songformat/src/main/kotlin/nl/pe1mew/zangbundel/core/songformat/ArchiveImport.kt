@@ -55,6 +55,8 @@ object ArchiveImport {
         val report: List<ReportEntry>,
         /** The manifest as read, for the installed revision's record (architecture section 6); null for a snapshot. */
         val manifestBytes: ByteArray? = null,
+        /** A library package's manifest, as checked (song-format 12.11, [PackageImport]); null for an archive or snapshot. */
+        val pkg: PackageInfo? = null,
     ) {
         val refused: Boolean get() = library == null || library.refused
     }
@@ -144,7 +146,7 @@ object ArchiveImport {
      * identical bytes for a release archive), and the verified attachments. Skipped songs and other
      * files under `songs/` stay out.
      */
-    private fun toInstall(files: Map<String, ByteArray>, checked: LibraryImport.Result, library: Library): Map<String, ByteArray> {
+    internal fun toInstall(files: Map<String, ByteArray>, checked: LibraryImport.Result, library: Library): Map<String, ByteArray> {
         val out = LinkedHashMap<String, ByteArray>()
         out[LibraryFileParser.PATH] = files.getValue(LibraryFileParser.PATH)
         out[library.license.file] = files.getValue(library.license.file)

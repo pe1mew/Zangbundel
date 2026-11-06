@@ -50,6 +50,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
   - **Test plan v0.20.** Section 3.2 lists the `libraries/` vectors and new `packages/` vectors.
   - **GUI design v0.69.** D-87 (the library row's version, signing status, maintainer and change note) and D-88 (a package import's question, refusals and W013) are approved by the owner. Three glossary terms are added.
   - **No change for the decision.** BLE protocol v0.52 and song format v0.21 only follow the FRD's version.
+- Library packages, built (FR-LIB-08, FR-LIB-09, FR-LIB-18; architecture A-24, A-26; guiDesign D-87, D-88; the library manager's FDS draft 0.6). Tested in `design/test-results/2026-11-06-library-packages.md`.
+  - **Reader.** `PackageImport` reads a package from its manifest: layout, names, files and hashes, the signature (raw Ed25519 keys through libsodium), sets, and the 1.1 view against the manifest (VIEW-01 to VIEW-03). Its songs go through the archive checks, and any error refuses the whole package, reported with the FDS rule code; ZIP faults map to PKG-01 to PKG-07.
+  - **Older formats.** `LibraryOpen` picks the format by content and adds W013 to every library without a signature. `ArchiveImport` alone stays the format 1.1 path.
+  - **Decisions.** The library manager's device memory, a new table in database version 6, holds each library's key and version. The import asks the FDS question when one is due: M-70 to M-74, and APP-06 for an unsigned copy of a package. On acceptance of such a copy, the memory records "unsigned".
+  - **Library row.** Each row shows version, signing status or *Niet ondertekend*, maintainer, the licence (a tap shows the full text) and the change note. Packages have no *Bijwerken*.
+  - **From other apps.** Share and Open for `.zbl` files, with the SP-37 checks: `content:` URIs only, never the app's own provider, a cleaned file name, and strict sorting of join links and library files. An unreadable file is refused instead of crashing the app, found on the A52.
+  - **Texts.** 48 new texts in five languages.
+  - **Tests.** The shared test libraries are in the corpus as `packages/`, with `PackageTest` and `PackageDecisionTest`, and two fuzz targets: `packageManifest` and `libraryOpen`.
+  - **Song format v0.22.** 4.3: an accepted unsigned copy leaves "unsigned" in the device memory.
 
 ## [0.3.0] - 2026-11-03
 

@@ -39,6 +39,27 @@ data class LibraryEntity(
     /** Added in version 2; libraries installed before are on. */
     @ColumnInfo(defaultValue = "1") val enabled: Boolean,
     val releaseIndex: String?,
+    /** Version 6 (library packages, guiDesign D-87): true for a package; the rest is null for any other library. */
+    @ColumnInfo(defaultValue = "0") val isPackage: Boolean = false,
+    val signer: String? = null,
+    val fingerprint: String? = null,
+    val maintainer: String? = null,
+    val changes: String? = null,
+)
+
+/**
+ * The library manager's device memory (FDS §8.2, APP-10 to APP-12): per library id, the key it was last
+ * imported with, or null for "unsigned", and its version. Kept when the library is removed; gone with the
+ * app's data. Excluded from backup like everything else (architecture A-13).
+ */
+@Entity(tableName = "library_memory")
+data class LibraryMemoryEntity(
+    @PrimaryKey val libraryId: String,
+    /** The raw 32-byte Ed25519 key in base64 (FDS SG-05); null when the library was unsigned. */
+    val publicKey: String?,
+    val signer: String?,
+    val fingerprint: String?,
+    val version: Int,
 )
 
 /** A song of an installed library ([SongRow]); `hash` is how the engine finds a local copy (FR-BLE-12). */
@@ -156,6 +177,12 @@ abstract class LibraryDao {
     @Query("UPDATE library SET enabled = :enabled WHERE id = :id")
     abstract suspend fun setEnabled(id: String, enabled: Boolean)
 
+    @Query("SELECT * FROM library_memory WHERE libraryId = :id")
+    abstract suspend fun memory(id: String): LibraryMemoryEntity?
+
+    @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
+    abstract suspend fun remember(memory: LibraryMemoryEntity)
+
     @Query("SELECT * FROM report WHERE libraryId = :libraryId ORDER BY id")
     abstract suspend fun report(libraryId: String): List<ReportEntity>
 
@@ -196,13 +223,14 @@ abstract class LibraryDao {
     entities = [
         LibraryEntity::class, SongEntity::class, SongFtsEntity::class, SetlistEntity::class, ReportEntity::class,
         PreparedSetlistEntity::class, PreparedEntryEntity::class, MemoryEntity::class, MemorySongEntity::class,
-        CampfireStatsEntity::class,
+        CampfireStatsEntity::class, LibraryMemoryEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     // 2: library.enabled and library.releaseIndex. 3: prepared setlists (guiDesign D-54). 4: gathering memories (D-49).
-    // 5: opt-in campfire statistics (D-60). Every later version adds its migration here.
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
+    // 5: opt-in campfire statistics (D-60). 6: library packages, their row fields and the device memory (FDS 8.2, D-87).
+    // Every later version adds its migration here.
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6)],
 )
 abstract class ZangbundelDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
@@ -224,7 +252,8 @@ class RoomLibraryIndex(private val dao: LibraryDao) : LibraryIndex {
     override suspend fun replace(plan: InstallPlan) {
         val l = plan.library
         dao.replace(
-            LibraryEntity(l.id, l.name, l.description, l.revision, l.directory, l.version, l.created, l.source, l.repository, l.ref, l.archiveSha256, l.formatVersion, l.licenseId, l.licenseSummary, l.installedAt, l.colour, l.songCount, l.enabled, l.releaseIndex),
+            LibraryEntity(l.id, l.name, l.description, l.revision, l.directory, l.version, l.created, l.source, l.repository, l.ref, l.archiveSha256, l.formatVersion, l.licenseId, l.licenseSummary, l.installedAt, l.colour, l.songCount, l.enabled, l.releaseIndex,
+                l.isPackage, l.signer, l.fingerprint, l.maintainer, l.changes),
             plan.songs.map { SongEntity(it.libraryId, it.songId, it.fileName, it.sourcePath, it.title, it.sortTitle, it.language, it.hash, it.tags.joinToString("\n"), it.variantGroup, it.redistribute, it.licenseSummary) },
             plan.songs.map { SongFtsEntity(it.libraryId, it.songId, it.title, it.searchText) },
             plan.setlists.map { SetlistEntity(it.libraryId, it.setlistId, it.fileName, it.title, it.description, it.entries) },
@@ -237,11 +266,18 @@ class RoomLibraryIndex(private val dao: LibraryDao) : LibraryIndex {
     override suspend fun all(): List<LibraryRow> = dao.all().map(::row)
 
     private fun row(it: LibraryEntity) =
-        LibraryRow(it.id, it.name, it.description, it.revision, it.directory, it.version, it.created, it.source, it.repository, it.ref, it.archiveSha256, it.formatVersion, it.licenseId, it.licenseSummary, it.installedAt, it.colour, it.songCount, it.enabled, it.releaseIndex)
+        LibraryRow(it.id, it.name, it.description, it.revision, it.directory, it.version, it.created, it.source, it.repository, it.ref, it.archiveSha256, it.formatVersion, it.licenseId, it.licenseSummary, it.installedAt, it.colour, it.songCount, it.enabled, it.releaseIndex,
+            it.isPackage, it.signer, it.fingerprint, it.maintainer, it.changes)
 
     override suspend fun remove(libraryId: String) = dao.remove(libraryId)
 
     override suspend fun songs(libraryId: String): List<InstalledSong> = dao.songs(libraryId).map { InstalledSong(it.songId, it.title, it.hash) }
 
     override suspend fun setEnabled(libraryId: String, enabled: Boolean) = dao.setEnabled(libraryId, enabled)
+
+    override suspend fun memory(libraryId: String): LibraryMemory? =
+        dao.memory(libraryId)?.let { LibraryMemory(it.libraryId, it.publicKey, it.signer, it.fingerprint, it.version) }
+
+    override suspend fun remember(memory: LibraryMemory) =
+        dao.remember(LibraryMemoryEntity(memory.libraryId, memory.publicKey, memory.signer, memory.fingerprint, memory.version))
 }

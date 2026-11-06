@@ -72,7 +72,8 @@ class LibraryFiles(private val root: File, private val random: SecureRandom = Se
         const val STAGING_PREFIX = ".staging-"
         private val ID = Regex("^[a-z0-9]+(-[a-z0-9]+)*$")
         /** A revision (40 or 64 hex, or `snapshot-` and 16 hex) and the install's random suffix. */
-        private val DIRECTORY = Regex("^(snapshot-[0-9a-f]{16}|[0-9a-f]{40}|[0-9a-f]{64})-[0-9a-f]{8}$")
+        // A release revision, a snapshot id, or `v<version>` for a library package (song-format 12.11), then a random suffix.
+        private val DIRECTORY = Regex("^(snapshot-[0-9a-f]{16}|[0-9a-f]{40}|[0-9a-f]{64}|v[0-9]{1,10})-[0-9a-f]{8}$")
         /** `library.json`, `songs/<id>.cho` and the like: at most one directory, id characters only. */
         private val FILE_NAME = Regex("^([a-z]+/)?[a-z0-9]+(-[a-z0-9]+)*\\.[a-z]{3,4}$")
     }

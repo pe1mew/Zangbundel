@@ -49,6 +49,38 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="zangbundel" android:host="j" />
             </intent-filter>
+            <!-- A library handed over with Share, from any app (FR-LIB-18, architecture A-24). The format is decided by
+                 content (song-format 12.11); MainActivity accepts content: URIs only (assessment SP-37). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.zangbundel.library+zip" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+            <!-- Opened with the library type: Zangbundel's own export, or a host that serves the type (song-format 12.2). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/vnd.zangbundel.library+zip" />
+            </intent-filter>
+            <!-- Opened by name: a content URI whose path ends in .zbl, with a generic type. Android's pathPattern is lazy
+                 and does not backtrack, so names with dots before .zbl need their own patterns on API 26 to 30. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+                <data android:pathSuffix=".zbl" tools:targetApi="31" />
+                <data android:pathPattern=".*\\.zbl" />
+                <data android:pathPattern=".*\\..*\\.zbl" />
+                <data android:pathPattern=".*\\..*\\..*\\.zbl" />
+            </intent-filter>
         </activity>
 
         <!-- One engine, owned by a foreground service, for leader and singer alike (A-06). -->

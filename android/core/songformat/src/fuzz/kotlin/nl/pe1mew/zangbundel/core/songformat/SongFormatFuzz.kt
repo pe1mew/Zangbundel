@@ -41,6 +41,21 @@ class SongFormatFuzz {
         ArchiveImport.open(data, APP_VERSION)
     }
 
+    /** A library package's `manifest.json` (FDS §4.1; architecture A-26, assessment SP-37 condition 3). */
+    @FuzzTest(maxDuration = MAX)
+    fun packageManifest(data: ByteArray) {
+        PackageImport.parseManifest(data)
+    }
+
+    /**
+     * Everything a file from another app reaches (FR-LIB-08, FR-LIB-18): the format choice, the package reader with
+     * `manifest.sig`, the view checks and the songs. The verifier accepts every signature, so the fuzzer gets past it.
+     */
+    @FuzzTest(maxDuration = MAX)
+    fun libraryOpen(data: ByteArray) {
+        LibraryOpen.open(data, APP_VERSION, SignatureVerifier { _, _, _ -> true })
+    }
+
     private companion object {
         const val APP_VERSION = "0.1.0"
         /** The CI budget of test plan 3.4; the release run passes a longer one (scripts/fuzz.sh). */
