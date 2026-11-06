@@ -15,6 +15,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -28,9 +32,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
@@ -78,14 +92,31 @@ fun SettingsScreen(onStatistics: () -> Unit, onAllRemoved: () -> Unit) {
             Text(stringResource(R.string.settings_singing), style = MaterialTheme.typography.titleMedium)
             Column(Modifier.fillMaxWidth().textPanel().padding(16.dp)) {
                 name?.let { current ->
+                    // D-44 as of v0.68 (issue #7): saved with every letter as before; the check mark and the keyboard's
+                    // Done key only end the entry, and "Saved." says so until the name changes again.
+                    val focus = LocalFocusManager.current
+                    val keyboard = LocalSoftwareKeyboardController.current
+                    var focused by remember { mutableStateOf(false) }
+                    var saved by remember { mutableStateOf(false) }
+                    val done = { keyboard?.hide(); focus.clearFocus(); saved = true }
                     OutlinedTextField(
                         value = current,
-                        onValueChange = { v -> val n = v.take(AppSettings.DISPLAY_NAME_MAX); name = n; scope.launch { container.storage.settings.setDisplayName(n) } },
+                        onValueChange = { v -> val n = v.take(AppSettings.DISPLAY_NAME_MAX); name = n; saved = false; scope.launch { container.storage.settings.setDisplayName(n) } },
                         singleLine = true,
                         label = { Text(stringResource(R.string.settings_name)) },
                         placeholder = { Text(stringResource(R.string.settings_name_hint)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = if (focused) {
+                            { IconButton(onClick = done) { Icon(painterResource(R.drawable.ic_check), contentDescription = stringResource(R.string.settings_name_done)) } }
+                        } else null,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { done() }),
+                        // A hardware Enter (a Bluetooth keyboard) is taken here, down and up, and ends the entry on release:
+                        // otherwise its release reaches the control that gets the focus next and opens the language menu.
+                        modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused }.onPreviewKeyEvent { e ->
+                            if (e.key == Key.Enter || e.key == Key.NumPadEnter) { if (e.type == KeyEventType.KeyUp) done(); true } else false
+                        },
                     )
+                    if (saved) Text(stringResource(R.string.settings_name_saved), style = MaterialTheme.typography.bodyMedium, color = Palette.FireOrange, modifier = Modifier.padding(top = 8.dp))
                     Text(stringResource(R.string.settings_name_note), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite, modifier = Modifier.padding(top = 8.dp))
                 }
             }

@@ -316,6 +316,9 @@
     <string name="settings_name">Il tuo nome</string>
     <string name="settings_name_hint">Solo il tuo nome o un soprannome</string>
     <string name="settings_name_note">Facoltativo. Lo vede solo il capo. Senza nome sei un cantante con un numero. Una modifica vale dalla prossima volta che ti unisci.</string>
+    <!-- D-44 as of v0.68 (issue #7): the check mark's TalkBack label, and the line after it. -->
+    <string name="settings_name_done">Fatto</string>
+    <string name="settings_name_saved">Salvato.</string>
     <string name="settings_privacy">Che fine fanno i miei dati?</string>
     <string name="settings_remove_all">Elimina tutti i dati</string>
     <string name="settings_remove_all_title">Eliminare tutti i dati?</string>

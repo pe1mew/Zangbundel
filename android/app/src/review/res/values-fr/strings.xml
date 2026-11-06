@@ -316,6 +316,9 @@
     <string name="settings_name">Ton nom</string>
     <string name="settings_name_hint">Seulement ton prénom ou un surnom</string>
     <string name="settings_name_note">Facultatif. Seul·e l’animateur·rice le voit. Sans nom, tu es un·e chanteur·euse numéroté·e. Un changement s’applique la prochaine fois que tu rejoins.</string>
+    <!-- D-44 as of v0.68 (issue #7): the check mark's TalkBack label, and the line after it. -->
+    <string name="settings_name_done">Terminé</string>
+    <string name="settings_name_saved">Enregistré.</string>
     <string name="settings_privacy">Que deviennent mes données ?</string>
     <string name="settings_remove_all">Supprimer toutes les données</string>
     <string name="settings_remove_all_title">Supprimer toutes les données ?</string>

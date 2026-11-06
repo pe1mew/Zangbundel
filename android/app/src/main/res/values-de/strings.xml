@@ -324,6 +324,9 @@
     <string name="settings_name">Dein Name</string>
     <string name="settings_name_hint">Nur dein Vorname oder ein Spitzname</string>
     <string name="settings_name_note">Freiwillig. Nur die*der Leiter*in sieht ihn. Ohne Namen bist du ein*e Sänger*in mit einer Nummer. Eine Änderung gilt ab dem nächsten Mitmachen.</string>
+    <!-- D-44 as of v0.68 (issue #7): the check mark's TalkBack label, and the line after it. -->
+    <string name="settings_name_done">Fertig</string>
+    <string name="settings_name_saved">Gespeichert.</string>
     <string name="settings_privacy">Was passiert mit meinen Daten?</string>
     <string name="settings_remove_all">Alle Daten entfernen</string>
     <string name="settings_remove_all_title">Alle Daten entfernen?</string>

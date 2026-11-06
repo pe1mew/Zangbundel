@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- Proposal, awaiting the owner's decision (`design/proposals/2026-11-06-backward-compatible-packages.md`):
+  - Every library package also carries a format 1.1 view: `zangbundel.json`, `LICENSE`, the songs under `songs/` and the sets as `set-<n>.zbs`. The view is listed in the manifest and checked against it, so older apps import a package as a snapshot without its integrity features.
+  - The UUID reservation (L006) is withdrawn, so no valid library becomes invalid.
+  - A new app shows one library-level warning, W013 "not signed", for old-format libraries.
+
+  The prototype script `2026-11-06-dual-package-prototype.py` builds such a package, which the library repository's 1.1 checks accept. No specification has changed.
 - Conformance corpus: library-file vectors, so `zangbundel.json` is part of the contract between the app and the library tools. Twelve vectors were added under `android/core/testing/src/main/resources/conformance/libraries/`: the example, a newer minor version with an unknown field, and each refusal L002 to L006. Their cases are taken from `LibraryTest`, and `ConformanceLibrariesTest` runs them. The corpus README says the library repository runs the vectors with its `scripts/conformance.py`, at a pinned commit of this repository. That script agrees with all 58 vectors (songs, setlists, library files, archives).
 - The wiki manual (*Manual*, *Handleiding*) is for 0.3.0 and names *Deutsch* under the language setting.
 - `docs/FDROID-RUNBOOK.md`: the status line names the closed merge request and the resubmission from 2027-01-18; the signing command sets `ANDROID_HOME` itself, since a new PowerShell window lacks it.
@@ -24,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
   - **Specifications.** FRD v0.25 adds FR-GEN-09 and widens FR-NET-01 and FR-NET-03 for this check only. GUI design v0.67 adds D-86, architecture v0.28 A-25, assessment v0.29 SP-38, test plan v0.19 D-10. BLE protocol v0.51 and song format v0.19 do not change.
   - **Privacy texts.** The privacy policy (effective 6 November 2026, in English, Dutch and German), the in-app privacy screen in five languages, the store listing and the RUNBOOK's Data safety table name the check. The Data safety declaration stays "no data collected".
   - **Code.** `AppUpdateCheck` in `platform/net`, with unit tests. `HttpsFetcher` takes optional timeouts.
+- *Je naam* in Settings has an end ([#7](https://github.com/pe1mew/Zangbundel/issues/7), GUI design v0.68, D-44). While you type, a check mark stands at the right of the field. It and the keyboard's *Klaar* key close the keyboard, and *Opgeslagen.* (*Saved.*) confirms the name. As before, the name is saved as you type, so leaving the screen keeps it. Texts in five languages.
 
 ## [0.3.0] - 2026-11-03
 

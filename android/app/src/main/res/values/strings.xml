@@ -323,6 +323,9 @@
     <string name="settings_name">Your name</string>
     <string name="settings_name_hint">Only your first name or a nickname</string>
     <string name="settings_name_note">Optional. Only the leader sees it. Without one you are a numbered singer. A change applies the next time you join.</string>
+    <!-- D-44 as of v0.68 (issue #7): the check mark's TalkBack label, and the line after it. -->
+    <string name="settings_name_done">Done</string>
+    <string name="settings_name_saved">Saved.</string>
     <string name="settings_privacy">What happens to my data?</string>
     <string name="settings_remove_all">Remove all data</string>
     <string name="settings_remove_all_title">Remove all data?</string>
