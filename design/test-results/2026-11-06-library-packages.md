@@ -1,6 +1,6 @@
 # Library packages: first run in the app – 2026-11-06
 
-The package reader, the decision table and opening a library from another app (FRD v0.26 FR-LIB-08, FR-LIB-09, FR-LIB-18; architecture A-24, A-26; guiDesign D-87, D-88; assessment SP-37, SP-39), against the library manager's shared test libraries (FDS O-04) and on a phone. **Result: the automated checks pass; D-02 passes in part on the A52; D-09 not run.**
+The package reader, the decision table and opening a library from another app (FRD v0.26 FR-LIB-08, FR-LIB-09, FR-LIB-18; architecture A-24, A-26; guiDesign D-87, D-88; assessment SP-37, SP-39), against the library manager's shared test libraries (FDS O-04) and on a phone. **Result: the automated checks pass; on the A52 every package question, a refusal, the change note and a real Share from the file manager pass; D-09 per messaging channel is not run.**
 
 | Field | Value |
 |---|---|
@@ -27,9 +27,24 @@ The package reader, the decision table and opening a library from another app (F
 | The same file again | M-72: *Je hebt versie 1 van deze bibliotheek al. Vervangen door deze kopie?* *Annuleren* left the library as it was. |
 | A Share (SEND) whose URI the app may not read | Before the fix the app crashed (`SecurityException` in `readPicked`). After it the import is refused with *Niet toegevoegd* (A001); the app stays up. The test itself sent no read grant: `am` grants the intent's data, not `EXTRA_STREAM`, which a real sharing app also puts in its ClipData. |
 
+## Second run on the A52: every question, a refusal and a real Share
+
+Variants of the shared test library, built with the library manager's own generator (`make_test_libraries.py`), so their rules are exactly those of the vectors: version 2 with the same key; versions 3 and 4 with a second key (fingerprint `10BA-682C-8AD1-3513`); a different library with the same title; and the 1.1 view alone, without manifest, as an unsigned copy. They were opened in turn by Open (VIEW) with a read grant, starting from version 1 installed.
+
+| Step | Pass criterion (guiDesign D-87, D-88; FDS §8.3) | Result |
+|---|---|---|
+| Version 2, same key | Updates without a question | Pass: licence, then *Zangbundel testbibliotheek bijgewerkt* |
+| Version 1 again | M-74 | Pass: *Dit is een oudere versie van de bibliotheek dan die je hebt: versie 1 in plaats van 2. Toch vervangen?*; *Annuleren* kept version 2 |
+| Version 3, other key | M-70, no version sentence (newer), fingerprints in monospace | Pass: both names and fingerprints, monospace on the screenshot; *Toch importeren*, licence, *bijgewerkt*; the row then names the second key |
+| Other library, same title | M-73 with three buttons | Pass: *Apart toevoegen*, *Vervangen*, *Annuleren* |
+| The view alone (unsigned copy, APP-06) | M-71 naming the current signer, no version sentence | Pass: *…ondertekend door Tweede testsleutel (niet voor echt gebruik) (10BA-682C-8AD1-3513), maar deze update is niet ondertekend. Toch importeren?* |
+| `view-mismatch.zbl` (shared vector) | Refused, the sentence names the file (D-88) | Pass: *Het bestand “LICENSE” past niet bij de bibliotheek. Sla de bibliotheek opnieuw op in de editor.*, with `LICENSE · VIEW-02 · …` below |
+| Version 4 | Its change note at the top of the report (D-87, APP-24) | Pass after a fix (it was missing in the first build): *Bij versie 4: Vierde versie: de notitie verschijnt na het bijwerken.* |
+| **Share from Samsung's *Mijn bestanden*** (a real SEND with ClipData and read grant) | The share sheet offers Zangbundel; the import starts | Pass: Zangbundel is listed under *Meer*; the file arrived and the import asked M-73. *Apart toevoegen* installed the second library next to the first. |
+
+The test files were deleted from the A52's Downloads afterwards; the test libraries stay in the debug build only, which is a separate app from the installed Zangbundel.
+
 ## Not run
 
-- D-09, Share and Open from WhatsApp, Signal, Telegram, Discord, Gmail, a browser download and Quick Share.
-- A Share with a working grant, which needs one of those apps.
-- The Huawei, and the other D-02 steps for a package: refused packages on the phone, M-70, M-73 and M-74.
-- The test library and `valid-signed.zbl` in Downloads are left on the A52.
+- D-09 per channel: WhatsApp, Signal, Telegram, Discord, Gmail, a browser download and Quick Share. These need the owner's accounts.
+- The Huawei.

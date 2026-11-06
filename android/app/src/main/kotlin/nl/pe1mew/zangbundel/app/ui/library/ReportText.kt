@@ -105,4 +105,16 @@ internal object ReportText {
 
     /** Null for a code this app does not know; the screen then shows the code alone. */
     fun of(code: String): Int? = text[code]
+
+    /** What fills the `%s` of a sentence that names a file or a reason (guiDesign D-88, the FDS messages). */
+    enum class Argument { PATH, DETAIL }
+
+    private val arguments = mapOf(
+        "PKG-06" to Argument.PATH, "STR-01" to Argument.PATH, "STR-05" to Argument.PATH, "STR-06" to Argument.PATH,
+        "STR-07" to Argument.PATH, "STR-08" to Argument.PATH, "STR-10" to Argument.PATH, "STR-11" to Argument.PATH,
+        "MAN-04" to Argument.PATH, "MAN-05" to Argument.PATH, "MAN-06" to Argument.PATH, "VIEW-02" to Argument.PATH,
+        "VIEW-01" to Argument.DETAIL, "VIEW-03" to Argument.DETAIL,
+    )
+
+    fun argument(code: String): Argument? = arguments[code]
 }

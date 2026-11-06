@@ -47,7 +47,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -172,7 +177,7 @@ private fun LibraryItem(library: LibraryRow, update: String?, onUpdate: (Library
                     Text(pluralStringResource(R.plurals.library_songs, library.songCount, library.songCount), style = MaterialTheme.typography.bodySmall)
                     Text(revisionLine(library), style = MaterialTheme.typography.bodySmall)
                     // D-87: who signed it, or plainly that nobody did (W013); the maintainer as text, never a link.
-                    if (library.signed) Text(stringResource(R.string.library_signed_by, plain(library.signer.orEmpty(), 100), library.fingerprint.orEmpty()),
+                    if (library.signed) Text(monoFingerprints(stringResource(R.string.library_signed_by, plain(library.signer.orEmpty(), 100), library.fingerprint.orEmpty())),
                         style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
                     else Text(stringResource(R.string.library_not_signed), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite)
                     library.maintainer?.let { Text(stringResource(R.string.library_maintainer, plain(it, 300)), style = MaterialTheme.typography.bodySmall, color = Palette.OffWhite) }
@@ -290,7 +295,7 @@ private fun ColumnScope.Question(checked: LibraryRepository.Checked, question: L
     }
     Text(name, style = MaterialTheme.typography.titleMedium)
     Spacer(Modifier.height(8.dp))
-    Text(text)
+    Text(monoFingerprints(text))
     Spacer(Modifier.height(16.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = model::cancel) { Text(stringResource(R.string.cancel)) }
@@ -367,6 +372,10 @@ private fun ColumnScope.Report(checked: LibraryRepository.Checked, outcome: Libr
     }
     Spacer(Modifier.height(8.dp))
     LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // D-87, FDS APP-24: the version's own note, once, at the top of what changed; it then stays on the row until the next version.
+        installed?.library?.changes?.takeIf { it.isNotBlank() }?.let { note ->
+            item { Text(stringResource(R.string.library_change_note, installed.library.version.orEmpty(), plain(note, 500)), modifier = Modifier.padding(top = 8.dp)) }
+        }
         installed?.changes?.let { changes(it) }
         reportSection(R.string.library_report_refused, refusals)
         reportSection(R.string.library_report_skipped, skipped)
@@ -392,7 +401,15 @@ private fun androidx.compose.foundation.lazy.LazyListScope.reportSection(title: 
     items(entries) { e ->
         val where = listOfNotNull(e.path.ifEmpty { null }, e.line?.toString()).joinToString(":")
         Column {
-            ReportText.of(e.code)?.let { Text(stringResource(it)) }
+            ReportText.of(e.code)?.let { res ->
+                // D-88: a sentence that names a file or a reason gets it from the report line, cleaned like any text from a library.
+                val argument = when (ReportText.argument(e.code)) {
+                    ReportText.Argument.PATH -> e.path
+                    ReportText.Argument.DETAIL -> e.detail.orEmpty()
+                    null -> null
+                }
+                Text(if (argument == null) stringResource(res) else stringResource(res, plain(argument, 300)))
+            }
             Text(listOfNotNull(where.ifEmpty { null }, e.code, e.detail).joinToString(" · "), style = MaterialTheme.typography.bodySmall,
                 color = Palette.OffWhite)
         }
@@ -415,4 +432,17 @@ private fun failure(reason: LibraryRepository.Reason) = when (reason) {
     LibraryRepository.Reason.NOT_AN_INDEX -> R.string.library_failed_index
     LibraryRepository.Reason.NO_RELEASE -> R.string.library_failed_no_release
     LibraryRepository.Reason.TOO_LARGE -> R.string.library_failed_too_large
+}
+
+/** guiDesign D-87, D-88: a fingerprint (FDS SG-20, `21FE-31DF-A154-A261`) is set in monospace wherever a sentence shows one. */
+private val FINGERPRINT = Regex("[0-9A-F]{4}(-[0-9A-F]{4}){3}")
+
+private fun monoFingerprints(text: String): AnnotatedString = buildAnnotatedString {
+    var at = 0
+    for (m in FINGERPRINT.findAll(text)) {
+        append(text.substring(at, m.range.first))
+        withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) { append(m.value) }
+        at = m.range.last + 1
+    }
+    append(text.substring(at))
 }

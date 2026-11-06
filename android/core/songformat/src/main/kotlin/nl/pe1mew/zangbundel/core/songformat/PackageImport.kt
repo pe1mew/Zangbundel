@@ -159,7 +159,7 @@ object PackageImport {
                 report += errors
                 return ArchiveImport.Result(null, null, null, sha, emptyMap(), report)
             }
-            if (checked.setlists.size != info.sets.size) return refused("VIEW-02", "the setlists do not all read as the manifest's sets")
+            if (checked.setlists.size != info.sets.size) return refused("VIEW-02", "the setlists do not all read as the manifest's sets", LibraryImport.SETLISTS)
 
             // FDS APP-01: Warnings and Info are not shown; W013 is the one warning a package adds (APP-22, song-format 11).
             if (!info.signed) report += ReportEntry(ReportLevel.WARNING, LibraryOpen.NOT_SIGNED, "")
@@ -292,7 +292,7 @@ object PackageImport {
         for (path in paths) {
             when {
                 '/' !in path -> if (path !in setOf(MANIFEST, SIGNATURE, VIEW_FILE, LICENSE)) return Triple("STR-01", "does not belong in the library folder", path)
-                path.startsWith(LibraryImport.SETLISTS) -> if (!SET_FILE.matches(path)) return Triple("VIEW-01", "not a set-<n>.zbs file of the view", path)
+                path.startsWith(LibraryImport.SETLISTS) -> if (!SET_FILE.matches(path)) return Triple("VIEW-01", path, path)
                 path.startsWith(LibraryImport.SONGS) -> {
                     val parts = path.split('/')
                     if (parts.size == 2) return Triple("STR-11", "songs/ holds only song folders", path)
@@ -318,7 +318,7 @@ object PackageImport {
         val presentSets = files.keys.filter { it.startsWith(LibraryImport.SETLISTS) }.toSet()
         val missing = listOf(VIEW_FILE, LICENSE).filter { it !in files } + (expectedSets - presentSets).sorted()
         if (missing.isNotEmpty()) return Triple("VIEW-01", missing.joinToString(", "), "")
-        (presentSets - expectedSets).firstOrNull()?.let { return Triple("VIEW-01", "no set for this file", it) }
+        (presentSets - expectedSets).firstOrNull()?.let { return Triple("VIEW-01", it, it) }
 
         // VIEW-03 first: a view an older app would refuse is reported as such, whatever else differs.
         val parsed = LibraryFileParser.parse(files.getValue(VIEW_FILE), appVersion.takeIf { LibraryFileParser.compareVersions(it, VIEW_MIN_APP_VERSION) >= 0 } ?: VIEW_MIN_APP_VERSION)
