@@ -6,7 +6,7 @@ Zangbundel is een zangbundel voor bij het kampvuur. Eén telefoon is de **kampvu
 
 De app bevat zelf geen liedteksten. Liederen komen uit **bibliotheken** die de leider toevoegt; elke bibliotheek heeft een eigen licentie. Om mee te zingen heb je geen bibliotheek nodig: de leider stuurt elk lied.
 
-De app toont zijn schermen in het Nederlands, Engels of Duits. Deze handleiding hoort bij versie 0.3.0.
+De app toont zijn schermen in het Nederlands, Engels of Duits. Deze handleiding hoort bij versie 0.4.0.
 
 ---
 
@@ -47,13 +47,25 @@ Alleen de leider heeft liederen nodig. Ga naar **Zangbundel → Bibliotheken**.
 - **Zangbundel bibliotheek toevoegen**: de eigen bibliotheek van de app met kampvuur- en kinderliederen, gedownload van GitHub.
 - **Bibliotheek toevoegen → Online**: typ het webadres van een bibliotheek, een release-index of een `.zbl`-bestand en tik op **Opzoeken**. De app laat de versie en grootte zien; tik op **Downloaden**.
 - **Bibliotheek toevoegen → Uit een bestand**: een `.zbl`- of `.zip`-bestand dat al op de telefoon staat, handig op een kampterrein zonder internet. Tik op **Bestand openen**.
+- **Vanuit een andere app**: kreeg je een bibliotheek in WhatsApp, of downloadde je er een in Chrome? Kies daar **Delen** en dan **Zangbundel**. De bibliotheek gaat dan dezelfde stappen door als bij *Uit een bestand*. Op het bestand zelf tikken opent Zangbundel niet: chat-apps vertellen de telefoon niet wat voor bestand het is. Signal en Gmail kunnen een bestand niet aan een andere app geven: sla het eerst op of download het, en deel het dan vanuit je bestandsbeheer (op een Samsung **Mijn bestanden**), of gebruik **Uit een bestand**.
 
 Daarna toont de app de **licentie** van de bibliotheek. Pas na **Accepteren** komen de liederen in de zangbundel. Liederen die de app niet kan lezen, worden overgeslagen; het rapport zegt welke en waarom.
+
+**Ondertekende bibliotheken.** Een bibliotheek die met de bibliotheekmanager is gemaakt, kan ondertekend zijn. In de lijst staat dan **Ondertekend door**, de naam van de maker en een vingerafdruk zoals `21FE-31DF-A154-A261`. De naam kiest de maker zelf; de vingerafdruk is wat je kunt vergelijken. Een bibliotheek zonder ondertekening toont **Niet ondertekend**. Dat is gewoon voor de bibliotheken van vroeger, en ze werken precies hetzelfde. Zo'n bibliotheek wordt in zijn geheel geweigerd als er ook maar iets mis mee is; het rapport zegt dan welk bestand.
+
+**Een vraag bij het toevoegen.** Een nieuwere versie van een bibliotheek die je al hebt, werkt de app gewoon bij. De app vraagt het eerst als de nieuwe:
+
+- dezelfde of een oudere versie is;
+- door iemand anders is ondertekend dan je vorige versie, of niet is ondertekend terwijl die van jou dat wel was;
+- dezelfde naam heeft als een andere bibliotheek die je al hebt: je kunt hem dan **Apart toevoegen** of jouw bibliotheek **Vervangen**.
+
+Twijfel je, tik dan op **Annuleren**: er verandert niets.
 
 Per bibliotheek kun je:
 
 - de liederen **Aan** of **Uit** zetten in de zangbundel;
-- **Bijwerken** naar de nieuwste versie; de app laat zien wat er veranderd is;
+- **Bijwerken** naar de nieuwste versie; de app laat zien wat er veranderd is. Een bibliotheek die je als bestand kreeg, heeft geen **Bijwerken**: open het nieuwere bestand van de maker op dezelfde manier. Wat de maker over die versie schreef, staat dan onder de bibliotheek;
+- op **Licentie** tikken om de licentie nog eens te lezen;
 - **Automatisch controleren op wifi** aanzetten: één keer per dag, alleen op wifi, en er wordt niets gedownload tot je op **Bijwerken** tikt;
 - **Verwijderen**.
 
@@ -165,7 +177,7 @@ Druk op terug (of kies **Kampvuur verlaten** onderaan de lijst) en bevestig met 
 ## 9. Instellingen
 
 - **Taal**: **Automatisch** volgt de taal van de telefoon; of kies **Nederlands**, **English** of **Deutsch**. Staat de telefoon in een taal die de app niet heeft, dan toont de app Engels. Op Android 13 en nieuwer kan het ook in de instellingen van de telefoon, bij de app.
-- **Je naam**: niet verplicht; alleen je voornaam of bijnaam. Alleen de leider kan hem lezen; zonder naam ben je een zanger met een nummer.
+- **Je naam**: niet verplicht; alleen je voornaam of bijnaam. Alleen de leider kan hem lezen; zonder naam ben je een zanger met een nummer. Tik op het vinkje of op **Klaar** op het toetsenbord als je klaar bent; **Opgeslagen.** bevestigt het. Ook als je het scherm gewoon verlaat, blijft de naam bewaard.
 - **Statistieken van kampvuren** (voor leiders, standaard uit): de telefoon bewaart per kampvuur zonder namen welke liederen er gestuurd werden, hoeveel zangers er waren en hoe goed Bluetooth hen bereikte. Het scherm zegt precies wat wel en niet. Er wordt niets verstuurd; het gaat alleen van je telefoon af als je zelf op **Delen** tikt.
 - **Alle gegevens verwijderen**: bibliotheken, setlists, herinneringen en instellingen gaan van de telefoon; de app begint opnieuw zoals op de eerste dag.
 
@@ -173,7 +185,9 @@ Druk op terug (of kies **Kampvuur verlaten** onderaan de lijst) en bevestig met 
 
 **Over** toont de versie van de app, de geïnstalleerde bibliotheken, de **Ondertekening** (de vingerafdruk van de echte app), een link naar de broncode en deze handleiding.
 
-In het kort over je gegevens: de app stuurt alleen tijdens een kampvuur iets, via Bluetooth naar telefoons in de buurt: het kampvuur en de liedteksten. Een naam kan alleen de leider lezen. Er gaat niets naar de makers van de app: geen account, geen reclame, geen volgen. Internet gebruikt de app alleen om een bibliotheek of setlist te downloaden die jij kiest. De volledige uitleg staat in de app onder **Wat gebeurt er met mijn gegevens?** en in de [privacyverklaring](https://pe1mew.github.io/Zangbundel/privacy/).
+**Zoeken naar een nieuwe versie** vraagt GitHub welke versie van de app de nieuwste is. Dat gebeurt alleen als je erop tikt, en er is internet voor nodig. Is er een nieuwere, dan opent een knop Google Play, F-Droid of de downloadpagina: waar je de app ook vandaan hebt. Tijdens een kampvuur kan het niet.
+
+In het kort over je gegevens: de app stuurt alleen tijdens een kampvuur iets, via Bluetooth naar telefoons in de buurt: het kampvuur en de liedteksten. Een naam kan alleen de leider lezen. Er gaat niets naar de makers van de app: geen account, geen reclame, geen volgen. Internet gebruikt de app alleen om een bibliotheek of setlist te downloaden die jij kiest, en om naar een nieuwe versie te zoeken als je daarop tikt. De volledige uitleg staat in de app onder **Wat gebeurt er met mijn gegevens?** en in de [privacyverklaring](https://pe1mew.github.io/Zangbundel/privacy/).
 
 ## 11. Als het niet lukt
 
@@ -187,5 +201,7 @@ In het kort over je gegevens: de app stuurt alleen tijdens een kampvuur iets, vi
 | *Laad eerst liederen* | Een leider heeft een bibliotheek nodig; zie [Liederen toevoegen](#3-liederen-toevoegen). |
 | Zangers raken de verbinding kwijt | Zet bij de leider de batterijbespaarstand uit en houd de telefoon in het midden van de groep. |
 | *Deze bibliotheek vraagt een nieuwere versie van de app* | Werk de app bij via Google Play. |
+| Op een bibliotheek tikken in WhatsApp, Gmail of Chrome opent Zangbundel niet | Gebruik **Delen → Zangbundel**, of sla het bestand op en kies **Bibliotheek toevoegen → Uit een bestand**. |
+| *Bestanden voor oudere Zangbundel-apps ontbreken*, *… past niet bij de bibliotheek* of *De ondertekening van de bibliotheek klopt niet* | Het bestand is veranderd of beschadigd nadat het gemaakt is. Vraag de maker om het opnieuw op te slaan in de bibliotheekmanager, en stuur het opnieuw. |
 
 Vragen of fouten? Meld ze op [GitHub](https://github.com/pe1mew/Zangbundel/issues).

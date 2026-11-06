@@ -56,6 +56,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
   - **Decisions.** The library manager's device memory, a new table in database version 6, holds each library's key and version. The import asks the FDS question when one is due: M-70 to M-74, and APP-06 for an unsigned copy of a package. On acceptance of such a copy, the memory records "unsigned".
   - **Library row.** Each row shows version, signing status or *Niet ondertekend*, maintainer, the licence (a tap shows the full text) and the change note. Packages have no *Bijwerken*.
   - **D-88 details.** Fingerprints are set in monospace. Refusals name the file or the reason in the sentence. After an update, the version's note appears at the top of the report. All three were tried on the A52, with every question, a refusal, and a real Share from the phone's file manager.
+  - **D-09 on the A52** (`design/test-results/2026-11-06-D-09.md`).
+    - *Delen → Zangbundel* works from WhatsApp, Chrome and *Mijn bestanden*.
+    - A tap opens Zangbundel in no channel: none passes the file name or the library type.
+    - Signal and Gmail offer no Share; their users save the file first.
+    - Telegram, Discord and Quick Share were not tried.
+- The wiki manual (*Manual*, *Handleiding*) is for 0.4.0, assuming that is the next version. It now covers:
+  - adding a library from another app with *Delen → Zangbundel*, and saving the file first in Signal and Gmail (D-09);
+  - signed libraries, *Niet ondertekend*, and the questions when adding;
+  - the licence line, and the change note under a library;
+  - *Zoeken naar een nieuwe versie* on *Over*, and the privacy line about it;
+  - the check mark for *Je naam*;
+  - two new rows in *Als het niet lukt*.
+
+  The owner pushes `wiki/` to the wiki repository at the release.
   - **From other apps.** Share and Open for `.zbl` files, with the SP-37 checks: `content:` URIs only, never the app's own provider, a cleaned file name, and strict sorting of join links and library files. An unreadable file is refused instead of crashing the app, found on the A52.
   - **Texts.** 48 new texts in five languages.
   - **Tests.** The shared test libraries are in the corpus as `packages/`, with `PackageTest` and `PackageDecisionTest`, and two fuzz targets: `packageManifest` and `libraryOpen`.

@@ -6,7 +6,7 @@ Zangbundel is a songbook for the campfire. One phone is the **campfire leader**:
 
 The app itself contains no lyrics. Songs come from **libraries** that the leader adds; each library has its own licence. To sing along you need no library: the leader sends every song.
 
-The app shows its screens in Dutch, English or German, following the phone's language unless you choose one under **Settings → Language**. This manual names the English labels; the [Dutch manual](Handleiding) has the Dutch ones. It belongs to version 0.3.0.
+The app shows its screens in Dutch, English or German, following the phone's language unless you choose one under **Settings → Language**. This manual names the English labels; the [Dutch manual](Handleiding) has the Dutch ones. It belongs to version 0.4.0.
 
 ---
 
@@ -47,13 +47,25 @@ Only the leader needs songs. Go to **Songbook → Libraries**.
 - **Add Zangbundel bibliotheek**: the app's own library of campfire and children's songs, downloaded from GitHub.
 - **Add a library → Online**: type the web address of a library, a release index or a `.zbl` file and tap **Look up**. The app shows the version and size; tap **Download**.
 - **Add a library → From a file**: a `.zbl` or `.zip` file already on the phone, handy on a campsite without internet. Tap **Open a file**.
+- **From another app**: did you get a library in WhatsApp, or download one in Chrome? There, choose **Share** and then **Zangbundel**. The library then goes through the same steps as with *From a file*. Tapping the file itself does not open Zangbundel: chat apps do not tell the phone what kind of file it is. Signal and Gmail cannot hand a file to another app: save or download it first, then share it from your file manager (on a Samsung phone **My Files**), or use **From a file**.
 
 The app then shows the library's **licence**. Only after **Accept** do the songs go into the songbook. Songs the app cannot read are skipped; the report says which and why.
+
+**Signed libraries.** A library made with the library manager can be signed. The list then shows **Signed by**, the maker's name and a fingerprint like `21FE-31DF-A154-A261`. The maker chooses the name; the fingerprint is what you can compare. A library without a signature shows **Not signed**. That is normal for the libraries from before, and they work just the same. Such a library is refused as a whole if anything in it is wrong; the report then names the file.
+
+**A question when adding.** A newer version of a library you already have simply updates it. The app asks first when the new one:
+
+- is the same or an older version;
+- is signed by someone other than your previous version, or is not signed while yours was;
+- has the same name as a different library you already have: you can then **Add separately** or **Replace** yours.
+
+When in doubt, tap **Cancel**: nothing changes.
 
 For each library you can:
 
 - switch its songs **On** or **Off** in the songbook;
-- **Update** to the newest version; the app shows what changed;
+- **Update** to the newest version; the app shows what changed. A library you received as a file has no **Update**: open the maker's newer file the same way. What the maker wrote about that version then shows under the library;
+- tap **Licence** to read its licence again;
 - switch on **Check automatically on Wi-Fi**: once a day, on Wi-Fi only, and nothing is downloaded until you tap **Update**;
 - **Remove** it.
 
@@ -165,7 +177,7 @@ Press back (or choose **Leave the campfire** at the bottom of the list) and conf
 ## 9. Settings
 
 - **Language**: **Automatic** follows the phone's language; or choose **Nederlands**, **English** or **Deutsch**. A phone set to a language the app does not have shows English. On Android 13 and later this can also be set in the phone's settings, under the app.
-- **Your name**: optional; just your first name or a nickname. Only the leader can read it; without a name you are a singer with a number.
+- **Your name**: optional; just your first name or a nickname. Only the leader can read it; without a name you are a singer with a number. Tap the check mark, or **Done** on the keyboard, when you are finished; **Saved.** confirms it. The name is also kept if you simply leave the screen.
 - **Campfire statistics** (for leaders, off by default): for each campfire, without names, the phone keeps which songs were sent, how many singers there were and how well Bluetooth reached them. The screen says exactly what is and is not kept. Nothing is sent; it leaves your phone only when you tap **Share** yourself.
 - **Remove all data**: libraries, setlists, memories and settings are removed from the phone; the app starts again as on the first day.
 
@@ -173,7 +185,9 @@ Press back (or choose **Leave the campfire** at the bottom of the list) and conf
 
 **About** shows the app's version, the installed libraries, the **Signature** (the fingerprint of the genuine app), a link to the source code and this manual.
 
-Your data in short: the app sends something only during a campfire, over Bluetooth to phones nearby: the campfire and the lyrics. Only the leader can read a name. Nothing goes to the app's makers: no account, no advertising, no tracking. The app uses the internet only to download a library or setlist you choose. The full explanation is in the app under **What happens to my data?** and in the [privacy policy](https://pe1mew.github.io/Zangbundel/privacy/).
+**Check for a new version** asks GitHub which version of the app is the latest. It does so only when you tap it, and it needs internet. If there is a newer one, a button opens Google Play, F-Droid or the download page: wherever you got the app from. It is not available during a campfire.
+
+Your data in short: the app sends something only during a campfire, over Bluetooth to phones nearby: the campfire and the lyrics. Only the leader can read a name. Nothing goes to the app's makers: no account, no advertising, no tracking. The app uses the internet only to download a library or setlist you choose, and to look for a new version when you tap that button. The full explanation is in the app under **What happens to my data?** and in the [privacy policy](https://pe1mew.github.io/Zangbundel/privacy/).
 
 ## 11. When something goes wrong
 
@@ -187,5 +201,7 @@ Your data in short: the app sends something only during a campfire, over Bluetoo
 | *Load songs first* | A leader needs a library; see [Adding songs](#3-adding-songs). |
 | Singers lose the connection | Switch battery saver off on the leader's phone and keep the phone in the middle of the group. |
 | *This library needs a newer version of the app* | Update the app from Google Play. |
+| Tapping a library in WhatsApp, Gmail or Chrome does not open Zangbundel | Use **Share → Zangbundel**, or save the file and choose **Add a library → From a file**. |
+| *Files for older Zangbundel apps are missing*, *… does not match the library* or *The library’s signature is not valid* | The file was changed or damaged after it was made. Ask the maker to save it again in the library manager, and send it again. |
 
 Questions or bugs? Report them on [GitHub](https://github.com/pe1mew/Zangbundel/issues).
