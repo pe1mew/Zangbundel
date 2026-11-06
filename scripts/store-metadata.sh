@@ -3,7 +3,7 @@
 # Writes F-Droid's store metadata, fastlane/metadata/android/, from the Play listing in docs/store-listing/.
 # docs/store-listing/ is the one source: edit there, then run this. With --check it writes nothing,
 # and exits 1 when fastlane/ is out of step or a text is over F-Droid's limit (docs/FDROID-RUNBOOK.md Step 5).
-#   en-US and nl-NL: title.txt, short_description.txt, full_description.txt, changelogs/<versionCode>.txt
+#   en-US, nl-NL and de-DE: title.txt, short_description.txt, full_description.txt, changelogs/<versionCode>.txt
 #     from the sections "## App name", "## Short description", "## Full description" and each
 #     "### <versionName> (<versionCode>)" under "## Release notes"
 #   en-US only (F-Droid falls back to en-US): images/icon.png, featureGraphic.png, phoneScreenshots/1.png …
@@ -41,7 +41,7 @@ text() { # file limit
 out=$(mktemp -d) || exit 1
 trap 'rm -rf "$out"' EXIT
 
-for loc in en-US nl-NL; do
+for loc in en-US nl-NL de-DE; do
   md=$src/$loc.md
   [ -f "$md" ] || { say "FAIL: $md not found"; exit 1; }
   d=$out/$loc
@@ -86,4 +86,4 @@ fi
 
 [ "$fail" -eq 0 ] || exit 1
 rm -rf "$dst" && mkdir -p "$dst" && cp -r "$out"/. "$dst"/
-say "Wrote $dst from $src: en-US, nl-NL, $i screenshots"
+say "Wrote $dst from $src: en-US, nl-NL, de-DE, $i screenshots"

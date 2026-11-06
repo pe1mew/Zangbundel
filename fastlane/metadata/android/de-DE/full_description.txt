@@ -1,0 +1,29 @@
+Zangbundel (niederländisch für „Liederbuch“) ist die Liederbuch-App für das Lagerfeuer, zum Beispiel bei Pfadfinderlagern.
+
+Ein Telefon gehört der Leitung. Die*der Leiter*in startet ein Lagerfeuer und wählt die Lieder; die App schickt die Liedtexte über Bluetooth an jedes Telefon rund ums Feuer, im selben Moment und ohne Internet, WLAN oder Hotspot. Alle sehen dieselben Worte, wenn das Lied beginnt.
+
+So funktioniert es
+• Die*der Leiter*in startet ein Lagerfeuer und zeigt einen QR-Code, oder die Sänger*innen wählen das Lagerfeuer aus einer Liste.
+• Die Sänger*innen scannen den Code und machen mit. Kein Konto, keine Anmeldung.
+• Die*der Leiter*in wählt ein Lied; der Liedtext erscheint auf allen Telefonen.
+• Sänger*innen scrollen Zeile für Zeile mit, groß und deutlich: schwarz auf weiß am Tag, weiß auf schwarz in der Nacht; oder sie lassen die Leitung scrollen.
+• Die*der Leiter*in sieht, wie viele Sänger*innen mitmachen und ob die Verbindung gut ist.
+• Alle können jederzeit gehen. Die*der Leiter*in beendet das Lagerfeuer; die Liedtexte verschwinden wieder von den Telefonen, und die Liste der gesungenen Lieder bleibt als Erinnerung.
+
+Liederbibliotheken
+Die App enthält selbst keine Liedtexte. Die Lieder kommen aus Bibliotheken, die eine Gruppe oder ein Verband pflegt, mit ihren Lizenzangaben. Eine Bibliothek lädst du herunter, wenn du Internet hast, zum Beispiel zu Hause vor dem Lager; danach ist kein Internet mehr nötig. Sänger*innen ohne die Bibliothek bekommen die Texte von der Leitung über Bluetooth.
+
+Datenschutz
+Zangbundel erhebt nichts und schickt nichts an den Entwickler. Kein Konto, keine Werbung, keine Analyse. Dein Anzeigename wird verschlüsselt an das Telefon der Leitung geschickt; Liedtexte werden unverschlüsselt gesendet, weil sie nichts Persönliches enthalten. Alles, was du während eines Lagerfeuers bekommst, wird gelöscht, wenn es endet.
+
+Berechtigungen
+• Bluetooth: um Lagerfeuer zu finden und mitzumachen, und um als Leiter*in zu senden.
+• Unter Android 11 und älter verlangt Android die Standortberechtigung, um nach Bluetooth-Geräten zu suchen. Zangbundel liest nie deinen Standort.
+• Internet: nur um Liederbibliotheken und Setlists herunterzuladen, wenn du es bestätigst, oder, wenn du es einschaltest, um im WLAN nach einer neuen Version einer Bibliothek zu suchen; und wenn du unter „Über“ auf „Nach einer neuen Version suchen“ tippst, um GitHub nach der neuesten Version der App zu fragen.
+• Benachrichtigungen: nur die Leitung wird gefragt, für eine Benachrichtigung, solange das Lagerfeuer läuft.
+
+Die App lässt sich auch ohne Internet weitergeben: ein Android-Telefon in der Nähe bekommt sie über Quick Share oder Bluetooth.
+
+Sprachen: Niederländisch, Englisch und Deutsch; Liederbibliotheken können in jeder Sprache sein.
+
+Zangbundel ist Open Source: https://github.com/pe1mew/Zangbundel

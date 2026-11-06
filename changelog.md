@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- A German store listing, `docs/store-listing/de-DE.md`: name, short and full description, and the release notes of 0.3.0 and 0.4.0. It's translated from the English listing with the glossary of guiDesign D-79 and the app's gender star, and the German reviewer checks it with the app's new texts. `scripts/store-metadata.sh` now also writes F-Droid's `fastlane/metadata/android/de-DE/`.
+
 ## [0.4.0] - 2026-11-06
 
 Prepared for Google Play (versionCode 2026110601); it goes to internal testing and then the closed test. Release checks: `design/test-results/2026-11-06-release-checks-0.4.0.md`.
