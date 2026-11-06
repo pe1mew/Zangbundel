@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-- Proposal, awaiting the owner's decision (`design/proposals/2026-11-06-backward-compatible-packages.md`):
+- `design/song-format.md` v0.20: library packages that format 1.1 apps can read, as the owner decided on 2026-11-06 (proposal section 8; the library manager's FDS draft 0.5).
+  - Every package carries a 1.1 view, checked by FDS VIEW-01 to VIEW-03, and its songs move under `songs/` (12.11).
+  - An app that reads only format 1.1 imports a package as a snapshot (12.5).
+  - The UUID reservation is withdrawn (4.2, 4.3, L006).
+  - The maintainer is required in packages.
+  - W013 "not signed" is added for old formats and unsigned packages (11).
+  - Set ids `set-<n>` are shared with the view (13.5).
+
+  Still to follow in the app session: FRD FR-LIB-05 and FR-LIB-09, the GUI design, the assessment and the test plan.
+- Proposal, approved by the owner on 2026-11-06 (section 8); first entered as awaiting the decision (`design/proposals/2026-11-06-backward-compatible-packages.md`):
   - Every library package also carries a format 1.1 view: `zangbundel.json`, `LICENSE`, the songs under `songs/` and the sets as `set-<n>.zbs`. The view is listed in the manifest and checked against it, so older apps import a package as a snapshot without its integrity features.
   - The UUID reservation (L006) is withdrawn, so no valid library becomes invalid.
   - A new app shows one library-level warning, W013 "not signed", for old-format libraries.
