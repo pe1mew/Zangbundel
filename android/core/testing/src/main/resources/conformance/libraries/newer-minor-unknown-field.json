@@ -1,0 +1,26 @@
+{
+  "format": "zangbundel-library",
+  "format_version": "1.9",
+  "id": "zangbundel-voorbeeld",
+  "name": "Zangbundel voorbeeldbundel",
+  "description": "Kampvuurliederen voor scouting. Vrij te gebruiken en te verspreiden; zie de licentie per lied.",
+  "maintainer": {
+    "name": "Zangbundel-project",
+    "email": "bundel@example.org",
+    "url": "https://example.org/zangbundel-voorbeeld"
+  },
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "file": "LICENSE",
+    "summary": "Creative Commons Naamsvermelding-GelijkDelen 4.0, tenzij een lied anders aangeeft."
+  },
+  "x_extra": 1,
+  "min_app_version": "1.0.0",
+  "homepage": "https://example.org/zangbundel-voorbeeld",
+  "languages": ["nl", "en"],
+  "tags": {
+    "kampvuur": { "nl": "Kampvuur", "en": "Campfire" },
+    "avond":    { "nl": "Avond",    "en": "Evening" },
+    "kerst":    { "nl": "Kerst",    "en": "Christmas" }
+  }
+}

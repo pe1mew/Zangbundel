@@ -1,0 +1,12 @@
+example
+newer-minor-unknown-field
+not-json
+array
+missing-description
+name-not-string
+maintainer-without-contact
+min-app-two-parts
+wrong-format
+format-major-2
+min-app-too-new
+bad-id

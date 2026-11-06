@@ -5,3 +5,4 @@ android/gradlew text eol=lf
 android/core/testing/src/main/resources/conformance/songs/*.cho -text
 android/core/testing/src/main/resources/conformance/archives/*.zbl -text
 android/core/testing/src/main/resources/conformance/setlists/*.zbs -text
+android/core/testing/src/main/resources/conformance/libraries/*.json -text
