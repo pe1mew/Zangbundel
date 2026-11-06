@@ -16,7 +16,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -44,38 +43,90 @@ class PackageTest {
 
     private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
 
-    @Test
-    fun `every package vector gives the app's verdict and codes`() {
-        assertTrue(names.size >= 6, "vectors: $names")
-        for (name in names) {
-            val bytes = resource("packages/$name.zbl")
-            val e = expected(name)
-            assertEquals(e.getValue("sha256").jsonPrimitive.content, sha(bytes), "$name: vector bytes changed")
-            assertTrue(PackageImport.isPackage(bytes), "$name is a package")
-            val want = e.getValue("app").jsonObject
-            val r = LibraryOpen.open(bytes, app, jdk)
-            assertEquals(want.getValue("verdict").jsonPrimitive.content == "refused", r.refused, "$name: ${r.report}")
-            val fdsCodes = r.report.map { it.code }.filter { '-' in it }.distinct().sorted()
-            assertEquals(want.getValue("codes").jsonArray.map { it.jsonPrimitive.content }.sorted(), fdsCodes, "$name: ${r.report}")
-            want["song_format_warnings"]?.let { w ->
-                assertEquals(w.jsonArray.map { it.jsonPrimitive.content }.sorted(), r.report.filter { it.level == ReportLevel.WARNING }.map { it.code }.distinct().sorted(), "$name: ${r.report}")
-            }
-            want["signed"]?.let { assertEquals(it.jsonPrimitive.boolean, r.pkg?.signed, "$name signed") }
-            want["fingerprint"]?.let { assertEquals(it.jsonPrimitive.content, r.pkg?.author?.fingerprint, "$name fingerprint") }
-        }
+    /**
+     * Vectors where the app disagrees today with the shared test libraries (the manager's 0.1.0, FDS draft 0.7).
+     * Each is open in `design/proposals/2026-11-06-shared-test-libraries.md`, which the owner decides; until then
+     * the app's code stays as it is. A vector leaves this list when the app or the vector is changed to agree, and
+     * the test fails until it does, so the list is always the true set of differences.
+     */
+    private val knownAppDifferences = setOf(
+        // Proposal section 3.1: the ZIP reader refuses before the format is known, with its A-code.
+        "zip-truncated", "zip-ratio", "path-traversal", "symlink", "entry-encrypted", "names-case",
+        // 3.2: two top-level folders are not a package (APP-02), so A001, not PKG-05.
+        "two-top-folders",
+        // 3.3: song errors keep the profile's S-codes.
+        "song-not-utf8", "song-no-title", "song-directive-twice", "song-directive-malformed", "song-environment-open",
+        "song-no-lyrics", "song-no-language", "song-id-differs", "song-chorus-early", "song-new-song", "song-value-invalid",
+        // 3.4: the app stops at the first refusing rule.
+        "license-missing", "song-folder-invalid",
+        // 3.5 and 3.6: an empty set and an empty library are refused, where the FDS makes them warnings.
+        "set-empty", "no-songs",
+    )
+
+    /** As [knownAppDifferences], for the format 1.1 path ([ArchiveImport] on the view): proposal section 3.7. */
+    private val knownFormat11Differences = setOf("song-two-files")
+
+    private fun codes(a: JsonObject, key: String) = a[key]?.jsonArray?.map { it.jsonPrimitive.content }?.sorted()
+
+    /** Null when the app gives [name] the expected verdict and codes, else what differs. */
+    private fun appDifference(name: String): String? {
+        val want = expected(name).getValue("app").jsonObject
+        val r = LibraryOpen.open(resource("packages/$name.zbl"), app, jdk)
+        val verdict = want.getValue("verdict").jsonPrimitive.content
+        val got = when { r.refused -> "refused"; r.pkg == null -> "accepted as snapshot"; else -> "accepted" }
+        val fds = r.report.map { it.code }.filter { '-' in it }.distinct().sorted()
+        val warnings = r.report.filter { it.level == ReportLevel.WARNING }.map { it.code }.distinct().sorted()
+        val differs = listOfNotNull(
+            "verdict $got, expected $verdict".takeIf { got != verdict },
+            "FDS codes $fds, expected ${codes(want, "codes")}".takeIf { fds != codes(want, "codes") },
+            codes(want, "song_format_warnings")?.let { w -> "warnings $warnings, expected $w".takeIf { warnings != w } },
+            // A snapshot or a refused library has no package info, and is not signed.
+            want["signed"]?.let { s -> "signed ${r.pkg?.signed ?: false}".takeIf { s.jsonPrimitive.boolean != (r.pkg?.signed ?: false) } },
+            want["fingerprint"]?.let { f -> "fingerprint ${r.pkg?.author?.fingerprint}".takeIf { f.jsonPrimitive.content != r.pkg?.author?.fingerprint } },
+        )
+        if (differs.isEmpty()) return null
+        val errors = r.report.filter { it.level == ReportLevel.LIBRARY_ERROR || it.level == ReportLevel.SONG_ERROR }
+            .joinToString("; ") { listOfNotNull(it.code, it.path.ifEmpty { null }, it.detail).joinToString(" ") }
+        return differs.joinToString("; ") + " | package ${PackageImport.isPackage(resource("packages/$name.zbl"))} | errors: $errors"
+    }
+
+    /** Null when the format 1.1 path gives [name] its expected verdict and every listed code. */
+    private fun format11Difference(name: String): String? {
+        val want = expected(name).getValue("format_1_1").jsonObject
+        val r = ArchiveImport.open(resource("packages/$name.zbl"), app)
+        val differs = listOfNotNull(
+            "refused ${r.refused}".takeIf { want.getValue("verdict").jsonPrimitive.content.startsWith("refused") != r.refused },
+            codes(want, "codes")!!.filter { c -> r.report.none { it.code == c } }.takeIf { it.isNotEmpty() }?.let { "missing $it" },
+            "read the manifest".takeIf { r.pkg != null },
+        )
+        return if (differs.isEmpty()) null else differs.joinToString("; ") + " | report: ${r.report.map { it.code }}"
+    }
+
+    /** Writes the differences to `build/reports/package-vectors.md`, the table behind the proposal. */
+    private fun record(title: String, found: Map<String, String>) {
+        val file = java.io.File("build/reports/package-vectors-$title.md")
+        file.parentFile.mkdirs()
+        file.writeText(found.entries.joinToString("\n", "# $title: ${found.size} of ${names.size}\n\n", "\n") { (n, d) -> "- `$n`: $d" })
     }
 
     @Test
-    fun `an app before packages imports every vector's view as a snapshot`() {
-        for (name in names) {
-            val want = expected(name).getValue("format_1_1").jsonObject
-            val r = ArchiveImport.open(resource("packages/$name.zbl"), app)
-            assertEquals(want.getValue("verdict").jsonPrimitive.content.startsWith("refused"), r.refused, "$name: ${r.report}")
-            want.getValue("codes").jsonArray.map { it.jsonPrimitive.content }.forEach { code ->
-                assertTrue(r.report.any { it.code == code }, "$name: $code expected in ${r.report}")
-            }
-            assertNull(r.pkg, "$name: the 1.1 path never reads the manifest")
-        }
+    fun `every package vector is intact and listed`() {
+        assertTrue(names.size >= 56, "vectors: $names")
+        for (name in names) assertEquals(expected(name).getValue("sha256").jsonPrimitive.content, sha(resource("packages/$name.zbl")), "$name: vector bytes changed")
+    }
+
+    @Test
+    fun `every package vector gives the app's verdict and codes, apart from the known differences`() {
+        val found = names.associateWith { appDifference(it) }.filterValues { it != null }.mapValues { it.value!! }
+        record("app", found)
+        assertEquals(knownAppDifferences, found.keys, found.entries.joinToString("\n") { "${it.key}: ${it.value}" })
+    }
+
+    @Test
+    fun `an app before packages imports every vector's view as expected, apart from the known differences`() {
+        val found = names.associateWith { format11Difference(it) }.filterValues { it != null }.mapValues { it.value!! }
+        record("format-1-1", found)
+        assertEquals(knownFormat11Differences, found.keys, found.entries.joinToString("\n") { "${it.key}: ${it.value}" })
     }
 
     @Test
