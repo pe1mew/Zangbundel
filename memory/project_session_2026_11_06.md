@@ -17,10 +17,10 @@ A run of the owner's requests: a reply on the library manager's FDS O-09/O-10 an
 | Library repo #4 BCP 47 language codes | Closed (README and contributing) | library `259f065` |
 | D-09 opening a library from other apps | Closed: Share works from WhatsApp, Chrome, Mijn bestanden; a tap opens Zangbundel in no tested app (`2026-11-06-D-09.md`) | `bf510c3` |
 | Wiki manual for 0.4.0 | Closed, pushed by the owner | `bf510c3`, wiki `44b6a80` |
-| Release 0.4.0 (2026110601) | Closed apart from G-09 and G-04: on Play, D-01 to D-08 on the S23 (owner-reported), tag `v0.4.0` on `85f6fb7`, G-07 identical to CI (`1f26c52e…`), GitHub release with the app-key APK (`2cd16ab0…`, G-08) | `85f6fb7`, `18719b3` |
+| Release 0.4.0 (2026110601) | Closed apart from G-04: on Play, D-01 to D-08 on the S23 (owner-reported), tag `v0.4.0` on `85f6fb7`, G-07 identical to CI (`1f26c52e…`), GitHub release with the app-key APK (`2cd16ab0…`, G-08) | `85f6fb7`, `18719b3` |
 | German store listing de-DE (Play and fastlane) | Closed; entered in Play Console and submitted by the owner | `18719b3` |
 | Review release 0.4.0-review (2026110690) with French and Italian | Closed: uploaded to the internal track by the owner | — |
-| G-09 fuzz at the release budget (`packageManifest`, `libraryOpen`, an hour each) | Open: running at curation time; result to go into `2026-11-06-release-checks-0.4.0.md` | — |
+| G-09 fuzz at the release budget (`packageManifest`, `libraryOpen`, an hour each) | Closed: both pass, 0 findings (14:28 to 16:28), recorded in `2026-11-06-release-checks-0.4.0.md` | — |
 | Message to Pep about the session | Closed, in chat only | — |
 
 ## The owner's decisions

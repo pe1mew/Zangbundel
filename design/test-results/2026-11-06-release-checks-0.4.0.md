@@ -9,7 +9,7 @@ Test plan section 6 for version 0.4.0 (versionCode 2026110601), on the working t
 - the check mark for the name (D-44 as of v0.68);
 - texts in Dutch, English and German, and in French and Italian for review builds only.
 
-**The owner's decision on German (2026-11-06):** the new German texts are released while the German reviewer checks them. That includes the privacy screen's internet sentence and the new sentence in the German privacy policy.
+**The owner's decision on German (2026-11-06):** the new German texts are released while the German reviewer checks them. That includes the privacy screen's internet sentence and the new sentence in the German privacy policy. **The German privacy policy has been reviewed and accepted** (the owner, 2026-11-06, after the release).
 
 | Check | How | Result |
 |---|---|---|
@@ -21,7 +21,7 @@ Test plan section 6 for version 0.4.0 (versionCode 2026110601), on the working t
 | **G-06** Dependencies | `git diff v0.3.0` on `libs.versions.toml`, `verification-metadata.xml` and every `build.gradle.kts` | **Pass.** No artefact or version changed. `platform/net` gained `testImplementation` of `junit` and `kotlin-test-junit`, which other modules already use and the verification metadata already lists. |
 | **G-07** Reproducibility | A fresh clone of `85f6fb7`, the commit tag `v0.4.0` points at, with `core.autocrlf=false` in `C:\Users\drasv\build\zangbundel-0.4.0`; `assembleRelease` with `--no-daemon --no-build-cache --no-configuration-cache` and no `keystore.properties`. Compared with CI's unsigned APK (run 42226383479, which passed) | **Pass.** Both are 5 891 042 bytes with SHA-256 `1f26c52e…a297ce2a`: **identical**. |
 | **G-08** Signature | `apksigner verify --print-certs` (build-tools 34.0.0) on the APK downloaded from the GitHub release | **GitHub APK: pass.** The owner signed the build of G-07 with apksigner **34.0.0** and the app signing key, `--v1-signing-enabled false`. Release https://github.com/pe1mew/Zangbundel/releases/tag/v0.4.0, published 2026-11-06 14:14 UTC (not a draft or pre-release), created with `gh` from this session at the owner's request. The downloaded `zangbundel-0.4.0.apk` is 5 902 730 bytes with SHA-256 `2cd16ab0…7dd1204f`. It is signed v2 and v3, not v1, by one signer, `CN=Remko Welling, O=PE1MEW, C=NL`, SHA-256 `57867b3f…a2c89b10`. Its 486 entries and their CRCs equal CI's unsigned APK. Not checked: the signer of a Play install of 0.4.0. |
-| **G-09** Fuzzing | `scripts/fuzz.sh 3600` on the new parser targets `packageManifest` and `libraryOpen`; the other targets' parsers are unchanged | See the result below; the CI budget of 60 s per target passed with no findings on 2026-11-06. |
+| **G-09** Fuzzing | `scripts/fuzz.sh 3600` on the new parser targets `packageManifest` and `libraryOpen`; the other targets' parsers are unchanged | **Pass.** 2026-11-06 14:28 to 16:28 on the working tree of `85f6fb7`: `packageManifest` 3 608 s and `libraryOpen` 3 609 s, each `pass` with 0 findings, and no finding input left under `src/fuzz/resources`. The CI budget of 60 s per target had passed with no findings the same day. |
 | **G-10** Assessment | `design/security-privacy-assessment.md` v0.30 | **Pass.** SP-37, SP-38 and SP-39 cover what was added. SP-37's conditions are built (content URIs only, never the app's own provider, the picker's cap, no install without the user, cleaned names, other extras ignored, strict dispatch), with the manifest parsers fuzzed. SP-38's D-10 ran in part. No new permission, no data to the developer; the Data safety declaration stays "no data collected". |
 
 **Database migration 5 to 6.** The A52's debug app had been installed with database version 5 and the default library 2026.11.0 before 2026-11-06. It was updated in place to version 6 with these changes, and the library stayed installed and usable, with its songs, *Bijwerken* and *Niet ondertekend* (`design/test-results/2026-11-06-library-packages.md`). The migration is Room's automatic one; `6.json` is in `platform/storage/schemas`.
@@ -42,5 +42,5 @@ Test plan section 6 for version 0.4.0 (versionCode 2026110601), on the working t
 **After the tag.** Tag `v0.4.0` on `85f6fb7`, G-07 and G-08 pass, and the GitHub release carries the APK signed with the app signing key (RUNBOOK Step 9.7). The wiki manual for 0.4.0 is pushed (wiki `44b6a80`).
 
 **Open, the owner's:**
-- the German reviewer's check of the new texts and of the de-DE store listing;
+- the German reviewer's check of the new app texts and the de-DE store listing (the privacy policy is done, its *Children* item reworded and accepted the same day);
 - G-04 and D-10's packet capture.
