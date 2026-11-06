@@ -1,6 +1,6 @@
 # Zangbundel – Privacy Policy / Privacybeleid / Datenschutzerklärung
 
-*Version of record. Published for the Google Play listing at https://pe1mew.github.io/Zangbundel/privacy/ (rendered copy in `docs/privacy/index.html`; keep both in step). The English text is the version of record, the Dutch and German texts follow it. The German text was added on 2026-11-03; the policy itself did not change. On 2026-11-06 the update check on the About screen was added (FRD FR-GEN-09, assessment SP-38), and the same day the *Children* item was reworded to say what it means (Play's target audience of 13 and over; nothing collected from anyone), with no change to what the app does.*
+*Version of record. Published for the Google Play listing at https://pe1mew.github.io/Zangbundel/privacy/ (rendered copy in `docs/privacy/index.html`; keep both in step). The English text is the version of record; the Dutch and German texts are translations of it. The German text was added on 2026-11-03; the policy itself did not change. On 2026-11-06 the update check on the About screen was added (FRD FR-GEN-09, assessment SP-38), and the same day the *Children* item was reworded to say what it means (Play's target audience of 13 and over; nothing collected from anyone), with no change to what the app does.*
 
 Effective date: 6 November 2026 (before that: 27 October 2026). Developer: Remko Welling (PE1MEW), contact via https://github.com/pe1mew/Zangbundel.
 
