@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-06
+
+Prepared for Google Play (versionCode 2026110601); it goes to internal testing and then the closed test. Release checks: `design/test-results/2026-11-06-release-checks-0.4.0.md`.
+
+- **Library packages.** Libraries from the library manager, signed or not, are read with their questions and their row on the library screen. They can arrive by Share from other apps.
+- **The update check on *Over*.**
+- **The check mark for the name.**
+- **German.** The new German texts, the privacy screen's sentence and the German privacy policy's new sentence included, are released while the German reviewer checks them (the owner's decision, 2026-11-06). French and Italian stay in review builds only.
+
 - `design/song-format.md` v0.20: library packages that format 1.1 apps can read, as the owner decided on 2026-11-06 (proposal section 8; the library manager's FDS draft 0.5).
   - Every package carries a 1.1 view, checked by FDS VIEW-01 to VIEW-03, and its songs move under `songs/` (12.11).
   - An app that reads only format 1.1 imports a package as a snapshot (12.5).

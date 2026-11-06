@@ -24,8 +24,8 @@ android {
         applicationId = "nl.pe1mew.zangbundel.app" // permanent once uploaded to Play (RUNBOOK Decisions)
         minSdk = 26
         targetSdk = 36
-        versionCode = 2026110301 // YYYYMMDDnn, strictly increasing
-        versionName = "0.3.0"
+        versionCode = 2026110601 // YYYYMMDDnn, strictly increasing
+        versionName = "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

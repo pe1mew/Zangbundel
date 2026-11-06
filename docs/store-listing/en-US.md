@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.4.0 (2026110601)
+
+New: libraries made with the library manager, which can be signed. The library list shows who signed a library, or that it is not signed. Got a library in WhatsApp, or downloaded one? Choose Share → Zangbundel. About can now check whether a new version of the app is out. In Settings, a check mark finishes entering your name.
+
 ### 0.3.0 (2026110301)
 
 New: Zangbundel speaks German. Choose Deutsch under Settings → Language, or let the app follow the phone. Clearer words: the leader's button on the home screen is now called Lead a campfire, and the name field in Settings is called Your name.

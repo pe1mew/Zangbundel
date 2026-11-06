@@ -1,0 +1,1 @@
+New: libraries made with the library manager, which can be signed. The library list shows who signed a library, or that it is not signed. Got a library in WhatsApp, or downloaded one? Choose Share → Zangbundel. About can now check whether a new version of the app is out. In Settings, a check mark finishes entering your name.
