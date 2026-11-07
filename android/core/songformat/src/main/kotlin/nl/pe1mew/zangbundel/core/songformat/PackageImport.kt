@@ -69,9 +69,9 @@ object PackageImport {
     const val VIEW_FORMAT_VERSION = "1.1"
     const val VIEW_MIN_APP_VERSION = "0.1.0"
 
-    /** FDS §3.6: written by operating systems, never part of a library (PF-31). */
-    private val IGNORED_FILES = setOf(".DS_Store", "Thumbs.db", "desktop.ini")
-    private const val IGNORED_FOLDER = "__MACOSX/"
+    /** FDS §3.6: written by operating systems, never part of a library (PF-31); lower case, matched regardless of case. */
+    private val IGNORED_FILES = setOf(".ds_store", "thumbs.db", "desktop.ini")
+    private const val IGNORED_FOLDER = "__macosx/"
 
     private val LIBRARY_ID = Regex("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
     private val UTC = Regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")
@@ -153,13 +153,18 @@ object PackageImport {
             view(info, files, appVersion)?.let { (code, detail, path) -> return refused(code, detail, path) }
 
             // The songs and the view's setlists through the checks of song-format section 11, as for an archive; any error refuses (APP-01).
-            val checked = LibraryImport.check(files, appVersion)
+            // An empty library (STR-02) and an empty set (SET-03) are warnings the Editor saves, so neither refuses here; an empty set
+            // is not offered as a setlist (FDS APP-23), as the 1.1 path skips it (proposal 2026-11-06-shared-test-libraries, 3.5, 3.6).
+            val checked = LibraryImport.check(files, appVersion, allowEmpty = true)
+            val emptySets = info.sets.withIndex().filter { it.value.songs.isEmpty() }.map { "setlists/set-${it.index + 1}.zbs" }.toSet()
             val errors = checked.report.filter { it.level == ReportLevel.LIBRARY_ERROR || it.level == ReportLevel.SONG_ERROR }
-            if (checked.refused || errors.isNotEmpty()) {
-                report += errors
+                .filterNot { it.code == "SL005" && it.path in emptySets }
+            // The first refusing rule, with a song error under its FDS code (proposal 3.3, 3.4).
+            errors.firstOrNull()?.let {
+                report += it.copy(code = sngCode(it))
                 return ArchiveImport.Result(null, null, null, sha, emptyMap(), report)
             }
-            if (checked.setlists.size != info.sets.size) return refused("VIEW-02", "the setlists do not all read as the manifest's sets", LibraryImport.SETLISTS)
+            if (checked.setlists.size != info.sets.size - emptySets.size) return refused("VIEW-02", "the setlists do not all read as the manifest's sets", LibraryImport.SETLISTS)
 
             // FDS APP-01: Warnings and Info are not shown; W013 is the one warning a package adds (APP-22, song-format 11).
             if (!info.signed) report += ReportEntry(ReportLevel.WARNING, LibraryOpen.NOT_SIGNED, "")
@@ -348,7 +353,7 @@ object PackageImport {
         // setlists/set-<n>.zbs (PF-43): the set's name, id set-<n>, and its songs in order, nothing else.
         for ((i, set) in info.sets.withIndex()) {
             val path = "setlists/set-${i + 1}.zbs"
-            val read = SetlistParser.parse(files.getValue(path), path, "set-${i + 1}.zbs").setlist ?: return Triple("VIEW-02", "not a readable setlist", path)
+            val read = SetlistParser.parse(files.getValue(path), path, "set-${i + 1}.zbs", allowEmpty = set.songs.isEmpty()).setlist ?: return Triple("VIEW-02", "not a readable setlist", path)
             val entries = read.entries.map { (it as? Setlist.Entry.Song)?.let { s -> "${s.library}/${s.song}" } ?: "?" }
             if (read.title != set.name || read.id != "set-${i + 1}" || entries != set.songs.map { "${info.libraryId}/$it" }) {
                 return Triple("VIEW-02", "does not match set \"${set.name}\"", path)
@@ -367,7 +372,30 @@ object PackageImport {
         else -> e.code
     }
 
-    private fun ignored(name: String): Boolean = name.startsWith(IGNORED_FOLDER) || "/$IGNORED_FOLDER" in name || name.substringAfterLast('/') in IGNORED_FILES
+    /**
+     * FDS 6.6, the Profile column: a package reports the profile's song errors as SNG rules, as [pkgCode] does for
+     * the ZIP reader (proposal 2026-11-06-shared-test-libraries, 3.3). S003 names its fields in the order id, title, language.
+     */
+    internal fun sngCode(e: ReportEntry): String = when (e.code) {
+        "S001" -> "SNG-01"
+        "S002" -> "SNG-18"
+        "S003" -> when (e.detail?.substringBefore(',')?.trim()) { "title" -> "SNG-02"; "language" -> "SNG-11"; else -> "SNG-12" }
+        "S004" -> "SNG-12"
+        "S006" -> "SNG-03"
+        "S007" -> "SNG-06"
+        "S008" -> "SNG-13"
+        "S009" -> "SNG-14"
+        "S010" -> "SNG-09"
+        "S011" -> "SNG-04"
+        "S012" -> "SNG-15"
+        else -> e.code
+    }
+
+    /** FDS §3.6, regardless of case (proposal 2026-11-06-shared-test-libraries, O-11 i): on Windows `Desktop.ini` is `desktop.ini`. */
+    private fun ignored(name: String): Boolean {
+        val n = name.lowercase()
+        return n.startsWith(IGNORED_FOLDER) || "/$IGNORED_FOLDER" in n || n.substringAfterLast('/') in IGNORED_FILES
+    }
 
     /** PF-20 to PF-22 for one name. */
     private fun validName(name: String): Boolean =

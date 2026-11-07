@@ -34,7 +34,8 @@ object SetlistParser {
 
     class Result(val setlist: Setlist?, val report: List<ReportEntry>)
 
-    fun parse(bytes: ByteArray, path: String = "", fileName: String? = null, library: String? = null, songIds: Set<String>? = null): Result {
+    /** [allowEmpty]: a library package's empty set, read from its 1.1 view (the library manager's FDS SET-03, PF-43), gives no SL005. */
+    fun parse(bytes: ByteArray, path: String = "", fileName: String? = null, library: String? = null, songIds: Set<String>? = null, allowEmpty: Boolean = false): Result {
         val report = ArrayList<ReportEntry>()
         fun add(level: ReportLevel, code: String, line: Int? = null, detail: String? = null) { report += ReportEntry(level, code, path, line, detail) }
         // Over the size of 13.1 nothing is read; 13.6 has no code of its own, so SL001 names the reason.
@@ -104,7 +105,7 @@ object SetlistParser {
         if (title.isNullOrBlank() || id.isNullOrBlank()) add(ReportLevel.SONG_ERROR, "SL002", detail = listOfNotNull("title".takeIf { title.isNullOrBlank() }, "id".takeIf { id.isNullOrBlank() }).joinToString(", ") + " missing")
         else if (fileName != null && id != fileName.removeSuffix(EXTENSION)) add(ReportLevel.SONG_ERROR, "SL003", detail = "$id in $fileName")
         else if (!isValidId(id!!)) add(ReportLevel.SONG_ERROR, "SL002", detail = "id $id")
-        if (entries.isEmpty()) add(ReportLevel.SONG_ERROR, "SL005")
+        if (entries.isEmpty() && !allowEmpty) add(ReportLevel.SONG_ERROR, "SL005")
         if (entries.size > MAX_ENTRIES) add(ReportLevel.WARNING, "SL103", detail = "${entries.size} entries")
         title?.let { if (it.length > Limits.TITLE_MAX_CHARS) add(ReportLevel.WARNING, "SL104", detail = "${it.length} characters") }
         if (report.any { it.level == ReportLevel.SONG_ERROR }) return Result(null, report)

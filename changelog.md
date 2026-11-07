@@ -6,7 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-- The library manager's 56 shared test libraries (manager 0.1.0, FDS draft 0.7, O-04) are in the app's `packages/` conformance vectors, and `PackageTest` runs every one. The app agrees on 34 of them. The 22 that differ, and one on the format 1.1 path, are listed by name in the test, which fails when the list stops being true. Each difference and each reading of FDS O-11 is in `design/proposals/2026-11-06-shared-test-libraries.md`, awaiting the owner's decision; the app's code is unchanged. FR-LIB-05 needed no change: v0.26 had already made the maintainer required for packages again. `.gitattributes` keeps the package vectors byte-exact.
+- The library manager's 56 shared test libraries (manager 0.1.0, FDS draft 0.7, O-04) are now in the app's `packages/` conformance vectors, and `PackageTest` runs every one. `.gitattributes` keeps the vectors byte-exact.
+- The first run differed on 22 cases. The owner approved every recommendation in `design/proposals/2026-11-06-shared-test-libraries.md` on 2026-11-06, and the app changed for the following:
+  - A package's song errors carry the FDS codes (SNG-nn), with the profile's sentences.
+  - A package reports only its first refusing rule.
+  - An empty set is accepted, and is not offered as a setlist.
+  - An empty package is accepted.
+  - System files are ignored regardless of case.
+- The app now agrees with 47 of the 56 cases. The other 9 wait for the manager to change their `expected.json`; the test names them and fails when that list stops being true.
+- `song-two-files.expected.json` is copied from the library manager, which corrected it to song format v0.23 (`A102, S004`; staged there on 2026-11-07, not yet committed). The format 1.1 path now agrees on all 56 cases, and `PackageTest` lists no format 1.1 difference.
+- FR-LIB-05 needed no change: FRD v0.26 had already made the maintainer required for packages again.
+- `design/song-format.md` v0.23:
+  - S005: a file skipped for another error takes no part in the duplicate-id check.
+  - A003: the ratio is measured against the archive file's size.
+- `design/test-plan.md` v0.21: section 3.2 covers the shared test libraries.
 - The German privacy policy (`docs/privacy-policy.md`, `docs/privacy/index.html`), 0.4.0's new sentence included, was reviewed and accepted (the owner, 2026-11-06). The German app texts of 0.4.0 and the de-DE store listing are still with the reviewer.
 - Privacy policy, *Children* item reworded in English, Dutch and German, both copies, at the owner's request: on Google Play the app is meant for ages 13 and over (the target audience of RUNBOOK Decisions), younger children sing along with a leader's or a parent's phone, and nothing is collected from anyone, so none from children either. Same meaning, no change to what the app does; the effective date stays 6 November 2026. Accepted by the owner the same day, the German sentence included. On the German reviewer's suggestion, the line about the version of record now says the Dutch and German texts are translations of the English one (*sind dessen Übersetzung*), in all three languages, instead of "follow it", which read as unclear.
 - `docs/FDROID-RUNBOOK.md` Step 6: the sign, verify and release commands set `ANDROID_HOME` and use full paths, so each works in a new PowerShell window and any folder; the release is checked with `gh release view` before it is reported done.

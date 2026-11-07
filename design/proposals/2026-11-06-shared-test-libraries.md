@@ -4,7 +4,7 @@
 |---|---|
 | Proposal | Settle the 22 cases where the app's verdict or codes differ from the library manager's shared test libraries, one case on the format 1.1 path, and the ten readings of FDS open item O-11. For each one: whether the app changes, or the FDS and the `expected.json` change. |
 | Date | 2026-11-06 |
-| Status | **Awaiting the owner's decision.** Nothing has changed in the app's code. The FDS and the test libraries change in the manager's repository only after that decision. |
+| Status | **Approved by the owner 2026-11-06, in full** (section 7). The app's part and the song format's part are done. The FDS and the test libraries are for the manager's repository. |
 | Asked by | The library manager's session, 2026-11-06 (manager version 0.1.0, FDS draft 0.7): add the 56 cases to the app's package tests, run them, and list every difference with a recommendation. |
 | Affects | App: `PackageImport.kt`, `LibraryImport` (empty library), the tests. `design/song-format.md` 11, 12.2 and A003. The manager's `design/FDS.md` 3.6, 6.2 to 6.8, APP-01 and APP-23, and `test-libraries/` (`expected.json`, README, checker). Later, `design/test-plan.md` 3.2. |
 | Requirements | FR-LIB-05, FR-LIB-07, FR-LIB-08 |
@@ -210,4 +210,22 @@ The app requires the maintainer (MAN-08, M-75), and `maintainer-no-contact` agre
 
 ## 7. The owner's decisions
 
-*To be filled in.*
+**2026-11-06: "Approve all".** Every recommendation in sections 3 and 4 is taken as written.
+
+What was done in this repository the same day:
+- **App, 3.3.** `PackageImport.sngCode` maps the profile's song errors to SNG codes. `ReportText` gives each SNG code the profile's sentence.
+- **App, 3.4.** A package reports only its first refusing rule. Before, a package with song errors reported all of them.
+- **App, 3.5.** An empty set is accepted. Its view file is read with `SetlistParser`'s `allowEmpty`, and it is neither offered nor installed as a setlist.
+- **App, 3.6.** An empty package is accepted, with `LibraryImport`'s `allowEmpty`. The format 1.1 path keeps L008.
+- **App, (i).** System files are ignored regardless of case.
+- **Song format v0.23:** S005 (3.7), and the ratio of 12.2 and A003 (f).
+- **Test plan v0.21:** 3.2.
+- **Tests.**
+  - The app now gives 47 of the 56 cases their expected verdict and codes.
+  - The 9 that still differ are 3.1 (six cases), 3.2 (one) and 3.4 (two). For each of them the app keeps its reading and the manager changes the `expected.json`.
+  - On the format 1.1 path, `song-two-files` (3.7) differed until 2026-11-07. Then the manager corrected its `expected.json` to `A102, S004`, and the copy here agrees, so the format 1.1 path agrees on all 56.
+  - New tests cover the empty set, the empty library, system files in any case and the SNG mapping.
+
+Still to do elsewhere:
+- **The manager:** the FDS changes and the `expected.json` changes of section 6, and the new cases for (g) and (i).
+- **The library repository:** `release.py` for 3.7 and (f). *Done 2026-11-07* (`Zangbundel-bibliotheek` `784743f`). Its `CONFORMANCE_REF` pin moves to the app commit that carries the corrected `song-two-files.expected.json`.

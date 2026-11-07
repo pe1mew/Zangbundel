@@ -44,27 +44,23 @@ class PackageTest {
     private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
 
     /**
-     * Vectors where the app disagrees today with the shared test libraries (the manager's 0.1.0, FDS draft 0.7).
-     * Each is open in `design/proposals/2026-11-06-shared-test-libraries.md`, which the owner decides; until then
-     * the app's code stays as it is. A vector leaves this list when the app or the vector is changed to agree, and
-     * the test fails until it does, so the list is always the true set of differences.
+     * Vectors where the app and the shared test libraries (the manager's 0.1.0, FDS draft 0.7) still disagree.
+     * `design/proposals/2026-11-06-shared-test-libraries.md`, approved by the owner 2026-11-06, keeps the app's
+     * behaviour for each of these, and the manager changes the vector's `expected.json`. A vector leaves this list
+     * when its new `expected.json` is copied here, and the test fails until it does, so the list is always the true
+     * set of differences.
      */
     private val knownAppDifferences = setOf(
         // Proposal section 3.1: the ZIP reader refuses before the format is known, with its A-code.
         "zip-truncated", "zip-ratio", "path-traversal", "symlink", "entry-encrypted", "names-case",
         // 3.2: two top-level folders are not a package (APP-02), so A001, not PKG-05.
         "two-top-folders",
-        // 3.3: song errors keep the profile's S-codes.
-        "song-not-utf8", "song-no-title", "song-directive-twice", "song-directive-malformed", "song-environment-open",
-        "song-no-lyrics", "song-no-language", "song-id-differs", "song-chorus-early", "song-new-song", "song-value-invalid",
-        // 3.4: the app stops at the first refusing rule.
+        // 3.4: the app reports the first refusing rule only.
         "license-missing", "song-folder-invalid",
-        // 3.5 and 3.6: an empty set and an empty library are refused, where the FDS makes them warnings.
-        "set-empty", "no-songs",
     )
 
-    /** As [knownAppDifferences], for the format 1.1 path ([ArchiveImport] on the view): proposal section 3.7. */
-    private val knownFormat11Differences = setOf("song-two-files")
+    /** As [knownAppDifferences], for the format 1.1 path ([ArchiveImport] on the view). Empty since `song-two-files` follows song format v0.23 (proposal 3.7). */
+    private val knownFormat11Differences = setOf<String>()
 
     private fun codes(a: JsonObject, key: String) = a[key]?.jsonArray?.map { it.jsonPrimitive.content }?.sorted()
 
@@ -140,6 +136,52 @@ class PackageTest {
         assertEquals(info.sets.indices.map { "set-${it + 1}" }, r.library?.setlists?.map { it.setlist.id })
         assertTrue(r.report.none { it.code == LibraryOpen.NOT_SIGNED }, "signed: no W013")
         assertTrue(r.files.keys.any { it.startsWith("songs/") })
+    }
+
+    @Test
+    fun `an empty set is accepted and not offered, and an empty library is accepted`() {
+        val set = LibraryOpen.open(resource("packages/set-empty.zbl"), app, jdk)
+        assertFalse(set.refused, "${set.report}")
+        assertEquals(listOf("set-1"), set.library?.setlists?.map { it.setlist.id }, "the empty set-2 is not a setlist")
+        assertTrue(set.files.keys.none { it == "setlists/set-2.zbs" }, "nor installed")
+        val none = LibraryOpen.open(resource("packages/no-songs.zbl"), app, jdk)
+        assertFalse(none.refused, "${none.report}")
+        assertEquals(0, none.library?.songs?.size)
+    }
+
+    /** [zip] with extra entries, each named relative to its library folder. */
+    private fun withEntries(zip: ByteArray, vararg extra: Pair<String, String>): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(out).use { z ->
+            var top = ""
+            java.util.zip.ZipInputStream(zip.inputStream()).use { input ->
+                generateSequence { input.nextEntry }.forEach { e ->
+                    top = e.name.substringBefore('/')
+                    z.putNextEntry(java.util.zip.ZipEntry(e.name)); input.copyTo(z); z.closeEntry()
+                }
+            }
+            for ((name, text) in extra) { z.putNextEntry(java.util.zip.ZipEntry("$top/$name")); z.write(text.toByteArray()); z.closeEntry() }
+        }
+        return out.toByteArray()
+    }
+
+    @Test
+    fun `system files are ignored regardless of case`() {
+        val base = resource("packages/valid-unsigned.zbl")
+        val bytes = withEntries(base, "Desktop.ini" to "[x]", "songs/vader-jacob/THUMBS.DB" to "x", ".ds_store" to "x")
+        val r = LibraryOpen.open(bytes, app, jdk)
+        assertFalse(r.refused, "${r.report}")
+        assertTrue(LibraryOpen.open(withEntries(base, "Desktop.txt" to "x"), app, jdk).report.any { it.code == "STR-01" }, "only those names are ignored")
+    }
+
+    @Test
+    fun `a song error in a package carries its FDS code`() {
+        fun entry(code: String, detail: String? = null) = ReportEntry(ReportLevel.SONG_ERROR, code, "songs/a/a.cho", detail = detail)
+        assertEquals("SNG-02", PackageImport.sngCode(entry("S003", "title, language")))
+        assertEquals("SNG-11", PackageImport.sngCode(entry("S003", "language")))
+        assertEquals("SNG-12", PackageImport.sngCode(entry("S003", "id")))
+        assertEquals("SNG-12", PackageImport.sngCode(entry("S004")))
+        assertEquals("S005", PackageImport.sngCode(entry("S005")), "no FDS code: unchanged")
     }
 
     @Test

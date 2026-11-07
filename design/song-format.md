@@ -5,7 +5,7 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.22 (draft) |
+| Document version | 0.23 (draft) |
 | Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -35,6 +35,7 @@
 | 0.20 | 2026-11-06 | Library packages that format 1.1 apps can read, as the owner decided on 2026-11-06 (`design/proposals/2026-11-06-backward-compatible-packages.md`, section 8; FDS draft 0.5). 12.11: every package carries a 1.1 view (`zangbundel.json`, `LICENSE`, songs under `songs/`, `setlists/set-<n>.zbs`), listed in its manifest and checked by FDS VIEW-01 to VIEW-03. Songs move to `songs/<song id>/<song id>.cho`. The maintainer becomes required. New row on the signing status. 12.5: an app that reads only format 1.1 imports a package as a snapshot. 4.2, 4.3 and L006: the UUID reservation is withdrawn, so no valid library becomes invalid. 11: new library-level warning W013 (not signed), for old formats and unsigned packages. 13.5: the `set-<n>` ids are shared with the view. Format version unchanged (1.1). FRD FR-LIB-09 still states the reservation and FR-LIB-05 the optional maintainer; the FRD follows in the app session. |
 | 0.21 | 2026-11-06 | Depends on FRD v0.26 (FR-LIB-05, FR-LIB-08, FR-LIB-09 amended for the decision that v0.20 carries out) and BLE protocol v0.52. 4.3 and 12.11, the owner's decision on assessment SP-39: a `zangbundel.json` library carrying the id of an installed or remembered package is an unsigned copy of it. The app asks M-71 when the package was signed and M-72 when not, never replacing it silently. |
 | 0.22 | 2026-11-06 | 4.3: an accepted unsigned copy of a package replaces it, and the device memory records "unsigned" with the version it had, as the library manager's FDS draft 0.6 says in APP-06. Built in the app (`LibraryInstaller`). No format change. |
+| 0.23 | 2026-11-06 | Two readings settled with the library manager's shared test libraries, approved by the owner (`design/proposals/2026-11-06-shared-test-libraries.md`, 3.7 and O-11 f). 11.3 S005: a file skipped for another song error takes no part in the duplicate-id check, so the good song of a pair imports. 12.2 and A003: the ratio limit is 20 × the size of the archive file, not the compressed sizes the central directory declares. Both as the app already did; the library repository's `release.py` follows. No format change. |
 
 ---
 
@@ -599,7 +600,7 @@ The "what changed" view after an update [FR-LIB-11] is computed from song ids an
 | S002 | File larger than 64 KiB |
 | S003 | Required metadata missing or invalid: id, title or language |
 | S004 | `id` does not equal the file name |
-| S005 | `id` duplicates another song in this library (both files are reported; the first in path order is imported) |
+| S005 | `id` duplicates another song in this library (both files are reported; the first in path order is imported). A file skipped for another song error is not a song of the library and takes no part in this check |
 | S006 | A single-valued directive occurs more than once |
 | S007 | Environment not closed, closed without being open, or nested |
 | S008 | `{chorus}` before any chorus definition |
@@ -669,7 +670,7 @@ Importing from the git repository directly (clone or pull) remains allowed; whet
 | Entry types | Regular files only. Directory entries are ignored; symbolic links and other special entries are an error (A005). |
 | Compression | *stored* (0) or *deflate* (8) only. Encryption of any kind is an error (A004). |
 | Top-level layout | All content at the archive root: `zangbundel-archive.json`, `zangbundel.json`, `songs/…`. Exactly one top-level directory wrapping everything (as GitHub source downloads produce) is accepted only for repository snapshots (12.5). |
-| Size limits | Archive ≤ 64 MiB (A002); warning above 16 MiB (A101). Uncompressed total ≤ 256 MiB and ≤ 20 × the compressed size (A003, zip-bomb guard). ≤ 10 000 entries (A002). Individual `.cho` entries follow section 5.5. |
+| Size limits | Archive ≤ 64 MiB (A002); warning above 16 MiB (A101). Uncompressed total ≤ 256 MiB and ≤ 20 × the size of the archive file itself (A003, zip-bomb guard; not the compressed sizes the central directory declares). ≤ 10 000 entries (A002). Individual `.cho` entries follow section 5.5. |
 | Duplicate names | An error (A006). |
 | Comments and extra fields | Ignored. |
 
@@ -793,7 +794,7 @@ Archive-level codes are **library errors** (section 11.1): the archive is refuse
 |---|---|
 | A001 | Not a ZIP file, or no `zangbundel.json` at the root (or, for a snapshot, inside the single top-level directory) |
 | A002 | Archive larger than 64 MiB, or more than 10 000 entries |
-| A003 | Uncompressed total larger than 256 MiB or more than 20 × the compressed size |
+| A003 | Uncompressed total larger than 256 MiB or more than 20 × the size of the archive file |
 | A004 | An entry is encrypted or uses a compression method other than stored or deflate |
 | A005 | An entry is a symbolic link or other special entry |
 | A006 | An entry name is not valid (absolute, `..`, backslash, not UTF-8, too long) or duplicates another, including by case |
