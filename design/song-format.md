@@ -5,7 +5,7 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.27 (draft) |
+| Document version | 0.28 (draft) |
 | Date | 2026-11-07 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -40,6 +40,7 @@
 | 0.25 | 2026-11-07 | Two points that change the line list, settled as the app reads them, approved by the owner (`design/proposals/2026-11-07-indented-comments-and-display-text.md`). 5.2: a file comment's first character is `#` with no trimming; an indented `#` line is a lyric line, and the validator warns with the new W014. 9.1: the display text trims trailing spaces and Unicode Zs, Zl and Zp characters, the no-break space included. The line list is unchanged from app 0.4.0. Conformance vectors `comment-indented`, `nbsp-display`. No format change. |
 | 0.26 | 2026-11-07 | Tag labels in library packages, decided by the owner (`design/proposals/2026-11-07-tag-labels-in-packages.md`). 12.11: a package carries its tag labels in the optional manifest field `tags` (the library manager's FDS 4.1), in the shape of `tags` in `zangbundel.json`; the 1.1 view is unchanged. 4.2 points to it. Written by the library session, which the owner made responsible for the format. No format change: the field is optional and an app ignores unknown manifest fields. |
 | 0.27 | 2026-11-07 | 12.11 *Tag labels*, made exact as the app and the library manager already read it: a label's length is counted in Unicode code points, not UTF-16 units, and the control characters it may not hold are those of 5.1 together with tab and LF (C0, DEL and C1). Written by the library session. No format change. |
+| 0.28 | 2026-11-07 | 4.2: which tag label is shown, decided by the owner: the app's language, then its main language, then English, then the label whose language code sorts first, then the tag id. It holds for `zangbundel.json` and for a package's manifest (12.11). The app before this version came close but differed: it skipped the exact language tag (it matched the primary subtag only), compared codes case-sensitively, and took the remaining label in file order; it now follows 4.2. The library manager's FDS (APP-27) points here. Written by the library session. No format change. |
 
 ---
 
@@ -197,6 +198,16 @@ The library file is edited rarely and is small. JSON parses identically on Andro
 | `release_index` | string | MAY | HTTPS URL of the library's release index (`releases.json`, section 12.6). With it the app can check for and download releases; without it the app can only update through git or a URL the user supplies. |
 | `languages` | array of string | MAY | BCP 47 codes of the song languages in the library, informational; the app derives the real list from the songs. |
 | `tags` | object | MAY | Localised labels for tags used in the songs: `{ "<tag>": { "<lang>": "<label>", … } }`. A tag without an entry is shown as is. A library package carries its labels in its manifest instead (12.11). [FR-LIB-30] |
+
+**Which tag label is shown.** For each tag the app takes the first of these that exists [FR-LIB-30]:
+
+1. the label whose language code equals the app's language;
+2. the label whose language code equals the app language's primary subtag, so `nl` for `nl-BE`;
+3. the label for `en`;
+4. the label whose language code sorts first, in ordinal order of the lower-cased codes;
+5. the tag id itself.
+
+Language codes are compared case-insensitively, as BCP 47 says. The same order holds for the labels of a library package's manifest (12.11).
 
 Unknown fields MUST be ignored by the app, so a library can carry extra fields for other tools.
 

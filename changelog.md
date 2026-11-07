@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- Song format v0.28: which tag label is shown (4.2). Written by the library session.
+- The songbook now picks a tag's label exactly as v0.28 says, through the new `TagLabel.choose` in `core/songformat`, tested in `TagLabelTest`. The first that exists wins:
+  1. the app's language exactly (`nl-BE`);
+  2. its primary subtag (`nl`);
+  3. English;
+  4. the label whose language code sorts first;
+  5. the tag id.
+
+  Codes are compared regardless of case. Before, the app looked up only the primary subtag, matched codes case-sensitively, and fell back to the first label in the file.
 - Song format v0.27: tag label lengths in code points, control characters as 5.1 plus tab and LF (12.11). Written by the library session; the app already did this.
 - The library manager's two new test libraries for tag labels (FDS draft 0.10, D-44) are copied into the `packages/` corpus: `tag-labels` (accepted) and `tag-label-invalid` (MAN-02). The app agrees with both, and `PackageTest` now runs 58 cases. They were copied from the manager's staged files, before its commit.
 - Song format v0.26: tag labels in library packages, in the optional manifest field `tags` (12.11; decision `design/proposals/2026-11-07-tag-labels-in-packages.md`). Written and staged by the library session, which the owner made responsible for the format.

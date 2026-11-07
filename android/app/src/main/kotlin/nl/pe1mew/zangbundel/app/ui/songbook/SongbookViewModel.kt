@@ -16,6 +16,7 @@ import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.app.library.SongbookFilter
 import nl.pe1mew.zangbundel.core.songformat.LibraryFileParser
 import nl.pe1mew.zangbundel.core.songformat.PackageImport
+import nl.pe1mew.zangbundel.core.songformat.TagLabel
 import nl.pe1mew.zangbundel.platform.storage.InstallPlan
 import nl.pe1mew.zangbundel.platform.storage.Songbook
 import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
@@ -102,8 +103,8 @@ class SongbookViewModel(private val songbook: Songbook, private val book: Setlis
 
     private fun State.recomputed() = copy(rows = filter.apply(entries, textHits))
 
-    private fun label(byLanguage: Map<String, String>): String? =
-        byLanguage[Locale.getDefault().language] ?: byLanguage["en"] ?: byLanguage.values.firstOrNull()
+    /** Song format 4.2 (v0.28): the app's language, its primary subtag, English, the code that sorts first. */
+    private fun label(byLanguage: Map<String, String>): String? = TagLabel.choose(byLanguage, Locale.getDefault().toLanguageTag())
 
     companion object {
         val Factory = viewModelFactory {
