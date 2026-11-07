@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- Song format v0.27: tag label lengths in code points, control characters as 5.1 plus tab and LF (12.11). Written by the library session; the app already did this.
+- The library manager's two new test libraries for tag labels (FDS draft 0.10, D-44) are copied into the `packages/` corpus: `tag-labels` (accepted) and `tag-label-invalid` (MAN-02). The app agrees with both, and `PackageTest` now runs 58 cases. They were copied from the manager's staged files, before its commit.
 - Song format v0.26: tag labels in library packages, in the optional manifest field `tags` (12.11; decision `design/proposals/2026-11-07-tag-labels-in-packages.md`). Written and staged by the library session, which the owner made responsible for the format.
 - The app reads a package's tag labels.
   - `PackageImport` checks the manifest's `tags`: up to 200 tags, 1 to 20 labels each, each label 1 to 60 characters on one line, NFC, no control characters. A package that breaks these is refused with MAN-02.
