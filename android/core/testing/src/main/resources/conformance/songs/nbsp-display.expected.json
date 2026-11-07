@@ -1,0 +1,13 @@
+{
+  "accepted": true,
+  "codes": [
+    "W002"
+  ],
+  "canonical_sha256": "3efed083b03ceee3aac4b87729abf02f03ff72e3222da53176beef7d4faa835e",
+  "hash": "3efed083b03ceee3aac4b87729abf02f",
+  "canonical_equals_input": true,
+  "lines": [
+    "Een regel.",
+    "Nog een regel."
+  ]
+}

@@ -11,3 +11,5 @@ vuur-in-de-nacht
 control-c1
 directive-escaped-close
 directive-indented
+comment-indented
+nbsp-display

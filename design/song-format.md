@@ -5,7 +5,7 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.24 (draft) |
+| Document version | 0.25 (draft) |
 | Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -37,6 +37,7 @@
 | 0.22 | 2026-11-06 | 4.3: an accepted unsigned copy of a package replaces it, and the device memory records "unsigned" with the version it had, as the library manager's FDS draft 0.6 says in APP-06. Built in the app (`LibraryInstaller`). No format change. |
 | 0.23 | 2026-11-06 | Two readings settled with the library manager's shared test libraries, approved by the owner (`design/proposals/2026-11-06-shared-test-libraries.md`, 3.7 and O-11 f). 11.3 S005: a file skipped for another song error takes no part in the duplicate-id check, so the good song of a pair imports. 12.2 and A003: the ratio limit is 20 × the size of the archive file, not the compressed sizes the central directory declares. Both as the app already did; the library repository's `release.py` follows. No format change. |
 | 0.24 | 2026-11-07 | Readings settled with the library manager's FDS draft 0.8, approved by the owner (`design/proposals/2026-11-07-fds-0.8-readings.md`). 5.1, S001, SL001: C1 control characters (U+0080 to U+009F) are not allowed. 5.2: blank and directive lines are judged after trimming spaces and tabs only, a directive whose closing brace is escaped is malformed, and trimming in sections 5 and 6 means spaces and tabs. 5.3 says so for names, values and the meta split. The display text of section 9.1 still trims trailing whitespace as before. Conformance vectors `control-c1`, `directive-escaped-close`, `directive-indented`. No format change. |
+| 0.25 | 2026-11-07 | Two points that change the line list, settled as the app reads them, approved by the owner (`design/proposals/2026-11-07-indented-comments-and-display-text.md`). 5.2: a file comment's first character is `#` with no trimming; an indented `#` line is a lyric line, and the validator warns with the new W014. 9.1: the display text trims trailing spaces and Unicode Zs, Zl and Zp characters, the no-break space included. The line list is unchanged from app 0.4.0. Conformance vectors `comment-indented`, `nbsp-display`. No format change. |
 
 ---
 
@@ -255,7 +256,7 @@ The parser works line by line. Each line is exactly one of:
 | Line type | Rule | Example |
 |---|---|---|
 | **Blank** | Empty after trimming spaces and tabs. Separates implicit verses (section 7.3); otherwise a visual gap. | |
-| **File comment** | First character is `#`. Not shown. Not a lyric line. | `# Melodie: Vader Jacob` |
+| **File comment** | First character is `#`, with nothing before it: no trimming. Not shown. Not a lyric line. A line with spaces or tabs before the `#` is a lyric line, and the validator warns (W014). | `# Melodie: Vader Jacob` |
 | **Directive** | After trimming spaces and tabs, the first character is `{` and the last is an unescaped `}`, with no other `{` or `}` unless escaped (section 5.4). | `{start_of_chorus: Refrein}` |
 | **Lyric or content line** | Anything else. Shown in the lyric view when it is in a verse, chorus, bridge or outside any environment and has text left after chord removal (section 9). | `De [G]zon is weg,` |
 
@@ -450,7 +451,7 @@ For each source line:
    - any other directive → nothing.
 4. **Content line** while `env` is *other* → nothing (tab, grid, abc, unknown).
 5. **Content line** otherwise:
-   - compute the *display text*: remove every `[…]` token (chords and annotations), resolve escapes (section 5.4), replace tabs by spaces, trim trailing whitespace;
+   - compute the *display text*: remove every `[…]` token (chords and annotations), resolve escapes (section 5.4), replace tabs by spaces, trim trailing white space: spaces and characters of the Unicode categories Zs, Zl and Zp, so the no-break space U+00A0 too (unlike the trimming of sections 5 and 6);
    - if the display text is empty (a chord-only line) → nothing;
    - else append the display text to `L`; if `env` is chorus, also to `current_chorus_lines`.
 
@@ -629,6 +630,7 @@ The "what changed" view after an update [FR-LIB-11] is computed from song ids an
 | W011 | `variant-group` with only one member in this library |
 | W012 | `notation` path does not exist in the repository |
 | W013 | Library not signed: the app cannot show who made it or check that nothing was changed. Library-level; given once per import of a release archive, snapshot or `zangbundel.json` library, and of a library package without `manifest.sig` (12.11). It never blocks anything: the library screen shows a short *niet ondertekend* / *not signed* note where a signed package shows its fingerprint. |
+| W014 | A line starts with spaces or tabs followed by `#`: it is a lyric line, not a file comment (5.2). Remove the indentation to make it a comment. Validator only: the app does not report it, and conformance comparisons leave it out. |
 
 **Info:**
 
