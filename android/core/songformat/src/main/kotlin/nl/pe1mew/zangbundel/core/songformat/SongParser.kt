@@ -437,7 +437,8 @@ object SongParser {
 
     private const val ESCAPABLE = "[]{}\\"
     private val NAME = Regex("[A-Za-z_]+")
-    private val LANGUAGE = Regex("^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*$")
+    /** The language code of `{meta: language}` (6.2); also the key of a package's tag labels (12.11). */
+    internal val LANGUAGE = Regex("^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*$")
     private val YEAR = Regex("^[0-9]{4}$")
     private val TIME = Regex("^[0-9]+(\\.[0-9]{1,3})?$")
     /** SPDX license identifier syntax, `LicenseRef-` included; the list itself is not consulted. */

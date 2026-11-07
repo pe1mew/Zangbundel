@@ -31,7 +31,7 @@ A new optional manifest field, FDS 4.1:
 |---|---|---|---|
 | `tags` | object | no | Localised labels for tags used in the songs: `{ "<tag>": { "<lang>": "<label>", … } }`, the shape of `tags` in `zangbundel.json` (song format 4.2). At most 200 tags. |
 | `tags.<tag>` | object | — | The key is a tag in tag syntax, the syntax of a song id (song format 3.2). The value has 1 to 20 entries. |
-| `tags.<tag>.<lang>` | string | — | The key is a language code as in `{meta: language}` (song format 6.1). The label is 1 to 60 characters, one line, NFC, with no control characters. |
+| `tags.<tag>.<lang>` | string | — | The key is a language code as in `{meta: language}` (song format 6.1). The label is 1 to 60 characters, one line, NFC, with no control characters. *Made exact in song format v0.27:* characters are Unicode code points, not UTF-16 units, and the control characters are U+0000 to U+001F (tab and LF included) and U+007F to U+009F. |
 
 - A violation is MAN-02, like any other manifest field. A manifest is written by the Editor, so it is held to its rules; a `zangbundel.json` is written by hand and only warned about (L002, S012).
 - A label for a tag that no song uses is allowed. The Editor may report it as Info.

@@ -15,6 +15,7 @@ import nl.pe1mew.zangbundel.app.ZangbundelApp
 import nl.pe1mew.zangbundel.app.library.SetlistBook
 import nl.pe1mew.zangbundel.app.library.SongbookFilter
 import nl.pe1mew.zangbundel.core.songformat.LibraryFileParser
+import nl.pe1mew.zangbundel.core.songformat.PackageImport
 import nl.pe1mew.zangbundel.platform.storage.InstallPlan
 import nl.pe1mew.zangbundel.platform.storage.Songbook
 import nl.pe1mew.zangbundel.platform.storage.SongbookEntry
@@ -54,7 +55,9 @@ class SongbookViewModel(private val songbook: Songbook, private val book: Setlis
         val labels = HashMap<String, String>()
         for (e in entries.distinctBy { it.libraryId }) {
             val library = runCatching { LibraryFileParser.parse(songbook.read(e.libraryId, e.directory, InstallPlan.LIBRARY_FILE), appVersion).library }.getOrNull()
-            library?.tags?.forEach { (tag, byLanguage) -> labels.putIfAbsent(tag, label(byLanguage) ?: tag) }
+            // A library package carries its labels in its manifest, not in its 1.1 view (song format 12.11, v0.26).
+            val packageTags = runCatching { PackageImport.tagLabels(songbook.read(e.libraryId, e.directory, InstallPlan.MANIFEST_FILE)) }.getOrDefault(emptyMap())
+            (library?.tags.orEmpty() + packageTags).forEach { (tag, byLanguage) -> labels.putIfAbsent(tag, label(byLanguage) ?: tag) }
         }
         val s = _state.value.copy(editing = editing())
         val filter = s.filter.copy(libraries = s.filter.libraries.filterTo(HashSet()) { id -> libraries.any { it.id == id } })

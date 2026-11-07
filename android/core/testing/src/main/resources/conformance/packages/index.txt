@@ -46,6 +46,8 @@ songs-stray-file
 stray-file
 symlink
 system-files
+tag-label-invalid
+tag-labels
 two-top-folders
 valid-signed
 valid-unsigned

@@ -194,6 +194,50 @@ class PackageTest {
         return out.toByteArray()
     }
 
+    /** [zip] (unsigned) with its manifest's `tags` set to [tags], a JSON object; nothing else changes. */
+    private fun withTags(zip: ByteArray, tags: String): ByteArray {
+        val entries = LinkedHashMap<String, ByteArray>()
+        java.util.zip.ZipInputStream(zip.inputStream()).use { input -> generateSequence { input.nextEntry }.forEach { entries[it.name] = input.readBytes() } }
+        val manifestPath = entries.keys.single { it.endsWith("/manifest.json") }
+        val manifest = Json.parseToJsonElement(String(entries.getValue(manifestPath), Charsets.UTF_8)).jsonObject
+        entries[manifestPath] = JsonObject(manifest + ("tags" to Json.parseToJsonElement(tags))).toString().toByteArray(Charsets.UTF_8)
+        val out = java.io.ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(out).use { z -> entries.forEach { (name, bytes) -> z.putNextEntry(java.util.zip.ZipEntry(name)); z.write(bytes); z.closeEntry() } }
+        return out.toByteArray()
+    }
+
+    @Test
+    fun `a package's tag labels come from its manifest, and the view stays as it is`() {
+        val labels = """{"kampvuur": {"nl": "Kampvuur", "en": "Campfire"}, "rustig": {"nl": "Rustig"}}"""
+        val bytes = withTags(resource("packages/valid-unsigned.zbl"), labels)
+        val r = LibraryOpen.open(bytes, app, jdk)
+        assertFalse(r.refused, "${r.report}")
+        val expected = mapOf("kampvuur" to mapOf("nl" to "Kampvuur", "en" to "Campfire"), "rustig" to mapOf("nl" to "Rustig"))
+        assertEquals(expected, r.pkg?.tags)
+        assertEquals(expected, PackageImport.tagLabels(r.manifestBytes), "what the songbook reads from the installed manifest")
+        assertEquals(emptyMap(), r.library?.library?.tags, "the 1.1 view carries no labels (PF-41)")
+        assertFalse(ArchiveImport.open(bytes, app).refused, "an app before packages still imports it as a snapshot")
+        assertEquals(emptyMap(), PackageImport.tagLabels(null))
+        assertEquals(emptyMap(), PackageImport.tagLabels("""{"format": "zangbundel-archive"}""".toByteArray()), "an archive's manifest has none")
+        assertEquals(emptyMap(), LibraryOpen.open(resource("packages/valid-unsigned.zbl"), app, jdk).pkg?.tags, "without tags: none")
+    }
+
+    @Test
+    fun `tag labels that break song format 12-11 are MAN-02`() {
+        val base = resource("packages/valid-unsigned.zbl")
+        val many = (1..201).joinToString(",", "{", "}") { "\"t$it\": {\"nl\": \"T\"}" }
+        val tooManyLabels = (1..21).joinToString(",", "{\"t\": {", "}}") { "\"x${'a' + it}\": \"T\"" }
+        val bad = listOf(
+            "[]", "{\"Kampvuur\": {\"nl\": \"K\"}}", "{\"kampvuur\": \"Kampvuur\"}", "{\"kampvuur\": {}}", tooManyLabels, many,
+            "{\"kampvuur\": {\"n\": \"K\"}}", "{\"kampvuur\": {\"nl\": 3}}", "{\"kampvuur\": {\"nl\": \"\"}}",
+            "{\"kampvuur\": {\"nl\": \"${"x".repeat(61)}\"}}", "{\"kampvuur\": {\"nl\": \"a\\nb\"}}", "{\"kampvuur\": {\"nl\": \"a\\u0085b\"}}",
+            "{\"kampvuur\": {\"nl\": \"Cafe\\u0301\"}}",
+        )
+        for (tags in bad) assertEquals(listOf("MAN-02"), LibraryOpen.open(withTags(base, tags), app, jdk).report.map { it.code }, tags)
+        val edge = """{"t": {"nl": "${"x".repeat(60)}", "nl-BE": "Café"}}"""
+        assertFalse(LibraryOpen.open(withTags(base, edge), app, jdk).refused, "60 characters, a region subtag and NFC are fine")
+    }
+
     @Test
     fun `VIEW-03 checks min_app_version as the oldest app does`() {
         val base = resource("packages/valid-unsigned.zbl")

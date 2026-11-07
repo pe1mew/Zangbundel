@@ -35,6 +35,8 @@ data class PackageInfo(
     val sets: List<Set>,
     val author: Author?,
     val files: List<File>,
+    /** Tag → language → label (song format 12.11, v0.26): what `tags` in `zangbundel.json` is for other formats. */
+    val tags: Map<String, Map<String, String>> = emptyMap(),
 ) {
     data class Set(val name: String, val songs: List<String>)
     data class File(val path: String, val size: Long, val sha256: String)
@@ -282,9 +284,47 @@ object PackageImport {
         if (paths != paths.sortedWith { a, b -> compareBytes(a, b) }) bad("files are not sorted by path")
         if (MANIFEST in paths || SIGNATURE in paths) bad("files lists manifest.json or manifest.sig")
 
+        val tags = tagLabels(root["tags"]) { bad(it) }
+
         return PackageInfo(libraryId, version, title, description, created, modified, changes, licenseId, licenseSummary, licenseText,
-            Library.Maintainer(maintainerName, email, url), sets, author, files)
+            Library.Maintainer(maintainerName, email, url), sets, author, files, tags)
     }
+
+    /**
+     * The optional `tags` of song format 12.11 (v0.26): at most [MAX_TAGS] tags in song-id syntax, each with 1 to
+     * [MAX_LABELS] labels keyed by a language code as in `{meta: language}`, each label 1 to [MAX_LABEL_CHARS]
+     * characters on one line, NFC, without control characters. [bad] refuses (MAN-02).
+     */
+    private fun tagLabels(element: kotlinx.serialization.json.JsonElement?, bad: (String) -> Nothing): Map<String, Map<String, String>> {
+        if (element == null) return emptyMap()
+        val o = element as? JsonObject ?: bad("tags is not an object")
+        if (o.size > MAX_TAGS) bad("more than $MAX_TAGS tags")
+        return o.entries.associate { (tag, value) ->
+            if (!isValidId(tag)) bad("tag \"$tag\" is not in tag syntax")
+            val labels = value as? JsonObject ?: bad("tags.$tag is not an object")
+            if (labels.size !in 1..MAX_LABELS) bad("tags.$tag needs 1 to $MAX_LABELS labels")
+            tag to labels.entries.associate { (language, v) ->
+                if (!SongParser.LANGUAGE.matches(language)) bad("tags.$tag: \"$language\" is not a language code")
+                val label = (v as? JsonPrimitive)?.takeIf { it.isString }?.content ?: bad("tags.$tag.$language is not text")
+                if (label.codePointCount(0, label.length) !in 1..MAX_LABEL_CHARS || label.any { it.code < 0x20 || it in '\u007F'..'\u009F' } ||
+                    !java.text.Normalizer.isNormalized(label, java.text.Normalizer.Form.NFC)) {
+                    bad("tags.$tag.$language must be 1 to $MAX_LABEL_CHARS characters on one line, NFC, without control characters")
+                }
+                language to label
+            }
+        }
+    }
+
+    /**
+     * The tag labels of an installed package's manifest, for the songbook (D-77); empty for anything that is not a
+     * valid manifest, such as a release archive's manifest or a missing file.
+     */
+    fun tagLabels(manifest: ByteArray?): Map<String, Map<String, String>> =
+        (manifest?.let { parseManifest(it) } as? Manifest.Read)?.info?.tags.orEmpty()
+
+    private const val MAX_TAGS = 200
+    private const val MAX_LABELS = 20
+    private const val MAX_LABEL_CHARS = 60
 
     /** `manifest.sig` (FDS §5.2): `{"algorithm": "Ed25519", "signature": "<base64 of 64 bytes>"}`; null when it is not that. */
     private fun parseSignature(bytes: ByteArray): ByteArray? {

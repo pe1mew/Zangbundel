@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-- Song format v0.26: tag labels in library packages, in the optional manifest field `tags` (12.11; decision `design/proposals/2026-11-07-tag-labels-in-packages.md`). Written and staged by the library session, which the owner made responsible for the format. The app doesn't read the field yet.
+- Song format v0.26: tag labels in library packages, in the optional manifest field `tags` (12.11; decision `design/proposals/2026-11-07-tag-labels-in-packages.md`). Written and staged by the library session, which the owner made responsible for the format.
+- The app reads a package's tag labels.
+  - `PackageImport` checks the manifest's `tags`: up to 200 tags, 1 to 20 labels each, each label 1 to 60 characters on one line, NFC, no control characters. A package that breaks these is refused with MAN-02.
+  - The songbook's tag filter takes the labels from the installed manifest, so a package shows *Kampvuur* / *Campfire* instead of `kampvuur`, as a release archive does.
+  - The 1.1 view is unchanged.
+  - Assessment v0.31, SP-40 (Low, resolved).
+  - Tests in `PackageTest`. The library repository's signed test package (247 songs, 9 tags, 18 labels) imports with all its labels.
 - `design/song-format.md` v0.25 settles the two points left open by v0.24, the way the app already reads them. The owner approved this on 2026-11-07 (`design/proposals/2026-11-07-indented-comments-and-display-text.md`). As a result, a song's line list stays the same as in app 0.4.0, and BLE line positions agree across versions.
   - A file comment is a line whose first character is `#`. An indented `#` line is a lyric line, and the validator warns with the new W014, which the app does not report.
   - The display text trims trailing spaces and Unicode Zs, Zl and Zp characters, so a no-break space adds no lyric line.
