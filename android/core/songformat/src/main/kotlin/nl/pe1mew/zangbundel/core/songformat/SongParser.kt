@@ -38,7 +38,7 @@ object SongParser {
             add(ReportLevel.SONG_ERROR, "S001", detail = "not valid UTF-8")
             return Result(null, report)
         }
-        text.indexOfFirst { (it < ' ' && it != '\n' && it != '\r' && it != '\t') || it == '\u007F' }.takeIf { it >= 0 }?.let { at ->
+        text.indexOfFirst { isControl(it) }.takeIf { it >= 0 }?.let { at ->
             add(ReportLevel.SONG_ERROR, "S001", line = text.substring(0, at).count { it == '\n' } + 1, detail = "control character U+%04X".format(text[at].code))
             return Result(null, report)
         }
@@ -154,11 +154,13 @@ object SongParser {
             if (reported.add("$code:$key")) add(level, code, line, detail)
         }
 
+        /** 5.2: a blank line and a directive line are judged after trimming spaces and tabs only, never other whitespace. */
         fun line(n: Int, line: String) {
+            val trimmed = line.trim(' ', '\t')
             when {
-                line.isBlank() -> blank()
+                trimmed.isEmpty() -> blank()
                 line.startsWith("#") -> {}
-                line.startsWith("{") || line.endsWith("}") -> directive(n, line)
+                trimmed.startsWith("{") || trimmed.endsWith("}") -> directive(n, trimmed)
                 else -> content(n, line)
             }
         }
@@ -184,14 +186,16 @@ object SongParser {
         }
 
         private fun directive(n: Int, line: String) {
-            if (!(line.startsWith("{") && line.endsWith("}")) || line.length < 2 || hasUnescapedBrace(line.substring(1, line.length - 1))) {
+            // 5.2: the closing brace must not itself be escaped (`{c: a\}` has none).
+            if (!(line.startsWith("{") && line.endsWith("}")) || line.length < 2 || escapedAt(line, line.length - 1) ||
+                hasUnescapedBrace(line.substring(1, line.length - 1))) {
                 add(ReportLevel.SONG_ERROR, "S011", n)
                 return
             }
             val inner = line.substring(1, line.length - 1)
             val colon = inner.indexOf(':')
-            val rawName = (if (colon < 0) inner else inner.substring(0, colon)).trim()
-            val value = if (colon < 0) null else unescape(inner.substring(colon + 1).trim())
+            val rawName = (if (colon < 0) inner else inner.substring(0, colon)).trim(' ', '\t')
+            val value = if (colon < 0) null else unescape(inner.substring(colon + 1).trim(' ', '\t'))
             if (!NAME.matches(rawName)) {
                 add(ReportLevel.SONG_ERROR, "S011", n, rawName)
                 return
@@ -201,9 +205,9 @@ object SongParser {
             when {
                 name == "meta" -> {
                     val v = value.orEmpty()
-                    val split = v.indexOfFirst { it.isWhitespace() }
+                    val split = v.indexOfFirst { it == ' ' || it == '\t' }
                     val metaName = (if (split < 0) v else v.substring(0, split)).lowercase()
-                    val metaValue = if (split < 0) "" else v.substring(split).trim()
+                    val metaValue = if (split < 0) "" else v.substring(split).trim(' ', '\t')
                     field(n, metaName, metaValue, viaMeta = true)
                 }
                 name in FIELDS || name in MULTI || name in KNOWN_UNUSED_FIELDS -> field(n, name, value.orEmpty(), viaMeta = false)
@@ -400,6 +404,16 @@ object SongParser {
         "final newline".takeIf { !text.endsWith("\n") || text.endsWith("\n\n") || text.endsWith("\r\n\r\n") },
         "NFD".takeIf { !Normalizer.isNormalized(text, Normalizer.Form.NFC) },
     )
+
+    /** True when the character at [i] follows an odd run of backslashes, so it is escaped (5.4). */
+    internal fun escapedAt(s: String, i: Int): Boolean {
+        var k = i - 1
+        while (k >= 0 && s[k] == '\\') k--
+        return (i - 1 - k) % 2 == 1
+    }
+
+    /** 5.1: U+0000 to U+001F other than tab, LF and CR, and U+007F to U+009F (C1 included, song format v0.24). */
+    internal fun isControl(c: Char): Boolean = (c < ' ' && c != '\n' && c != '\r' && c != '\t') || c in '\u007F'..'\u009F'
 
     private fun hasUnescapedBrace(s: String): Boolean {
         var i = 0

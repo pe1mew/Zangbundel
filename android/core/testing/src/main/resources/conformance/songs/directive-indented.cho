@@ -1,0 +1,6 @@
+{title: Test}
+{meta: id directive-indented}
+{meta: language nl}
+  {start_of_verse}
+Een regel.
+	{end_of_verse}

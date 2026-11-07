@@ -5,7 +5,7 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.23 (draft) |
+| Document version | 0.24 (draft) |
 | Date | 2026-11-06 |
 | Author | Remko Welling |
 | Status | Draft for review |
@@ -36,6 +36,7 @@
 | 0.21 | 2026-11-06 | Depends on FRD v0.26 (FR-LIB-05, FR-LIB-08, FR-LIB-09 amended for the decision that v0.20 carries out) and BLE protocol v0.52. 4.3 and 12.11, the owner's decision on assessment SP-39: a `zangbundel.json` library carrying the id of an installed or remembered package is an unsigned copy of it. The app asks M-71 when the package was signed and M-72 when not, never replacing it silently. |
 | 0.22 | 2026-11-06 | 4.3: an accepted unsigned copy of a package replaces it, and the device memory records "unsigned" with the version it had, as the library manager's FDS draft 0.6 says in APP-06. Built in the app (`LibraryInstaller`). No format change. |
 | 0.23 | 2026-11-06 | Two readings settled with the library manager's shared test libraries, approved by the owner (`design/proposals/2026-11-06-shared-test-libraries.md`, 3.7 and O-11 f). 11.3 S005: a file skipped for another song error takes no part in the duplicate-id check, so the good song of a pair imports. 12.2 and A003: the ratio limit is 20 × the size of the archive file, not the compressed sizes the central directory declares. Both as the app already did; the library repository's `release.py` follows. No format change. |
+| 0.24 | 2026-11-07 | Readings settled with the library manager's FDS draft 0.8, approved by the owner (`design/proposals/2026-11-07-fds-0.8-readings.md`). 5.1, S001, SL001: C1 control characters (U+0080 to U+009F) are not allowed. 5.2: blank and directive lines are judged after trimming spaces and tabs only, a directive whose closing brace is escaped is malformed, and trimming in sections 5 and 6 means spaces and tabs. 5.3 says so for names, values and the meta split. The display text of section 9.1 still trims trailing whitespace as before. Conformance vectors `control-c1`, `directive-escaped-close`, `directive-indented`. No format change. |
 
 ---
 
@@ -243,7 +244,7 @@ Unknown fields MUST be ignored by the app, so a library can carry extra fields f
 - A song file is **UTF-8** text without byte order mark. Unicode is normalised to **NFC**.
 - Line separator is **LF** (`0x0A`). The file ends with exactly one LF.
 - No line has trailing spaces or tabs.
-- Control characters other than LF are not allowed; a tab is a warning and is shown as a space.
+- Control characters other than LF are not allowed: U+0000 to U+001F and U+007F to U+009F (C0, DEL and C1). A tab is a warning and is shown as a space.
 
 Section 8 defines how the app canonicalises a file that deviates and what it reports.
 
@@ -253,12 +254,14 @@ The parser works line by line. Each line is exactly one of:
 
 | Line type | Rule | Example |
 |---|---|---|
-| **Blank** | Empty after trimming. Separates implicit verses (section 7.3); otherwise a visual gap. | |
+| **Blank** | Empty after trimming spaces and tabs. Separates implicit verses (section 7.3); otherwise a visual gap. | |
 | **File comment** | First character is `#`. Not shown. Not a lyric line. | `# Melodie: Vader Jacob` |
-| **Directive** | First character is `{`, last character is `}`, no other `{` or `}` unless escaped (section 5.4). | `{start_of_chorus: Refrein}` |
+| **Directive** | After trimming spaces and tabs, the first character is `{` and the last is an unescaped `}`, with no other `{` or `}` unless escaped (section 5.4). | `{start_of_chorus: Refrein}` |
 | **Lyric or content line** | Anything else. Shown in the lyric view when it is in a verse, chorus, bridge or outside any environment and has text left after chord removal (section 9). | `De [G]zon is weg,` |
 
-A line that starts with `{` but does not end with `}` (or the reverse) is a malformed directive and an error; it is never shown as lyrics.
+A line that starts with `{` but does not end with `}` (or the reverse) is a malformed directive and an error; it is never shown as lyrics. So is a line holding a second directive (`{c: a} {new_song}`) and one whose closing brace is escaped (`{c: a\}`).
+
+Trimming in sections 5 and 6 removes spaces (U+0020) and tabs (U+0009) only. Other characters that some languages count as whitespace, such as the no-break space U+00A0, U+FEFF and U+0085, are content: a line holding only a no-break space is not blank.
 
 ### 5.3 Directive syntax
 
@@ -268,9 +271,9 @@ A line that starts with `{` but does not end with `}` (or the reverse) is a malf
 ```
 
 - `name` is `[a-z_]+`. Parsers MUST match names case-insensitively; the validator warns on anything but lower case.
-- The colon is required when there is a value. Spaces around the colon and around the value are trimmed.
+- The colon is required when there is a value. Spaces and tabs around the colon and around the value are trimmed.
 - Short forms from ChordPro (`{t}`, `{soc}`, `{eoc}` …) are accepted and listed in sections 6 and 7. The validator does not warn on them, but the long forms are recommended for readability.
-- `{meta: name value}`: the value is split at the first run of whitespace into a *meta name* and a *meta value*. `{meta: tag kampvuur}` sets meta `tag` to `kampvuur`. For the standard names (title, subtitle, artist, composer, lyricist, copyright, album, year, key, time, tempo, duration, capo, sorttitle) `{meta: title X}` and `{title: X}` are equivalent.
+- `{meta: name value}`: the value is split at the first run of spaces or tabs into a *meta name* and a *meta value*. `{meta: tag kampvuur}` sets meta `tag` to `kampvuur`. For the standard names (title, subtitle, artist, composer, lyricist, copyright, album, year, key, time, tempo, duration, capo, sorttitle) `{meta: title X}` and `{title: X}` are equivalent.
 - The ChordPro 6 attribute form `{start_of_verse: label="Couplet 1"}` is **not** part of the profile. Write `{start_of_verse: Couplet 1}`.
 - Unknown directives are ignored (section 10.1). The validator lists them once per file as an informational message so typos are noticed.
 
@@ -596,7 +599,7 @@ The "what changed" view after an update [FR-LIB-11] is computed from song ids an
 
 | Code | Condition |
 |---|---|
-| S001 | File is not valid UTF-8, or contains control characters other than LF, CR, tab |
+| S001 | File is not valid UTF-8, or contains control characters other than LF, CR, tab (C1, U+0080 to U+009F, included; section 5.1) |
 | S002 | File larger than 64 KiB |
 | S003 | Required metadata missing or invalid: id, title or language |
 | S004 | `id` does not equal the file name |
@@ -917,7 +920,7 @@ Setlist errors skip the setlist; the rest of the library imports. Warnings impor
 
 | Code | Level | Condition |
 |---|---|---|
-| SL001 | error | File is not valid UTF-8, or contains control characters other than LF, CR, tab |
+| SL001 | error | File is not valid UTF-8, or contains control characters other than LF, CR, tab (C1 included, as section 5.1) |
 | SL002 | error | `{title}` or `{meta: id}` missing, empty, duplicated, or `{title}` after the first entry |
 | SL003 | error | `id` does not equal the file name, or duplicates another setlist in this library |
 | SL004 | error | Malformed entry line (not `<id>/<id>`, not `? <title>`) or malformed directive |

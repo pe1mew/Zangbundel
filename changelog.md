@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
   - System files are ignored regardless of case.
 - The app now agrees with 47 of the 56 cases. The other 9 wait for the manager to change their `expected.json`; the test names them and fails when that list stops being true.
 - `song-two-files.expected.json` is copied from the library manager, which corrected it to song format v0.23 (`A102, S004`; staged there on 2026-11-07, not yet committed). The format 1.1 path now agrees on all 56 cases, and `PackageTest` lists no format 1.1 difference.
+- The library manager's FDS draft 0.8 lists ten readings for the app to confirm (O-11). Five already agreed, among them strict signature checking: a new `PackageTest` shows that libsodium rejects a forged signature under the identity key and under a non-canonical key. The owner approved the other five on 2026-11-07 (`design/proposals/2026-11-07-fds-0.8-readings.md`), and the app now follows them:
+  - a set name that can't be a setlist title is refused (MAN-02);
+  - C1 control characters (U+0080 to U+009F) are refused in songs, setlists and file names;
+  - a directive whose closing brace is escaped (`{c: a\}`) is malformed;
+  - blank and directive lines, names and values are trimmed of spaces and tabs only, so a line holding only a no-break space is no longer blank, and an indented directive now counts as a directive;
+  - VIEW-03 checks a package's view as app 0.1.0 would.
+- `design/song-format.md` v0.24 says so in 5.1, 5.2, 5.3, S001 and SL001. There are three new song vectors: `control-c1`, `directive-escaped-close`, `directive-indented`.
+- Three points are left open for the owner (proposal section 5): how the display text is trimmed (it affects the line list), indented comments, and the manager's trimming of values.
 - FR-LIB-05 needed no change: FRD v0.26 had already made the maintainer required for packages again.
 - `design/song-format.md` v0.23:
   - S005: a file skipped for another error takes no part in the duplicate-id check.

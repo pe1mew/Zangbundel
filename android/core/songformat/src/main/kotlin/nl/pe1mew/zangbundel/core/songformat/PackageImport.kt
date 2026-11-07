@@ -150,7 +150,7 @@ object PackageImport {
             for (set in info.sets) set.songs.firstOrNull { it !in songIds }?.let { return refused("SET-01", "set \"${set.name}\": $it is not a song of the library") }
 
             // VIEW-01 to VIEW-03 (FDS §3.7, §6.8): the 1.1 view is complete, agrees with the manifest and passes the 1.1 library checks.
-            view(info, files, appVersion)?.let { (code, detail, path) -> return refused(code, detail, path) }
+            view(info, files)?.let { (code, detail, path) -> return refused(code, detail, path) }
 
             // The songs and the view's setlists through the checks of song-format section 11, as for an archive; any error refuses (APP-01).
             // An empty library (STR-02) and an empty set (SET-03) are warnings the Editor saves, so neither refuses here; an empty set
@@ -252,7 +252,14 @@ object PackageImport {
             val songs = (o["songs"] as? JsonArray ?: bad("a set has no songs list")).map { s ->
                 ((s as? JsonPrimitive)?.takeIf { it.isString }?.content)?.takeIf { isValidId(it) } ?: bad("a set lists an invalid song ID")
             }
-            PackageInfo.Set(o.text("name", 1, 60), songs)
+            // A set name becomes the title of setlists/set-<n>.zbs (PF-43), so it must be one (song format 13.2): one line, no
+            // brace, no leading or trailing space, NFC (proposal 2026-11-07-fds-0.8-readings, 3.1).
+            val name = o.text("name", 1, 60)
+            if (name.any { it == '{' || it == '}' || SongParser.isControl(it) || it == '\n' || it == '\r' } ||
+                name != name.trim(' ') || !java.text.Normalizer.isNormalized(name, java.text.Normalizer.Form.NFC)) {
+                bad("set name \"$name\" cannot be a setlist title")
+            }
+            PackageInfo.Set(name, songs)
         }
         sets.groupBy { it.name.lowercase() }.values.firstOrNull { it.size > 1 }?.let { bad("two sets are named \"${it.first().name}\"", "SET-02") }
 
@@ -318,15 +325,16 @@ object PackageImport {
     }
 
     /** VIEW-01 to VIEW-03 (FDS §3.7, PF-41 to PF-43); null when the view holds. */
-    private fun view(info: PackageInfo, files: Map<String, ByteArray>, appVersion: String): Triple<String, String, String>? {
+    private fun view(info: PackageInfo, files: Map<String, ByteArray>): Triple<String, String, String>? {
         val expectedSets = info.sets.indices.map { "setlists/set-${it + 1}.zbs" }.toSet()
         val presentSets = files.keys.filter { it.startsWith(LibraryImport.SETLISTS) }.toSet()
         val missing = listOf(VIEW_FILE, LICENSE).filter { it !in files } + (expectedSets - presentSets).sorted()
         if (missing.isNotEmpty()) return Triple("VIEW-01", missing.joinToString(", "), "")
         (presentSets - expectedSets).firstOrNull()?.let { return Triple("VIEW-01", it, it) }
 
-        // VIEW-03 first: a view an older app would refuse is reported as such, whatever else differs.
-        val parsed = LibraryFileParser.parse(files.getValue(VIEW_FILE), appVersion.takeIf { LibraryFileParser.compareVersions(it, VIEW_MIN_APP_VERSION) >= 0 } ?: VIEW_MIN_APP_VERSION)
+        // VIEW-03 first: a view an older app would refuse is reported as such, whatever else differs. The oldest app is the
+        // 0.1.0 that PF-41 fixes, so L005 is checked as that app checks it (proposal 2026-11-07-fds-0.8-readings, 3.5).
+        val parsed = LibraryFileParser.parse(files.getValue(VIEW_FILE), VIEW_MIN_APP_VERSION)
         val library = parsed.library ?: return Triple("VIEW-03", parsed.report.joinToString { "${it.code} ${it.detail.orEmpty()}".trim() }, VIEW_FILE)
 
         // VIEW-02: zangbundel.json (PF-41), field by field and no other fields.
@@ -397,9 +405,9 @@ object PackageImport {
         return n.startsWith(IGNORED_FOLDER) || "/$IGNORED_FOLDER" in n || n.substringAfterLast('/') in IGNORED_FILES
     }
 
-    /** PF-20 to PF-22 for one name. */
+    /** PF-20 to PF-22 for one name; control characters are C0, DEL and C1 (proposal 2026-11-07-fds-0.8-readings, 3.2). */
     private fun validName(name: String): Boolean =
-        name.isNotEmpty() && name.length <= 100 && name.none { it in FORBIDDEN || it.code < 0x20 || it.code == 0x7F } &&
+        name.isNotEmpty() && name.length <= 100 && name.none { it in FORBIDDEN || it.code < 0x20 || it in '\u007F'..'\u009F' } &&
             !name.endsWith(' ') && !name.endsWith('.') && !RESERVED.matches(name)
 
     /** Ordinal byte order of the UTF-8 encodings (FDS §4.1, `files`). */

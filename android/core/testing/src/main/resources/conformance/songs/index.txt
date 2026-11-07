@@ -8,3 +8,6 @@ non-canonical
 unclosed-chorus
 vader-jacob
 vuur-in-de-nacht
+control-c1
+directive-escaped-close
+directive-indented

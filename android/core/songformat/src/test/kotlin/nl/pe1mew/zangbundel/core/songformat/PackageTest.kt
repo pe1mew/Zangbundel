@@ -16,6 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -174,6 +175,64 @@ class PackageTest {
         assertTrue(LibraryOpen.open(withEntries(base, "Desktop.txt" to "x"), app, jdk).report.any { it.code == "STR-01" }, "only those names are ignored")
     }
 
+    /** [zip] (unsigned) with its view's `zangbundel.json` edited and the manifest's entry for it updated, so MAN-06 holds. */
+    private fun withView(zip: ByteArray, edit: (String) -> String): ByteArray {
+        val entries = LinkedHashMap<String, ByteArray>()
+        java.util.zip.ZipInputStream(zip.inputStream()).use { input -> generateSequence { input.nextEntry }.forEach { entries[it.name] = input.readBytes() } }
+        val viewPath = entries.keys.single { it.endsWith("/zangbundel.json") }
+        val view = edit(String(entries.getValue(viewPath), Charsets.UTF_8)).toByteArray(Charsets.UTF_8)
+        entries[viewPath] = view
+        val manifestPath = entries.keys.single { it.endsWith("/manifest.json") }
+        val manifest = Json.parseToJsonElement(String(entries.getValue(manifestPath), Charsets.UTF_8)).jsonObject
+        val files = manifest.getValue("files").jsonArray.map { f ->
+            if (f.jsonObject.getValue("path").jsonPrimitive.content != "zangbundel.json") f
+            else JsonObject(f.jsonObject + mapOf("size" to kotlinx.serialization.json.JsonPrimitive(view.size), "sha256" to kotlinx.serialization.json.JsonPrimitive(sha(view))))
+        }
+        entries[manifestPath] = JsonObject(manifest + ("files" to kotlinx.serialization.json.JsonArray(files))).toString().toByteArray(Charsets.UTF_8)
+        val out = java.io.ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(out).use { z -> entries.forEach { (name, bytes) -> z.putNextEntry(java.util.zip.ZipEntry(name)); z.write(bytes); z.closeEntry() } }
+        return out.toByteArray()
+    }
+
+    @Test
+    fun `VIEW-03 checks min_app_version as the oldest app does`() {
+        val base = resource("packages/valid-unsigned.zbl")
+        assertFalse(LibraryOpen.open(withView(base) { it }, app, jdk).refused, "the rebuilt package itself is valid")
+        val r = LibraryOpen.open(withView(base) { it.replace("\"min_app_version\": \"0.1.0\"", "\"min_app_version\": \"0.2.0\"") }, app, jdk)
+        assertEquals(listOf("VIEW-03"), r.report.map { it.code }, "an app 0.1.0 would refuse it (L005), whatever this app's version")
+    }
+
+    @Test
+    fun `a name with a C1 control character is PKG-06`() {
+        val r = LibraryOpen.open(withEntries(resource("packages/valid-unsigned.zbl"), "a\u0085b" to "x"), app, jdk)
+        assertEquals(listOf("PKG-06"), r.report.map { it.code })
+    }
+
+    @Test
+    fun `a set name that cannot be a setlist title is MAN-02`() {
+        fun code(name: String): String? {
+            val m = """{"formatVersion":1,"libraryId":"3f6c2a1e-8b4d-4c1a-9e2f-7d5b0a6c9e11","version":4,"title":"T",
+                "created":"2026-03-14T18:22:05Z","modified":"2026-11-04T09:41:30Z",
+                "license":{"id":"CC0-1.0","summary":"Free."},"maintainer":{"name":"M","email":"m@example.org"},
+                "sets":[{"name":${kotlinx.serialization.json.JsonPrimitive(name)},"songs":[]}],"files":[]}"""
+            return (PackageImport.parseManifest(m.toByteArray()) as? PackageImport.Manifest.Refused)?.code
+        }
+        assertNull(code("Kampvuur"))
+        assertNull(code("Kampvuur 2 (rustig)"))
+        for (bad in listOf("Demo}\n3f6c2a1e-8b4d-4c1a-9e2f-7d5b0a6c9e11/x", " Demo", "Demo ", "De{mo", "De}mo", "Café", "a\u0085b", "a\rb")) {
+            assertEquals("MAN-02", code(bad), bad)
+        }
+    }
+
+    @Test
+    fun `a line holding only a no-break space is not blank`() {
+        val text = "{title: T}\n{meta: id t}\n{meta: language nl}\none\n \ntwo\n"
+        val nbsp = assertNotNull(SongParser.parse(text.toByteArray(), "t.cho", "t.cho").song)
+        val blank = assertNotNull(SongParser.parse(text.replace(" ", "").toByteArray(), "t.cho", "t.cho").song)
+        assertEquals(1, nbsp.body.size, "one implicit verse: the NBSP line does not end it")
+        assertEquals(2, blank.body.size, "an empty line does")
+    }
+
     @Test
     fun `a song error in a package carries its FDS code`() {
         fun entry(code: String, detail: String? = null) = ReportEntry(ReportLevel.SONG_ERROR, code, "songs/a/a.cho", detail = detail)
@@ -182,6 +241,28 @@ class PackageTest {
         assertEquals("SNG-12", PackageImport.sngCode(entry("S003", "id")))
         assertEquals("SNG-12", PackageImport.sngCode(entry("S004")))
         assertEquals("S005", PackageImport.sngCode(entry("S005")), "no FDS code: unchanged")
+    }
+
+    /**
+     * FDS SIG-03 (draft 0.8, O-11): strict RFC 8032, so no forgery under a small-order key. libsodium, which the
+     * app verifies with (architecture A-26), rejects small-order and non-canonical keys and a small-order R.
+     * Run here on lazysodium-java's libsodium; the app runs lazysodium-android's.
+     */
+    @Test
+    fun `libsodium rejects a signature under the identity key, canonical or not`() {
+        val sodium = nl.pe1mew.zangbundel.core.testing.JvmSodiumCrypto()
+        val libsodium = SignatureVerifier { publicKey, message, signature -> sodium.verify(message, signature, publicKey) }
+        val identity = Base64.getDecoder().decode("AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+        val nonCanonical = ByteArray(32) { 0xFF.toByte() }.also { it[0] = 0xEE.toByte(); it[31] = 0x7F } // y = p + 1
+        val forged = identity + ByteArray(32) // R = identity, S = 0
+        for (message in listOf(ByteArray(0), "{}".toByteArray(), resource("packages/valid-signed.zbl"))) {
+            assertFalse(libsodium.verify(identity, message, forged), "identity key")
+            assertFalse(libsodium.verify(nonCanonical, message, forged), "y = p + 1")
+            assertFalse(libsodium.verify(identity, message, nonCanonical + ByteArray(32)), "non-canonical R")
+        }
+        // And a genuine signature still verifies.
+        val pair = sodium.generateSigningKeyPair()
+        assertTrue(libsodium.verify(pair.publicKey, "{}".toByteArray(), sodium.sign("{}".toByteArray(), pair.secretKey)))
     }
 
     @Test

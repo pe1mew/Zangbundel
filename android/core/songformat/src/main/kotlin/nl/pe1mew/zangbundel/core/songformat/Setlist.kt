@@ -43,7 +43,7 @@ object SetlistParser {
         val text = try { Charsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString() } catch (e: CharacterCodingException) {
             add(ReportLevel.SONG_ERROR, "SL001", detail = "not valid UTF-8"); return Result(null, report)
         }
-        if (text.any { (it < ' ' && it != '\n' && it != '\r' && it != '\t') || it == '\u007F' }) {
+        if (text.any { SongParser.isControl(it) }) {   // C0 and C1, as in songs (5.1, v0.24)
             add(ReportLevel.SONG_ERROR, "SL001", detail = "control character"); return Result(null, report)
         }
         val canonical = Canonical.canonicalise(text)
@@ -57,7 +57,7 @@ object SetlistParser {
         val unknown = HashSet<String>()
         canonical.text.removeSuffix("\n").split('\n').forEachIndexed { i, raw ->
             val n = i + 1
-            val line = raw.trim()
+            val line = raw.trim(' ', '\t')                                  // spaces and tabs only (5.2, v0.24)
             when {
                 line.isEmpty() || line.startsWith("#") -> {}
                 line.startsWith("{") || line.endsWith("}") -> {
@@ -72,7 +72,7 @@ object SetlistParser {
                         name == "meta" -> {
                             val v = value.orEmpty()
                             val metaName = v.substringBefore(' ').lowercase(Locale.ROOT)
-                            val metaValue = v.substringAfter(' ', "").trim()
+                            val metaValue = v.substringAfter(' ', "").trim(' ', '\t')
                             when (metaName) {
                                 "id" -> if (id != null) add(ReportLevel.SONG_ERROR, "SL002", n, "a second id") else id = metaValue
                                 "description" -> description = metaValue
@@ -84,7 +84,7 @@ object SetlistParser {
                     }
                 }
                 line.startsWith("? ") -> {
-                    val t = line.removePrefix("? ").trim()
+                    val t = line.removePrefix("? ").trim(' ', '\t')
                     if (t.isEmpty()) add(ReportLevel.SONG_ERROR, "SL004", n, "empty title") else {
                         entries += Setlist.Entry.Title(t, n)
                         add(ReportLevel.INFO, "I005", n, t)
@@ -118,9 +118,9 @@ object SetlistParser {
         val inner = line.substring(1, line.length - 1)
         if ('{' in inner || '}' in inner) return null
         val colon = inner.indexOf(':')
-        val name = (if (colon < 0) inner else inner.substring(0, colon)).trim()
+        val name = (if (colon < 0) inner else inner.substring(0, colon)).trim(' ', '\t')
         if (!Regex("[A-Za-z_]+").matches(name)) return null
-        return name.lowercase(Locale.ROOT) to (if (colon < 0) null else inner.substring(colon + 1).trim())
+        return name.lowercase(Locale.ROOT) to (if (colon < 0) null else inner.substring(colon + 1).trim(' ', '\t'))
     }
 
     const val EXTENSION = ".zbs"

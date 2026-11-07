@@ -1,0 +1,9 @@
+{
+  "accepted": false,
+  "codes": [
+    "S001"
+  ],
+  "canonical_sha256": "9201dd66b5c9d3d96a8c42259f3e35316a5d8b613ba92f02db467370d57efb22",
+  "hash": "9201dd66b5c9d3d96a8c42259f3e3531",
+  "canonical_equals_input": true
+}
