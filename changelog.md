@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- The setlist parser now splits `{meta: …}` at the first run of spaces or tabs, as song format 5.3 (v0.24) says and the song parser does. Before, it split at a space only. The library session found this. New setlist vector `meta-tab`.
 - The library manager's 56 shared test libraries (manager 0.1.0, FDS draft 0.7, O-04) are now in the app's `packages/` conformance vectors, and `PackageTest` runs every one. `.gitattributes` keeps the vectors byte-exact.
 - The first run differed on 22 cases. The owner approved every recommendation in `design/proposals/2026-11-06-shared-test-libraries.md` on 2026-11-06, and the app changed for the following:
   - A package's song errors carry the FDS codes (SNG-nn), with the profile's sentences.

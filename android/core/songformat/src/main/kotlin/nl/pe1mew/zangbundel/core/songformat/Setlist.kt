@@ -71,8 +71,10 @@ object SetlistParser {
                         }
                         name == "meta" -> {
                             val v = value.orEmpty()
-                            val metaName = v.substringBefore(' ').lowercase(Locale.ROOT)
-                            val metaValue = v.substringAfter(' ', "").trim(' ', '\t')
+                            // 5.3 (v0.24): split at the first run of spaces or tabs, as in songs.
+                            val split = v.indexOfFirst { it == ' ' || it == '\t' }
+                            val metaName = (if (split < 0) v else v.substring(0, split)).lowercase(Locale.ROOT)
+                            val metaValue = if (split < 0) "" else v.substring(split).trim(' ', '\t')
                             when (metaName) {
                                 "id" -> if (id != null) add(ReportLevel.SONG_ERROR, "SL002", n, "a second id") else id = metaValue
                                 "description" -> description = metaValue
