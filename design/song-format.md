@@ -5,8 +5,8 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.25 (draft) |
-| Date | 2026-11-06 |
+| Document version | 0.26 (draft) |
+| Date | 2026-11-07 |
 | Author | Remko Welling |
 | Status | Draft for review |
 | Depends on | `design/functional-requirements.md` v0.26, `design/ble-protocol.md` v0.52 |
@@ -38,6 +38,7 @@
 | 0.23 | 2026-11-06 | Two readings settled with the library manager's shared test libraries, approved by the owner (`design/proposals/2026-11-06-shared-test-libraries.md`, 3.7 and O-11 f). 11.3 S005: a file skipped for another song error takes no part in the duplicate-id check, so the good song of a pair imports. 12.2 and A003: the ratio limit is 20 × the size of the archive file, not the compressed sizes the central directory declares. Both as the app already did; the library repository's `release.py` follows. No format change. |
 | 0.24 | 2026-11-07 | Readings settled with the library manager's FDS draft 0.8, approved by the owner (`design/proposals/2026-11-07-fds-0.8-readings.md`). 5.1, S001, SL001: C1 control characters (U+0080 to U+009F) are not allowed. 5.2: blank and directive lines are judged after trimming spaces and tabs only, a directive whose closing brace is escaped is malformed, and trimming in sections 5 and 6 means spaces and tabs. 5.3 says so for names, values and the meta split. The display text of section 9.1 still trims trailing whitespace as before. Conformance vectors `control-c1`, `directive-escaped-close`, `directive-indented`. No format change. |
 | 0.25 | 2026-11-07 | Two points that change the line list, settled as the app reads them, approved by the owner (`design/proposals/2026-11-07-indented-comments-and-display-text.md`). 5.2: a file comment's first character is `#` with no trimming; an indented `#` line is a lyric line, and the validator warns with the new W014. 9.1: the display text trims trailing spaces and Unicode Zs, Zl and Zp characters, the no-break space included. The line list is unchanged from app 0.4.0. Conformance vectors `comment-indented`, `nbsp-display`. No format change. |
+| 0.26 | 2026-11-07 | Tag labels in library packages, decided by the owner (`design/proposals/2026-11-07-tag-labels-in-packages.md`). 12.11: a package carries its tag labels in the optional manifest field `tags` (the library manager's FDS 4.1), in the shape of `tags` in `zangbundel.json`; the 1.1 view is unchanged. 4.2 points to it. Written by the library session, which the owner made responsible for the format. No format change: the field is optional and an app ignores unknown manifest fields. |
 
 ---
 
@@ -194,7 +195,7 @@ The library file is edited rarely and is small. JSON parses identically on Andro
 | `homepage` | string | MAY | URL for humans (repository page, website). |
 | `release_index` | string | MAY | HTTPS URL of the library's release index (`releases.json`, section 12.6). With it the app can check for and download releases; without it the app can only update through git or a URL the user supplies. |
 | `languages` | array of string | MAY | BCP 47 codes of the song languages in the library, informational; the app derives the real list from the songs. |
-| `tags` | object | MAY | Localised labels for tags used in the songs: `{ "<tag>": { "<lang>": "<label>", … } }`. A tag without an entry is shown as is. [FR-LIB-30] |
+| `tags` | object | MAY | Localised labels for tags used in the songs: `{ "<tag>": { "<lang>": "<label>", … } }`. A tag without an entry is shown as is. A library package carries its labels in its manifest instead (12.11). [FR-LIB-30] |
 
 Unknown fields MUST be ignored by the app, so a library can carry extra fields for other tools.
 
@@ -845,6 +846,7 @@ The library manager defines a second library format, the **library package** [FR
 | Song files | `songs/<song id>/<song id>.cho` under the library folder, so that the 1.1 view finds them under `songs/` (section 3.1), in the profile of sections 5 to 7; `{meta: id}` equals the folder name (FDS PF-14). The manifest's `sha256` checks the stored bytes. The content hash (8.2) is computed after canonicalising (8.1), as for a snapshot (8.3), because a package's files MAY carry a BOM or CRLF (FDS SNG-01). A library the library manager converted from a release archive (FDS EDT-26) therefore has the same content hashes as the original, but a new library id (FDS limitation 8). |
 | Licence | The manifest's `license` takes the place of `license` and its file in `zangbundel.json`: `id`, `summary` (at most 200 characters, shown first) and an optional full `text` (at most 32,000 characters), shown on first import and on request [FR-LIB-21]. It applies to every song without a licence of its own, as in 4.3. `summary` is what the song document's `lic` carries (BLE protocol 9.5, at most 200 characters). The view's `LICENSE` is a copy of `text` (or of `summary` when there is no text), checked against the manifest; the app reads the manifest. |
 | Maintainer, minimum app version | `maintainer` is required (FDS draft 0.5), because the view's `zangbundel.json` needs one, and it is shown on the library screen. `formatVersion` serves as the minimum app version: a higher one than the app reads is refused (FDS MAN-03) [FR-LIB-05]. |
+| Tag labels | The manifest's optional `tags` (FDS 4.1) takes the place of `tags` in `zangbundel.json` (4.2), in the same shape: tag → language → label. Up to 200 tags, 1 to 20 labels each, each label 1 to 60 characters on one line, NFC, without control characters; anything else fails MAN-02. A tag without a label is shown as its id. The 1.1 view carries no labels (PF-41), so an app that reads only format 1.1 shows the package's tags as ids. [FR-LIB-30] |
 | What the app records | `libraryId`, `version`, `modified`, the signing status and fingerprint (FDS SG-20), the source file name and the SHA-256 of the file [FR-LIB-17]. The library screen shows the version where an archive shows its revision. |
 | `rev` on the air | The decimal `version`, e.g. `"4"` (BLE protocol section 5). Informational: leader and singer match by content hash [FR-BLE-12]. |
 | Sets | Read-only shipped setlists of the library (13.5). |

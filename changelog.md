@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- Song format v0.26: tag labels in library packages, in the optional manifest field `tags` (12.11; decision `design/proposals/2026-11-07-tag-labels-in-packages.md`). Written and staged by the library session, which the owner made responsible for the format. The app doesn't read the field yet.
 - `design/song-format.md` v0.25 settles the two points left open by v0.24, the way the app already reads them. The owner approved this on 2026-11-07 (`design/proposals/2026-11-07-indented-comments-and-display-text.md`). As a result, a song's line list stays the same as in app 0.4.0, and BLE line positions agree across versions.
   - A file comment is a line whose first character is `#`. An indented `#` line is a lyric line, and the validator warns with the new W014, which the app does not report.
   - The display text trims trailing spaces and Unicode Zs, Zl and Zp characters, so a no-break space adds no lyric line.
