@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-11
+
+Prepared for Google Play (versionCode 2026111101); it goes to internal testing and then the closed test. Release checks: `design/test-results/2026-11-11-release-checks-0.5.0.md`.
+
+- **Tag labels from library packages.** The songbook's tags show the names a package gives them, in the app's language (song format v0.26 to v0.28, SP-40).
+- **Library packages follow the library manager's rules.** The app agrees with the manager's shared test libraries, 59 cases, apart from the 9 differences the owner approved on 2026-11-06. FDS rule SNG-10 (D-46, draft 0.12) now compares title, subtitle and language; it is a Warning the app does not show, and the app does not check it, so nothing changed in the app for it.
+- **Stricter song and setlist reading** (song format v0.23 to v0.25): C1 control characters, escaped closing braces and indented directives as the format says, and `{meta: …}` split at spaces or tabs. A song's line list is unchanged from 0.4.0, so BLE line positions agree across versions.
+- German texts and the de-DE store listing still ship while the German reviewer checks them.
+
 - Song format v0.28: which tag label is shown (4.2). Written by the library session.
 - The songbook now picks a tag's label exactly as v0.28 says, through the new `TagLabel.choose` in `core/songformat`, tested in `TagLabelTest`. The first that exists wins:
   1. the app's language exactly (`nl-BE`);

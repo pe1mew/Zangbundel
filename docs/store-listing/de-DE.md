@@ -44,6 +44,10 @@ Zangbundel ist Open Source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.5.0 (2026111101)
+
+Neu: Die Schlagwörter im Liederbuch zeigen die Namen, die eine Bibliothek ihnen gibt, in deiner Sprache, etwa „Lagerfeuer“ statt „kampvuur“. Bibliotheken aus dem Bibliotheksmanager werden nach denselben Regeln geprüft wie im Manager, sodass App und Manager sich einig sind, was an einer Bibliothek falsch ist.
+
 ### 0.4.0 (2026110601)
 
 Neu: Bibliotheken aus dem Bibliotheksmanager, die signiert sein können. Die Liste zeigt, von wem eine Bibliothek signiert ist, oder dass sie nicht signiert ist. Eine Bibliothek in WhatsApp bekommen oder heruntergeladen? Wähle Teilen → Zangbundel. Unter „Über“ kannst du jetzt nach einer neuen Version der App suchen. In den Einstellungen schließt ein Häkchen die Eingabe deines Namens ab.

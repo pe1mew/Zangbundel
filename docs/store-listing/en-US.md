@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.5.0 (2026111101)
+
+New: the tags in the Songbook show a library's own names for them, in your language, such as Campfire instead of kampvuur. Libraries from the library manager are checked by the same rules the manager uses, so the app and the manager agree on what is wrong with a library.
+
 ### 0.4.0 (2026110601)
 
 New: libraries made with the library manager, which can be signed. The library list shows who signed a library, or that it is not signed. Got a library in WhatsApp, or downloaded one? Choose Share → Zangbundel. About can now check whether a new version of the app is out. In Settings, a check mark finishes entering your name.

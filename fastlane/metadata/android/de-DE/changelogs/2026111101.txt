@@ -1,0 +1,1 @@
+Neu: Die Schlagwörter im Liederbuch zeigen die Namen, die eine Bibliothek ihnen gibt, in deiner Sprache, etwa „Lagerfeuer“ statt „kampvuur“. Bibliotheken aus dem Bibliotheksmanager werden nach denselben Regeln geprüft wie im Manager, sodass App und Manager sich einig sind, was an einer Bibliothek falsch ist.

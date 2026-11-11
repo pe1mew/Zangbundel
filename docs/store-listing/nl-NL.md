@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.5.0 (2026111101)
+
+Nieuw: de labels in de Zangbundel tonen de namen die een bibliotheek ze geeft, in jouw taal, zoals Kampvuur in plaats van kampvuur. Bibliotheken uit de bibliotheekmanager worden gecontroleerd met dezelfde regels als in de manager, zodat de app en de manager het eens zijn over wat er mis is met een bibliotheek.
+
 ### 0.4.0 (2026110601)
 
 Nieuw: bibliotheken uit de bibliotheekmanager, die ondertekend kunnen zijn. De lijst laat zien wie een bibliotheek ondertekende, of dat hij niet ondertekend is. Kreeg je een bibliotheek in WhatsApp, of download je er een? Kies Delen → Zangbundel. In Over kun je nu zoeken naar een nieuwe versie van de app. In Instellingen sluit een vinkje het invullen van je naam af.

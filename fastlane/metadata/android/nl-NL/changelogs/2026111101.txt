@@ -1,0 +1,1 @@
+Nieuw: de labels in de Zangbundel tonen de namen die een bibliotheek ze geeft, in jouw taal, zoals Kampvuur in plaats van kampvuur. Bibliotheken uit de bibliotheekmanager worden gecontroleerd met dezelfde regels als in de manager, zodat de app en de manager het eens zijn over wat er mis is met een bibliotheek.

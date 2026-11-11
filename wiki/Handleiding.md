@@ -6,7 +6,7 @@ Zangbundel is een zangbundel voor bij het kampvuur. Eén telefoon is de **kampvu
 
 De app bevat zelf geen liedteksten. Liederen komen uit **bibliotheken** die de leider toevoegt; elke bibliotheek heeft een eigen licentie. Om mee te zingen heb je geen bibliotheek nodig: de leider stuurt elk lied.
 
-De app toont zijn schermen in het Nederlands, Engels of Duits. Deze handleiding hoort bij versie 0.4.0.
+De app toont zijn schermen in het Nederlands, Engels of Duits. Deze handleiding hoort bij versie 0.5.0.
 
 ---
 

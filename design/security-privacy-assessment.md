@@ -4,8 +4,8 @@
 |---|---|
 | Document | Assessment of the design against the project's security and privacy principles |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.31 |
-| Date | 2026-11-07 |
+| Document version | 0.32 |
+| Date | 2026-11-11 |
 | Author | Remko Welling |
 | Status | Assessment of the design as of FRD v0.5, BLE protocol v0.5, song format v0.2, docs/RUNBOOK.md; the changes it led to are in FRD v0.6 and BLE v0.6. v0.3 assesses the opt-in campfire statistics (`design/guiDesign.md` D-60) against FRD v0.8; decided export only without a server, so no requirement or policy changed. v0.4 assesses `design/architecture.md` v0.2 against FRD v0.11 and BLE v0.13: SP-05, SP-08, SP-09 and SP-15 checked against concrete choices, new findings SP-17 to SP-22. All resolved the same day; SP-21's policy wording was approved by the owner and published with effective date 22 October 2026 |
 
@@ -42,6 +42,7 @@
 | 0.29 | 2026-11-06 | SP-38: the app update check on *Over* (FRD v0.25 FR-GEN-09, architecture A-25), Low, resolved in the design. The privacy policy, the in-app privacy screen and the store listing name it; the Data safety form is unchanged. |
 | 0.30 | 2026-11-06 | SP-39: the 1.1 view of a library package (FRD v0.26, architecture A-26). Part 1 accepted as the owner decided. Part 2 resolved the same day, also by the owner: a `zangbundel.json` library with the id of a package is an unsigned copy of it and gets the M-71 question, or M-72 when the package was unsigned (song-format 4.3 as of v0.21). Low. No policy or declaration changed. |
 | 0.31 | 2026-11-07 | SP-40: tag labels from a library package's manifest (song format v0.26, 12.11), shown in the songbook's tag filter. Low, resolved in the design: bounded, checked and shown as plain text. No policy or declaration changed. |
+| 0.32 | 2026-11-11 | Re-run for 0.5.0 (section 7) as release check G-10 (`design/test-results/2026-11-11-release-checks-0.5.0.md`). Since the 0.4.0 pass (v0.30) the app changed in its song, setlist and package parsers only. SP-40 is built as resolved: `PackageImport` bounds the manifest's `tags` (200 tags, 1 to 20 labels, 60 characters on one line, NFC, no control characters) and refuses a package that breaks them with MAN-02. The other parser changes accept less than before (C1 control characters, escaped closing braces), so they add no surface. The permissions, the backup rules, the network code and the dependencies are unchanged (G-01, G-02, G-06). No new finding; no policy or declaration changed. |
 
 ---
 
