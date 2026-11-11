@@ -23,3 +23,11 @@ Comparing title alone gave 11 groups in that library. Every one of them differs 
   - `song-title-other-language` added: the same title alone. Accepted, W013, and no SNG-10 in the Editor.
   - There are now 59 cases. Copy both `.zbl` files and their `expected.json` from `Zangbundel-bibliotheek-manager/test-libraries/` into `packages/`.
 - **Song format:** no change. Its section 11 has no rule on repeated titles.
+
+## 3. State (2026-11-11)
+
+- **Corpus copied and staged, not committed.** The library manager session copied `song-title-duplicate` (changed) and `song-title-other-language` (new) into `android/core/testing/src/main/resources/conformance/packages/`, byte-identical to the manager's `test-libraries/`, and added the new case to `index.txt` (59 cases, sorted). Done at the owner's request.
+- **Left for the app's session:**
+  1. Run the conformance tests (`ConformanceLibrariesTest` and the package tests) against the 59 cases. The expected verdict for both cases is *accepted, W013*.
+  2. Where the app checks SNG-10 internally, compare title, subtitle and language, case-insensitively. A missing subtitle is the same subtitle.
+  3. Commit (the owner), then release the app with its package import. The manager's completion plan waits on that release (C11).

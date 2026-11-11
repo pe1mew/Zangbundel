@@ -39,6 +39,7 @@ song-no-title
 song-not-utf8
 song-subfolder
 song-title-duplicate
+song-title-other-language
 song-too-large
 song-two-files
 song-value-invalid
