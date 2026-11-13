@@ -113,6 +113,7 @@
     <string name="report_s010">Das Lied hat keinen Text.</string>
     <string name="report_s011">Eine Anweisungszeile ist fehlerhaft.</string>
     <string name="report_s012">Ein Metadatenwert ist ungültig.</string>
+    <string name="report_s013">Das Lied wird zu lang, wenn die Refrainwiederholungen ausgeschrieben werden.</string>
     <string name="report_w001">Die Datei wurde aufgeräumt; das Lied ist unverändert.</string>
     <string name="report_w002">Empfohlene Angaben wie Autor*in oder Lizenz fehlen.</string>
     <string name="report_w003">Der Titel ist sehr lang.</string>

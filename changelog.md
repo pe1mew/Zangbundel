@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-12
+
+Prepared for Google Play (versionCode 2026111201) in place of 0.5.0, whose release check G-09 failed. 0.5.0 has no tag and no GitHub release. Release checks: `design/test-results/2026-11-12-release-checks-0.5.1.md`.
+
+- **Fixed: a song built to double itself no longer crashes the app.** A `{chorus}` inside a chorus definition repeated twice per level grew the line list until the phone ran out of memory, on import and on a singer's phone receiving the song in a gathering. The song is now refused (S013) above 32 768 lines; songs within that keep their line list. Found by release check G-09 for 0.5.0, present since 0.1.0 (assessment v0.33 SP-41; `design/proposals/2026-11-12-chorus-repeat-bound.md`, the format text awaiting the library session). Tests in `SongParserTest`, conformance vector `songs/chorus-repeat-bound`, the fuzz finding's input kept for regression; `.gitattributes` keeps fuzz inputs byte-exact.
+- **Fixed: a crafted library file no longer closes the app.** The ZIP reader checked ZIP64 offsets and sizes with sums that overflowed, so a file shared to the app, or downloaded, could make it read outside the archive and close. Every bound is now compared by subtraction and the file is refused (A001). Found by the G-09 rerun for 0.5.1 (`libraryOpen`), present in every release so far (assessment v0.33 SP-42). Test in `ArchiveTest`, the finding's input kept for regression.
+
 ## [0.5.0] - 2026-11-11
 
 Prepared for Google Play (versionCode 2026111101); it goes to internal testing and then the closed test. Release checks: `design/test-results/2026-11-11-release-checks-0.5.0.md`.

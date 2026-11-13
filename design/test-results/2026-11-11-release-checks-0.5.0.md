@@ -19,7 +19,7 @@ No resource, manifest, dependency, database schema, protocol, BLE, crypto, stora
 | **G-06** Dependencies | `git diff v0.4.0` on `libs.versions.toml`, `verification-metadata.xml` and every `build.gradle.kts` | **Pass.** No artefact or version changed; `app/build.gradle.kts` changed in `versionCode` and `versionName` only. |
 | **G-07** Reproducibility | A fresh clone of the tag, built as for 0.4.0, compared with CI's unsigned APK | **Not yet run:** needs the commit and tag `v0.5.0` (the owner's). |
 | **G-08** Signature | `apksigner verify --print-certs` on the GitHub APK and a Play install | **Not yet run:** after the tag and the owner's signing with the app signing key (RUNBOOK Step 9.7). The bundle is signed with the upload key `C0:A3:C6:…:95:17:2A`, as it should be. |
-| **G-09** Fuzzing | `scripts/fuzz.sh 3600` on the targets whose parsers changed: `songParser`, `setlistParser`, `packageManifest`, `libraryOpen` | **Running** since 2026-11-11 12:28. |
+| **G-09** Fuzzing | `scripts/fuzz.sh 3600` on the targets whose parsers changed: `songParser`, `setlistParser`, `packageManifest`, `libraryOpen` | **Fail.** Started 2026-11-11 12:28. `songParser` found an out-of-memory at 13:03 (`FuzzerSecurityIssueLow: Out of memory`, in `SongParser$Body.chorus`): chorus repeats inside chorus definitions double the line list (SP-41). The fuzz report ends there, so `setlistParser`, `packageManifest` and `libraryOpen` did not get their hour. Fixed for the next version, 2026-11-12 (`design/proposals/2026-11-12-chorus-repeat-bound.md`); 0.5.0 keeps the weakness, as every earlier version does. |
 | **G-10** Assessment | `design/security-privacy-assessment.md` v0.32 | **Pass.** SP-40 is built as resolved; the other parser changes accept less than before. No new permission, network peer or dependency, no data to the developer; the Data safety declaration stays "no data collected". |
 
 **Build.**
@@ -32,9 +32,11 @@ No resource, manifest, dependency, database schema, protocol, BLE, crypto, stora
 - Version: versionName `0.5.0`, no `-review`.
 - Languages: the app's own texts are in English, Dutch and German (`aapt2 dump resources`, for example `home_songbook`: *Songbook*, *Zangbundel*, *Liederbuch*); no French or Italian.
 
+**From Play.** The owner uploaded the bundle to internal testing on 2026-11-11 (reported by the owner, while G-09 ran), with the release notes of `docs/store-listing/` for nl-NL, de-DE and en-GB (the en-US text).
+
 **Open, the owner's:**
 - commit, tag `v0.5.0`, then G-07 and G-08 (RUNBOOK Step 9.7);
-- upload to internal testing, D-01 to D-08 from the Play install, then the closed test (RUNBOOK Step 9.4 and 9.5);
+- D-01 to D-08 from the Play install, then the closed test (RUNBOOK Step 9.4 and 9.5);
 - push `wiki/` (the manuals now say 0.5.0);
 - the German reviewer's check of the German texts and the de-DE store listing, including 0.5.0's release note;
 - G-04 and D-10's packet capture, as for 0.4.0.

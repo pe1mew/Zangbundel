@@ -139,6 +139,36 @@ class SongParserTest {
         assertEquals(listOf("S002"), r.report.map { it.code })
     }
 
+    /** A chorus whose definition repeats the previous chorus twice, [levels] deep: each level doubles the line list. */
+    private fun nestedChoruses(levels: Int) = buildString {
+        append("{start_of_chorus}\nLa la la\n{end_of_chorus}\n")
+        repeat(levels) { append("{start_of_chorus}\n{chorus}\n{chorus}\n{end_of_chorus}\n") }
+    }
+
+    @Test
+    fun `a repeat inside a chorus definition stays part of that chorus`() {
+        // The line list as every version up to 0.5.0 builds it: 1 + 2 + 4 + 8 lines. Positions over BLE index it.
+        val s = song(nestedChoruses(3))
+        assertEquals(15, s.lines.size)
+        assertEquals(List(15) { "La la la" }, s.lines)
+    }
+
+    @Test
+    fun `chorus repeats that would grow the line list beyond the bound refuse the song`() {
+        // Fuzz finding of 2026-11-11 (G-09): 40 levels are 2^41 lines; the parser ran out of memory.
+        val r = parse(nestedChoruses(40))
+        assertNull(r.song)
+        assertEquals(listOf("S013"), r.report.filter { it.level == ReportLevel.SONG_ERROR }.map { it.code })
+    }
+
+    @Test
+    fun `a song just within the bound is still read`() {
+        // 2^15 - 1 = 32 767 lines from 14 levels: the most a 64 KiB file could hold written out is 32 768.
+        val s = song(nestedChoruses(14))
+        assertEquals(32_767, s.lines.size)
+        assertEquals(listOf("S013"), codes(nestedChoruses(15)).filter { it == "S013" })
+    }
+
     @Test
     fun `random bytes never make it throw`() {
         val random = Random(20261025)

@@ -108,6 +108,7 @@
     <string name="report_s010">La canzone non ha testo.</string>
     <string name="report_s011">Una riga di direttiva non è formata correttamente.</string>
     <string name="report_s012">Un valore dei metadati non è valido.</string>
+    <string name="report_s013">La canzone diventa troppo lunga quando i ritornelli ripetuti vengono scritti per intero.</string>
     <string name="report_w001">Il file è stato riordinato; la canzone non è cambiata.</string>
     <string name="report_w002">Mancano dati consigliati come l’autore o la licenza.</string>
     <string name="report_w003">Il titolo è molto lungo.</string>

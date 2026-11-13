@@ -35,13 +35,13 @@ internal class ZipReader private constructor(private val zip: ByteArray, val ent
     /** The bytes of [entry], inflated within its declared size and checked against its CRC. */
     fun read(entry: Entry): ByteArray {
         val p = entry.localHeaderOffset
-        if (p < 0 || p + LOCAL_HEADER > zip.size || u32(p.toInt()) != LOCAL_SIG) throw Refused("A001", "${entry.name}: no local header")
+        if (p < 0 || p > zip.size - LOCAL_HEADER || u32(p.toInt()) != LOCAL_SIG) throw Refused("A001", "${entry.name}: no local header")
         val nameLen = u16(p.toInt() + 26)
         val extraLen = u16(p.toInt() + 28)
         val start = p + LOCAL_HEADER + nameLen + extraLen
         val localName = zip.copyOfRange(p.toInt() + LOCAL_HEADER, minOf(zip.size, p.toInt() + LOCAL_HEADER + nameLen))
         if (!localName.contentEquals(entry.name.toByteArray(Charsets.UTF_8))) throw Refused("A006", "${entry.name}: local name differs from the directory")
-        if (start + entry.compressedSize > zip.size) throw Refused("A001", "${entry.name}: data beyond the end")
+        if (entry.compressedSize > zip.size - start) throw Refused("A001", "${entry.name}: data beyond the end")
         val data = zip.copyOfRange(start.toInt(), (start + entry.compressedSize).toInt())
         val out = when (entry.method) {
             STORED -> { if (entry.compressedSize != entry.size) throw Refused("A001", "${entry.name}: stored sizes differ"); data }
@@ -110,20 +110,21 @@ internal class ZipReader private constructor(private val zip: ByteArray, val ent
                 val loc = end - 20
                 if (loc < 0 || r.u32(loc) != END64_LOCATOR_SIG) throw Refused("A001", "ZIP64 locator missing")
                 val e64 = r.u64(loc + 8)
-                if (e64 < 0 || e64 + 56 > zip.size || r.u32(e64.toInt()) != END64_SIG) throw Refused("A001", "ZIP64 end record missing")
+                // Bounds are compared by subtraction: ZIP64 values reach 2^63 - 1, and a sum would overflow (fuzz finding, SP-42).
+                if (e64 < 0 || e64 > zip.size - 56L || r.u32(e64.toInt()) != END64_SIG) throw Refused("A001", "ZIP64 end record missing")
                 count = r.u64(e64.toInt() + 32)
                 cdSize = r.u64(e64.toInt() + 40)
                 cdOffset = r.u64(e64.toInt() + 48)
             }
             if (count > Limits.ARCHIVE_MAX_ENTRIES) throw Refused("A002", "$count entries")
-            if (cdOffset < 0 || cdSize < 0 || cdOffset + cdSize > zip.size) throw Refused("A001", "central directory beyond the end")
+            if (cdOffset < 0 || cdSize < 0 || cdOffset > zip.size || cdSize > zip.size - cdOffset) throw Refused("A001", "central directory beyond the end")
 
             val entries = ArrayList<Entry>()
             val seen = HashSet<String>()
             var total = 0L
             var p = cdOffset.toInt()
             repeat(count.toInt()) {
-                if (p + CENTRAL_HEADER > zip.size || r.u32(p) != CENTRAL_SIG) throw Refused("A001", "central directory corrupt")
+                if (p > zip.size - CENTRAL_HEADER || r.u32(p) != CENTRAL_SIG) throw Refused("A001", "central directory corrupt")
                 val madeBy = r.u16(p + 4)
                 val flags = r.u16(p + 8)
                 val method = r.u16(p + 10)
@@ -190,7 +191,7 @@ internal class ZipReader private constructor(private val zip: ByteArray, val ent
     }
 
     private class Raw(val b: ByteArray) {
-        fun u16(at: Int): Int = if (at < 0 || at + 2 > b.size) throw Refused("A001", "truncated") else (b[at].toInt() and 0xFF) or ((b[at + 1].toInt() and 0xFF) shl 8)
+        fun u16(at: Int): Int = if (at < 0 || at > b.size - 2) throw Refused("A001", "truncated") else (b[at].toInt() and 0xFF) or ((b[at + 1].toInt() and 0xFF) shl 8)
         fun u32(at: Int): Long = u16(at).toLong() or (u16(at + 2).toLong() shl 16)
         fun u64(at: Int): Long {
             val v = u32(at) or (u32(at + 4) shl 32)

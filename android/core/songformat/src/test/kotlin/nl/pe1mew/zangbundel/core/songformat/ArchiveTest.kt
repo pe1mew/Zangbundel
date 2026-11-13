@@ -101,4 +101,17 @@ class ArchiveTest {
             }
         }
     }
+
+    @Test
+    fun `ZIP64 offsets and sizes near 2^63 are refused, not read beyond the archive`() {
+        // Fuzz finding of 2026-11-12 (G-09, libraryOpen; SP-42): offset plus size overflowed, the bounds checks
+        // passed, and the reader indexed byte 2^31 - 1 of 96, an exception that closed the app.
+        val finding = ("504b06060017ff00f3000000600000000000ff00370000504b05060000000000000100000000000000000000f77a6e67" +
+            "ffffff7f6150504b060700000000000000000000000041fffff5504b0506000000000030312fffffffff505050ffff00")
+            .chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        val r = ArchiveImport.open(finding, app)
+        assertTrue(r.refused)
+        assertEquals(listOf("A001"), r.report.map { it.code })
+        assertFalse(PackageImport.isPackage(finding))
+    }
 }

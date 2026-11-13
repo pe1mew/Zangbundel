@@ -111,6 +111,7 @@
     <string name="report_s010">Het lied heeft geen tekst.</string>
     <string name="report_s011">Een aanwijzingsregel is onjuist opgebouwd.</string>
     <string name="report_s012">Een waarde in de metadata is ongeldig.</string>
+    <string name="report_s013">Het lied wordt te lang als de herhaalde refreinen worden uitgeschreven.</string>
     <string name="report_w001">Het bestand is opgeschoond; het lied is ongewijzigd.</string>
     <string name="report_w002">Aanbevolen gegevens zoals auteur of licentie ontbreken.</string>
     <string name="report_w003">De titel is erg lang.</string>

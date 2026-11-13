@@ -1,0 +1,1 @@
+Fixed: a song that repeats its chorus inside its own chorus could fill the phone's memory and close the app, when you added a library or when the leader sent that song at a campfire. Such a song is now skipped; when you add a library, the app says why. Every other song stays as it was. A damaged library file no longer closes the app either; it is refused.

@@ -6,7 +6,7 @@ Zangbundel is a songbook for the campfire. One phone is the **campfire leader**:
 
 The app itself contains no lyrics. Songs come from **libraries** that the leader adds; each library has its own licence. To sing along you need no library: the leader sends every song.
 
-The app shows its screens in Dutch, English or German, following the phone's language unless you choose one under **Settings → Language**. This manual names the English labels; the [Dutch manual](Handleiding) has the Dutch ones. It belongs to version 0.5.0.
+The app shows its screens in Dutch, English or German, following the phone's language unless you choose one under **Settings → Language**. This manual names the English labels; the [Dutch manual](Handleiding) has the Dutch ones. It belongs to version 0.5.1.
 
 ---
 

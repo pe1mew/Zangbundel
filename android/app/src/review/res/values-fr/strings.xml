@@ -108,6 +108,7 @@
     <string name="report_s010">Le chant n’a pas de paroles.</string>
     <string name="report_s011">Une ligne de directive est mal formée.</string>
     <string name="report_s012">Une valeur de métadonnées n’est pas valide.</string>
+    <string name="report_s013">Le chant devient trop long une fois ses refrains répétés écrits en entier.</string>
     <string name="report_w001">Le fichier a été mis en ordre ; le chant n’a pas changé.</string>
     <string name="report_w002">Des informations recommandées, comme l’auteur·rice ou la licence, manquent.</string>
     <string name="report_w003">Le titre est très long.</string>

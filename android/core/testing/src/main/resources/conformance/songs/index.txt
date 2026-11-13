@@ -13,3 +13,4 @@ directive-escaped-close
 directive-indented
 comment-indented
 nbsp-display
+chorus-repeat-bound

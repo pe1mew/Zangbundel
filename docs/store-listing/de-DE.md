@@ -44,6 +44,10 @@ Zangbundel ist Open Source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.5.1 (2026111201)
+
+Behoben: Ein Lied, das seinen Refrain innerhalb seines eigenen Refrains wiederholt, konnte den Speicher des Telefons füllen und die App schließen, beim Hinzufügen einer Bibliothek oder wenn die Leitung dieses Lied an einem Lagerfeuer schickte. Ein solches Lied wird jetzt übersprungen; beim Hinzufügen einer Bibliothek sagt die App, warum. Alle anderen Lieder bleiben, wie sie waren. Auch eine beschädigte Bibliotheksdatei schließt die App nicht mehr; sie wird abgelehnt.
+
 ### 0.5.0 (2026111101)
 
 Neu: Die Schlagwörter im Liederbuch zeigen die Namen, die eine Bibliothek ihnen gibt, in deiner Sprache, etwa „Lagerfeuer“ statt „kampvuur“. Bibliotheken aus dem Bibliotheksmanager werden nach denselben Regeln geprüft wie im Manager, sodass App und Manager sich einig sind, was an einer Bibliothek falsch ist.

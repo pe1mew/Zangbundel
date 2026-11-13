@@ -112,6 +112,7 @@
     <string name="report_s010">The song has no lyrics.</string>
     <string name="report_s011">A directive line is malformed.</string>
     <string name="report_s012">A metadata value is invalid.</string>
+    <string name="report_s013">The song becomes too long once its chorus repeats are written out.</string>
     <string name="report_w001">The file was tidied up; the song is unchanged.</string>
     <string name="report_w002">Recommended details such as author or licence are missing.</string>
     <string name="report_w003">The title is very long.</string>

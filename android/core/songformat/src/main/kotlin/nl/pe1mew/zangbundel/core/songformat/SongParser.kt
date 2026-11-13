@@ -268,6 +268,11 @@ object SongParser {
         private fun chorus(n: Int, label: String?) {
             if (choruses.isEmpty()) { add(ReportLevel.SONG_ERROR, "S008", n); return }
             val source = choruses.lastOrNull { label != null && it.first == label } ?: choruses.last()
+            // S013: checked before copying, so the work and memory of a song stay within the bound.
+            if (lineCount + source.second.size > Limits.CANONICAL_LINES_HARD_MAX) {
+                once("lines", ReportLevel.SONG_ERROR, "S013", n, "more than ${Limits.CANONICAL_LINES_HARD_MAX} lines")
+                return
+            }
             closeImplicit()
             val e = env
             if (e != null && e.kind != null) { emit(e); e.items.clear(); e.continued = true }

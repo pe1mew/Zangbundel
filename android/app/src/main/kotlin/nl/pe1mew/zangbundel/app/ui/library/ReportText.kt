@@ -30,6 +30,7 @@ internal object ReportText {
         "S010" to R.string.report_s010,
         "S011" to R.string.report_s011,
         "S012" to R.string.report_s012,
+        "S013" to R.string.report_s013,
         "W001" to R.string.report_w001,
         "W002" to R.string.report_w002,
         "W003" to R.string.report_w003,

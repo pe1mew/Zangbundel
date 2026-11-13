@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.5.1 (2026111201)
+
+Fixed: a song that repeats its chorus inside its own chorus could fill the phone's memory and close the app, when you added a library or when the leader sent that song at a campfire. Such a song is now skipped; when you add a library, the app says why. Every other song stays as it was. A damaged library file no longer closes the app either; it is refused.
+
 ### 0.5.0 (2026111101)
 
 New: the tags in the Songbook show a library's own names for them, in your language, such as Campfire instead of kampvuur. Libraries from the library manager are checked by the same rules the manager uses, so the app and the manager agree on what is wrong with a library.

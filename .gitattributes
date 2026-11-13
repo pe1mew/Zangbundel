@@ -7,3 +7,5 @@ android/core/testing/src/main/resources/conformance/archives/*.zbl -text
 android/core/testing/src/main/resources/conformance/packages/*.zbl -text
 android/core/testing/src/main/resources/conformance/setlists/*.zbs -text
 android/core/testing/src/main/resources/conformance/libraries/*.json -text
+# Fuzz findings are replayed byte for byte (test plan 3.4).
+android/core/*/src/fuzz/resources/** -text

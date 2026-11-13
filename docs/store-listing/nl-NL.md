@@ -44,6 +44,10 @@ Zangbundel is open source: https://github.com/pe1mew/Zangbundel
 
 ## Release notes (≤ 500)
 
+### 0.5.1 (2026111201)
+
+Opgelost: een lied dat zijn refrein binnen zijn eigen refrein herhaalt, kon het geheugen van de telefoon vullen en de app laten sluiten, bij het toevoegen van een bibliotheek of als de leider dat lied bij een kampvuur stuurde. Zo'n lied wordt nu overgeslagen; bij het toevoegen van een bibliotheek zegt de app waarom. Alle andere liederen blijven zoals ze waren. Ook een beschadigd bibliotheekbestand laat de app niet meer sluiten; het wordt geweigerd.
+
 ### 0.5.0 (2026111101)
 
 Nieuw: de labels in de Zangbundel tonen de namen die een bibliotheek ze geeft, in jouw taal, zoals Kampvuur in plaats van kampvuur. Bibliotheken uit de bibliotheekmanager worden gecontroleerd met dezelfde regels als in de manager, zodat de app en de manager het eens zijn over wat er mis is met een bibliotheek.

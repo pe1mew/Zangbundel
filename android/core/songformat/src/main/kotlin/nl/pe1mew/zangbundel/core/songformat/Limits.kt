@@ -8,6 +8,12 @@ object Limits {
     const val TITLE_MAX_CHARS = 60
     const val LYRIC_LINE_MAX_CHARS = 120
     const val CANONICAL_LINES_MAX = 254
+    /**
+     * Above this the song is refused (S013, proposal 2026-11-12-chorus-repeat-bound). It is the most lines a
+     * 64 KiB file could hold written out, so only chorus repeats can pass it: a repeat inside a chorus definition
+     * doubles that chorus, and without a bound a few kilobytes grow to billions of lines (fuzz finding, G-09).
+     */
+    const val CANONICAL_LINES_HARD_MAX = 32 * 1024
     /** `zangbundel.json` is a few hundred bytes; 64 KiB bounds it before parsing (assessment SP-09). */
     const val LIBRARY_FILE_MAX_BYTES = 64 * 1024
     const val ARCHIVE_MAX_BYTES = 64L * 1024 * 1024
