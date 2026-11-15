@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- `README.md`: the status of 15 November 2026. 0.5.1 is on the internal and closed-testing tracks; its release checks, with G-04, G-07 and G-08 still open; the two fuzz findings it fixes; GitHub Releases' latest APK is 0.4.0. The features name library files opened by Share, signed libraries from the library manager, the library's tag names, and the About screen's check for a new version.
+
 ## [0.5.1] - 2026-11-12
 
 Prepared for Google Play (versionCode 2026111201) in place of 0.5.0, whose release check G-09 failed. 0.5.0 has no tag and no GitHub release. Release checks: `design/test-results/2026-11-12-release-checks-0.5.1.md`.

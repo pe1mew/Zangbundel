@@ -2,13 +2,13 @@
 
 Zangbundel ("songbook" in Dutch) is a mobile songbook app for singing together around a campfire, for example at scouting events. One phone is the **leader** (*kampvuurleider*): it starts a campfire, advertises a Bluetooth Low Energy beacon and broadcasts the lyrics of the current song to every **singer** (*zanger*) phone around the fire. No internet, Wi-Fi, hotspot or pairing is involved. Lyrics come from external, git-hosted song libraries, so copyright and licences are managed outside the app.
 
-## Status (28 October 2026)
+## Status (15 November 2026)
 
 **Phase 1 is built for Android and in a closed test on Google Play; the app is not public yet.**
 
-- Version 0.2.0 (28 October 2026) is on Google Play's internal and closed-testing tracks. Adults can join the closed test through a Google group: see [Join the test](#join-the-test).
-- The release checks G-01 to G-10 all pass for 0.2.0. They cover permissions, backups, network use, logs, dependencies, reproducible builds, signing, fuzzing and the security and privacy assessment. Every parser of library or over-the-air input has been fuzzed for an hour without a finding.
-- The signed APK of 0.2.0 is also on [GitHub Releases](https://github.com/pe1mew/Zangbundel/releases/tag/v0.2.0). F-Droid's build reproduces it byte for byte. F-Droid accepts an app after three months of development, so the app is submitted there again from January 2027.
+- Version 0.5.1 (12 November 2026) is on Google Play's internal and closed-testing tracks. Adults can join the closed test through a Google group: see [Join the test](#join-the-test).
+- The release checks G-01 to G-10 cover permissions, backups, network use, logs, dependencies, reproducible builds, signing, fuzzing and the security and privacy assessment. For 0.5.1, every check that can run before the tag passes, except G-04, the packet capture during an import, which is not yet run; G-07 and G-08 follow the tag ([release checks](design/test-results/2026-11-12-release-checks-0.5.1.md)). Fuzzing for 0.5.0 and 0.5.1 found two ways a crafted song or library file could close the app; 0.5.1 fixes both, and every parser whose code changed has since been fuzzed for an hour without a finding.
+- The latest signed APK on [GitHub Releases](https://github.com/pe1mew/Zangbundel/releases) is 0.4.0; 0.5.1 follows when it is tagged. F-Droid's build reproduced 0.2.0 byte for byte. F-Droid accepts an app after three months of development, so the app is submitted there again from January 2027.
 - Still to do before the public release: field tests on real phones around a real fire (range, group size, battery, recovery), and the 14-day closed test with at least 12 testers.
 - An iOS version is planned for later and must interoperate over BLE.
 
@@ -28,13 +28,13 @@ The wiki page [Testing](https://github.com/pe1mew/Zangbundel/wiki/Testing) ([Tes
 
 Phase 1, the songbook over BLE:
 
-- **Libraries.** Install song libraries from their release archives when online, update them by hand or with a daily check on Wi-Fi, and browse and search them offline, swiping from song to song. The default library is [Zangbundel-bibliotheek](https://github.com/pe1mew/Zangbundel-bibliotheek).
+- **Libraries.** Install song libraries from their release archives when online, update them by hand or with a daily check on Wi-Fi, and browse and search them offline, swiping from song to song. A library file received in a chat or downloaded opens with Share → Zangbundel. Libraries made with the library manager can be signed, and the app shows who signed them; their tags appear in the songbook under the library's own names, in your language. The default library is [Zangbundel-bibliotheek](https://github.com/pe1mew/Zangbundel-bibliotheek).
 - **Setlists.** Prepare a setlist from the songbook or import one; change it during the campfire.
 - **Leading.** Start a campfire that is open to everyone nearby, needs a four-digit join code, or can only be joined through its QR code. Push a song and every singer sees it; the songs of the setlist are broadcast ahead, so a push usually only switches the song.
 - **Singing.** Join from the list of campfires nearby, with a join code, or by scanning the leader's QR code with the camera app. Read in night or day theme, at five text sizes, fitted to the screen width if wanted, and follow the leader from song to song.
 - **Trust.** Every campfire shows two words made from its key; leader and singers compare them aloud.
 - **Afterwards.** Received lyrics are deleted when the campfire ends; the list of titles sung stays as a memory. A leader can opt in to anonymous campfire statistics that never leave the phone unless shared by hand.
-- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, Dutch, English and German.
+- **Around it.** Resume after a crash, the app shared to a nearby phone without internet, a check for a new version of the app on the About screen, Dutch, English and German.
 
 Phase 2 adds song requests, likes, delegates and karaoke (timed lyric highlighting). Phase 3 adds chords and notation for instrument players.
 
