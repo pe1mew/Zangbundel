@@ -287,6 +287,16 @@
 **Root cause**: `ContentResolver.openInputStream` throws `SecurityException` (and `FileNotFoundException`) for URIs from other apps; `readPicked` caught neither.
 **Fix**: catch every exception around the read and refuse the import with A001. Treat each URI from another app as untrusted (SP-37).
 
+### A Jazzer finding is saved in the module root, not under `src/fuzz/resources` (2026-11-12)
+**Problem**: after `fuzz.sh` reported a finding, the input was `android/core/songformat/crash-<sha1>`, untracked, and the regression replay in `check` did not run it.
+**Root cause**: Jazzer writes `crash-*` to the Gradle task's working directory. Test plan 3.4 and the `fuzz.sh` header say it lands under `src/fuzz/resources/…Inputs/<target>/`, which is where the replay looks.
+**Fix**: after a finding, `git status` the module; move `crash-*` to `src/fuzz/resources/nl/pe1mew/zangbundel/core/<module>/<Class>Inputs/<target>/`, then check that the replay fails before the fix. `.gitattributes` keeps those files `-text`.
+
+### A bounds check written as a sum overflows on 64-bit offsets (2026-11-12)
+**Problem**: a 96-byte crafted ZIP passed `offset + size > zip.size` and the reader indexed byte 2^31 - 1 (SP-42).
+**Root cause**: ZIP64 fields are u64 up to 2^63 - 1, read into `Long`; the sum wraps to a negative number, and the check passes.
+**Fix**: compare by subtraction once each side is known non-negative: `offset < 0 || size < 0 || offset > n || size > n - offset`. Apply it to every length read from untrusted bytes.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
