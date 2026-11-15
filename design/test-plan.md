@@ -4,7 +4,7 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.22 (draft) |
+| Document version | 0.23 (draft) |
 | Date | 2026-11-15 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
@@ -34,6 +34,7 @@
 | 0.20 | 2026-11-06 | Depends on FRD v0.26 (FR-LIB-05, FR-LIB-08, FR-LIB-09 amended), architecture v0.29 (A-26), song format v0.21 and assessment v0.30 (SP-39). 3.2: the `libraries/` vectors, which existed already, and the new `packages/` vectors for the 1.1 view, VIEW-01 to VIEW-03, MAN-08, signatures with raw and wrapped keys, and W013. |
 | 0.21 | 2026-11-06 | 3.2, `packages/`: the library manager's 56 shared test libraries (manager 0.1.0, FDS draft 0.7, O-04), copied byte for byte, and how a case where the app keeps its own reading is listed (`design/proposals/2026-11-06-shared-test-libraries.md`, approved by the owner). |
 | 0.22 | 2026-11-15 | 3.4: where a finding's input lands. Jazzer saves it in the module's folder, not under `src/fuzz/resources/`; `scripts/fuzz.sh` now moves it there, where the replay reads it (the 0.5.1 findings had to be moved by hand). The target count is 16: `packageManifest` and `libraryOpen` (0.4.0) were not listed. |
+| 0.23 | 2026-11-15 | 3.2, `packages/`: the folder holds 60 of the library manager's shared test libraries, with `song-chorus-repeat-bound` (manager `42a7bd3`, SNG-19); the count of 56 was from 2026-11-06. |
 
 ---
 
@@ -110,7 +111,7 @@ Every core module has unit tests next to it (`core/*/src/test`). Time-dependent 
 | `setlists/` | A `.zbs` file, a library state, expected resolution and codes | App; library validator |
 | `archives/` | A `.zbl` or `.zip`, expected verdict and A-codes, including bomb, traversal, symlink and case-duplicate cases | App; library validator |
 | `libraries/` | A `zangbundel.json`, expected verdict and L-codes, including a UUID-form `id`, which is accepted (song-format 4.2, FRD v0.26 FR-LIB-09) | App; library validator |
-| `packages/` | A library package `.zbl` with its 1.1 view (FDS draft 0.5), the keys used, and the expected verdict with FDS rule codes and song-format warnings. At least: a valid signed package and a valid unsigned one (W013); one bad case each for VIEW-01, VIEW-02 and VIEW-03, MAN-08 and SIG-03; the same public key raw (accepted, fingerprint `21FE-31DF-A154-A261`) and wrapped in SubjectPublicKeyInfo (refused, SG-05); a release archive and a snapshot, each with W013; a snapshot carrying the id of an installed signed package (M-71, no silent replacement; assessment SP-39). The valid package is also an `archives/` vector: the 1.1 rules accept it as a snapshot. Since 2026-11-06 the folder holds the library manager's 56 shared test libraries (`Zangbundel-bibliotheek-manager/test-libraries/`, FDS O-04), copied byte for byte and checked by SHA-256. `PackageTest` names each case whose `expected.json` the manager is still to change after an approved proposal, with that proposal's section; a listed case that starts to agree, or an unlisted one that stops, fails the test. | App (package side); library validator (the 1.1 side, through the view) |
+| `packages/` | A library package `.zbl` with its 1.1 view (FDS draft 0.5), the keys used, and the expected verdict with FDS rule codes and song-format warnings. At least: a valid signed package and a valid unsigned one (W013); one bad case each for VIEW-01, VIEW-02 and VIEW-03, MAN-08 and SIG-03; the same public key raw (accepted, fingerprint `21FE-31DF-A154-A261`) and wrapped in SubjectPublicKeyInfo (refused, SG-05); a release archive and a snapshot, each with W013; a snapshot carrying the id of an installed signed package (M-71, no silent replacement; assessment SP-39). The valid package is also an `archives/` vector: the 1.1 rules accept it as a snapshot. Since 2026-11-06 the folder holds the library manager's shared test libraries, 60 on 2026-11-15 (`Zangbundel-bibliotheek-manager/test-libraries/`, FDS O-04), copied byte for byte and checked by SHA-256. `PackageTest` names each case whose `expected.json` the manager is still to change after an approved proposal, with that proposal's section; a listed case that starts to agree, or an unlisted one that stops, fails the test. | App (package side); library validator (the 1.1 side, through the view) |
 | `protocol/` | A document or frame as bytes, its decoded form, and for signed or sealed vectors the keys used | App (and a future iOS app) |
 | `joinlinks/` | A join URL or intent link, expected payload or error | App |
 

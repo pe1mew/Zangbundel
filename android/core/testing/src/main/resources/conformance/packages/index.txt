@@ -24,6 +24,7 @@ signature-orphan
 song-chord-bracket
 song-chord-unknown
 song-chorus-early
+song-chorus-repeat-bound
 song-directive-malformed
 song-directive-twice
 song-environment-open

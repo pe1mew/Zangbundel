@@ -110,6 +110,7 @@ internal object ReportText {
         "SNG-14" to R.string.report_s009,
         "SNG-15" to R.string.report_s012,
         "SNG-18" to R.string.report_sng_18,
+        "SNG-19" to R.string.report_s013,
         "VIEW-01" to R.string.report_view_01,
         "VIEW-02" to R.string.report_view_02,
         "VIEW-03" to R.string.report_view_03,

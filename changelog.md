@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - Song format v0.29: hard bound on the canonical line list, 32 768 lines (5.5, 7.2, S013).
 - Conformance vector `songs/chorus-label-most-recent`, asked for by the library session: two choruses with the same label, and `{chorus: R}` repeats the most recent of them (song format 7.2). The app already reads it so; the corpus had no case for it.
+- A package reports S013 as SNG-19, the library manager's rule for it (FDS draft 0.13), with the same report text; `PackageImport.sngCode` and `ReportText`, the owner's decision 2026-11-15. The manager's package case `song-chorus-repeat-bound` (manager `42a7bd3`) is copied byte for byte into `conformance/packages/`, making 60; `PackageTest` gives it the expected verdict with no new difference. Test plan v0.23 3.2 counts 60.
 - 0.5.1 after the tag (2026-11-15): tag `v0.5.1` on `435c0de`; G-07 passes (the tag's build equals CI's, `2d88950d…`); the GitHub release carries `zangbundel-0.5.1.apk` signed with the app signing key (G-08 on the GitHub APK, `9c84cb01…`); the wiki manual for 0.5.1 is pushed. The README's status says so.
 
 - `scripts/fuzz.sh` moves a finding's input from the module's folder, where Jazzer saves it as `crash-<sha1>`, to `src/fuzz/resources/<package>/<Class>Inputs/<target>/`, where `check` replays it; test plan v0.22 section 3.4 says so. Both 0.5.1 findings had been moved by hand. Section 3.4 also counts 16 targets, with `packageManifest` and `libraryOpen`, instead of 14.
