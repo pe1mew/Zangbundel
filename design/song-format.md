@@ -5,8 +5,8 @@
 | Document | Song file format and library repository layout |
 | Project | Zangbundel – campfire songbook app |
 | Format version | 1.1 (draft; 1.0 plus setlists, section 13) |
-| Document version | 0.28 (draft) |
-| Date | 2026-11-07 |
+| Document version | 0.29 (draft) |
+| Date | 2026-11-15 |
 | Author | Remko Welling |
 | Status | Draft for review |
 | Depends on | `design/functional-requirements.md` v0.26, `design/ble-protocol.md` v0.52 |
@@ -41,6 +41,7 @@
 | 0.26 | 2026-11-07 | Tag labels in library packages, decided by the owner (`design/proposals/2026-11-07-tag-labels-in-packages.md`). 12.11: a package carries its tag labels in the optional manifest field `tags` (the library manager's FDS 4.1), in the shape of `tags` in `zangbundel.json`; the 1.1 view is unchanged. 4.2 points to it. Written by the library session, which the owner made responsible for the format. No format change: the field is optional and an app ignores unknown manifest fields. |
 | 0.27 | 2026-11-07 | 12.11 *Tag labels*, made exact as the app and the library manager already read it: a label's length is counted in Unicode code points, not UTF-16 units, and the control characters it may not hold are those of 5.1 together with tab and LF (C0, DEL and C1). Written by the library session. No format change. |
 | 0.28 | 2026-11-07 | 4.2: which tag label is shown, decided by the owner: the app's language, then its main language, then English, then the label whose language code sorts first, then the tag id. It holds for `zangbundel.json` and for a package's manifest (12.11). The app before this version came close but differed: it skipped the exact language tag (it matched the primary subtag only), compared codes case-sensitively, and took the remaining label in file order; it now follows 4.2. The library manager's FDS (APP-27) points here. Written by the library session. No format change. |
+| 0.29 | 2026-11-15 | A hard bound on the canonical line list, against chorus repeats that double a song, from the app's proposal `design/proposals/2026-11-12-chorus-repeat-bound.md` (assessment SP-41). The owner approved the app side on 2026-11-12; the library session agreed the number and the code. 5.5: at most 32 768 lines, checked before each repeat is copied, or the song is refused with the new S013. 7.2: a `{chorus}` inside a chorus definition is part of that chorus, as the app has always read it. 11.3: S013. 7.2 also writes down a reading settled on 2026-11-07 (`design/proposals/2026-11-07-fds-0.8-readings.md`, reading 6): `{chorus: label}` with several choruses of that label repeats the most recent. The line list of every song within the bound is unchanged. Conformance vector `chorus-repeat-bound`. Written by the library session. No format change. |
 
 ---
 
@@ -306,6 +307,7 @@ Trimming in sections 5 and 6 removes spaces (U+0020) and tabs (U+0009) only. Oth
 | Title length | ≤ 60 characters | SHOULD; the BLE state carries at most 60. |
 | Lyric line length | ≤ 120 characters | SHOULD; lines wrap on screen [FR-DISP-06] but very long lines read badly. |
 | Canonical line list | ≤ 254 lines | SHOULD; the BLE `pos` field cannot point beyond line 254. |
+| Canonical line list, hard | ≤ 32 768 lines | MUST; the song is refused (S013). A 64 KiB file cannot hold more lines written out, so only chorus repeats (7.2) can pass it. A reader checks it before each repeat is copied, so its work stays within the bound. |
 
 ---
 
@@ -372,8 +374,9 @@ Rules:
 ### 7.2 Chorus repeats
 
 - `{chorus}` repeats the most recently defined chorus at that point in the song. The app shows the chorus text again (not just a "Refrein" marker), so lyrics are complete and in sung order [FR-SING-10, FR-SING-13].
-- `{chorus: <label>}` repeats the chorus whose definition carried exactly that label, if one exists; otherwise the most recent chorus. The repeat is shown with the given label.
+- `{chorus: <label>}` repeats the chorus whose definition carried exactly that label, the most recent such when several did; if none did, the most recent chorus. The repeat is shown with the given label.
 - `{chorus}` before any chorus has been defined is an error.
+- A `{chorus}` inside a chorus definition is part of that chorus: the repeated lines are repeated again wherever that chorus is. Each such repeat adds to the canonical line list, which 5.5 bounds (S013).
 - Each `{chorus}` directive expands to **one** repetition in the canonical line list. A chorus sung twice in a row is either written as two `{chorus}` lines, or as one `{chorus: Refrein (2x)}` whose "(2x)" is a display hint only. Songs with timing data (P2) SHOULD use the explicit form so each repetition has its own line numbers and times.
 
 ### 7.3 Implicit verses and blank lines
@@ -625,6 +628,7 @@ The "what changed" view after an update [FR-LIB-11] is computed from song ids an
 | S010 | No lyric lines (empty canonical line list) |
 | S011 | Malformed directive line (`{` without closing `}` or the reverse) |
 | S012 | Invalid value: `redistribute` not `yes`/`no`, `year` not four digits, `variant-group` or `tag` not in id syntax |
+| S013 | The canonical line list would be longer than 32 768 lines (5.5); only chorus repeats can make it so |
 
 **Warnings** (song imported):
 

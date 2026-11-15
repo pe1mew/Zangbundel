@@ -89,7 +89,7 @@ Herr, komm in mir wohnen, lass mein' Geist auf Erden
 
 | Where | Change | Owner |
 |---|---|---|
-| Song format | v0.29: 7.1 rules 1 to 5 above; W015 in the warning table; the 7.1 table's "n counts verses in the file" points to the counting rule. | Library session |
+| Song format | The next version: 7.1 rules 1 to 5 above; W015 in the warning table; the 7.1 table's "n counts verses in the file" points to the counting rule. | Library session |
 | App | Generated verse labels follow the counting rule. Tests for each rule. | App session |
 | Corpus | Song vectors `verse-number-labels` (labels 6 and 8 between verses without labels: numbers 1, 2, 6, 8) and `verse-number-down` (W015). Song vectors don't record labels today, so `expected.json` gains an optional `verse_numbers` list that both the app and `conformance.py` compare. | App session, with the library session for `conformance.py` |
 | Library repository | `validate.py`: W015, and the verse numbers for `conformance.py`. README: how to keep original verse numbers. | Library session |
