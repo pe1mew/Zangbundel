@@ -297,6 +297,11 @@
 **Root cause**: ZIP64 fields are u64 up to 2^63 - 1, read into `Long`; the sum wraps to a negative number, and the check passes.
 **Fix**: compare by subtraction once each side is known non-negative: `offset < 0 || size < 0 || offset > n || size > n - offset`. Apply it to every length read from untrusted bytes.
 
+### Commands for the owner were missing, then unseen, so "done" was reported for steps that never ran (2026-11-15)
+**Problem**: for the tag and the wiki push, one reply said "they're yours" with no commands; the owner answered "Both pushed", and nothing was on GitHub. The next reply had the commands in the text before a question box, and the owner asked "what commands?".
+**Root cause**: the app's next-step box ends the turn and the owner reads the box; the text before it was not read. The first reply simply left the commands out.
+**Fix**: put commands the owner must run in the closing message, after a `wrap_up` without a question, or with the ask saying only "run the commands below". After "done", check the remote (`git ls-remote`, `gh release view`) before going on, as the promoted owner-command row says.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.
