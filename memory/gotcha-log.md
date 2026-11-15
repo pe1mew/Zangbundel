@@ -287,10 +287,10 @@
 **Root cause**: `ContentResolver.openInputStream` throws `SecurityException` (and `FileNotFoundException`) for URIs from other apps; `readPicked` caught neither.
 **Fix**: catch every exception around the read and refuse the import with A001. Treat each URI from another app as untrusted (SP-37).
 
-### A Jazzer finding is saved in the module root, not under `src/fuzz/resources` (2026-11-12)
+### A Jazzer finding is saved in the module root, not under `src/fuzz/resources` (2026-11-12) [RESOLVED]
 **Problem**: after `fuzz.sh` reported a finding, the input was `android/core/songformat/crash-<sha1>`, untracked, and the regression replay in `check` did not run it.
 **Root cause**: Jazzer writes `crash-*` to the Gradle task's working directory. Test plan 3.4 and the `fuzz.sh` header say it lands under `src/fuzz/resources/…Inputs/<target>/`, which is where the replay looks.
-**Fix**: after a finding, `git status` the module; move `crash-*` to `src/fuzz/resources/nl/pe1mew/zangbundel/core/<module>/<Class>Inputs/<target>/`, then check that the replay fails before the fix. `.gitattributes` keeps those files `-text`.
+**Fix**: after a finding, `git status` the module; move `crash-*` to `src/fuzz/resources/nl/pe1mew/zangbundel/core/<module>/<Class>Inputs/<target>/`, then check that the replay fails before the fix. `.gitattributes` keeps those files `-text`. Resolved 2026-11-15: `fuzz.sh` moves it (test plan v0.22).
 
 ### A bounds check written as a sum overflows on 64-bit offsets (2026-11-12)
 **Problem**: a 96-byte crafted ZIP passed `offset + size > zip.size` and the reader indexed byte 2^31 - 1 (SP-42).

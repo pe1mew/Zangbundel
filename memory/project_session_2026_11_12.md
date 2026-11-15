@@ -30,4 +30,4 @@ From `02bb9fd` to `b3b66a5`: FDS draft 0.8 readings (song format v0.24), indente
 - Push `wiki/` (the manuals say 0.5.1).
 - Pass the chorus proposal to the library session: song format 5.5, 7.2, 11.3; `validate.py`; the manager.
 - The German reviewer on 0.5.0's and 0.5.1's German notes; G-04 and D-10's capture.
-- Test plan 3.4 and the `fuzz.sh` header say a finding lands under `src/fuzz/resources/`; Jazzer writes it to the module root (gotcha-log 2026-11-12).
+- Test plan 3.4 and the `fuzz.sh` header say a finding lands under `src/fuzz/resources/`; Jazzer writes it to the module root (gotcha-log 2026-11-12). Fixed 2026-11-15: `fuzz.sh` moves it, test plan v0.22.

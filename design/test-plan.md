@@ -4,8 +4,8 @@
 |---|---|
 | Document | Test plan: automated tests, device tests, security and privacy checks, field tests, closed test, release gate |
 | Project | Zangbundel – campfire songbook app |
-| Document version | 0.21 (draft) |
-| Date | 2026-11-06 |
+| Document version | 0.22 (draft) |
+| Date | 2026-11-15 |
 | Author | Remko Welling |
 | Status | Draft for review; no test has been run, because no code exists |
 | Depends on | `design/functional-requirements.md` v0.26, `design/architecture.md` v0.29, `design/ble-protocol.md` v0.13, `design/song-format.md` v0.21, `design/guiDesign.md` v0.12, `design/security-privacy-assessment.md` v0.30, `docs/RUNBOOK.md` Steps 5, 7 and 9 |
@@ -33,6 +33,7 @@
 | 0.19 | 2026-11-06 | Depends on FRD v0.25 (FR-GEN-09), architecture v0.28 (A-25) and assessment v0.29 (SP-38). D-10 added: the update check on *Over*. Traceability row for FR-GEN-09. |
 | 0.20 | 2026-11-06 | Depends on FRD v0.26 (FR-LIB-05, FR-LIB-08, FR-LIB-09 amended), architecture v0.29 (A-26), song format v0.21 and assessment v0.30 (SP-39). 3.2: the `libraries/` vectors, which existed already, and the new `packages/` vectors for the 1.1 view, VIEW-01 to VIEW-03, MAN-08, signatures with raw and wrapped keys, and W013. |
 | 0.21 | 2026-11-06 | 3.2, `packages/`: the library manager's 56 shared test libraries (manager 0.1.0, FDS draft 0.7, O-04), copied byte for byte, and how a case where the app keeps its own reading is listed (`design/proposals/2026-11-06-shared-test-libraries.md`, approved by the owner). |
+| 0.22 | 2026-11-15 | 3.4: where a finding's input lands. Jazzer saves it in the module's folder, not under `src/fuzz/resources/`; `scripts/fuzz.sh` now moves it there, where the replay reads it (the 0.5.1 findings had to be moved by hand). |
 
 ---
 
@@ -155,7 +156,7 @@ Jazzer runs one target per parser of untrusted input (NFR-SEC-04, assessment SP-
 | Join-link payload | URL or intent text as the camera app delivers it | base64url length, then the CBOR bound (ble-protocol 6.5) |
 | Leader's GATT write handlers | Join, Request, Control and Transfer writes, sealed or plain | 512-byte values, ranges ≤ 32, rate limits |
 
-*(Built 2026-10-27:)* 14 targets in two classes, `SongFormatFuzz` (song parser, setlist parser, library file, release index, archive manifest, whole archive through the ZIP reader) and `ProtocolFuzz` (CBOR, every payload decoder and the signed state, DEFLATE with its cap, both beacon encodings, the join link, frame reassembly with repair ranges, the erasure decoder, the leader's GATT writes), in a `fuzz` source set of `core/songformat` and `core/protocol` with its own Gradle task `fuzzTest` on the JUnit 5 platform. Without `JAZZER_FUZZ=1` the task replays each target's saved inputs and is part of `check`; `bash scripts/fuzz.sh [seconds] [target]` fuzzes each target in turn. A finding's input is saved under `src/fuzz/resources/…Inputs/<target>/` and committed with its fix; the working corpus in `.cifuzz-corpus/` is not. Not yet done: seeds from the conformance vectors, and the 60 s per target in CI (CI replays only).
+*(Built 2026-10-27:)* 14 targets in two classes, `SongFormatFuzz` (song parser, setlist parser, library file, release index, archive manifest, whole archive through the ZIP reader) and `ProtocolFuzz` (CBOR, every payload decoder and the signed state, DEFLATE with its cap, both beacon encodings, the join link, frame reassembly with repair ranges, the erasure decoder, the leader's GATT writes), in a `fuzz` source set of `core/songformat` and `core/protocol` with its own Gradle task `fuzzTest` on the JUnit 5 platform. Without `JAZZER_FUZZ=1` the task replays each target's saved inputs and is part of `check`; `bash scripts/fuzz.sh [seconds] [target]` fuzzes each target in turn. Jazzer saves a finding's input as `crash-<sha1>` in the module's folder, the task's working directory; `fuzz.sh` moves it to `src/fuzz/resources/<package>/<Class>Inputs/<target>/`, where the replay reads it, and it is committed with its fix; the working corpus in `.cifuzz-corpus/` is not. Not yet done: seeds from the conformance vectors, and the 60 s per target in CI (CI replays only).
 
 Budgets: 60 s per target on every push in CI, 1 hour per target before a release. Seed corpora come from the conformance vectors. Every finding becomes a regression test before it is fixed. Pass: no crash, no uncaught exception, no time-bound overrun and no allocation above the target's bound in the long run.
 

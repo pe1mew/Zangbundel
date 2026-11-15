@@ -7,10 +7,11 @@
 #   bash scripts/fuzz.sh 3600       # 1 hour per target: the release budget
 #   bash scripts/fuzz.sh 60 deflate # one target by name
 #
-# Jazzer fuzzes one target per run, so each target gets its own Gradle run. A finding fails that run
-# and leaves its input under src/fuzz/resources/…Inputs/<target>/, where the regression mode of
-# `./gradlew check` replays it from then on: commit it with the fix (test plan 3.4). The working corpus
-# in each module's .cifuzz-corpus/ is a local cache and is not committed.
+# Jazzer fuzzes one target per run, so each target gets its own Gradle run. A finding fails that run.
+# Jazzer saves its input as crash-<sha1> in the module's folder, the task's working directory; this
+# script moves it to src/fuzz/resources/<package>/<Class>Inputs/<target>/, where the regression mode
+# of `./gradlew check` replays it from then on: commit it with the fix (test plan 3.4). The working
+# corpus in each module's .cifuzz-corpus/ is a local cache and is not committed.
 set -u
 seconds="${1:-60}"
 only="${2:-}"
@@ -46,6 +47,14 @@ for t in "${targets[@]}"; do
     result="FINDING (see $module build/reports/tests/fuzzTest)"
     failed=$((failed + 1))
   fi
+  # Move any finding from the module's folder to the inputs the replay reads (test plan 3.4).
+  dir="${module//:/\/}"
+  src=$(find "$dir/src/fuzz/kotlin" -name "$class.kt" | head -1)
+  dest="$dir/src/fuzz/resources/$(dirname "${src#"$dir/src/fuzz/kotlin/"}")/${class}Inputs/$method"
+  for f in "$dir"/crash-*; do
+    [ -e "$f" ] || continue
+    mkdir -p "$dest" && mv "$f" "$dest/" && result="$result; saved $dest/${f##*/}"
+  done
   printf '%-16s %-16s %4ds  %s\n' "$module" "$method" "$(( $(date +%s) - start ))" "$result"
 done
 echo "findings: $failed"
