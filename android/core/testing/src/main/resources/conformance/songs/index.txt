@@ -14,3 +14,4 @@ directive-indented
 comment-indented
 nbsp-display
 chorus-repeat-bound
+chorus-label-most-recent

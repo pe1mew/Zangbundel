@@ -1,0 +1,10 @@
+{title: Test}
+{meta: id chorus-label-most-recent}
+{meta: language nl}
+{start_of_chorus: R}
+Eerste.
+{end_of_chorus}
+{start_of_chorus: R}
+Tweede.
+{end_of_chorus}
+{chorus: R}

@@ -1,0 +1,14 @@
+{
+  "accepted": true,
+  "codes": [
+    "W002"
+  ],
+  "canonical_sha256": "518cc9aaf10de78867dc24a418244168d36dca8d7e899a3f826620d34b997ba1",
+  "hash": "518cc9aaf10de78867dc24a418244168",
+  "canonical_equals_input": true,
+  "lines": [
+    "Eerste.",
+    "Tweede.",
+    "Tweede."
+  ]
+}
