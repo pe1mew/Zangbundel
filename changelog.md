@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+- Song format v0.29: hard bound on the canonical line list, 32 768 lines (5.5, 7.2, S013).
+- 0.5.1 after the tag (2026-11-15): tag `v0.5.1` on `435c0de`; G-07 passes (the tag's build equals CI's, `2d88950d…`); the GitHub release carries `zangbundel-0.5.1.apk` signed with the app signing key (G-08 on the GitHub APK, `9c84cb01…`); the wiki manual for 0.5.1 is pushed. The README's status says so.
+
 - `scripts/fuzz.sh` moves a finding's input from the module's folder, where Jazzer saves it as `crash-<sha1>`, to `src/fuzz/resources/<package>/<Class>Inputs/<target>/`, where `check` replays it; test plan v0.22 section 3.4 says so. Both 0.5.1 findings had been moved by hand. Section 3.4 also counts 16 targets, with `packageManifest` and `libraryOpen`, instead of 14.
 
 - `README.md`: the status of 15 November 2026. 0.5.1 is on the internal and closed-testing tracks; its release checks, with G-04, G-07 and G-08 still open; the two fuzz findings it fixes; GitHub Releases' latest APK is 0.4.0. The features name library files opened by Share, signed libraries from the library manager, the library's tag names, and the About screen's check for a new version.
